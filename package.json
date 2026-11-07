@@ -1,0 +1,26 @@
+{
+  "name": "yhwh",
+  "productName": "𐤉𐤄𐤅𐤄",
+  "version": "0.1.0",
+  "description": "A small-company rehearsal room, with an unusually opinionated deity.",
+  "private": true,
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "node scripts/start.cjs",
+    "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_review.py'",
+    "test:ui": "node scripts/ui-test.cjs && node scripts/review-ui-test.cjs",
+    "package": "electron-packager . YHWH --out=dist --overwrite --ignore=^/test --ignore=^/artifacts --ignore=^/dist --ignore=^/gen --ignore=^/doc --ignore=^/.obsidian --ignore=^/\\.git --ignore=^/AGENTS --ignore=^/The --ignore=__pycache__ --asar.unpack=**/*.py"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "overrides": {
+    "glob": "14.0.4",
+    "minimatch": "11.0.5"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "45.2.3",
+    "playwright": "1.65.0"
+  }
+}
