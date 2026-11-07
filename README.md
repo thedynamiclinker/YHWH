@@ -10,7 +10,7 @@ data folder; the command prints the folder and how to resume it. `make guide`
 prints this walkthrough. The Makefile also exposes core tests, desktop and
 headless UI tests, packaging, the Nix shell, and optional Ollama commands.
 
-Requires Node.js 22.12 or newer, Git, and Python 3 for interactive code review. On a normal desktop:
+Requires Node.js 22.12 or newer, Git, and Python 3 for interactive code review. The default AI engine uses your installed, signed-in Codex CLI (`codex login`). On a normal desktop:
 
 ```sh
 cd ~/obsidian/YHWH
@@ -18,7 +18,7 @@ npm install
 npm start
 ```
 
-The first launch prepares a fictional company and a real example Git repository with four draft commits. It needs no account, API key, or model. The opening “Did you know?” card rotates through observations about the character in _We The Nameless_. Turn startup cards off in settings if desired.
+The first launch prepares a fictional company and a real example Git repository with four draft commits. Opening the app needs no model connection; conversation, company reviews, and handoff revisions use Codex by default. Choose **Offline rehearsal** in Settings to use the scripted demo without an account or model. The opening “Did you know?” card rotates through observations about the character in _We The Nameless_. Turn startup cards off in settings if desired.
 
 On NixOS, `npm start` automatically obtains the native `electron` from your configured `<nixpkgs>`, because npm’s generic Linux binary does not resolve NixOS libraries. You can also use:
 
@@ -51,7 +51,7 @@ The desktop and `./review start` use **one Python implementation**, the same `.r
 
 Your coding agent can read `.review/state.json`, inspect `./review show --diff`, and revise with the same CLI. The desktop refreshes shared changes every four seconds while its editors are idle; **Refresh** also reloads immediately. A stale decision or save is rejected so a concurrent CLI edit cannot silently be overwritten. Local editor text remains visible; refresh and compare it with the shared version before saving again. Pause a terminal's interactive review with `q` before using desktop actions, because the terminal holds the workspace lock for its entire session.
 
-Yahweh's conversation receives the current review, displayed hunk, and recorded comments while this page is open. Offline mode explains the workflow using that context; optional Ollama supports free-form discussion. Chat text suggests changes; explicit review controls or your coding agent's CLI actions perform them. Existing company rehearsal conversations remain saved with their company.
+Yahweh's conversation receives the current review, displayed hunk, and recorded comments while this page is open. Codex supports free-form discussion and can carry out requested work in that review workspace. Ollama supports discussion, and offline mode explains the workflow using scripted responses. Existing company rehearsal conversations remain saved with their company.
 
 Keys outside editors: Enter/`y` next, `p` previous, `d` full diff, `c`/`n` focus the comment editor, `e` message/MR, Shift+`E` patch, `a` acceptance confirmation, `q` pause. Use the explicit **Comment** or **Request changes** button to submit feedback.
 
@@ -90,7 +90,7 @@ Hunk exclusions and manual edits are checked with `git apply --check --index` be
 
 Git imports in the company rehearsal create separate rounds per repository. The **Code review** page supports paired acceptance through an existing prepared review plan. Neither workflow splits a large existing commit into new rounds, executes tests on imported code, resolves conflicts automatically, or pushes branches. Record real test results in the evidence field. A rehearsal commit is evidence of applying a patch, not evidence of its correctness.
 
-## Yahweh’s voice and the two engines
+## Yahweh’s voice and the three engines
 
 The persona was derived from the user’s `We The Nameless/01-genesis/*.tex`, especially chapters 3, 4, 6, 8, 11, and 18. A complete local snapshot now lives in `gen/context/we-the-nameless/01-genesis/`. The app bundles selected character evidence and chapter references, so it does not depend on that directory being present after installation. It does not modify or build the book.
 
@@ -98,9 +98,24 @@ The key distinction is between YHWH and the commentator. This character is embod
 
 `src/persona.cjs` contains the character prompt, original-source references, startup facts, and offline dialogue. The facts describe the literary portrayal, with explicitly humorous workplace interpretations. This is a source-grounded adaptation; an LLM’s personality cannot be guaranteed identical to a literary character in every exchange.
 
+**Codex** is the default, matching the locally installed `lordhavemercy -f` command:
+
+```sh
+codex exec --dangerously-bypass-approvals-and-sandbox \
+  -c 'model_reasoning_effort="xhigh"' ...
+```
+
+The app invokes `codex` directly with an argument array and sends conversation context through stdin. It uses the CLI's configured model, provider, credentials, and sign-in; the Ollama model name is not passed to Codex. Run `codex login` before the first model request. Set `YHWH_CODEX=/absolute/path/to/codex` when the executable is not on the desktop app's PATH.
+
+Codex runs with full filesystem and network permissions and no approval prompts. Chat can use its tools for work you request. Its working directory is the selected code-review workspace, the selected proposal's isolated rehearsal repository, or the app's workspace directory for a company without a repository. These directories establish context; full-access Codex can also reach files outside them. Context goes to the provider configured in Codex, so the app does not promise local-only inference in this mode.
+
+Company reviews and handoff revisions use JSON schemas for their final responses. Only the final answer is displayed; CLI progress is kept separate. Requests allow up to 30 minutes for xhigh reasoning. A missing CLI, authentication failure, or invalid response reports an error and preserves the previous saved conversation and rehearsal state. Any filesystem changes made by Codex tools remain on disk even if the request later fails.
+
+Existing version-1 workspaces switch to Codex once when opened, retaining their Ollama model name, startup-card preference, companies, and saved work. Later choices of **Ollama** or **Offline rehearsal** persist across restarts.
+
 **Offline rehearsal** is a clearly labeled deterministic demonstration. It uses the company’s concerns, supplied evidence, and feedback to produce review reactions and revise draft text. Chat has scripted responses for scope, evidence, approval, and a few character-specific topics. It is not a general language model and does not infer new facts about the company.
 
-For free-form dialogue and generated reactions, use **Local model · Ollama** in settings:
+For optional local inference, use **Local model · Ollama** in Settings:
 
 ```sh
 ollama serve
@@ -108,9 +123,9 @@ ollama serve
 ollama pull qwen3:8b
 ```
 
-Enter the installed model’s name in settings. The main process calls Ollama at `http://127.0.0.1:11434/api/chat`. Chat receives the persona, company context, selected proposal, and recent conversation. Company reviews and draft revisions request structured JSON. The renderer never receives a network or shell capability. A model failure leaves the previous round intact and offers a useful error. No cloud inference provider is configured.
+Enter the installed model’s name in settings. The main process calls Ollama at `http://127.0.0.1:11434/api/chat`. Chat receives the persona, company context, selected proposal, and recent conversation. Company reviews and draft revisions request structured JSON. The renderer never receives a network or shell capability. A model failure leaves the previous round intact and offers a useful error.
 
-The model writes conversation, imagined review reactions, and draft text. The app’s explicit controls perform actual actions; model text cannot run commands or approve a round. The app itself sends context only to the local Ollama endpoint; choose local models if you want inference to remain on the machine.
+Ollama writes conversation, imagined review reactions, and draft text; it has no tool execution path. The app’s explicit controls perform actual actions in this mode. Choose a local Ollama model if you want inference to remain on the machine.
 
 ## Saved work and exports
 
@@ -127,7 +142,7 @@ JSON is replaced atomically. A small approval journal coordinates Git commits an
 
 The export does not contain repository history or Git objects. Keep the app’s data directory to resume the full rehearsal. Snapshot import is not implemented in this POC. Back up that directory if the work matters.
 
-The board’s round cards follow actual review decisions. Independent tasks can be dragged or moved with a select control, so other preparation can continue while a proposal waits for review. The POC prepares draft work up front; it does not run autonomous background coding jobs.
+The board’s round cards follow actual review decisions. Independent tasks can be dragged or moved with a select control, so other preparation can continue while a proposal waits for review. The POC prepares draft work up front; Codex runs in response to chat or review requests rather than autonomous background jobs.
 
 Shortcuts: **Ctrl/Cmd+K** searches proposals, **Ctrl/Cmd+S** saves the current editor, **Ctrl/Cmd+Shift+E** exports, and **Enter** sends a chat message (**Shift+Enter** inserts a newline). Proposal and draft editors autosave after a short typing pause, on leaving a field, before review actions, and before the window closes. Company settings use their explicit save button. The settings, search dialog, forms, and review controls are keyboard accessible.
 
@@ -139,9 +154,9 @@ npm run test:ui
 npm run package
 ```
 
-The core tests use real temporary Git repositories. They cover preparation, feedback, final exports, ordered approvals, hunk selection, failed patches, untouched source repositories, arbitrary companies, independent tasks, persistence failures, crash recovery, and the Ollama HTTP boundary. The model-boundary test serves controlled responses on local port 11434; stop Ollama before running that test suite.
+The core tests use real temporary Git repositories. They cover preparation, feedback, final exports, ordered approvals, hunk selection, failed patches, untouched source repositories, arbitrary companies, independent tasks, persistence failures, crash recovery, Codex default migration, CLI arguments and working directories, structured responses, process failures, and the Ollama HTTP boundary. Automated Codex tests use a disposable executable and do not require a sign-in or paid inference. The Ollama boundary test serves controlled responses on local port 11434; stop Ollama before running that test suite.
 
-The UI tests launch actual Electron with isolated temporary data. They exercise the original company workflow and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, final handoff, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `artifacts/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
+The UI tests launch actual Electron with isolated temporary data. They exercise default Codex chat through the disposable executable, engine selection, the original company workflow, and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, final handoff, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `artifacts/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
 
 Packaging creates a host-platform application under `dist/`. It needs no development server or frontend build step. On NixOS use the native launcher or run a packaged `resources/app.asar` with native Electron; the packaged upstream Linux binary needs a conventional Linux library environment. `YHWH_DATA_DIR=/some/isolated/directory npm start` starts a separate data profile for experiments.
 
@@ -150,6 +165,7 @@ Packaging creates a host-platform application under `dist/`. It needs no develop
 - `src/workspace.cjs`: companies, proposals, rehearsals, decisions, persistence, model calls, and exports.
 - `src/repository.cjs`: preparation/import, hunk selection, and isolated Git commits.
 - `src/persona.cjs`: the source-grounded character and startup facts.
+- `src/codex.cjs`: Codex CLI invocation, structured output, and process errors.
 - `src/main.cjs` / `src/preload.cjs`: Electron window and narrow IPC boundary.
 - `src/renderer.js` / `src/style.css`: the local interface.
 - `src/review.py`: the shared interactive CLI and JSON review engine.
@@ -163,4 +179,4 @@ See [gen/README.md](gen/README.md) for literary sources and [doc/Migration.md](d
 
 The application has no production npm dependencies. Electron, Playwright, and the packager are development dependencies; versions are locked. The Phoenician font is Noto Sans Phoenician, distributed under the bundled `assets/OFL.txt` license. The icon is an original SVG.
 
-Implementation references: [Electron context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation), [Electron security guidance](https://www.electronjs.org/docs/latest/tutorial/security), and [Ollama’s chat API](https://github.com/ollama/ollama/blob/main/docs/api.md).
+Implementation references: [Codex CLI reference](https://learn.chatgpt.com/docs/developer-commands?surface=cli), [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference), [Electron context isolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation), [Electron security guidance](https://www.electronjs.org/docs/latest/tutorial/security), and [Ollama’s chat API](https://github.com/ollama/ollama/blob/main/docs/api.md).

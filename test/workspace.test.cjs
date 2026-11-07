@@ -5,6 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const http = require("node:http");
 const { Workspace } = require("../src/workspace.cjs");
+const { createCodex } = require("./codex-fixture.cjs");
 const {
   git,
   createDemo,
@@ -12,11 +13,12 @@ const {
   selectedPatch,
 } = require("../src/repository.cjs");
 
-async function setup(t) {
+async function setup(t, mode = "offline") {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-test-"));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const workspace = new Workspace(path.join(directory, "data"));
   await workspace.load();
+  if (mode) await workspace.act("settings", { mode });
   const company = workspace.state.companies[0];
   return {
     workspace,
@@ -26,6 +28,102 @@ async function setup(t) {
     repo: workspace.repoPath(company.repositories[0].id),
   };
 }
+
+test("Codex is the default; existing workspaces switch once and retain later engine choices", async (t) => {
+  const { workspace } = await setup(t, null);
+  assert.equal(workspace.state.settings.mode, "codex");
+  for (const mode of ["offline", "ollama"]) {
+    const legacy = structuredClone(workspace.state);
+    legacy.version = 1;
+    legacy.settings = { mode, model: "my-local-model", showFacts: false };
+    await fs.writeFile(path.join(workspace.directory, "workspace.json"), JSON.stringify(legacy));
+    const migrated = new Workspace(workspace.directory);
+    await migrated.load();
+    assert.equal(migrated.state.version, 2);
+    assert.deepEqual(migrated.state.companies, legacy.companies);
+    assert.deepEqual(migrated.state.settings, { mode: "codex", model: "my-local-model", showFacts: false });
+    await migrated.act("settings", { mode, showFacts: false });
+    const reopened = new Workspace(workspace.directory);
+    await reopened.load();
+    assert.equal(reopened.state.settings.mode, mode);
+    assert.equal(reopened.state.settings.model, "my-local-model");
+  }
+});
+
+async function useCodex(t, directory) {
+  const fixture = await createCodex(directory);
+  const previous = process.env.YHWH_CODEX;
+  process.env.YHWH_CODEX = fixture.executable;
+  t.after(() => {
+    if (previous === undefined) delete process.env.YHWH_CODEX;
+    else process.env.YHWH_CODEX = previous;
+  });
+  return fixture;
+}
+
+test("Default Codex uses lordhavemercy -f permissions and reasoning for chat, reviews, and revisions", async (t) => {
+  const { workspace, directory, company, first, repo } = await setup(t, null);
+  const fixture = await useCodex(t, directory);
+  const message = "Inspect this diff; literal $(touch should-not-exist) and `false`.";
+  await workspace.act("chat", { message, proposalId: first.id });
+  assert.equal(company.messages.at(-1).content, "Let me come down and inspect that diff.");
+  await workspace.act("rehearse", { proposalId: first.id });
+  assert.equal(first.rehearsals[0].mode, "codex");
+  assert.equal(first.rehearsals[0].reactions.length, company.people.length);
+  await workspace.act("revise", { proposalId: first.id });
+  assert.equal(first.drafts.chat, "A small improvement for review.");
+  const requests = (await fs.readFile(fixture.requests, "utf8")).trim().split("\n").map(JSON.parse);
+  assert.equal(requests.length, 3);
+  for (const request of requests) {
+    assert.equal(request.args[0], "exec");
+    assert.ok(request.args.includes("--dangerously-bypass-approvals-and-sandbox"));
+    assert.ok(request.args.includes('model_reasoning_effort="xhigh"'));
+    assert.ok(!request.args.includes("--model"));
+    assert.ok(!request.args.includes(workspace.state.settings.model));
+    assert.equal(request.args.at(-1), "-");
+    assert.equal(request.cwd, repo);
+    await assert.rejects(fs.access(path.dirname(request.output)));
+  }
+  assert.match(requests[0].messages[0].content, /Gen 18:21/);
+  assert.equal(requests[0].messages.at(-1).content, message);
+  assert.equal(requests[0].schema, null);
+  assert.deepEqual(requests[1].schema.properties.reactions.items.properties.personId.enum, company.people.map((p) => p.id));
+  assert.deepEqual(requests[2].schema.required, ["chat", "mail", "forge"]);
+  await assert.rejects(fs.access(path.join(repo, "should-not-exist")));
+
+  const reviewRoot = path.join(directory, "selected review");
+  await fs.mkdir(reviewRoot);
+  await workspace.act("chat", { message: "Inspect this hunk", reviewContext: { root: reviewRoot, round: { id: "R01" } } });
+  let latest = (await fs.readFile(fixture.requests, "utf8")).trim().split("\n").map(JSON.parse).at(-1);
+  assert.equal(latest.cwd, reviewRoot);
+  assert.match(latest.messages[0].content, /R01/);
+  await workspace.act("createCompany", { name: "No repository", goal: "Review a message." });
+  await workspace.act("chat", { message: "Help me write this." });
+  latest = (await fs.readFile(fixture.requests, "utf8")).trim().split("\n").map(JSON.parse).at(-1);
+  assert.equal(latest.cwd, workspace.directory);
+});
+
+test("Codex startup, process, empty output, and invalid JSON errors preserve saved work", async (t) => {
+  const { workspace, directory, first } = await setup(t, null);
+  const fixture = await useCodex(t, directory);
+  const before = structuredClone(workspace.state);
+  for (const [behavior, pattern] of [
+    [{ exit: 1 }, /Codex failed.*log in/s],
+    [{ answer: " " }, /empty answer/],
+    [{ missing: true }, /without a final answer/],
+  ]) {
+    await fs.writeFile(fixture.response, JSON.stringify(behavior));
+    await assert.rejects(workspace.act("chat", { message: "Hello" }), pattern);
+    assert.deepEqual(workspace.state, before);
+  }
+  await fs.writeFile(fixture.response, JSON.stringify({ answer: "not JSON" }));
+  await assert.rejects(workspace.act("rehearse", { proposalId: first.id }), SyntaxError);
+  assert.deepEqual(workspace.state, before);
+  process.env.YHWH_CODEX = path.join(directory, "missing-codex");
+  await assert.rejects(workspace.act("chat", { message: "Hello" }), /Install the Codex CLI/);
+  assert.deepEqual(workspace.state, before);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(workspace.directory, "workspace.json"), "utf8")), before);
+});
 
 test("The example prepares every draft commit before the first review", async (t) => {
   const { workspace, company, repo } = await setup(t);

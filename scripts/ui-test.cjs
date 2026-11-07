@@ -4,13 +4,15 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { createDemo, git } = require("../src/repository.cjs");
+const { createCodex } = require("../test/codex-fixture.cjs");
 
 (async () => {
   const root = path.join(__dirname, "..");
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-ui-"));
   const artifacts = path.join(root, "artifacts");
   await fs.mkdir(artifacts, { recursive: true });
-  const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, "data") };
+  const codex = await createCodex(temp);
+  const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, "data"), YHWH_CODEX: codex.executable };
   delete env.ELECTRON_RUN_AS_NODE;
   const executablePath = require("./runtime.cjs")();
   let app;
@@ -30,6 +32,23 @@ const { createDemo, git } = require("../src/repository.cjs");
     await page.locator('[data-action="close-dialog"]').last().click();
     await page.screenshot({ path: path.join(artifacts, "02-overview.png") });
     console.log("✓ Startup character fact and workspace overview");
+
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.mode, "codex");
+    await page.locator("#chat-input").fill("Inspect this proposal with Codex.");
+    await page.locator("#chat-input").press("Enter");
+    await page.waitForFunction(() => document.querySelector(".chat-message.assistant:last-child p")?.textContent.includes("inspect that diff"));
+    assert.match(await page.locator(".god-heading small").textContent(), /Codex.*xhigh.*full access/);
+    await page.locator('.rail-bottom [data-action="settings"]').click();
+    assert.equal(await page.locator('#settings-form [name="mode"]').inputValue(), "codex");
+    assert.equal(await page.locator('[data-engine="codex"]').isVisible(), true);
+    await page.screenshot({ path: path.join(artifacts, "13-codex-settings.png") });
+    await page.locator('#settings-form [name="mode"]').selectOption("ollama");
+    assert.equal(await page.locator('#settings-form [name="model"]').isVisible(), true);
+    assert.equal(await page.locator('#settings-form [name="model"]').inputValue(), "qwen3:8b");
+    await page.locator('#settings-form [name="mode"]').selectOption("offline");
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.locator(".modal").waitFor({ state: "detached" });
+    console.log("✓ Default Codex chat, full-access settings, and retained Ollama/offline choices");
 
     await page.locator('.next-step [data-action="open-proposal"]').click();
     await page
@@ -252,6 +271,7 @@ const { createDemo, git } = require("../src/repository.cjs");
       companyId,
     );
     const restored = await reopened.evaluate(() => window.yhwh.read());
+    assert.equal(restored.settings.mode, "offline");
     assert.equal(
       restored.companies.find((c) => c.id === companyId).proposals[0].summary,
       "Preserve the edit that was still focused when the window closed.",
