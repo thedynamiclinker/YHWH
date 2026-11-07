@@ -619,6 +619,119 @@ b {
   width: 16px;
   height: 16px;
 }
+.walkthrough {
+  border: 1px solid #65517d;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #30263d, #231e2b);
+  padding: 24px;
+  margin-bottom: 30px;
+}
+.walkthrough-label,
+.walkthrough-hint > strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #c9ade6;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.walkthrough-label > span {
+  margin-left: auto;
+  color: #b5d3bf;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.walkthrough h2 {
+  font-size: 24px;
+  line-height: 1.4;
+  color: #e4d5f1;
+  margin: 20px 0 10px;
+}
+.walkthrough p,
+.walkthrough-hint p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c5b6d2;
+  margin: 10px 0;
+}
+.walkthrough p strong {
+  color: #e0cfea;
+}
+.walkthrough-start {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0;
+}
+.walkthrough-start > small {
+  flex: 1 1 210px;
+  color: #ada0ba;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.walkthrough-steps {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0;
+}
+.walkthrough-steps > li {
+  display: flex;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid #51405f;
+}
+.walkthrough-steps > li > div { min-width: 0; }
+.walkthrough-number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #493458;
+  color: #ddc9ef;
+  font-size: 12px;
+}
+.walkthrough h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 6px;
+  font-size: 14px;
+  color: #dfcfea;
+}
+.walkthrough-steps p { margin: 0 0 8px; }
+.walkthrough-recorded {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #acd0b7;
+  font-size: 10px;
+  font-weight: 400;
+}
+.walkthrough-recorded > .icon { width: 13px; height: 13px; }
+.walkthrough-result {
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #51405f;
+  padding-top: 16px;
+}
+.walkthrough-result > .icon { color: #acd0b7; margin-top: 15px; flex: none; }
+.walkthrough .walkthrough-note { font-size: 11px; color: #b0a1bb; }
+.walkthrough .walkthrough-complete { color: #acd0b7; }
+.walkthrough-hint {
+  border: 1px solid #65517d;
+  border-left: 3px solid #b7a1ef;
+  border-radius: 6px;
+  padding: 16px 18px;
+  background: #30263d;
+  margin-bottom: 24px;
+}
+.walkthrough-hint .button { margin-top: 6px; }
+.fact-dialog-actions { flex-wrap: wrap; gap: 10px; }
 .fact-card {
   padding: 20px 18px;
   display: flex;

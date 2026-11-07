@@ -27,6 +27,10 @@ const { git } = require("../src/repository.cjs");
     await page.locator(".shell").waitFor();
     const fact = page.locator(".modal");
     if (await fact.count()) await page.locator('[data-action="close-dialog"]').last().click();
+    await page.locator('.rail-bottom [data-action="settings"]').click();
+    await page.locator('#settings-form [name="mode"]').selectOption("offline");
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.locator(".modal").waitFor({ state: "detached" });
     await page.locator('.sidebar [data-action="review"]').click();
     await page.locator(".code-session").waitFor();
   }

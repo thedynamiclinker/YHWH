@@ -58,7 +58,7 @@ Gen 11:5–6: He goes down to inspect the tower and is alarmed at human cooperat
 Gen 18:15: 'No, but you did laugh.'
 Gen 18:21: 'Let me go down, and I’ll see ... And if not, let me know.' He investigates because he does not already know everything.
 Gen 18:23–32: He bargains with Abraham from fifty righteous people down to ten.
-IN THIS APP: Help the user rehearse small useful changes with a simulated company. Your private voice may be theatrical; drafts for colleagues must be plain, polite, short, and constructive. Give people real concerns, not villain roles. Never claim to know a colleague's actual thoughts. Never invent test results, file contents, applied patches, sent messages, or real-world outcomes. Distinguish plans from evidence. Nothing is posted externally. All repository operations are in isolated local rehearsal copies. You can discuss plans but cannot execute tools through chat. If the user asks for an action, direct them to the actual button. Maximum 200 words unless asked for detail.`;
+IN THIS APP: Help the user rehearse small useful changes with a simulated company. Your private voice may be theatrical; drafts for colleagues must be plain, polite, short, and constructive. Give people real concerns, not villain roles. Never claim to know a colleague's actual thoughts. Never invent test results, file contents, applied patches, sent messages, or real-world outcomes. Distinguish plans from evidence. Keep review decisions and external posting explicit. Your available tools depend on the selected engine, described below. Maximum 200 words unless asked for detail.`;
 
 function reply(message, company, proposal) {
   const title = proposal?.title || "the next small change";

@@ -13,10 +13,13 @@ const { pathToFileURL } = require("node:url");
 const { Workspace } = require("./workspace.cjs");
 const { hunks } = require("./repository.cjs");
 const { Review } = require("./review.cjs");
+const thwh = process.argv.includes("--thwh");
 
-if (process.env.YHWH_DATA_DIR)
+if (thwh) {
+  app.setPath("userData", require("./thwh-profile.cjs")());
+} else if (process.env.YHWH_DATA_DIR)
   app.setPath("userData", path.resolve(process.env.YHWH_DATA_DIR));
-app.setName("𐤉𐤄𐤅𐤄");
+app.setName(thwh ? "THWH" : "𐤉𐤄𐤅𐤄");
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -25,7 +28,7 @@ let workspace;
 let review;
 let closeApproved = false;
 let queue = Promise.resolve();
-const entry = path.join(__dirname, "index.html");
+const entry = path.join(__dirname, thwh ? "thwh.html" : "index.html");
 const entryUrl = pathToFileURL(entry).href;
 app.on("second-instance", () => {
   if (window) {
@@ -34,10 +37,11 @@ app.on("second-instance", () => {
   }
 });
 
-function handle(channel, callback) {
+function handle(channel, callback, serial = true) {
   ipcMain.handle(channel, (event, ...args) => {
     if (event.senderFrame.url !== entryUrl)
       throw new Error("Untrusted window.");
+    if (!serial) return callback(...args);
     // Model calls, approvals and saves share a queue: a late model response
     // must never replace a newer review decision or race another Git commit.
     const operation = queue.then(() => callback(...args));
@@ -56,6 +60,11 @@ app
       process.cwd(),
     );
     await review.load();
+    if (thwh) review = await require("./thwh.cjs").register({ handle, app, review, workspace });
+    else {
+      const themeFlag = process.argv.indexOf("--theme");
+      if (themeFlag >= 0) await workspace.act("settings", { theme: process.argv[themeFlag + 1] });
+    }
     handle("workspace:read", () => workspace.view());
     handle("workspace:act", async (action, input) => {
       if (action === "chat" && input?.review) {
@@ -85,8 +94,8 @@ app
       if (result.canceled) return null;
       const view = await review.act("read");
       const target = await fs.mkdtemp(path.join(result.filePaths[0], "review-handoff-"));
-      await fs.writeFile(path.join(target, "MASTER.md"), view.master);
-      await fs.writeFile(path.join(target, "Kanbun.md"), view.board);
+      await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.master) : "MASTER.md"), view.master);
+      await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.board) : "Kanbun.md"), view.board);
       return target;
     });
     handle("patch:hunks", (patch) => {
@@ -170,6 +179,14 @@ app
             { role: "togglefullscreen" },
           ],
         },
+        {
+          label: "Help",
+          role: "help",
+          submenu: require("./help-links.json").map(({ label, url }) => ({
+            label,
+            click: () => shell.openExternal(url),
+          })),
+        },
       ]),
     );
     function createWindow() {
@@ -179,9 +196,9 @@ app
         height: 980,
         minWidth: 1060,
         minHeight: 700,
-        title: "𐤉𐤄𐤅𐤄",
+        title: thwh ? "THWH" : "𐤉𐤄𐤅𐤄",
         backgroundColor: "#19191e",
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         icon: path.join(__dirname, "../assets/icon.png"),
         webPreferences: {
           preload: path.join(__dirname, "preload.cjs"),

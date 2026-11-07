@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Replace the current first-run landing experience with a hands-on 
+walkthrough of YHWH. Build it into the screen users currently see after 
+dismissing the “Did you know?” tips. The walkthrough should be visible 
+immediately on a fresh launch, with no tips popup blocking it.
+
+Walk a new user through one useful task from start to finish using 
+Example Company and the sample apps already available. Use the sample 
+email account if it exists. Explain where to start, what to click, and 
+what a successful result looks like. I’ll be the first person using 
+this regularly, so make the walkthrough clear to someone who has never 
+seen the app before. Keep this work on sample data and leave real 
+account connections for later.
+
+Keep the existing tips, their data, and the code that supports them. 
+Give the tips a visible but secondary home, such as lower in the middle 
+panel or in a side panel. Add a “Don’t show this again” button wherever 
+the existing tips popup is presented. Save that choice across app 
+restarts and suppress future automatic appearances of the popup. A 
+normal dismissal should leave the saved preference alone. Users should 
+still be able to find the tips in their in-app location.
+
+Verify that a fresh launch opens directly to the walkthrough, that the 
+sample task can be completed, and that disabling the tips popup 
+survives a restart while the tips remain accessible in the app.
+EOF
