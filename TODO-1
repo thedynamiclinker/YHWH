@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 
 lordhavemercy -f --verbose << "EOF"
+PREVIOUS PROMPT #1:
+
 Bugs to Fix:
 
 1. I don't know where to start when I open THWH. I see "Start" but need a vimtutor style game to teach me how to use the thing before I can be productive with it.
 
 Make improvements in a way that won't affect the app if I'm running it while you make the changes, but in a way where your changes are trivial to merge back into THWH (and eventually YHWH) when your work on this prompt finishes.
+
+PREVIOUS PROMPT #2:
+
+Explain worktrees well enough that I can tell which 'branch' or which 'worktree' I'm on. I told an agent to make changes to [something] in this repo in a way that wouldn't affect a running copy of the program while changes are actively being made to it, and it chose to do that using worktrees. I'm happy cuz I've wanted to learn those. Explain worktrees to someone who already knows most other .git/\* internals
+
+CURRENT PROMPT:
+
+Great! Understand worktrees at the plumbing level. But
+
+1. I don't know what to do in order to merge the new work in ../YHWH-worktrees/thwh-tutor/ into this repo, so explain that to me using a list of one-liners to stdout, but also.
+
+2. Actually do that merge. I now want this branch or worktree or whatever to contain the new work with the tutorial.
 EOF
