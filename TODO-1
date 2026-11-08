@@ -4,4 +4,6 @@ lordhavemercy -f --verbose << "EOF"
 Bugs to Fix:
 
 1. I don't know where to start when I open THWH. I see "Start" but need a vimtutor style game to teach me how to use the thing before I can be productive with it.
+
+Make improvements in a way that won't affect the app if I'm running it while you make the changes, but in a way where your changes are trivial to merge back into THWH (and eventually YHWH) when your work on this prompt finishes.
 EOF
