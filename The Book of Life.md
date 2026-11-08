@@ -28,7 +28,7 @@ What makes a product or a project a Universe (as opposed to a universe) is that 
 Math                       Bible
 
 
-Comp                      Work
+Comp                      Prof
 
 
 If you're alive, you've probably encountered the four things above.
@@ -43,6 +43,8 @@ Comp is Computing, that field that runs the modern world.
 	The thing that proper nerds and hacker types love.
 	The thing that software companies think they're doing but aren't.
 	Just trust me on that one.
+
+Prof is Professional life, your work, career, profession, and other synonyms that mean the same goddamn thing at least to like 3rd order in the Taylor expansion of all their deno- and connotations. It is the worldwide 
 
 Bible is... well... we'll get to that.
 	It's the same Bible you're thinking of.

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Bugs to Fix:
+
+1. I don't know where to start when I open THWH. I see "Start" but need a vimtutor style game to teach me how to use the thing before I can be productive with it.
+EOF
