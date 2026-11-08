@@ -30,6 +30,7 @@ const { git } = require("../src/repository.cjs");
   }
   try {
     await launch();
+    await click("tutorial-skip"); // This suite exercises the real workspace controls.
     await require("./help-menu-test.cjs")(app);
     assert.equal(await page.locator("body").getAttribute("data-theme"), "yhwh");
     assert.equal(await page.locator("input[type=radio]").count(), 0);

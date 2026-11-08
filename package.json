@@ -9,7 +9,7 @@
     "start": "node scripts/start.cjs",
     "start:thwh": "./thwh",
     "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
-    "test:ui": "node scripts/ui-test.cjs && node scripts/review-ui-test.cjs && node scripts/thwh-ui-test.cjs",
+    "test:ui": "node scripts/ui-test.cjs && node scripts/review-ui-test.cjs && node scripts/thwh-ui-test.cjs && node scripts/tutorial-ui-test.cjs",
     "package": "electron-packager . YHWH --out=dist --overwrite --ignore=^/test --ignore=^/artifacts --ignore=^/dist --ignore=^/gen --ignore=^/doc --ignore=^/.obsidian --ignore=^/\\.git --ignore=^/AGENTS --ignore=^/The --ignore=__pycache__ --asar.unpack=\"**/{*.py,help-links.json}\""
   },
   "engines": {
