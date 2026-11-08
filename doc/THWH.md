@@ -2,7 +2,7 @@
 
 Run `make` or `make thwh` to build and launch, or `./thwh` to launch directly.
 The first launch uses the
-YHWH interface and opens a prepared review in the current directory. The original
+YHWH interface and offers **Start practice review** in Start. The original
 company-rehearsal app is available with `make yhwh`. For separate steps, use
 `make build-thwh` / `make run-thwh` or `make build-yhwh` / `make run-yhwh`.
 Building prepares the shared locked dependencies; the apps run directly from source.
@@ -40,6 +40,24 @@ The visible **Help** menu in every desktop level offers **About Us** and
 **About YHWH**, opening their pages in your browser.
 
 ## The review
+
+New to THWH? Choose **Start practice review** on the opening screen, or
+**Practice review** in the sidebar at any time. Eight short lessons teach the
+actual controls: open a diff, mark both hunks read, save an anchored note,
+request a clearer message, finalize the message, resolve the request, accept
+the sample pair, and find the accepted handoff. Each lesson advances when the
+action is completed. **Show this step’s controls** takes you to the relevant
+view and focuses the control. Buttons and the normal review shortcuts both work.
+
+Practice creates two tiny Git repositories under the THWH profile, using the
+same Python review engine and acceptance transaction as a real review. It
+needs no prepared workspace, account, model, or downloaded sample project.
+The assistant gives scripted lesson guidance during practice, preserving your
+normal engine choice. **Leave practice** returns to your selected review with
+its existing drafts and position. **Use my review** skips the introduction;
+practice remains available in the sidebar and keyboard help. Progress and
+completion survive restarts. After finishing, **Practice again** resets only
+the sample review.
 
 The six views follow the shared `./review start` interface:
 
@@ -98,6 +116,18 @@ On first launch after the spelling correction, an existing default `TWHW`
 profile moves to `THWH`, and its `twhw.json` becomes `thwh.json`. An existing
 `THWH` profile takes precedence. The old `TWHW_DATA_DIR` override is still
 recognized so explicitly selected profiles keep working.
+
+`tutorial.json` saves lesson progress; `practice-review/` contains only the
+sample repositories and their review records. Entering practice routes review
+operations to that directory without changing `review.json`. The lesson rules
+and sample creation live in `src/tutorial.cjs`; presentation stays in the THWH
+renderer. The original YHWH company walkthrough uses its existing workflow.
+
+Run `node --test test/tutorial.test.cjs` for practice isolation and review
+decisions, and `node scripts/tutorial-ui-test.cjs` for the complete desktop
+lesson sequence, resume/replay, keyboard controls, and theme layout. Both use
+temporary profiles and repositories. The desktop test is included in
+`npm run test:ui` and saves screenshots under `artifacts/`.
 
 The Circus widget fetches the pairing chosen by
 [Nietzsche Family Circus](https://nietzschefamilycircus.com/), whose server

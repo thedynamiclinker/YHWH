@@ -60,7 +60,7 @@ app
       process.cwd(),
     );
     await review.load();
-    if (thwh) await require("./thwh.cjs").register({ handle, app, review, workspace });
+    if (thwh) review = await require("./thwh.cjs").register({ handle, app, review, workspace });
     else {
       const themeFlag = process.argv.indexOf("--theme");
       if (themeFlag >= 0) await workspace.act("settings", { theme: process.argv[themeFlag + 1] });

@@ -7,7 +7,9 @@ const glyphs = ["◈", "±", "≡", "◇", "⌘", "▤"];
 let v, settings, page = 0, full = false, patchRepo = null, notice = "Your place is saved. One hunk is enough.", working = false;
 let circus = null, circusError = "", circusBusy = false, chain = Promise.resolve(), scrollTimer, anchorNote = true, noteKey = "comment", factIndex = 2;
 const edits = {};
+const chatDrafts = {};
 const fieldNames = [["Round title", "title"], ["Teams message", "teams"], ["MR title", "mr_title"], ["Validation and limits", "validation"]];
+const practice = () => settings?.tutorial?.active;
 const divine = () => settings?.energy === 100;
 const dawkins = () => settings?.energy === 0;
 const button = (action, label, cls = "quiet", extra = "") => `<button class="button ${cls}" data-action="${action}" ${extra}>${label}</button>`;
@@ -24,7 +26,10 @@ function toast(message, error = false) {
   setTimeout(() => $("#toast").className = "", 6000);
 }
 async function request(action, input = {}) {
+  const step = settings.tutorial?.step;
   v = await api.reviewAct(action, { roundId: v?.round?.id, revision: v?.revision, ...input });
+  if (v.tutorial) settings.tutorial = v.tutorial;
+  if (practice() && settings.tutorial.step > step) toast(`✓ ${settings.tutorial.lessons[step].title}`);
   return v;
 }
 async function work(fn) {
@@ -44,7 +49,17 @@ function messages() {
     Object.entries(v.round.descriptions).map(([repo, description]) => field(`${repo} MR description`, description)).join("") +
     field("Validation and limits", v.round.validation, 5);
 }
+function welcome() {
+  return `<section class="tw-welcome"><span class="tw-kicker">NEW HERE? START HERE.</span><h1>Learn THWH<br>by doing.</h1><p>THWH helps you review a change across two repositories and turn it into a clear handoff. Learn the controls on a tiny practice bug before opening your own work.</p><ol><li>Read the two changes and leave a note.</li><li>Request a clearer message, improve it, and resolve the request.</li><li>Accept the sample pair and find your finished handoff.</li></ol><p class="muted">About 5–10 minutes · sample repositories · no login needed<br>Your progress saves automatically.</p><div>${button("tutorial-start", settings.tutorial?.step ? "Resume practice review →" : "Start practice review →", "primary")}${button("tutorial-skip", "Use my review", "quiet")}</div></section>`;
+}
+function lesson() {
+  if (!practice()) return "";
+  const t = settings.tutorial, current = t.lessons[t.step];
+  if (!current) return `<section class="tw-tutorial tw-tutorial-complete" aria-label="Practice complete"><span class="tw-kicker">✓ ALL ${t.lessons.length} LESSONS COMPLETE</span><h2>You’ve reviewed your first pair.</h2><p>You read the code, gave feedback, improved the handoff, and accepted both sample changes. In your own workspace, use the same controls and check the validation before accepting.</p><div>${button("tutorial-leave", "Return to my workspace →", "primary")}${button("tutorial-restart", "Practice again")}</div></section>`;
+  return `<section class="tw-tutorial" aria-label="Current practice lesson"><div class="tw-tutorial-heading"><span class="tw-kicker">PRACTICE · LESSON ${t.step + 1} OF ${t.lessons.length}</span>${button("tutorial-leave", "Leave practice")}</div><progress aria-label="Practice progress" value="${t.step}" max="${t.lessons.length}"></progress><h2>${esc(current.title)}</h2><p>${esc(current.text)}</p><div class="tw-tutorial-tools">${button("tutorial-hint", "Show this step’s controls", "secondary")}<small>Complete the action to unlock the next lesson. Your place is saved.</small></div></section>`;
+}
 function content() {
+  if (!practice() && (!v || page === 0) && !settings.tutorial?.completed && !settings.tutorial?.dismissed) return welcome();
   if (!v) return `<div class="tw-empty"><span class="tw-big-glyph">⌘</span><h1>Open your review workspace.</h1><p>Choose a folder containing the prepared review.</p>${button("choose", "Choose workspace", "primary")}</div>`;
   const r = v.round, h = v.hunks[v.hunk];
   if (page === 5) return `<div class="tw-context-tabs">${button("document", "Accepted handoff", "quiet", 'data-document="master"')}${button("document", "Board", "quiet", 'data-document="board"')}</div><div class="tw-document-list">${v.documents.map(name => button("document", esc(name.split("/").at(-1)), "quiet", `data-document="${esc(name)}"`)).join("")}</div><pre class="tw-document">${esc(v.screen.document ? v.document : v.screen.record === "board" ? v.board : v.master || "No rounds accepted yet. Open a context file above whenever you need it.")}</pre>${button("copy-document", "Copy displayed text", "secondary")}`;
@@ -60,7 +75,7 @@ function content() {
 }
 function companion() {
   const messages = settings.messages.filter(m => m.energy === settings.energy && m.root === v?.root);
-  return `<aside class="tw-companion">${dawkins() ? "" : `<section class="tw-widget">${divine() ? `<div class="tw-divine-orbit"><span>✧</span><bdi>𐤉𐤄𐤅𐤄</bdi></div><div class="tw-widget-caption"><span class="tw-kicker">A LITTLE DIVINE INTERVENTION</span><h2>Let there be<br>one small change.</h2><p>“I will go down and see.”<br><small>Genesis 18:21 · even omniscience checks.</small></p>${button("fact", "A footnote from Genesis ↗")}</div>` : `<div class="tw-obituary"><strong>God is dead.</strong><small>We’ve reassigned his code reviews.</small></div><div class="tw-circus" aria-label="Nietzsche Family Circus">${circus ? `<img src="${esc(circus.image)}" alt="Family Circus cartoon"><p>${esc(circus.quote)}</p>` : `<p>${circusBusy ? "Finding the eternal recurrence…" : "Random cartoons. Random Nietzsche."}</p>`}${circusError ? `<small role="alert">${esc(circusError)}</small>` : ""}<div>${button("circus-next", circusBusy ? "Loading…" : "Next ↻", "quiet", circusBusy ? "disabled" : "")}${button("circus-share", "Share", "quiet", circus ? "" : "disabled")}</div><small>Nietzsche Family Circus</small></div>`}</section>`}<section class="tw-assistant"><header><span class="tw-assistant-mark">${divine() ? "✧" : ">_"}</span><div><b>${divine() ? "Yahweh" : "Review assistant"}</b><small>${settings.mode === "offline" ? "Scripted guidance" : settings.mode === "codex" ? "Codex · xhigh" : "Ollama"}</small></div>${button("settings", dawkins() ? "Setup" : "···", "quiet", 'aria-label="Assistant settings"')}</header><div class="tw-chat-log" role="log">${messages.length ? messages.map(m => `<article class="${m.role}"><small>${m.role === "user" ? "You" : divine() ? "Yahweh" : "Assistant"}</small><p>${esc(m.content)}</p></article>`).join("") : `<p class="tw-chat-welcome">${divine() ? "Where are you? Ah. Here. Give me the situation. I will come down and have a look." : "Ask about the current hunk, the evidence, or how to make the change smaller."}</p>`}</div><form id="assistant-form"><textarea id="assistant-message" aria-label="Message review assistant" rows="2" placeholder="${divine() ? "Give Yahweh the situation…" : "Discuss this hunk…"}"></textarea><div><small>${working ? "Working…" : "Current hunk included"}</small><button class="button secondary" type="submit">${dawkins() ? "Send" : "Send ↗"}</button></div></form></section></aside>`;
+  return `<aside class="tw-companion">${dawkins() ? "" : `<section class="tw-widget">${divine() ? `<div class="tw-divine-orbit"><span>✧</span><bdi>𐤉𐤄𐤅𐤄</bdi></div><div class="tw-widget-caption"><span class="tw-kicker">A LITTLE DIVINE INTERVENTION</span><h2>Let there be<br>one small change.</h2><p>“I will go down and see.”<br><small>Genesis 18:21 · even omniscience checks.</small></p>${button("fact", "A footnote from Genesis ↗")}</div>` : `<div class="tw-obituary"><strong>God is dead.</strong><small>We’ve reassigned his code reviews.</small></div><div class="tw-circus" aria-label="Nietzsche Family Circus">${circus ? `<img src="${esc(circus.image)}" alt="Family Circus cartoon"><p>${esc(circus.quote)}</p>` : `<p>${circusBusy ? "Finding the eternal recurrence…" : "Random cartoons. Random Nietzsche."}</p>`}${circusError ? `<small role="alert">${esc(circusError)}</small>` : ""}<div>${button("circus-next", circusBusy ? "Loading…" : "Next ↻", "quiet", circusBusy ? "disabled" : "")}${button("circus-share", "Share", "quiet", circus ? "" : "disabled")}</div><small>Nietzsche Family Circus</small></div>`}</section>`}<section class="tw-assistant"><header><span class="tw-assistant-mark">${divine() ? "✧" : ">_"}</span><div><b>${divine() ? "Yahweh" : "Review assistant"}</b><small>${practice() ? "Practice guidance · offline" : settings.mode === "offline" ? "Scripted guidance" : settings.mode === "codex" ? "Codex · xhigh" : "Ollama"}</small></div>${button("settings", dawkins() ? "Setup" : "···", "quiet", 'aria-label="Assistant settings"')}</header><div class="tw-chat-log" role="log">${messages.length ? messages.map(m => `<article class="${m.role}"><small>${m.role === "user" ? "You" : divine() ? "Yahweh" : "Assistant"}</small><p>${esc(m.content)}</p></article>`).join("") : `<p class="tw-chat-welcome">${divine() ? "Where are you? Ah. Here. Give me the situation. I will come down and have a look." : "Ask about the current hunk, the evidence, or how to make the change smaller."}</p>`}</div><form id="assistant-form"><textarea id="assistant-message" aria-label="Message review assistant" rows="2" placeholder="${divine() ? "Give Yahweh the situation…" : "Discuss this hunk…"}"></textarea><div><small>${working ? "Working…" : "Current hunk included"}</small><button class="button secondary" type="submit">${dawkins() ? "Send" : "Send ↗"}</button></div></form></section></aside>`;
 }
 function render() {
   if (!settings) return;
@@ -72,7 +87,7 @@ function render() {
   const draftChat = $("#assistant-message")?.value || "";
   const accepted = v?.rounds.filter(r => r.status === "accepted").length || 0;
   document.body.dataset.theme = divine() ? "yhwh" : dawkins() ? "dawkins" : "nietzsche";
-  $("#app").innerHTML = `<div class="tw-app"><header class="tw-header"><div class="tw-brand"><span class="tw-logo">${divine() ? "✧" : "⌘"}</span><b>THWH</b><span>the review</span></div><div class="tw-workspace-name">${esc(v?.root.split("/").at(-1) || "Choose workspace")} <span>/</span> ${v?.round ? esc(v.round.id) : "review"}</div><label class="tw-energy"><span>Amount of YHWH-ness <b>${settings.energy}%</b></span><input id="energy" type="range" min="0" max="100" step="50" value="${settings.energy}" aria-label="Amount of YHWH-ness" aria-valuetext="${divine() ? "YHWH, 100 percent" : dawkins() ? "dawkins, 0 percent" : "nietzsche, 50 percent"}"><span class="tw-energy-labels"><span>dawkins</span><span>nietzsche</span><span>YHWH</span></span></label></header><aside class="tw-sidebar"><div class="tw-nav-label">${dawkins() ? "REVIEW" : "ONE SMALL STEP AT A TIME"}</div><nav aria-label="Review views">${pages.map((name, i) => `<button data-action="view" data-page="${i}" class="${page === i ? "selected" : ""}" aria-current="${page === i ? "page" : "false"}"><span>${glyphs[i]}</span>${name}<kbd>${i + 1}</kbd></button>`).join("")}</nav><div class="tw-nav-label tw-files-label">THIS ROUND <span>${v?.hunks.length || 0} HUNKS</span></div><div class="tw-hunk-list">${v?.hunks.map((h, i) => `<button class="${i === v.hunk ? "selected" : ""}" data-action="hunk" data-hunk="${i}" title="${esc(h.anchor)}"><span>${h.seen ? "✓" : "·"}</span><div><b>${esc(h.repo)}</b><small>${esc(h.text.split("\n")[0].replace("diff --git ", ""))}</small></div><small>${i + 1}</small></button>`).join("") || '<p class="muted">Open a prepared review.</p>'}</div><div class="tw-sidebar-bottom"><div class="tw-progress"><span>${accepted}/${v?.rounds.length || 0} rounds accepted</span><progress value="${accepted}" max="${v?.rounds.length || 1}"></progress></div>${button("choose", dawkins() ? "Choose workspace" : "⌘  Choose workspace")}${button("refresh", dawkins() ? "Refresh review" : "↻  Refresh shared review")}${button("help", dawkins() ? "Keys / ?" : "?  Keyboard shortcuts")}</div></aside><main class="tw-main"><header class="tw-round-header"><div><span class="tw-kicker">${v?.round ? esc(v.round.id) + " · " + esc(v.status.replaceAll("_", " ")) : "LOCAL PR REHEARSAL"}</span><h2>${esc(v?.round?.title || "The review")}</h2></div><span class="tw-page-name">${pages[page]}</span></header>${v?.pending ? '<div class="tw-warning">An interrupted acceptance needs recovery. Start / resume completes only the recorded transaction.</div>' : ""}<div class="tw-content" tabindex="0">${content()}</div><footer class="tw-actions"><div>${button("previous", "← Previous")}${button("note", "◇ Note")}${v?.status === "changes_requested" ? button("resolve", "Mark changes addressed") : ""}</div><div>${v?.round ? button("accept", "Preview acceptance", "quiet") + button("advance", v.pending || !v.active ? "Start / resume →" : page === 0 ? "Review next hunk →" : page === 1 ? "Read · next →" : page === 2 ? "Review acceptance →" : "Continue review →", "primary") : ""}</div></footer></main>${companion()}<footer class="tw-status"><span><i></i> ${working ? "Working…" : Object.keys(v?.drafts || {}).length ? "Drafts saved · finish before acceptance" : "Your place is saved"}</span><span>${v ? `${v.hunks.filter(h => h.seen).length}/${v.hunks.length} hunks read · ` : ""}Local rehearsal · nothing posted</span>${button("pause", "Save & pause   q")}</footer></div>`;
+  $("#app").innerHTML = `<div class="tw-app"><header class="tw-header"><div class="tw-brand"><span class="tw-logo">${divine() ? "✧" : "⌘"}</span><b>THWH</b><span>the review</span></div><div class="tw-workspace-name">${practice() ? "PRACTICE · sample repositories" : esc(v?.root.split("/").at(-1) || "Choose workspace")} <span>/</span> ${v?.round ? esc(v.round.id) : "review"}</div><label class="tw-energy"><span>Amount of YHWH-ness <b>${settings.energy}%</b></span><input id="energy" type="range" min="0" max="100" step="50" value="${settings.energy}" aria-label="Amount of YHWH-ness" aria-valuetext="${divine() ? "YHWH, 100 percent" : dawkins() ? "dawkins, 0 percent" : "nietzsche, 50 percent"}"><span class="tw-energy-labels"><span>dawkins</span><span>nietzsche</span><span>YHWH</span></span></label></header><aside class="tw-sidebar"><div class="tw-nav-label">${dawkins() ? "REVIEW" : "ONE SMALL STEP AT A TIME"}</div><nav aria-label="Review views">${pages.map((name, i) => `<button data-action="view" data-page="${i}" class="${page === i ? "selected" : ""}" aria-current="${page === i ? "page" : "false"}"><span>${glyphs[i]}</span>${name}<kbd>${i + 1}</kbd></button>`).join("")}</nav><div class="tw-nav-label tw-files-label">THIS ROUND <span>${v?.hunks.length || 0} HUNKS</span></div><div class="tw-hunk-list">${v?.hunks.map((h, i) => `<button class="${i === v.hunk ? "selected" : ""}" data-action="hunk" data-hunk="${i}" title="${esc(h.anchor)}"><span>${h.seen ? "✓" : "·"}</span><div><b>${esc(h.repo)}</b><small>${esc(h.text.split("\n")[0].replace("diff --git ", ""))}</small></div><small>${i + 1}</small></button>`).join("") || '<p class="muted">Open a prepared review.</p>'}</div><div class="tw-sidebar-bottom"><div class="tw-progress"><span>${accepted}/${v?.rounds.length || 0} rounds accepted</span><progress value="${accepted}" max="${v?.rounds.length || 1}"></progress></div>${button("tutorial-start", "Practice review")}${button("choose", dawkins() ? "Choose workspace" : "⌘  Choose workspace")}${button("refresh", dawkins() ? "Refresh review" : "↻  Refresh shared review")}${button("help", dawkins() ? "Keys / ?" : "?  Keyboard shortcuts")}</div></aside><main class="tw-main"><header class="tw-round-header"><div><span class="tw-kicker">${v?.round ? esc(v.round.id) + " · " + esc(v.status.replaceAll("_", " ")) : "LOCAL PR REHEARSAL"}</span><h2>${esc(v?.round?.title || "The review")}</h2></div><span class="tw-page-name">${pages[page]}</span></header>${v?.pending ? '<div class="tw-warning">An interrupted acceptance needs recovery. Start / resume completes only the recorded transaction.</div>' : ""}${lesson()}<div class="tw-content" tabindex="0">${content()}</div><footer class="tw-actions"><div>${button("previous", "← Previous")}${button("note", "◇ Note")}${v?.status === "changes_requested" ? button("resolve", "Mark changes addressed") : ""}</div><div>${v?.round ? button("accept", "Preview acceptance", "quiet") + button("advance", v.pending || !v.active ? "Start / resume →" : page === 0 ? "Review next hunk →" : page === 1 ? "Read · next →" : page === 2 ? "Review acceptance →" : "Continue review →", "primary") : ""}</div></footer></main>${companion()}<footer class="tw-status"><span><i></i> ${working ? "Working…" : Object.keys(v?.drafts || {}).length ? "Drafts saved · finish before acceptance" : "Your place is saved"}</span><span>${v ? `${v.hunks.filter(h => h.seen).length}/${v.hunks.length} hunks read · ` : ""}Local rehearsal · nothing posted</span>${button("pause", "Save & pause   q")}</footer></div>`;
   $(".tw-content").scrollTop = previousScroll;
   $("#assistant-message").value = draftChat;
   $(".tw-chat-log").scrollTop = $(".tw-chat-log").scrollHeight;
@@ -121,6 +136,29 @@ async function loadCircus() {
   finally { circusBusy = false; render(); }
 }
 async function action(name, element) {
+  if (["tutorial-start", "tutorial-leave", "tutorial-restart", "tutorial-skip"].includes(name)) {
+    clearTimeout(scrollTimer);
+    if (v) chatDrafts[v.root] = $("#assistant-message")?.value || "";
+    const result = await api.thwhTutorial(name.replace("tutorial-", ""));
+    v = result.view; settings.tutorial = result.tutorial;
+    page = v?.screen.page || 0; full = v?.screen.full_diff || false;
+    patchRepo = null; noteKey = "comment"; anchorNote = true;
+    Object.keys(edits).forEach(key => delete edits[key]);
+    $("#modal-root").innerHTML = "";
+    $("#assistant-message").value = chatDrafts[v?.root] || "";
+    render();
+    $(".tw-content").scrollTop = v?.screen.offset || 0;
+    toast(practice() ? "Practice uses its own sample repositories. Follow the lesson above the review." : v ? "Practice saved. Your workspace is ready." : "Choose a prepared workspace, or return to practice.");
+    return;
+  }
+  if (name === "tutorial-hint") {
+    const current = settings.tutorial.lessons[settings.tutorial.step];
+    await go(current.page);
+    const target = $(current.target);
+    target?.scrollIntoView({ block: "nearest" });
+    target?.focus({ preventScroll: true });
+    return;
+  }
   if (name === "close-modal") { $("#modal-root").innerHTML = ""; return; }
   if (name === "circus-next") { loadCircus(); return; }
   if (name === "circus-share") { await api.copy(circus.permalink); toast("Permalink copied."); return; }
@@ -129,13 +167,13 @@ async function action(name, element) {
     const fact = settings.facts[factIndex];
     modal(`<span class="tw-kicker">GENESIS, WITH FOOTNOTES</span><h1>${esc(fact.title)}</h1><p>${esc(fact.text)}</p><blockquote>${esc(fact.evidence)}</blockquote><p class="muted">${esc(fact.source)}</p>${button("next-fact", "Another footnote →", "secondary")}`); return;
   }
-  if (name === "help") { modal('<h1>One hunk is enough.</h1><p>Enter: Start → Diff → Messages → acceptance preview.<br>1–6 / Tab: switch views · ←/→: hunks<br>d: full diff · f: choose a hunk · c/n: note / request changes<br>e: messages · Shift+E: patch · r: resolve<br>a: preview acceptance · y: confirm in preview · q: save & pause<br>Ctrl+S in an editor: save that field · Esc: close preview</p><p>The three-stop slider changes the amount of YHWH in the interface. At 0%, dawkins uses a monospaced, monochrome DOS/TTY-style interface in this window.</p>'); return; }
+  if (name === "help") { modal(`<h1>One hunk is enough.</h1><p>New here? Practice a complete review on sample repositories. Each lesson advances when you perform the action.</p>${button("tutorial-start", "Open practice review", "primary")}<p>Enter: Start → Diff → Messages → acceptance preview.<br>1–6 / Tab: switch views · ←/→: hunks<br>d: full diff · f: choose a hunk · c/n: note / request changes<br>e: messages · Shift+E: patch · r: resolve<br>a: preview acceptance · y: confirm in preview · q: save & pause<br>Ctrl/Cmd+S in an editor: save that field · Esc: close preview</p><p>The three-stop slider changes the amount of YHWH in the interface. At 0%, dawkins uses a monospaced, monochrome DOS/TTY-style interface in this window.</p>`); return; }
   if (name === "settings") { modal(`<h1>Review assistant</h1><form id="settings-form"><label>Engine<select name="mode"><option value="codex" ${settings.mode === "codex" ? "selected" : ""}>Codex</option><option value="ollama" ${settings.mode === "ollama" ? "selected" : ""}>Ollama</option><option value="offline" ${settings.mode === "offline" ? "selected" : ""}>Scripted offline guidance</option></select></label><label>Ollama model<input name="model" value="${esc(settings.model)}"></label><p class="muted">Codex uses your installed CLI configuration, xhigh reasoning, and full access. Run codex login first.</p><button class="button primary" type="submit">Save settings</button></form>`); return; }
   if (name === "view") return go(Number(element.dataset.page));
   if (name === "note" || name === "request-change") { noteKey = name === "request-change" ? "requested change" : "comment"; await go(3); $("#review-note").focus(); if (name === "request-change") toast("Write the requested change, then choose Request changes."); return; }
   if (name === "resume-note") { noteKey = element.dataset.key; render(); $("#review-note").focus(); return; }
-  if (name === "choose") { const result = await api.reviewChoose(); if (result) { v = result; page = v.screen.page || 0; Object.keys(edits).forEach(k => delete edits[k]); } return; }
-  if (name === "refresh") { v = await api.reviewRead(); toast("Shared review refreshed. Your unfinished editor text is retained."); return; }
+  if (name === "choose") { const result = await api.reviewChoose(); if (result) { v = result; settings.tutorial = v.tutorial; page = v.screen.page || 0; Object.keys(edits).forEach(k => delete edits[k]); } return; }
+  if (name === "refresh") { v = await api.reviewRead(); settings.tutorial = v.tutorial; toast("Shared review refreshed. Your unfinished editor text is retained."); return; }
   if (name === "advance") return advance();
   if (name === "previous") { await request("previous"); return go(1); }
   if (name === "hunk") { $("#modal-root").innerHTML = ""; await request("position", { hunk: Number(element.dataset.hunk), screen: { page: 1, offset: 0, full_diff: false } }); return go(1); }
@@ -170,8 +208,8 @@ document.addEventListener("input", event => {
   if (!key) return;
   const text = event.target.value;
   edits[key] = text;
-  const roundId = v.round.id;
-  enqueue(async () => { if (v.round?.id !== roundId) throw new Error("The round changed; your editor text is retained."); await request("draft", { key, text }); });
+  const roundId = v.round.id, root = v.root;
+  enqueue(async () => { if (v.root !== root || v.round?.id !== roundId) throw new Error("The review changed; refresh before editing."); await request("draft", { key, text }); });
 });
 document.addEventListener("change", event => {
   if (event.target.id === "anchor-note") anchorNote = event.target.checked;
@@ -230,15 +268,19 @@ document.addEventListener("keydown", event => {
 document.addEventListener("scroll", event => {
   if (!event.target.matches?.(".tw-content") || !v?.round) return;
   clearTimeout(scrollTimer);
-  const offset = event.target.scrollTop;
-  scrollTimer = setTimeout(() => enqueue(() => request("position", { screen: { ...v.screen, page, offset, full_diff: full } })), 250);
+  const root = v.root, roundId = v.round.id;
+  const screen = { ...v.screen, page, offset: event.target.scrollTop, full_diff: full };
+  scrollTimer = setTimeout(() => enqueue(() => {
+    if (v?.root === root && v.round?.id === roundId) return request("position", { screen });
+  }), 250);
 }, true);
 api.onBeforeClose(() => enqueue(async () => { if (v) await request("pause"); await api.closeAfterSave(); }));
 api.onExport(() => enqueue(async () => { const result = await api.reviewExport(); if (result) toast("Handoff exported."); }));
 (async () => {
   settings = await api.thwhRead();
-  try { v = await api.reviewRead(); page = v.screen.page || 0; full = v.screen.full_diff || false; }
-  catch (error) { toast(error.message, true); }
-  render(); if (v?.screen.offset) $(".tw-content").scrollTop = v.screen.offset;
+  try { v = await api.reviewRead(); settings.tutorial = v.tutorial; page = v.screen.page || 0; full = v.screen.full_diff || false; }
+  catch (error) { if (practice() || settings.tutorial?.dismissed || settings.tutorial?.completed) toast(error.message, true); }
+  if (!practice() && !settings.tutorial?.dismissed && !settings.tutorial?.completed) page = 0;
+  render(); if (v?.screen.offset && page === v.screen.page) $(".tw-content").scrollTop = v.screen.offset;
   if (settings.energy === 50) loadCircus();
 })().catch(error => toast(error.message, true));

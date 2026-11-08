@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("yhwh", {
   thwhRead: () => ipcRenderer.invoke("thwh:read"),
+  thwhTutorial: (action) => ipcRenderer.invoke("thwh:tutorial", action),
   thwhSettings: (input) => ipcRenderer.invoke("thwh:settings", input),
   thwhChat: (message) => ipcRenderer.invoke("thwh:chat", message),
   circus: () => ipcRenderer.invoke("thwh:circus"),

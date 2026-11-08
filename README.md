@@ -5,7 +5,10 @@ An Electron rehearsal room for getting useful work through a company, one small 
 The new paired-review app is **THWH**: run `make` or `make thwh` to build and launch it.
 Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
 nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
-(0%, monochrome DOS/TTY-style Electron). See [the THWH guide](doc/THWH.md) for controls and shared state.
+(0%, monochrome DOS/TTY-style Electron). New users can choose **Start practice review**
+on the opening screen: eight hands-on lessons teach a complete paired review on
+separate sample repositories, with saved progress and offline guidance.
+See [the THWH guide](doc/THWH.md) for controls and shared state.
 
 ## Run it
 
