@@ -3,7 +3,6 @@ contextBridge.exposeInMainWorld("yhwh", {
   thwhRead: () => ipcRenderer.invoke("thwh:read"),
   thwhSettings: (input) => ipcRenderer.invoke("thwh:settings", input),
   thwhChat: (message) => ipcRenderer.invoke("thwh:chat", message),
-  thwhTerminal: () => ipcRenderer.invoke("thwh:terminal"),
   circus: () => ipcRenderer.invoke("thwh:circus"),
   read: () => ipcRenderer.invoke("workspace:read"),
   reviewRead: () => ipcRenderer.invoke("review:read"),

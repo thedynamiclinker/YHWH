@@ -1,6 +1,5 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
 const persona = require("./persona.cjs");
 const { nextPair } = require("./circus.cjs");
 
@@ -31,23 +30,6 @@ async function register({ handle, app, review, workspace }) {
     return view();
   });
   handle("thwh:circus", () => nextPair(), false);
-  handle("thwh:terminal", async () => {
-    const engine = path.join(__dirname, "review.py").replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`);
-    const args = ["-T", "THWH · dawkins", "-fa", "Monospace", "-fs", "11", "-geometry", "160x48", "-e",
-      process.env.YHWH_PYTHON || "python3", engine, "--root", review.root, "start"];
-    await new Promise((resolve, reject) => {
-      const child = spawn(process.env.THWH_TERMINAL || "xterm", args, {
-        detached: true, stdio: "ignore", env: { ...process.env,
-          THWH_PREFERENCES: filename, THWH_DATA_DIR: app.getPath("userData"),
-          THWH_LAUNCHER: path.join(__dirname, "../thwh") },
-      });
-      child.once("error", () => reject(new Error("Could not open xterm. Install xterm, or run ./thwh --theme dawkins in a terminal.")));
-      child.once("spawn", () => { child.unref(); resolve(); });
-    });
-    settings.energy = 0;
-    await save();
-    return true;
-  });
   handle("thwh:chat", async (message) => {
     if (typeof message !== "string" || !message.trim() || message.length > 6000) throw new Error("Write a message first.");
     const reviewView = await review.act("read");

@@ -140,7 +140,7 @@ class Workspace {
         version: 2,
         companies: [],
         selectedCompany: null,
-        settings: { mode: "codex", model: "qwen3:8b", showFacts: false },
+        settings: { theme: "yhwh", mode: "codex", model: "qwen3:8b", showFacts: false },
         factIndex: 0,
       };
       const company = companyFrom({
@@ -281,7 +281,10 @@ class Workspace {
   }
   async change(action, input = {}) {
     if (action === "settings") {
+      if (input.theme !== undefined && !["yhwh", "dawkins"].includes(input.theme))
+        throw new Error("Choose the yhwh or dawkins interface.");
       this.state.settings = {
+        theme: input.theme ?? this.state.settings.theme ?? "yhwh",
         mode: input.mode === undefined
           ? this.state.settings.mode
           : ["codex", "ollama", "offline"].includes(input.mode) ? input.mode : "codex",

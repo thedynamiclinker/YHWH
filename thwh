@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log("THWH — one small review step at a time.\n\n./thwh [--theme yhwh|nietzsche|dawkins] [--root PATH]\n\nyhwh: 100%, Electron (default on first launch)\nnietzsche: 50%, minimal Electron + Nietzsche Family Circus\ndawkins: 0%, real ncurses in your terminal\n\nThe three-stop slider changes levels and keeps your saved review.");
+  console.log("THWH — one small review step at a time.\n\n./thwh [--theme yhwh|nietzsche|dawkins] [--root PATH]\n\nyhwh: 100%, Electron (default on first launch)\nnietzsche: 50%, minimal Electron + Nietzsche Family Circus\ndawkins: 0%, monochrome DOS/TTY-style Electron\n\nThe three-stop slider changes levels in place and keeps your saved review.\nFor ncurses, use ./review --root PATH start.");
   process.exit(0);
 }
 const get = key => args.includes(key) ? args[args.indexOf(key) + 1] : undefined;
@@ -21,23 +21,8 @@ delete env.ELECTRON_RUN_AS_NODE;
 let root = get("--root") || env.YHWH_REVIEW_ROOT;
 try { root ||= JSON.parse(fs.readFileSync(path.join(directory, "review.json"), "utf8")).root; } catch {}
 root ||= process.cwd();
-let executable, launchArgs;
-if (theme === "dawkins") {
-  if (!fs.existsSync(path.join(root, ".review/plan.json"))) {
-    console.error(`No prepared review at ${root}. Use --root PATH.`); process.exit(1);
-  }
-  fs.mkdirSync(directory, { recursive: true });
-  fs.writeFileSync(preferences + ".tmp", JSON.stringify({ ...settings, energy: 0 }) + "\n");
-  fs.renameSync(preferences + ".tmp", preferences);
-  fs.writeFileSync(path.join(directory, "review.json"), JSON.stringify({ root: path.resolve(root) }) + "\n");
-  const python = env.YHWH_PYTHON || "python3";
-  const reviewArgs = [path.join(__dirname, "src/review.py"), "--root", root, "start"];
-  executable = process.stdin.isTTY ? python : env.THWH_TERMINAL || "xterm";
-  launchArgs = process.stdin.isTTY ? reviewArgs : ["-T", "THWH · dawkins", "-geometry", "160x48", "-e", python, ...reviewArgs];
-} else {
-  executable = require("./scripts/runtime.cjs")();
-  launchArgs = [__dirname, "--thwh", "--theme", theme, "--root", root, ...args.filter(a => a === "--disable-gpu")];
-}
+const executable = require("./scripts/runtime.cjs")();
+const launchArgs = [__dirname, "--thwh", "--theme", theme, "--root", root, ...args.filter(a => a === "--disable-gpu")];
 const child = spawn(executable, launchArgs, { env, stdio: "inherit" });
 child.on("error", error => { console.error(error.message); process.exitCode = 1; });
 child.on("exit", code => { process.exitCode = code ?? 1; });

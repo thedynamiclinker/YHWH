@@ -60,7 +60,11 @@ app
       process.cwd(),
     );
     await review.load();
-    if (thwh) await require("./thwh.cjs").register({ handle, app, review, workspace, getWindow: () => window });
+    if (thwh) await require("./thwh.cjs").register({ handle, app, review, workspace });
+    else {
+      const themeFlag = process.argv.indexOf("--theme");
+      if (themeFlag >= 0) await workspace.act("settings", { theme: process.argv[themeFlag + 1] });
+    }
     handle("workspace:read", () => workspace.view());
     handle("workspace:act", async (action, input) => {
       if (action === "chat" && input?.review) {

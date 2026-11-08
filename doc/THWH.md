@@ -13,11 +13,10 @@ The **Amount of YHWH-ness** slider has three stops:
 | --- | --- |
 | 100% · YHWH | Electron, the original purple and gold palette, Phoenician lettering, Genesis footnotes, and Yahweh as the review assistant. |
 | 50% · nietzsche | Electron with a restrained editor palette, a plain review assistant, “God is dead.”, and Nietzsche Family Circus. |
-| 0% · dawkins | Real Python ncurses, with the navigation on the left, the review in the center, the status and assistant on the right, and controls along the bottom. |
+| 0% · dawkins | Monochrome DOS/TTY-style Electron: monospaced text, black background, square controls, plain assistant, and no decorative widget. |
 
-Both Electron levels keep the same panel positions. Dawkins uses the same
-arrangement in terminals at least 100 columns wide; smaller terminals use a
-compact layout. The minimum usable size is 45 columns by 10 rows.
+All three levels keep navigation on the left, the review in the center, and
+the assistant on the right. Dawkins uses compact spacing and text controls.
 
 ```sh
 ./thwh --theme yhwh
@@ -27,16 +26,18 @@ compact layout. The minimum usable size is 45 columns by 10 rows.
 make thwh THEME=nietzsche REVIEW_ROOT=/path/to/review
 ```
 
-The last selected level and workspace are remembered. To return from dawkins
-to Electron, press `t` and move the three-stop slider with Left/Right, then
-Enter. `]` directly opens nietzsche. Selecting 0% in Electron opens xterm and
-closes the desktop window after saving. `THWH_TERMINAL` can name another
-terminal executable that accepts xterm's `-e` and window options. You can
-always launch dawkins directly inside an existing terminal.
+The last selected level and workspace are remembered by `./thwh`. The slider
+switches all three levels in the same desktop window, keeping unfinished
+editors, the assistant composer, and your review position. `make thwh` passes
+its explicit `THEME` value (default `yhwh`). No terminal emulator is needed.
+The original ncurses interface remains available with `./review --root PATH start`.
 
-The visible **Help** menu in both Electron levels offers **About Us** and
-**About YHWH**, opening their pages in your browser. Dawkins has the same
-choices under **? Help**, along with **Keyboard shortcuts**.
+The company-rehearsal app also supports `make yhwh THEME=dawkins`, or
+**Settings → Interface → dawkins**. It shares the terminal presentation in
+`src/dawkins.css`; its normal rehearsal and draft controls remain available.
+
+The visible **Help** menu in every desktop level offers **About Us** and
+**About YHWH**, opening their pages in your browser.
 
 ## The review
 
@@ -64,9 +65,9 @@ pushed or posted. An interrupted acceptance resumes from its existing journal.
 Common keys: `1`–`6` or Tab change views; Left/Right navigate hunks; `d` toggles
 the full diff; `f` chooses a hunk; `c`/`n` open notes/requested changes; `e` edits
 messages; `E` edits a patch; `r` resolves; `a` previews acceptance; `y` confirms
-inside that preview; `q` saves and pauses; `?` opens help. In dawkins, `s` opens
-the review assistant, and `S` chooses its engine. Its text editor uses Ctrl-S to submit and Esc to retain
-a draft. Scroll with arrows, j/k, Page Up/Down, or Space.
+inside that preview; `q` saves and pauses; `?` opens help. The assistant and
+its settings stay in the right panel at every level. Ctrl-S finalizes a review
+field. Scroll with arrows, j/k, Page Up/Down, or Space.
 
 The assistant uses the existing Codex/Ollama implementation. Codex is the
 default engine, with xhigh reasoning and full access, and needs `codex login`.
@@ -108,5 +109,5 @@ are not embedded. It requires internet access and shows a retryable error if
 the site cannot be reached or changes its markup.
 
 Run `npm test` for the Git, draft, assistant, and real pseudoterminal tests.
-Run `npm run test:ui` for the original app and both THWH Electron levels.
+Run `npm run test:ui` for the company app and all three THWH desktop levels.
 Screenshots are written to `artifacts/thwh-*.png`.

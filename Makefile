@@ -10,7 +10,7 @@ THEME ?= yhwh
 help: ## List commands and show how to get started
 	@printf '\nTHWH / YHWH — review and rehearsal apps\n\nmake (or make thwh) builds and runs the paired review app.\nmake yhwh builds and runs the company rehearsal; choose Start offline walkthrough.\nThe sample walkthrough needs no account or model login.\nRequires Node.js >=22.12, npm, Git, Python 3 for code review, and a desktop display.\nCodex is the default AI engine: xhigh reasoning, full access, no approval prompts.\nRun codex login before using that engine. Ollama and scripted offline rehearsal remain available in Settings.\n\n'
 	@awk 'BEGIN { FS = ":.*## " } /^[a-zA-Z][a-zA-Z-]*:.*## / { printf "  make %-20s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
-	@printf '\nUse make build-thwh / build-yhwh to prepare dependencies without launching,\nand make run-thwh / run-yhwh to launch without building. Both apps run from\nsource; there is no frontend compilation step.\nSee make guide for the complete walkthrough, shortcuts, data locations,\nsource map, and limitations. Use View > Toggle Developer Tools to inspect the UI.\n\nOverrides:\n  THWH_DATA_DIR=/absolute/path  Separate THWH data profile\n  YHWH_DATA_DIR=/absolute/path  Separate YHWH data profile\n  THEME=yhwh|nietzsche|dawkins   THWH interface level (default: yhwh)\n  REVIEW_ROOT=/path/to/review    THWH workspace (default: current directory)\n  YHWH_ELECTRON=/path/to/electron  Native Electron runtime\n  YHWH_CODEX=/path/to/codex    Codex CLI executable (default: codex on PATH)\n  MODEL=qwen3:8b               Model for make ollama-pull\n\nCore tests bind port 11434; stop Ollama before make test.\nUI tests save screenshots in artifacts/. Packaging writes to dist/.\n'
+	@printf '\nUse make build-thwh / build-yhwh to prepare dependencies without launching,\nand make run-thwh / run-yhwh to launch without building. Both apps run from\nsource; there is no frontend compilation step.\nSee make guide for the complete walkthrough, shortcuts, data locations,\nsource map, and limitations. Use View > Toggle Developer Tools to inspect the UI.\n\nOverrides:\n  THWH_DATA_DIR=/absolute/path  Separate THWH data profile\n  YHWH_DATA_DIR=/absolute/path  Separate YHWH data profile\n  THEME=yhwh|dawkins         Interface for either app (default: yhwh)\n  THEME=nietzsche            THWH only: editor palette and Circus\n  REVIEW_ROOT=/path/to/review    THWH workspace (default: current directory)\n  YHWH_ELECTRON=/path/to/electron  Native Electron runtime\n  YHWH_CODEX=/path/to/codex    Codex CLI executable (default: codex on PATH)\n  MODEL=qwen3:8b               Model for make ollama-pull\n\nCore tests bind port 11434; stop Ollama before make test.\nUI tests save screenshots in artifacts/. Packaging writes to dist/.\n'
 
 install: ## Install the exact locked development dependencies (requires network)
 	npm ci
@@ -31,10 +31,10 @@ yhwh: build-yhwh ## Build and run YHWH, the company rehearsal app
 run-thwh: ## Run THWH (THEME=yhwh|nietzsche|dawkins) without building
 	./thwh --theme "$(THEME)" --root "$(REVIEW_ROOT)"
 
-run-yhwh: ## Run YHWH without building
-	npm start
+run-yhwh: ## Run YHWH (THEME=yhwh|dawkins) without building
+	npm start -- --theme "$(THEME)"
 
-dawkins: ## Open THWH's real ncurses interface in this terminal
+dawkins: ## Open THWH's monochrome DOS/TTY-style desktop interface
 	./thwh --theme dawkins --root "$(REVIEW_ROOT)"
 
 run-isolated: build-yhwh ## Build and run YHWH with a fresh retained trial profile in /tmp

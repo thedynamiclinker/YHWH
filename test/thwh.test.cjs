@@ -8,6 +8,25 @@ const { invoke } = require("../src/review.cjs");
 const { parsePair, nextPair } = require("../src/circus.cjs");
 const { answer } = require("../src/thwh.cjs");
 const dataDirectory = require("../src/thwh-profile.cjs");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+
+test("Both Make launch paths select the Dawkins Electron theme", async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "dawkins-launch-"));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const executable = path.join(directory, "electron");
+  const capture = path.join(directory, "launch.json");
+  await fs.writeFile(executable, '#!/usr/bin/env node\nrequire("node:fs").writeFileSync(process.env.LAUNCH_CAPTURE, JSON.stringify(process.argv.slice(2)));\n', { mode: 0o755 });
+  for (const target of ["run-thwh", "run-yhwh"]) {
+    await promisify(execFile)("make", [target, "THEME=dawkins", `REVIEW_ROOT=${directory}`], {
+      cwd: path.resolve(__dirname, ".."),
+      env: { ...process.env, YHWH_ELECTRON: executable, THWH_DATA_DIR: path.join(directory, "profile"), LAUNCH_CAPTURE: capture },
+    });
+    const args = JSON.parse(await fs.readFile(capture, "utf8"));
+    assert.equal(args[args.indexOf("--theme") + 1], "dawkins");
+    assert.equal(args.includes("--thwh"), target === "run-thwh");
+  }
+});
 
 test("The spelling correction retains the existing profile, workspace and assistant history", async t => {
   const config = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-profile-"));

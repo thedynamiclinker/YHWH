@@ -5,7 +5,7 @@ An Electron rehearsal room for getting useful work through a company, one small 
 The new paired-review app is **THWH**: run `make` or `make thwh` to build and launch it.
 Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
 nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
-(0%, real ncurses). See [the THWH guide](doc/THWH.md) for controls and shared state.
+(0%, monochrome DOS/TTY-style Electron). See [the THWH guide](doc/THWH.md) for controls and shared state.
 
 ## Run it
 
@@ -21,8 +21,7 @@ prints this walkthrough. The Makefile also exposes core tests, desktop and
 headless UI tests, packaging, the Nix shell, and optional Ollama commands.
 
 The visible **Help** menu in both desktop apps has **About Us** and **About YHWH**,
-which open in your browser. Both THWH desktop levels share this menu; dawkins
-offers the same links through **? Help**, alongside keyboard shortcuts.
+which open in your browser. All three THWH desktop levels share this menu.
 
 Requires Node.js 22.12 or newer, Git, and Python 3 for interactive code review. The default AI engine uses your installed, signed-in Codex CLI (`codex login`). On a normal desktop:
 
@@ -31,7 +30,12 @@ cd ~/obsidian/YHWH
 make
 # Or build and launch the company rehearsal:
 make yhwh
+# Monospaced, monochrome DOS/TTY presentation in either app:
+make thwh THEME=dawkins
+make yhwh THEME=dawkins
 ```
+
+Dawkins keeps the desktop controls and saved work in a plain black, monospaced interface with square controls and no decorative widgets. THWH’s slider switches levels in the same window. In the company app, choose **Settings → Interface → dawkins** to switch in place. That selection is saved; `npm start` resumes it, while `make yhwh` uses its explicit `THEME` value (default `yhwh`). Character tips stay available on demand, but Dawkins hides the Overview tip card and suppresses the startup popup. The ncurses review remains available through `./review --root PATH start`.
 
 The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline rehearsal** in Settings; other conversation, company reviews, and handoff revisions use the selected engine (initially Codex).
 

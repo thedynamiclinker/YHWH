@@ -425,7 +425,7 @@ def show(r, state, full=False):
 
 def interactive(plan, state):
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        raise RuntimeError("Open a terminal and run ./thwh --theme dawkins. Use show --diff for plain output.")
+        raise RuntimeError("Open a terminal and run ./review start. Use show --diff for plain output.")
     import curses
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from review_tui import Review

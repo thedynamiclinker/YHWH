@@ -1,4 +1,4 @@
-"""Exercise dawkins through a real ncurses pseudoterminal and disposable Git refs."""
+"""Exercise the CLI through a real ncurses pseudoterminal and disposable Git refs."""
 import fcntl
 import json
 import os

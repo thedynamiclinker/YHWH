@@ -17,8 +17,8 @@ const { createCodex } = require("../test/codex-fixture.cjs");
   const executablePath = require("./runtime.cjs")();
   let app, page;
   const errors = [];
-  async function launch() {
-    app = await electron.launch({ executablePath, args: [root, "--disable-gpu"], env, timeout: 60000 });
+  async function launch(theme) {
+    app = await electron.launch({ executablePath, args: [root, "--disable-gpu", ...(theme ? ["--theme", theme] : [])], env, timeout: 60000 });
     page = await app.firstWindow();
     page.on("pageerror", (error) => errors.push(error.message));
     await page.locator(".shell").waitFor();
@@ -340,6 +340,42 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     console.log(
       "✓ Search, settings, compact layout, company persistence and restart",
     );
+    // The company app honors --theme and retains the selection through later saves.
+    await app.close(); app = null;
+    await launch("dawkins");
+    assert.equal(await page.locator("body").getAttribute("data-theme"), "dawkins");
+    assert.equal(await page.locator(".wordmark").textContent(), "YHWH");
+    assert.match(await page.locator("#chat-input").evaluate(el => getComputedStyle(el).fontFamily), /Mono|monospace/);
+    assert.equal(await page.locator("body").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(0, 0, 0)");
+    assert.equal(await page.locator('section[aria-label="Character tips"]').isVisible(), false);
+    await page.screenshot({ path: path.join(artifacts, "yhwh-dawkins.png") });
+    const compact = await app.browserWindow(page);
+    await compact.evaluate(win => win.setSize(1060, 700));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    assert.equal(await page.locator('.walkthrough-start [data-action="walkthrough"]').isVisible(), true);
+    await page.locator('.walkthrough-start [data-action="walkthrough"]').click();
+    await page.locator(".final-packet").waitFor();
+    await page.screenshot({ path: path.join(artifacts, "yhwh-dawkins-compact.png") });
+    await page.locator('.sidebar [data-action="settings"]').click();
+    await page.locator('#settings-form [name="showFacts"]').check();
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.locator(".modal").waitFor({ state: "detached" });
+    await app.close(); app = null;
+    await launch();
+    assert.equal(await page.locator("body").getAttribute("data-theme"), "dawkins");
+    assert.equal(await page.locator(".modal").count(), 0);
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, true);
+    await page.locator('.sidebar [data-action="settings"]').click();
+    await page.locator('#settings-form [name="theme"]').selectOption("yhwh");
+    await page.locator('#settings-form [name="showFacts"]').uncheck();
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.waitForFunction(() => document.body.dataset.theme === "yhwh");
+    await page.locator('.rail-bottom [data-action="settings"]').click();
+    await page.locator('#settings-form [name="theme"]').selectOption("dawkins");
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.waitForFunction(() => document.body.dataset.theme === "dawkins");
+    assert.deepEqual(errors, []);
+    console.log("✓ YHWH: Dawkins launch, compact layout, completed handoff, theme persistence, suppressed startup tips and in-place theme switching");
     console.log(`Screenshots: ${artifacts}`);
   } catch (error) {
     if (app) {
