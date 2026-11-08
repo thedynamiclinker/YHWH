@@ -61,6 +61,25 @@ async function useCodex(t, directory) {
   return fixture;
 }
 
+test("Fresh launches leave tips in the app; changing their startup preference preserves the engine across restarts", async (t) => {
+  const { workspace } = await setup(t, null);
+  assert.equal(workspace.state.settings.showFacts, false);
+  const facts = workspace.view().facts;
+  assert.ok(facts.length > 1);
+  await workspace.act("settings", { mode: "ollama", model: "my-model", showFacts: true });
+  await workspace.act("settings", { showFacts: false });
+  let reopened = new Workspace(workspace.directory);
+  await reopened.load();
+  assert.deepEqual(reopened.state.settings, { mode: "ollama", model: "my-model", showFacts: false });
+  await reopened.act("settings", { mode: "offline" });
+  await reopened.act("nextFact");
+  reopened = new Workspace(workspace.directory);
+  await reopened.load();
+  assert.deepEqual(reopened.state.settings, { mode: "offline", model: "my-model", showFacts: false });
+  assert.deepEqual(reopened.view().facts, facts);
+  assert.equal(reopened.state.factIndex, 1);
+});
+
 test("Default Codex uses lordhavemercy -f permissions and reasoning for chat, reviews, and revisions", async (t) => {
   const { workspace, directory, company, first, repo } = await setup(t, null);
   const fixture = await useCodex(t, directory);

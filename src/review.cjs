@@ -5,6 +5,7 @@ const path = require("node:path");
 const actions = new Set([
   "read", "start", "pause", "next", "previous", "comment", "reject",
   "resolve", "save-copy", "save-patch", "accept",
+  "position", "draft", "discard-drafts", "save-field",
 ]);
 
 // Python must read an actual file, including in a packaged Electron application.

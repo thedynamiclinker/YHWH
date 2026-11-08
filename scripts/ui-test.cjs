@@ -15,23 +15,66 @@ const { createCodex } = require("../test/codex-fixture.cjs");
   const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, "data"), YHWH_CODEX: codex.executable };
   delete env.ELECTRON_RUN_AS_NODE;
   const executablePath = require("./runtime.cjs")();
-  let app;
+  let app, page;
   const errors = [];
-  try {
-    app = await electron.launch({
-      executablePath,
-      args: [root, "--disable-gpu"],
-      env,
-      timeout: 60000,
-    });
-    const page = await app.firstWindow();
+  async function launch() {
+    app = await electron.launch({ executablePath, args: [root, "--disable-gpu"], env, timeout: 60000 });
+    page = await app.firstWindow();
     page.on("pageerror", (error) => errors.push(error.message));
     await page.locator(".shell").waitFor();
-    await page.locator(".modal").waitFor();
+  }
+  try {
+    await launch();
+    assert.equal(await page.locator(".modal").count(), 0);
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, false);
+    assert.equal(await page.locator('.walkthrough-start [data-action="walkthrough"]').isVisible(), true);
+    assert.equal(await page.locator('.walkthrough-start [data-action="walkthrough"]').evaluate((el) => el.getBoundingClientRect().bottom <= innerHeight), true);
     await page.screenshot({ path: path.join(artifacts, "01-welcome.png") });
-    await page.locator('[data-action="close-dialog"]').last().click();
+    const launchWindow = await app.browserWindow(page);
+    await launchWindow.evaluate((win) => win.setSize(1060, 700));
+    await page.screenshot({ path: path.join(artifacts, "15-compact-walkthrough.png") });
+    assert.equal(await page.locator('.walkthrough-start [data-action="walkthrough"]').evaluate((el) => el.getBoundingClientRect().bottom <= innerHeight), true);
+    assert.equal(await page.locator(".page").evaluate((el) => el.scrollWidth > el.clientWidth), false);
+    await launchWindow.evaluate((win) => win.setSize(1510, 980));
+    await page.locator('.sidebar [data-action="facts"]').click();
+    const factTitle = await page.locator(".startup-fact h2").textContent();
+    await page.locator('[data-action="fact-dialog-next"]').click();
+    assert.notEqual(await page.locator(".startup-fact h2").textContent(), factTitle);
+    await page.locator('.modal [data-action="close-dialog"]').first().click();
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, false);
+    await page.locator('.rail-bottom [data-action="settings"]').click();
+    await page.locator('#settings-form [name="showFacts"]').check();
+    await page.locator("#settings-form button:not([data-action])").click();
+    await page.waitForFunction(() => !document.querySelector(".modal") && !document.querySelector(".button.primary:disabled"));
+    await app.close();
+    await launch();
+    await page.locator(".startup-fact").waitFor();
+    await page.locator('.modal [data-action="close-dialog"]').last().click();
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, true);
+    await page.locator('.sidebar [data-action="facts"]').click();
+    await page.keyboard.press("Escape");
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, true);
+    await app.close();
+    await launch();
+    await page.locator(".startup-fact").waitFor();
+    await page.locator('[data-action="disable-facts"]').click();
+    await page.locator(".modal").waitFor({ state: "detached" });
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.mode, "codex");
+    await app.close();
+    await launch();
+    assert.equal(await page.locator(".modal").count(), 0);
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, false);
+    await page.locator('section[aria-label="Character tips"] [data-action="facts"]').click();
+    await page.locator(".startup-fact").waitFor();
+    await page.locator('.modal [data-action="close-dialog"]').last().click();
+    await page.locator('[data-action="hide-fact"]').click();
+    assert.equal(await page.locator(".fact-card").count(), 0);
+    await page.locator('.sidebar [data-action="facts"]').click();
+    await page.locator(".startup-fact").waitFor();
+    await page.locator('.modal [data-action="close-dialog"]').last().click();
+    await page.locator(".page").evaluate((el) => { el.scrollTop = 0; });
     await page.screenshot({ path: path.join(artifacts, "02-overview.png") });
-    console.log("✓ Startup character fact and workspace overview");
+    console.log("✓ Fresh launch shows walkthrough; ordinary/X/Escape dismissals preserve preferences; Don’t show this again survives restart; tips remain accessible");
 
     assert.equal((await page.evaluate(() => window.yhwh.read())).settings.mode, "codex");
     await page.locator("#chat-input").fill("Inspect this proposal with Codex.");
@@ -46,16 +89,15 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     assert.equal(await page.locator('#settings-form [name="model"]').isVisible(), true);
     assert.equal(await page.locator('#settings-form [name="model"]').inputValue(), "qwen3:8b");
     await page.locator('#settings-form [name="mode"]').selectOption("offline");
+    await page.locator('#settings-form [name="mode"]').selectOption("codex");
     await page.locator("#settings-form button:not([data-action])").click();
     await page.locator(".modal").waitFor({ state: "detached" });
     console.log("✓ Default Codex chat, full-access settings, and retained Ollama/offline choices");
 
-    await page.locator('.next-step [data-action="open-proposal"]').click();
-    await page
-      .locator('[data-field="evidence"]')
-      .fill(
-        "Manually reviewed the two removed dependency pins. Runtime comparisons are still pending.",
-      );
+    await page.locator('.walkthrough-start [data-action="walkthrough"]').click();
+    await page.locator('[data-field="evidence"]').waitFor();
+    assert.equal((await page.evaluate(() => window.yhwh.read())).settings.mode, "offline");
+    assert.match(await page.locator(".walkthrough-hint").textContent(), /Verification evidence/);
     await page.locator('[data-tab="patch"]').click();
     await page.locator(".diff-hunk").waitFor();
     assert.match(
@@ -70,6 +112,10 @@ const { createCodex } = require("../test/codex-fixture.cjs");
       document.querySelector(".diff-hunk")?.classList.contains("excluded"),
     );
     await page.locator("[data-hunk]").first().check();
+    await page.locator('[data-tab="brief"]').click();
+    await page.locator('[data-field="evidence"]').fill(
+      "Reviewed requirements.txt: exact requests and rich version pins are removed. Runtime comparisons are still pending.",
+    );
     await page.locator('.review-actions [data-action="rehearse"]').click();
     await page.locator(".reaction").first().waitFor();
     assert.equal(await page.locator(".reaction").count(), 3);
@@ -79,7 +125,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     await page
       .locator('#feedback-form [name="content"]')
       .fill(
-        "Keep the runtime unchanged and describe the unverified comparison honestly.",
+        "Keep this to the dependency pins; runtime comparisons are still pending.",
       );
     await page.locator("#feedback-form button:not([data-action])").click();
     await page.locator(".feedback").waitFor();
@@ -90,8 +136,19 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     await page.locator('[data-draft="chat"]').waitFor();
     assert.match(
       await page.locator('[data-draft="chat"]').inputValue(),
-      /Keep the runtime unchanged/,
+      /Keep this to the dependency pins/,
     );
+    await page.locator('.walkthrough-hint [data-page="mail"]').click();
+    assert.match(await page.locator('[data-draft="mail"]').inputValue(), /Subject: A small proposal/);
+    assert.match(await page.locator('[data-draft="mail"]').inputValue(), /Evidence supplied for review/);
+    assert.match(await page.locator('[data-draft="mail"]').inputValue(), /Review clarification: Keep this to the dependency pins/);
+    await page.locator('[data-draft="mail"]').fill((await page.locator('[data-draft="mail"]').inputValue()) + "\n\nSample review only; keep the previous environment available.");
+    await page.screenshot({ path: path.join(artifacts, "14-sample-email.png") });
+    await page.locator('.sidebar [data-action="chat"]').click();
+    await page.locator('[data-draft="chat"]').waitFor();
+    await page.locator('.sidebar [data-action="forge"]').click();
+    assert.match(await page.locator('[data-draft="forge"]').inputValue(), /Rollback/);
+    await page.locator('.walkthrough-hint [data-page="room"]').click();
     await page
       .locator('[data-draft="chat"]')
       .fill(
@@ -111,6 +168,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     );
     const saved = await page.evaluate(() => window.yhwh.read());
     const first = saved.companies[0].proposals[0];
+    assert.equal((await fs.readFile(codex.requests, "utf8")).trim().split("\n").length, 1);
     assert.ok(first.approvedCommit);
     assert.equal(
       await git(path.join(saved.dataPath, "repositories", first.repoId), [
@@ -126,6 +184,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
       await page.locator(".final-packet").textContent(),
       /A small dependency cleanup/,
     );
+    assert.match(await page.locator(".final-packet").textContent(), /Sample review only; keep the previous environment available/);
     await page.screenshot({
       path: path.join(artifacts, "05-approved-handoff.png"),
     });
@@ -134,6 +193,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     );
 
     await page.locator('.sidebar [data-action="board"]').click();
+    assert.match(await page.locator('[data-drop="approved"]').textContent(), /Let the environment choose dependency versions/);
     await page.locator('[data-action="new-task"]').click();
     await page.locator("#task-form input").fill("Run the output comparison");
     await page.locator("#task-form button").click();
@@ -253,14 +313,8 @@ const { createCodex } = require("../test/codex-fixture.cjs");
       .fill("Preserve the edit that was still focused when the window closed.");
     await app.close();
     app = null;
-    app = await electron.launch({
-      executablePath,
-      args: [root, "--disable-gpu"],
-      env,
-      timeout: 60000,
-    });
-    const reopened = await app.firstWindow();
-    await reopened.locator(".shell").waitFor();
+    await launch();
+    const reopened = page;
     assert.equal(
       (await reopened.evaluate(() => window.yhwh.read())).selectedCompany,
       companyId,
@@ -276,6 +330,11 @@ const { createCodex } = require("../test/codex-fixture.cjs");
       restored.companies.find((c) => c.id === companyId).proposals[0].summary,
       "Preserve the edit that was still focused when the window closed.",
     );
+    await reopened.locator('.walkthrough-start [data-action="walkthrough"]').click();
+    await reopened.locator(".final-packet").waitFor();
+    assert.match(await reopened.locator(".final-packet").textContent(), /Sample review only/);
+    await reopened.locator('.sidebar [data-action="home"]').click();
+    assert.match(await reopened.locator(".walkthrough-complete").textContent(), /approved and saved/);
     assert.deepEqual(errors, []);
     console.log(
       "✓ Search, settings, compact layout, company persistence and restart",

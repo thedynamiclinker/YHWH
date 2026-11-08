@@ -1,0 +1,24 @@
+20 names for the voice
+
+1. Ada — Ada Lovelace published an algorithm for a machine that hadn’t been built.
+2. Eve — Genesis meets the eve of something new.
+3. Lilith — A sharp mythic name for a voice that questions the premise.
+4. Iris — A mythic messenger, part of an eye, and a flower.
+5. Vera — Echoes verify and veracity. A voice you want to check the damn file.
+6. Alma — Alma mater suggests learning, and almanac is a pleasing near-echo.
+7. Ruth — Biblical, one syllable, and hiding in plain sight inside truth.
+8. Esther — A biblical queen whose story turns on timing and knowing when to speak.
+9. Judith — Echoes judgment. A name for a voice with opinions.
+10. Miriam — A biblical name with a strong association with song.
+11. Grace — Divine grace, graceful failure, and computing pioneer Grace Hopper.
+12. Clio — The muse of history, with CLI hiding in the spelling.
+13. Sibyl — An old word for a prophetess that works as a name.
+14. Sofia — Greek for wisdom. Ancient philosophy in an everyday name.
+15. Daphne — A mythic transformation into a laurel, for a voice that turns a ramble into something useful.
+16. Echo — A mythic voice and a shell command, with a familiar smart-speaker association.
+17. Sylvie — A woodland name with a faint echo of syntax.
+18. Paige — A person’s name that sounds like the thing in a codex.
+19. Cora — Sounds like core. A warm name for the voice at the center of the workspace.
+20. Vesper — Evening, evening prayer, and a little bite.
+
+Shortlist — Clio for the Codex-style double meaning, Lilith for mythic bite, and Vera for everyday use.

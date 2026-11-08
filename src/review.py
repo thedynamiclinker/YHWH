@@ -18,6 +18,25 @@ import tempfile
 # A CLI symlink keeps its directory as the default review workspace.
 ROOT = Path(os.path.abspath(__file__)).parent
 
+DOCUMENTS = (
+    "The Review/Start Here.md", "The Review/The Task.md", "The Review/The Context.md",
+    "The Review/The Original Prompt.md", "The Review/The Interface.md",
+    ".review/VALIDATION.md", ".review/PROVENANCE.md",
+    "The Review/The Accepted Rounds.md", "The Review/The Board.md",
+    "The Review/The Terminal Task.md",
+)
+
+
+def document_path(kind):
+    """Use the workspace's existing review document convention."""
+    modern, legacy = {"board": ("The Review/The Board.md", "Kanbun.md"),
+                      "master": ("The Review/The Accepted Rounds.md", "MASTER.md")}[kind]
+    return ROOT / (modern if (ROOT / "The Review").is_dir() else legacy)
+
+
+def hunk_id(chunk):
+    return hashlib.sha256((chunk["repo"] + chunk["text"]).encode()).hexdigest()
+
 
 def git(repo, *args, data=None, env=None):
     result = subprocess.run(["git", "-C", str(ROOT / repo), *args], input=data,
@@ -63,7 +82,7 @@ def patch(round_, repo):
     edited = ROOT / ".review/edits" / round_["id"] / (repo + ".patch")
     if edited.exists():
         return edited.read_text()
-    return git(repo, "show", "--format=", "--binary", round_["commits"][repo])
+    return git(repo, "show", "--no-color", "--no-ext-diff", "--format=", "--binary", round_["commits"][repo])
 
 
 def hunks(round_):
@@ -93,11 +112,19 @@ def snapshot(plan, state):
                        for item in plan["rounds"]],
             "round": details(r, state) if r else None,
             "status": entry.get("status", "prepared"), "hunk": index,
-            "hunks": chunks, "comments": entry.get("comments", []),
+            "hunks": [{**c, "id": hunk_id(c), "seen": hunk_id(c) in entry.get("seen", [])}
+                      for c in chunks], "comments": entry.get("comments", []),
+            "screen": entry.get("screen", {}) if r else state.get("screen", {}), "drafts": entry.get("drafts", {}),
+            "documents": [name for name in DOCUMENTS if (ROOT / name).is_file()],
+            "document": "",
             "patches": {repo: patch(r, repo) for repo in r["commits"]} if r else {},
-            "master": (ROOT / "MASTER.md").read_text() if (ROOT / "MASTER.md").exists() else "",
-            "board": (ROOT / "Kanbun.md").read_text() if (ROOT / "Kanbun.md").exists() else "",
+            "master": document_path("master").read_text() if document_path("master").exists() else "",
+            "board": document_path("board").read_text() if document_path("board").exists() else "",
+            "paths": {kind: str(document_path(kind).relative_to(ROOT)) for kind in ("board", "master")},
             "pending": bool(state.get("pending"))}
+    document = view["screen"].get("document")
+    if document in view["documents"]:
+        view["document"] = (ROOT / document).read_text()
     view["revision"] = hashlib.sha256(json.dumps(view, sort_keys=True).encode()).hexdigest()
     return view
 
@@ -127,6 +154,15 @@ def act(plan, state, action, data):
         state["active"] = False
         save(state_path(), state)
         return
+    if not r and action == "position":
+        screen = data.get("screen", {})
+        if not isinstance(screen, dict) or screen.get("document") not in (None, *DOCUMENTS):
+            raise ValueError("Invalid review position.")
+        state["screen"] = {"page": max(0, min(int(screen.get("page", 0)), 5)),
+                           "offset": max(0, int(screen.get("offset", 0))),
+                           "document": screen.get("document"), "record": screen.get("record")}
+        save(state_path(), state)
+        return
     if not r:
         if action == "start":
             state["active"] = False
@@ -144,8 +180,51 @@ def act(plan, state, action, data):
         if entry.get("status") != "changes_requested":
             entry["status"] = "review"
     elif action in ("next", "previous"):
-        maximum = max(0, len(hunks(r)) - 1)
+        chunks = hunks(r)
+        maximum = max(0, len(chunks) - 1)
+        if action == "next" and chunks:
+            identity = hunk_id(chunks[max(0, min(entry.get("hunk", 0), maximum))])
+            if identity not in entry.setdefault("seen", []):
+                entry["seen"].append(identity)
         entry["hunk"] = max(0, min(entry.get("hunk", 0) + (1 if action == "next" else -1), maximum))
+    elif action == "position":
+        screen = data.get("screen", {})
+        if (not isinstance(screen, dict) or not isinstance(screen.get("page", 0), int)
+                or not 0 <= screen.get("page", 0) <= 5
+                or not isinstance(screen.get("offset", 0), (int, float))
+                or screen.get("document") not in (None, *DOCUMENTS)):
+            raise ValueError("Invalid review position.")
+        entry["screen"] = {"page": screen.get("page", 0), "offset": max(0, int(screen.get("offset", 0))),
+                           "document": screen.get("document"), "full_diff": bool(screen.get("full_diff", False)),
+                           "record": screen.get("record") if screen.get("record") in ("master", "board") else None}
+        if "hunk" in data:
+            entry["hunk"] = max(0, min(int(data["hunk"]), max(0, len(hunks(r)) - 1)))
+    elif action == "draft":
+        key, text = data.get("key"), data.get("text")
+        allowed = {"Round title", "Teams message", "MR title", "Validation and limits", "comment", "requested change"}
+        allowed.update(f"{repo} {suffix}" for repo in r["commits"] for suffix in ("patch", "MR description"))
+        if key not in allowed or not isinstance(text, str) or len(text) > 5_000_000:
+            raise ValueError("Invalid editor draft.")
+        entry.setdefault("drafts", {})[key] = text
+    elif action == "discard-drafts":
+        entry.pop("drafts", None)
+    elif action == "save-field":
+        fields = {"Round title": "title", "Teams message": "teams", "MR title": "mr_title",
+                  "Validation and limits": "validation"}
+        key, text = data.get("key"), data.get("text")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Keep some text in this field. Your draft is saved.")
+        copy = details(r, state)
+        copy = {k: copy[k] for k in ("title", "teams", "mr_title", "validation", "descriptions")}
+        if key in fields:
+            copy[fields[key]] = text
+        elif key in {f"{repo} MR description" for repo in r["commits"]}:
+            repo = key.removesuffix(" MR description")
+            copy["descriptions"] = {**copy["descriptions"], repo: text}
+        else:
+            raise ValueError("Choose an existing message field.")
+        save_copy(state, r, copy)
+        entry.setdefault("drafts", {}).pop(key, None)
     elif action in ("comment", "reject"):
         text = data.get("text", "").strip()
         if not text:
@@ -154,6 +233,12 @@ def act(plan, state, action, data):
         index = max(0, min(entry.get("hunk", 0), max(0, len(chunks) - 1)))
         anchor = chunks[index]["anchor"] if data.get("onHunk", True) and chunks else None
         comment(state, r, text, anchor, reject=action == "reject")
+        entry.setdefault("drafts", {}).pop("requested change" if action == "reject" else "comment", None)
+        if entry["drafts"].get("comment", "").strip() == text:
+            entry["drafts"].pop("comment", None)
+        draft_key = data.get("draftKey")
+        if draft_key in ("comment", "requested change") and entry["drafts"].get(draft_key, "").strip() == text:
+            entry["drafts"].pop(draft_key, None)
         if action == "reject":
             state["active"] = False
     elif action == "resolve":
@@ -172,6 +257,7 @@ def act(plan, state, action, data):
         temporary.write_text(text)
         temporary.replace(destination)
         entry["hunk"] = 0
+        entry.setdefault("drafts", {}).pop(repo + " patch", None)
     elif action == "accept":
         accept(plan, state, r)
         following = current(plan, state)
@@ -184,12 +270,13 @@ def act(plan, state, action, data):
     else:
         raise ValueError(f"Unknown review action: {action}")
     save(state_path(), state)
-    board(plan, state)
+    if action not in ("position", "draft", "discard-drafts"):
+        board(plan, state)
 
 
 def board(plan, state):
     """Move only review-owned cards; preserve user cards, columns and settings."""
-    path = ROOT / "Kanbun.md"
+    path = document_path("board")
     text = path.read_text()
     text = re.sub(r"^- \[[ x]\] \[R\d+\].*\n?", "", text, flags=re.M)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -213,7 +300,7 @@ def board(plan, state):
 def record(round_, state):
     entry = state["rounds"][round_["id"]]
     copy = details(round_, state)
-    path = ROOT / "MASTER.md"
+    path = document_path("master")
     text = path.read_text() if path.exists() else "# Accepted review rounds\n"
     marker = f'<!-- accepted:{round_["id"]} -->'
     if marker in text:
@@ -241,10 +328,12 @@ def finish_pending(plan, state):
             raise RuntimeError(f"{repo}: master is checked out; switch away before recovering acceptance.")
         before = pending["before"][repo]
         head = git(repo, "rev-parse", "master").strip()
-        if head == before:
-            git(repo, "update-ref", "refs/heads/master", after, before)
-        elif head != after:
+        if head not in (before, after):
             raise RuntimeError(f"{repo}: master moved outside review; inspect pending journal before continuing.")
+    for repo, after in pending["after"].items():
+        before = pending["before"][repo]
+        if git(repo, "rev-parse", "master").strip() == before:
+            git(repo, "update-ref", "refs/heads/master", after, before)
     entry = state["rounds"].setdefault(r["id"], {})
     entry.update(status="accepted", accepted_commits=pending["after"],
                  before=pending["before"], accepted_at=pending["at"])
@@ -255,6 +344,8 @@ def finish_pending(plan, state):
 
 
 def accept(plan, state, r):
+    if state["rounds"].get(r["id"], {}).get("drafts"):
+        raise RuntimeError("There is unfinished editor text. Save it or discard drafts before acceptance.")
     if state["rounds"].get(r["id"], {}).get("status") == "changes_requested":
         raise RuntimeError("Changes are requested. Revise the patch/copy, then use 'resolve' before accepting.")
     before, after = {}, {}
@@ -333,48 +424,17 @@ def show(r, state, full=False):
 
 
 def interactive(plan, state):
-    while (r := current(plan, state)) is not None:
-        act(plan, state, "start", {})
-        entry = state["rounds"][r["id"]]
-        show(r, state)
-        chunks = hunks(r)
-        index = max(0, min(entry.get("hunk", 0), max(0, len(chunks) - 1)))
-        print("y/Enter next hunk | p previous | d full diff | c comment | n request changes")
-        print("e edit message/MR | E edit patch | a accept paired round | q pause")
-        while True:
-            chunk = chunks[index] if chunks else {"repo": "", "text": "This round has no patch hunks.", "anchor": None}
-            print(f"\n[{index + 1 if chunks else 0}/{len(chunks)}] {chunk['repo']}\n{chunk['text']}")
-            command = input("review [y,p,d,c,n,e,E,a,q,?]> ").strip()
-            if command in ("", "y"):
-                act(plan, state, "next", {})
-                index = entry["hunk"]
-            elif command == "p":
-                act(plan, state, "previous", {})
-                index = entry["hunk"]
-            elif command == "d":
-                show(r, state, full=True)
-            elif command == "c":
-                act(plan, state, "comment", {"text": input("Comment: ")})
-            elif command == "n":
-                act(plan, state, "reject", {"text": input("Requested change: ")})
-                print("Changes requested; round remains pending. Resume after revision with ./review resolve.")
-                return
-            elif command in ("e", "E"):
-                edit(state, r, input("Repository: ").strip() if command == "E" else None)
-                break
-            elif command == "a":
-                act(plan, state, "accept", {})
-                break
-            elif command == "q":
-                act(plan, state, "pause", {})
-                print("Paused. Resume with ./review start.")
-                return
-            else:
-                print("y marks a hunk read; a accepts the whole paired round. n holds it for changes.")
-            entry["hunk"] = index
-            save(state_path(), state)
-    else:
-        print("Every round is accepted locally. See MASTER.md for finished Teams and GitLab text.")
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise RuntimeError("Open a terminal and run ./twhw --theme dawkins. Use show --diff for plain output.")
+    import curses
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from review_tui import Review
+    act(plan, state, "start", {})
+    try:
+        curses.wrapper(lambda screen: Review(screen, sys.modules[__name__], plan, state).run())
+    finally:
+        state["active"] = False
+        save(state_path(), state)
 
 
 def main():
@@ -384,7 +444,8 @@ def main():
     p.add_argument("--json", action="store_true", help="JSON desktop interface; input is a JSON object on stdin")
     p.add_argument("command", nargs="?", default="start", choices=(
         "start", "status", "show", "accept", "comment", "reject", "resolve", "edit", "edit-patch", "sync", "task-add", "task-move",
-        "read", "pause", "next", "previous", "save-copy", "save-patch"))
+        "read", "pause", "next", "previous", "save-copy", "save-patch", "position", "draft",
+        "discard-drafts", "save-field"))
     p.add_argument("text", nargs="*")
     p.add_argument("--diff", action="store_true", help="show every diff with 'show'")
     args = p.parse_args()
@@ -427,7 +488,7 @@ def main():
             if len(args.text) < 2 or args.text[0] not in ("Todo", "In Progress", "Review", "Done"):
                 raise RuntimeError('Use task-add/task-move COLUMN "task text"; quote "In Progress".')
             column, task = args.text[0], " ".join(args.text[1:])
-            path = ROOT / "Kanbun.md"
+            path = document_path("board")
             text = path.read_text()
             if args.command == "task-move":
                 pattern = r"^- \[[ x]\] " + re.escape(task) + r"\n?"
@@ -439,10 +500,10 @@ def main():
             box = "x" if column == "Done" else " "
             text = text.replace(f"## {column}\n", f"## {column}\n\n- [{box}] {task}\n", 1)
             path.write_text(text)
-        elif not r:
-            print("Every round is accepted locally. See MASTER.md.")
         elif args.command == "start":
             interactive(plan, state)
+        elif not r:
+            print(f"Every round is accepted locally. See {document_path('master').relative_to(ROOT)}.")
         elif args.command == "show":
             show(r, state, full=args.diff)
         elif args.command == "accept":

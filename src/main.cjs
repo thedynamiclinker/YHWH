@@ -13,10 +13,14 @@ const { pathToFileURL } = require("node:url");
 const { Workspace } = require("./workspace.cjs");
 const { hunks } = require("./repository.cjs");
 const { Review } = require("./review.cjs");
+const twhw = process.argv.includes("--twhw");
 
-if (process.env.YHWH_DATA_DIR)
+if (twhw) {
+  app.setPath("userData", process.env.TWHW_DATA_DIR || path.join(
+    process.env.XDG_CONFIG_HOME || path.join(app.getPath("home"), ".config"), "TWHW"));
+} else if (process.env.YHWH_DATA_DIR)
   app.setPath("userData", path.resolve(process.env.YHWH_DATA_DIR));
-app.setName("𐤉𐤄𐤅𐤄");
+app.setName(twhw ? "TWHW" : "𐤉𐤄𐤅𐤄");
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -25,7 +29,7 @@ let workspace;
 let review;
 let closeApproved = false;
 let queue = Promise.resolve();
-const entry = path.join(__dirname, "index.html");
+const entry = path.join(__dirname, twhw ? "twhw.html" : "index.html");
 const entryUrl = pathToFileURL(entry).href;
 app.on("second-instance", () => {
   if (window) {
@@ -34,10 +38,11 @@ app.on("second-instance", () => {
   }
 });
 
-function handle(channel, callback) {
+function handle(channel, callback, serial = true) {
   ipcMain.handle(channel, (event, ...args) => {
     if (event.senderFrame.url !== entryUrl)
       throw new Error("Untrusted window.");
+    if (!serial) return callback(...args);
     // Model calls, approvals and saves share a queue: a late model response
     // must never replace a newer review decision or race another Git commit.
     const operation = queue.then(() => callback(...args));
@@ -56,6 +61,7 @@ app
       process.cwd(),
     );
     await review.load();
+    if (twhw) await require("./twhw.cjs").register({ handle, app, review, workspace, getWindow: () => window });
     handle("workspace:read", () => workspace.view());
     handle("workspace:act", async (action, input) => {
       if (action === "chat" && input?.review) {
@@ -85,8 +91,8 @@ app
       if (result.canceled) return null;
       const view = await review.act("read");
       const target = await fs.mkdtemp(path.join(result.filePaths[0], "review-handoff-"));
-      await fs.writeFile(path.join(target, "MASTER.md"), view.master);
-      await fs.writeFile(path.join(target, "Kanbun.md"), view.board);
+      await fs.writeFile(path.join(target, twhw ? path.basename(view.paths.master) : "MASTER.md"), view.master);
+      await fs.writeFile(path.join(target, twhw ? path.basename(view.paths.board) : "Kanbun.md"), view.board);
       return target;
     });
     handle("patch:hunks", (patch) => {
@@ -179,7 +185,7 @@ app
         height: 980,
         minWidth: 1060,
         minHeight: 700,
-        title: "𐤉𐤄𐤅𐤄",
+        title: twhw ? "TWHW" : "𐤉𐤄𐤅𐤄",
         backgroundColor: "#19191e",
         autoHideMenuBar: true,
         icon: path.join(__dirname, "../assets/icon.png"),

@@ -140,7 +140,7 @@ class Workspace {
         version: 2,
         companies: [],
         selectedCompany: null,
-        settings: { mode: "codex", model: "qwen3:8b", showFacts: true },
+        settings: { mode: "codex", model: "qwen3:8b", showFacts: false },
         factIndex: 0,
       };
       const company = companyFrom({
@@ -282,9 +282,13 @@ class Workspace {
   async change(action, input = {}) {
     if (action === "settings") {
       this.state.settings = {
-        mode: ["codex", "ollama", "offline"].includes(input.mode) ? input.mode : "codex",
+        mode: input.mode === undefined
+          ? this.state.settings.mode
+          : ["codex", "ollama", "offline"].includes(input.mode) ? input.mode : "codex",
         model: required(input.model || this.state.settings.model || "qwen3:8b", "Model name", 150),
-        showFacts: input.showFacts !== false,
+        showFacts: input.showFacts === undefined
+          ? this.state.settings.showFacts
+          : input.showFacts !== false,
       };
     } else if (action === "nextFact") {
       this.state.factIndex = (this.state.factIndex + 1) % persona.facts.length;

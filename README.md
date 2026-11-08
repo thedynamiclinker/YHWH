@@ -2,6 +2,11 @@
 
 An Electron rehearsal room for getting useful work through a company, one small change at a time. The layout takes cues from Obsidian: a narrow tool ribbon, company sidebar, central workspace, and a persistent conversation with Yahweh.
 
+The new paired-review app is **TWHW**: run `./twhw` or `make twhw`.
+Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
+nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
+(0%, real ncurses). See [the TWHW guide](doc/TWHW.md) for controls and shared state.
+
 ## Run it
 
 Run `make` to list the available operations. For a first launch, use `make install`
@@ -18,7 +23,9 @@ npm install
 npm start
 ```
 
-The first launch prepares a fictional company and a real example Git repository with four draft commits. Opening the app needs no model connection; conversation, company reviews, and handoff revisions use Codex by default. Choose **Offline rehearsal** in Settings to use the scripted demo without an account or model. The opening “Did you know?” card rotates through observations about the character in _We The Nameless_. Turn startup cards off in settings if desired.
+The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline rehearsal** in Settings; other conversation, company reviews, and handoff revisions use the selected engine (initially Codex).
+
+Character tips from _We The Nameless_ live below the sample apps in Overview and in **Did you know?** in the sidebar. Their popup is off by default for fresh profiles. You can enable it in Settings. **Don’t show this again** in any tips popup saves the preference across restarts; closing it normally or pressing Escape leaves that preference alone. Tips remain available in the app either way. Existing profiles retain their saved startup preference.
 
 On NixOS, `npm start` automatically obtains the native `electron` from your configured `<nixpkgs>`, because npm’s generic Linux binary does not resolve NixOS libraries. You can also use:
 
@@ -38,7 +45,7 @@ Choose **Code review** in the sidebar. The initial workspace is the current dire
 3. Add a **Comment** or **Request changes**, attached either to the displayed hunk or the whole round. Requests hold the round and block acceptance.
 4. You or your agent can revise **Message & MR** and **Edit patch**. Use the save buttons; pending patch and copy edits also save when you leave the page, change sections, perform a review action, or close the app. Patch drafts are checked against the accepted branches at acceptance. Saving a draft does not establish that it applies or passes tests.
 5. Choose **Resolve & resume** after addressing requested changes. Inspect the result, then **Accept paired round**. The confirmation lists the repositories whose local `master` branches will change.
-6. The existing engine prepares every commit before moving either ref. It records accepted final messages in `MASTER.md`, moves review cards in `Kanbun.md`, and opens the next round. **Handoff & board** displays those actual files. **Copy handoff** copies the accepted text; **Export handoff** saves the selected review's `MASTER.md` and `Kanbun.md` into a new subfolder.
+6. The existing engine prepares every commit before moving either ref. It records accepted final messages in `The Review/The Accepted Rounds.md`, moves review cards in `The Review/The Board.md`, and opens the next round. Older workspaces retain their `MASTER.md` / `Kanbun.md` convention. **Handoff & board** displays those actual files. **Copy handoff** copies the accepted text; **Export handoff** saves the selected review's `MASTER.md` and `Kanbun.md` into a new subfolder.
 
 The desktop and `./review start` use **one Python implementation**, the same `.review/state.json`, edits, lock, and acceptance journal. From this vault:
 
@@ -59,14 +66,15 @@ The shared engine uses POSIX file locking and requires Python 3 on Linux/macOS. 
 
 ## Try a complete company rehearsal
 
-1. Dismiss the opening fact and choose **Enter the rehearsal**.
-2. Read **The proposal**. Record verification evidence, including anything still unverified.
-3. Inspect **The patch**. Include or exclude individual hunks, or edit the unified diff.
-4. Choose **Rehearse company**. Each configured participant responds from their role and concern.
-5. In **The company**, play a participant yourself and add feedback. Rehearse repeatedly as needed.
-6. Choose **Revise the handoff**. The three drafts incorporate the feedback; review and edit each one. Revisions change the messages, not the code patch.
-7. Choose **Approve round**. Attached patches are checked and committed in the isolated rehearsal repository. Final drafts become immutable, and the round moves to Approved on Kanbun.
-8. Copy the approved text into the real apps yourself, or **Export handoff**.
+1. In **Overview**, choose **Start offline walkthrough**. This selects The Example Company, its first proposal, and the scripted offline engine. The left sidebar opens pages and sample apps; the middle panel holds your work; Yahweh’s conversation stays on the right.
+2. Read **The proposal**, then open **The patch**. In `requirements.txt`, exact `requests` and `rich` pins become package names without pinned versions. Leave **Include** checked for this sample task.
+3. Return to **The proposal**. In **Verification evidence**, enter: “Reviewed requirements.txt: exact requests and rich version pins are removed. Runtime comparisons are still pending.” This records an inspection, not a claim that the dependencies were tested.
+4. Choose **Rehearse company**. Read Alex, Morgan, and Casey’s scripted reactions in **The company**. In **Review feedback**, enter: “Keep this to the dependency pins; runtime comparisons are still pending.” Click **Add feedback**, then **Revise the handoff**.
+5. Open **Electronic Mail** in the sidebar or use **Open sample email**. Check its subject, evidence, and review clarification. Edit it if needed; edits save locally. Review **Group Chat** and **Code Place** as well. These are local draft surfaces; there is no configured sample email account or inbox.
+6. Use **Review all drafts & approve** to return to **The handoff** (or select that tab in the Rehearsal room). Read all three drafts, then click **Approve round** at the bottom and confirm. This applies the patch and creates a commit only in the isolated sample repository.
+7. Open **Approved handoff** to see the three saved, immutable messages and approval commit. Open **Kanbun board** to find the round in **Approved**. This is a completed sample handoff; runtime comparisons remain pending and nothing has been sent externally. Keep real account connections for later.
+
+The in-app guide follows you into the sample review and draft pages. Overview derives its saved-step indicators from the proposal’s evidence, feedback, revisions, and approval, so returning after a restart does not erase your work. Once approved, **View completed handoff** reopens the saved result. You can also review the remaining example proposals using **Enter the rehearsal**.
 
 The three deliberately generic destinations are **Group Chat** (“Let’s go, department”), **Electronic Mail** (“As per my last electronic mail”), and **Code Place** (“We put the code in the code place”). They are local review surfaces. The app does not connect to or post into a real messaging, email, or repository service.
 

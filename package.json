@@ -7,8 +7,9 @@
   "main": "src/main.cjs",
   "scripts": {
     "start": "node scripts/start.cjs",
-    "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_review.py'",
-    "test:ui": "node scripts/ui-test.cjs && node scripts/review-ui-test.cjs",
+    "start:twhw": "./twhw",
+    "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
+    "test:ui": "node scripts/ui-test.cjs && node scripts/review-ui-test.cjs && node scripts/twhw-ui-test.cjs",
     "package": "electron-packager . YHWH --out=dist --overwrite --ignore=^/test --ignore=^/artifacts --ignore=^/dist --ignore=^/gen --ignore=^/doc --ignore=^/.obsidian --ignore=^/\\.git --ignore=^/AGENTS --ignore=^/The --ignore=__pycache__ --asar.unpack=**/*.py"
   },
   "engines": {
