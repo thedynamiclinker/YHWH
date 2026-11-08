@@ -25,6 +25,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
   }
   try {
     await launch();
+    await require("./help-menu-test.cjs")(app);
     assert.equal(await page.locator(".modal").count(), 0);
     assert.equal((await page.evaluate(() => window.yhwh.read())).settings.showFacts, false);
     assert.equal(await page.locator('.walkthrough-start [data-action="walkthrough"]').isVisible(), true);

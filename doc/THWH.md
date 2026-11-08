@@ -1,8 +1,11 @@
-# TWHW
+# THWH
 
-Run `./twhw` from this repository, or `make twhw`. The first launch uses the
+Run `make` or `make thwh` to build and launch, or `./thwh` to launch directly.
+The first launch uses the
 YHWH interface and opens a prepared review in the current directory. The original
-company-rehearsal app is still available with `make run`.
+company-rehearsal app is available with `make yhwh`. For separate steps, use
+`make build-thwh` / `make run-thwh` or `make build-yhwh` / `make run-yhwh`.
+Building prepares the shared locked dependencies; the apps run directly from source.
 
 The **Amount of YHWH-ness** slider has three stops:
 
@@ -17,19 +20,23 @@ arrangement in terminals at least 100 columns wide; smaller terminals use a
 compact layout. The minimum usable size is 45 columns by 10 rows.
 
 ```sh
-./twhw --theme yhwh
-./twhw --theme nietzsche
-./twhw --theme dawkins
-./twhw --root /path/to/review/workspace
-make twhw THEME=nietzsche REVIEW_ROOT=/path/to/review
+./thwh --theme yhwh
+./thwh --theme nietzsche
+./thwh --theme dawkins
+./thwh --root /path/to/review/workspace
+make thwh THEME=nietzsche REVIEW_ROOT=/path/to/review
 ```
 
 The last selected level and workspace are remembered. To return from dawkins
 to Electron, press `t` and move the three-stop slider with Left/Right, then
 Enter. `]` directly opens nietzsche. Selecting 0% in Electron opens xterm and
-closes the desktop window after saving. `TWHW_TERMINAL` can name another
+closes the desktop window after saving. `THWH_TERMINAL` can name another
 terminal executable that accepts xterm's `-e` and window options. You can
 always launch dawkins directly inside an existing terminal.
+
+The visible **Help** menu in both Electron levels offers **About Us** and
+**About YHWH**, opening their pages in your browser. Dawkins has the same
+choices under **? Help**, along with **Keyboard shortcuts**.
 
 ## The review
 
@@ -70,7 +77,7 @@ Conversations are kept separately by level and workspace.
 ## Shared state and implementation
 
 `src/review.py` owns the review operations and Git transaction. The original
-YHWH review panel, TWHW's Electron renderer, and `src/review_tui.py` call that
+YHWH review panel, THWH's Electron renderer, and `src/review_tui.py` call that
 engine. The CLI reads and writes the same `.review/state.json`,
 patch overrides, content-addressed hunk markers, editor draft keys, and screen
 positions. Pause one interface before opening another; the workspace lock
@@ -81,11 +88,15 @@ Prepared workspaces can use `The Review/The Accepted Rounds.md` and
 `The Review/The Board.md`. Older prepared workspaces still use `MASTER.md` and
 `Kanbun.md`; the engine selects the workspace's existing convention.
 
-TWHW preferences and assistant history live in
-`${XDG_CONFIG_HOME:-~/.config}/TWHW/twhw.json`; workspace selection is in the
-neighboring `review.json`. Set `TWHW_DATA_DIR` for an isolated profile. Review
+THWH preferences and assistant history live in
+`${XDG_CONFIG_HOME:-~/.config}/THWH/thwh.json`; workspace selection is in the
+neighboring `review.json`. Set `THWH_DATA_DIR` for an isolated profile. Review
 decisions always remain in the selected workspace. `YHWH_PYTHON`,
 `YHWH_ELECTRON`, and `YHWH_CODEX` retain their existing meanings.
+On first launch after the spelling correction, an existing default `TWHW`
+profile moves to `THWH`, and its `twhw.json` becomes `thwh.json`. An existing
+`THWH` profile takes precedence. The old `TWHW_DATA_DIR` override is still
+recognized so explicitly selected profiles keep working.
 
 The Circus widget fetches the pairing chosen by
 [Nietzsche Family Circus](https://nietzschefamilycircus.com/), whose server
@@ -97,5 +108,5 @@ are not embedded. It requires internet access and shows a retryable error if
 the site cannot be reached or changes its markup.
 
 Run `npm test` for the Git, draft, assistant, and real pseudoterminal tests.
-Run `npm run test:ui` for the original app and both TWHW Electron levels.
-Screenshots are written to `artifacts/twhw-*.png`.
+Run `npm run test:ui` for the original app and both THWH Electron levels.
+Screenshots are written to `artifacts/thwh-*.png`.

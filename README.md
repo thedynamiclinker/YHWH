@@ -2,25 +2,35 @@
 
 An Electron rehearsal room for getting useful work through a company, one small change at a time. The layout takes cues from Obsidian: a narrow tool ribbon, company sidebar, central workspace, and a persistent conversation with Yahweh.
 
-The new paired-review app is **TWHW**: run `./twhw` or `make twhw`.
+The new paired-review app is **THWH**: run `make` or `make thwh` to build and launch it.
 Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
 nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
-(0%, real ncurses). See [the TWHW guide](doc/TWHW.md) for controls and shared state.
+(0%, real ncurses). See [the THWH guide](doc/THWH.md) for controls and shared state.
 
 ## Run it
 
-Run `make` to list the available operations. For a first launch, use `make install`
-and then `make run`. Use `make run-isolated` to explore a fresh demo with its own
+`make` defaults to `make thwh`. Use `make yhwh` to build and launch the original
+company rehearsal app, and `make help` to list the available operations.
+Each combined target builds before running, including with parallel Make.
+`make build-thwh` and `make build-yhwh` prepare the shared, locked npm dependencies
+when the package files change; both apps run directly from source without a
+frontend compilation step. `make run-thwh` and `make run-yhwh` launch without
+building. Use `make run-isolated` to explore a fresh YHWH demo with its own
 data folder; the command prints the folder and how to resume it. `make guide`
 prints this walkthrough. The Makefile also exposes core tests, desktop and
 headless UI tests, packaging, the Nix shell, and optional Ollama commands.
+
+The visible **Help** menu in both desktop apps has **About Us** and **About YHWH**,
+which open in your browser. Both THWH desktop levels share this menu; dawkins
+offers the same links through **? Help**, alongside keyboard shortcuts.
 
 Requires Node.js 22.12 or newer, Git, and Python 3 for interactive code review. The default AI engine uses your installed, signed-in Codex CLI (`codex login`). On a normal desktop:
 
 ```sh
 cd ~/obsidian/YHWH
-npm install
-npm start
+make
+# Or build and launch the company rehearsal:
+make yhwh
 ```
 
 The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline rehearsal** in Settings; other conversation, company reviews, and handoff revisions use the selected engine (initially Codex).

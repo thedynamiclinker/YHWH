@@ -3,11 +3,15 @@
 from contextlib import redirect_stdout
 import curses
 import io
+import json
+from pathlib import Path
 import textwrap
 import unicodedata
+import webbrowser
 
 
 PAGES = ("Start", "Diff", "Messages", "Notes", "Roadmap", "Context")
+HELP_LINKS = json.loads(Path(__file__).with_name("help-links.json").read_text())
 
 
 def diff_style(line):
@@ -129,7 +133,7 @@ class Review:
             self.screen.refresh()
             return 1
         accepted = sum(e.get("status") == "accepted" for e in self.state["rounds"].values())
-        self.put(0, 1, f"TWHW / dawkins     {accepted}/{len(self.plan['rounds'])} rounds accepted", "title", width=width - 45)
+        self.put(0, 1, f"THWH / dawkins     {accepted}/{len(self.plan['rounds'])} rounds accepted", "title", width=width - 45)
         self.put(0, max(1, width - 39), "Amount of YHWH-ness  0%", "title")
         self.put(1, max(1, width - 39), "[0 dawkins]----50 nietzsche----100 YHWH")
         if left:
@@ -149,7 +153,7 @@ class Review:
                 marker = ">" if i == self.entry.get("hunk") else " "
                 self.put(y, 1, f"{marker}{seen} {i+1} {chunk['repo']}", width=left-2)
             self.put(height - 5, 1, "q Save & pause", width=left-2)
-            self.put(height - 4, 1, "? Shortcuts", width=left-2)
+            self.put(height - 4, 1, "? Help", width=left-2)
             x = width - right + 1
             self.put(3, x, "REVIEW STATUS", "title", width=right-3)
             self.put(5, x, "One hunk is enough.", width=right-3)
@@ -477,9 +481,8 @@ class Review:
 
     def open_electron(self, energy=50):
         import os
-        from pathlib import Path
         import subprocess
-        launcher = os.environ.get("TWHW_LAUNCHER", str(Path(__file__).resolve().parents[1] / "twhw"))
+        launcher = os.environ.get("THWH_LAUNCHER", str(Path(__file__).resolve().parents[1] / "thwh"))
         self.position()
         subprocess.Popen(["node", launcher, "--theme", "yhwh" if energy == 100 else "nietzsche", "--root", str(self.engine.ROOT)],
                          start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -505,14 +508,12 @@ class Review:
                 return False
 
     def discuss(self):
-        import json
-        from pathlib import Path
         import subprocess
         text = self.editor("Discuss this hunk with the review assistant", "assistant message")
         if not text or not text.strip():
             return
         self.draw("Review assistant is working…", ["Your question includes the current hunk and saved notes."], "Please wait")
-        script = Path(__file__).resolve().parents[1] / "scripts/twhw-chat.cjs"
+        script = Path(__file__).resolve().parents[1] / "scripts/thwh-chat.cjs"
         result = subprocess.run(["node", str(script)], input=json.dumps({"view": self.engine.snapshot(self.plan, self.state), "message": text}),
                                 text=True, capture_output=True)
         if result.returncode:
@@ -523,10 +524,8 @@ class Review:
         self.confirm("Review assistant", self.assistant_answer.splitlines())
 
     def assistant_settings(self):
-        import json
         import os
-        from pathlib import Path
-        filename = Path(os.environ.get("TWHW_PREFERENCES", str(Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))) / "TWHW/twhw.json")))
+        filename = Path(os.environ.get("THWH_PREFERENCES", str(Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))) / "THWH/thwh.json")))
         settings = json.loads(filename.read_text()) if filename.exists() else {}
         selected = self.choose("Review assistant engine", ["Codex · xhigh · full access", "Ollama", "Scripted offline guidance"])
         if selected is None:
@@ -543,6 +542,16 @@ class Review:
         self.notice = "Assistant settings saved. s discusses the current hunk."
 
     def help(self):
+        selected = self.choose("Help", ["Keyboard shortcuts", *[link["label"] for link in HELP_LINKS]])
+        if selected == 0:
+            self.shortcuts()
+        elif selected is not None:
+            link = HELP_LINKS[selected - 1]
+            if not webbrowser.open(link["url"], new=2):
+                raise RuntimeError(f"Could not open a browser. Visit {link['url']}")
+            self.notice = f"Opened {link['label']} in your browser."
+
+    def shortcuts(self):
         lines = [
             "You play the reviewer. The proposed commits and messages are already prepared.",
             "", "Enter: Start -> one hunk at a time -> messages -> acceptance preview.",

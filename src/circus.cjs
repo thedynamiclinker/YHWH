@@ -20,7 +20,7 @@ function parsePair(html) {
 async function nextPair(fetcher = fetch) {
   // The site's PHP chooses the cartoon and quote independently. Use that same
   // pairing and permalink, without embedding its advertisements or scripts.
-  const response = await fetcher(`${ORIGIN}/?twhw=${Date.now()}`, { signal: AbortSignal.timeout(12000) });
+  const response = await fetcher(`${ORIGIN}/?thwh=${Date.now()}`, { signal: AbortSignal.timeout(12000) });
   if (!response.ok) throw new Error(`Circus is unavailable (${response.status}). Try Next again.`);
   const pair = parsePair(await response.text());
   const asset = await fetcher(ORIGIN + pair.image, { signal: AbortSignal.timeout(12000) });

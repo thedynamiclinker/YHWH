@@ -5,7 +5,7 @@ const persona = require("./persona.cjs");
 const { nextPair } = require("./circus.cjs");
 
 async function register({ handle, app, review, workspace }) {
-  const filename = path.join(app.getPath("userData"), "twhw.json");
+  const filename = path.join(app.getPath("userData"), "thwh.json");
   let settings = { energy: 100, mode: "codex", model: "qwen3:8b", messages: [] };
   try { settings = { ...settings, ...JSON.parse(await fs.readFile(filename, "utf8")) }; }
   catch (error) { if (error.code !== "ENOENT") throw error; }
@@ -20,35 +20,35 @@ async function register({ handle, app, review, workspace }) {
   };
   if (flag >= 0) await save();
   const view = () => ({ ...settings, facts: persona.facts });
-  handle("twhw:read", view);
-  handle("twhw:settings", async (input) => {
+  handle("thwh:read", view);
+  handle("thwh:settings", async (input) => {
     if (!input || (input.energy !== undefined && ![0, 50, 100].includes(input.energy)) ||
         (input.mode !== undefined && !["codex", "ollama", "offline"].includes(input.mode)) ||
         (input.model !== undefined && (typeof input.model !== "string" || !input.model.trim() || input.model.length > 150)))
-      throw new Error("Invalid TWHW settings.");
+      throw new Error("Invalid THWH settings.");
     for (const key of ["energy", "mode", "model"]) if (input[key] !== undefined) settings[key] = input[key];
     await save();
     return view();
   });
-  handle("twhw:circus", () => nextPair(), false);
-  handle("twhw:terminal", async () => {
+  handle("thwh:circus", () => nextPair(), false);
+  handle("thwh:terminal", async () => {
     const engine = path.join(__dirname, "review.py").replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`);
-    const args = ["-T", "TWHW · dawkins", "-fa", "Monospace", "-fs", "11", "-geometry", "160x48", "-e",
+    const args = ["-T", "THWH · dawkins", "-fa", "Monospace", "-fs", "11", "-geometry", "160x48", "-e",
       process.env.YHWH_PYTHON || "python3", engine, "--root", review.root, "start"];
     await new Promise((resolve, reject) => {
-      const child = spawn(process.env.TWHW_TERMINAL || "xterm", args, {
+      const child = spawn(process.env.THWH_TERMINAL || "xterm", args, {
         detached: true, stdio: "ignore", env: { ...process.env,
-          TWHW_PREFERENCES: filename, TWHW_DATA_DIR: app.getPath("userData"),
-          TWHW_LAUNCHER: path.join(__dirname, "../twhw") },
+          THWH_PREFERENCES: filename, THWH_DATA_DIR: app.getPath("userData"),
+          THWH_LAUNCHER: path.join(__dirname, "../thwh") },
       });
-      child.once("error", () => reject(new Error("Could not open xterm. Install xterm, or run ./twhw --theme dawkins in a terminal.")));
+      child.once("error", () => reject(new Error("Could not open xterm. Install xterm, or run ./thwh --theme dawkins in a terminal.")));
       child.once("spawn", () => { child.unref(); resolve(); });
     });
     settings.energy = 0;
     await save();
     return true;
   });
-  handle("twhw:chat", async (message) => {
+  handle("thwh:chat", async (message) => {
     if (typeof message !== "string" || !message.trim() || message.length > 6000) throw new Error("Write a message first.");
     const reviewView = await review.act("read");
     workspace.state.settings.mode = settings.mode;

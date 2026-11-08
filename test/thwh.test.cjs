@@ -6,10 +6,45 @@ const path = require("node:path");
 const { createReview } = require("./review-fixture.cjs");
 const { invoke } = require("../src/review.cjs");
 const { parsePair, nextPair } = require("../src/circus.cjs");
-const { answer } = require("../src/twhw.cjs");
+const { answer } = require("../src/thwh.cjs");
+const dataDirectory = require("../src/thwh-profile.cjs");
 
-test("TWHW resumes a prepared workspace's file layout, screen, content-addressed read markers and editor drafts", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "twhw-shared-"));
+test("The spelling correction retains the existing profile, workspace and assistant history", async t => {
+  const config = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-profile-"));
+  t.after(() => fs.rm(config, { recursive: true, force: true }));
+  const old = path.join(config, "TWHW");
+  await fs.mkdir(old);
+  const settings = { energy: 50, messages: [{ content: "Keep this conversation." }] };
+  await fs.writeFile(path.join(old, "twhw.json"), JSON.stringify(settings));
+  await fs.writeFile(path.join(old, "review.json"), JSON.stringify({ root: "/my/review" }));
+  const directory = dataDirectory({ XDG_CONFIG_HOME: config });
+  assert.equal(directory, path.join(config, "THWH"));
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory, "thwh.json"), "utf8")), settings);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory, "review.json"), "utf8")), { root: "/my/review" });
+  assert.equal(dataDirectory({ XDG_CONFIG_HOME: config }), directory);
+  await assert.rejects(fs.access(old));
+});
+
+test("Existing corrected profiles and explicit overrides take precedence without losing old data", async t => {
+  const config = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-profile-"));
+  t.after(() => fs.rm(config, { recursive: true, force: true }));
+  const directory = path.join(config, "THWH");
+  await fs.mkdir(directory);
+  await fs.writeFile(path.join(directory, "thwh.json"), '{"energy":100}');
+  await fs.writeFile(path.join(directory, "twhw.json"), '{"energy":0}');
+  assert.equal(dataDirectory({ XDG_CONFIG_HOME: config }), directory);
+  assert.equal(JSON.parse(await fs.readFile(path.join(directory, "thwh.json"), "utf8")).energy, 100);
+  assert.equal(JSON.parse(await fs.readFile(path.join(directory, "twhw.json"), "utf8")).energy, 0);
+  const custom = path.join(config, "custom");
+  await fs.mkdir(custom);
+  await fs.writeFile(path.join(custom, "twhw.json"), '{"energy":50}');
+  assert.equal(dataDirectory({ XDG_CONFIG_HOME: config, TWHW_DATA_DIR: custom }), custom);
+  assert.equal(JSON.parse(await fs.readFile(path.join(custom, "thwh.json"), "utf8")).energy, 50);
+  assert.equal(dataDirectory({ THWH_DATA_DIR: directory, TWHW_DATA_DIR: custom }), directory);
+});
+
+test("THWH resumes a prepared workspace's file layout, screen, content-addressed read markers and editor drafts", async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-shared-"));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createReview(root);
   await fs.mkdir(path.join(root, "The Review"));
@@ -46,7 +81,7 @@ test("TWHW resumes a prepared workspace's file layout, screen, content-addressed
 });
 
 test("A requested change consumes its saved note draft and still needs resolution", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "twhw-notes-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-notes-"));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createReview(root);
   await invoke(root, "draft", { key: "comment", text: "Please preserve the input type." });

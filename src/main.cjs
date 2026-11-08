@@ -13,14 +13,13 @@ const { pathToFileURL } = require("node:url");
 const { Workspace } = require("./workspace.cjs");
 const { hunks } = require("./repository.cjs");
 const { Review } = require("./review.cjs");
-const twhw = process.argv.includes("--twhw");
+const thwh = process.argv.includes("--thwh");
 
-if (twhw) {
-  app.setPath("userData", process.env.TWHW_DATA_DIR || path.join(
-    process.env.XDG_CONFIG_HOME || path.join(app.getPath("home"), ".config"), "TWHW"));
+if (thwh) {
+  app.setPath("userData", require("./thwh-profile.cjs")());
 } else if (process.env.YHWH_DATA_DIR)
   app.setPath("userData", path.resolve(process.env.YHWH_DATA_DIR));
-app.setName(twhw ? "TWHW" : "𐤉𐤄𐤅𐤄");
+app.setName(thwh ? "THWH" : "𐤉𐤄𐤅𐤄");
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -29,7 +28,7 @@ let workspace;
 let review;
 let closeApproved = false;
 let queue = Promise.resolve();
-const entry = path.join(__dirname, twhw ? "twhw.html" : "index.html");
+const entry = path.join(__dirname, thwh ? "thwh.html" : "index.html");
 const entryUrl = pathToFileURL(entry).href;
 app.on("second-instance", () => {
   if (window) {
@@ -61,7 +60,7 @@ app
       process.cwd(),
     );
     await review.load();
-    if (twhw) await require("./twhw.cjs").register({ handle, app, review, workspace, getWindow: () => window });
+    if (thwh) await require("./thwh.cjs").register({ handle, app, review, workspace, getWindow: () => window });
     handle("workspace:read", () => workspace.view());
     handle("workspace:act", async (action, input) => {
       if (action === "chat" && input?.review) {
@@ -91,8 +90,8 @@ app
       if (result.canceled) return null;
       const view = await review.act("read");
       const target = await fs.mkdtemp(path.join(result.filePaths[0], "review-handoff-"));
-      await fs.writeFile(path.join(target, twhw ? path.basename(view.paths.master) : "MASTER.md"), view.master);
-      await fs.writeFile(path.join(target, twhw ? path.basename(view.paths.board) : "Kanbun.md"), view.board);
+      await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.master) : "MASTER.md"), view.master);
+      await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.board) : "Kanbun.md"), view.board);
       return target;
     });
     handle("patch:hunks", (patch) => {
@@ -176,6 +175,14 @@ app
             { role: "togglefullscreen" },
           ],
         },
+        {
+          label: "Help",
+          role: "help",
+          submenu: require("./help-links.json").map(({ label, url }) => ({
+            label,
+            click: () => shell.openExternal(url),
+          })),
+        },
       ]),
     );
     function createWindow() {
@@ -185,9 +192,9 @@ app
         height: 980,
         minWidth: 1060,
         minHeight: 700,
-        title: twhw ? "TWHW" : "𐤉𐤄𐤅𐤄",
+        title: thwh ? "THWH" : "𐤉𐤄𐤅𐤄",
         backgroundColor: "#19191e",
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         icon: path.join(__dirname, "../assets/icon.png"),
         webPreferences: {
           preload: path.join(__dirname, "preload.cjs"),

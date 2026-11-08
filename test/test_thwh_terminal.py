@@ -22,10 +22,10 @@ class TerminalTests(unittest.TestCase):
         (self.root / ".review/plan.json").write_text(json.dumps(self.plan))
         self.engine = Path(__file__).resolve().parents[1] / "src/review.py"
 
-    def terminal(self, rows=48, columns=160):
+    def terminal(self, rows=48, columns=160, overrides=None):
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
-        env = {**os.environ, "TERM": "xterm-256color"}
+        env = {**os.environ, "TERM": "xterm-256color", **(overrides or {})}
         process = subprocess.Popen(["python3", str(self.engine), "--root", str(self.root), "start"],
                                    stdin=slave, stdout=slave, stderr=slave, env=env, close_fds=True)
         os.close(slave)
@@ -97,6 +97,40 @@ class TerminalTests(unittest.TestCase):
         fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", 48, 160, 0, 0))
         process.send_signal(signal.SIGWINCH)
         self.until(master, "YOUR NEXT SMALL STEP")
+        os.write(master, b"q")
+        process.wait(timeout=10)
+        self.assertEqual(process.returncode, 0)
+
+    def test_help_opens_both_about_links_and_preserves_shortcuts(self):
+        browser = self.root / "browser"
+        capture = self.root / "opened-links"
+        browser.write_text('#!/usr/bin/env python3\nimport os, sys\nwith open(os.environ["HELP_LINK_CAPTURE"], "a") as output:\n    output.write(sys.argv[1] + "\\n")\n')
+        browser.chmod(0o755)
+        def opened(count):
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                if capture.exists() and len(capture.read_text().splitlines()) == count:
+                    return
+                time.sleep(.01)
+            self.fail(f"Browser did not open {count} links")
+        process, master = self.terminal(overrides={"BROWSER": str(browser), "HELP_LINK_CAPTURE": str(capture)})
+        self.until(master, "nothing posted")
+        os.write(master, b"?")
+        self.until(master, "About YHWH")
+        os.write(master, b"j\n")
+        opened(1)
+        os.write(master, b"?")
+        self.until(master, "About YHWH")
+        os.write(master, b"jj\n")
+        opened(2)
+        self.assertEqual(capture.read_text().splitlines(), [
+            "https://www.amazon.com/stores/The-Nameless/author/B0HP8PGPW7",
+            "https://www.amazon.com/clp/B0HNR3B4MB?lv=shuf&channelId=500",
+        ])
+        os.write(master, b"?\n")
+        self.until(master, "The proposed commits and messages are already prepared.")
+        os.write(master, b"\x1b")
+        self.until(master, "NEXT SMALL STEP")
         os.write(master, b"q")
         process.wait(timeout=10)
         self.assertEqual(process.returncode, 0)
