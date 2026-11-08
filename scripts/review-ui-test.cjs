@@ -127,7 +127,7 @@ const { git } = require("../src/repository.cjs");
       dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [directory] });
     }, exportDirectory);
     await page.locator('[data-action="export"]').click();
-    await page.waitForFunction(() => document.querySelector("#toast")?.textContent.includes("Handoff exported"));
+    await page.waitForFunction(() => document.querySelector("#toast")?.textContent.includes("Files exported"));
     const [exportName] = await fs.readdir(exportDirectory);
     assert.equal(await fs.readFile(path.join(exportDirectory, exportName, "MASTER.md"), "utf8"), accepted.master);
     assert.equal(await fs.readFile(path.join(exportDirectory, exportName, "Kanbun.md"), "utf8"), accepted.board);

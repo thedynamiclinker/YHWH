@@ -21,7 +21,7 @@ const { git } = require("../src/repository.cjs");
   const errors = [];
   const click = action => page.locator(`[data-action="${action}"]`).first().click();
   const view = () => page.evaluate(() => window.yhwh.reviewRead());
-  const go = async n => { await page.locator(`nav [data-page="${n}"]`).click(); await page.waitForFunction(n => document.querySelector(".tw-page-name")?.textContent === ["Start", "Diff", "Messages", "Notes", "Roadmap", "Context"][n], n); };
+  const go = async n => { await page.locator(`nav [data-page="${n}"]`).click(); await page.waitForFunction(n => document.querySelector(".tw-page-name")?.textContent === ["Start", "Diff", "Messages", "Comments", "Changes", "Files"][n], n); };
   async function launch() {
     app = await electron.launch({ executablePath: require("./runtime.cjs")(), args: [root, "--thwh", "--disable-gpu"], env, timeout: 60000 });
     page = await app.firstWindow();

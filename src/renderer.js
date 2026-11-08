@@ -83,21 +83,21 @@ function render() {
   const reviewing = page === "review" && codeReview.view;
   $("#app").innerHTML = `<div class="shell">
     <aside class="rail"><button class="app-mark" data-action="home" aria-label="Home">${icon("sun")}</button>
-      <div class="rail-tools">${smallButton("search", "search", "Find a proposal (Ctrl+K)")}${smallButton("room", "layers", "Rehearsal room")}${smallButton("board", "board", "Kanbun board")}${smallButton("master", "book", "Approved handoff")}</div>
+      <div class="rail-tools">${smallButton("search", "search", "Find a proposal (Ctrl+K)")}${smallButton("room", "layers", "Try a change")}${smallButton("board", "board", "Tasks")}${smallButton("master", "book", "Accepted changes")}</div>
       <div class="rail-bottom">${smallButton("facts", "spark", "Did you know?")}${smallButton("settings", "settings", "Settings")}<span class="user-avatar" title="You, the human">Y</span></div></aside>
-    <aside class="sidebar"><div class="brand"><bdi class="wordmark" dir="ltr">${dawkins() ? "YHWH" : "𐤉𐤄𐤅𐤄"}</bdi><span>${dawkins() ? "COMPANY REHEARSAL" : "A LITTLE DIVINE INTERVENTION"}</span></div>
-      <label class="company-switch"><span class="company-symbol">${icon("folder")}</span><span><small>COMPANY WORKSPACE</small><select id="company-select" aria-label="Company workspace">${state.companies.map((item) => `<option value="${item.id}" ${item.id === c.id ? "selected" : ""}>${escape(item.name)}</option>`).join("")}</select></span></label>
-      <nav><div class="nav-label">WORKSPACE</div>${nav("home", "home", "Overview")}${nav("room", "layers", "Rehearsal room", waiting)}${nav("review", "git", "Code review")}${nav("board", "board", "Kanbun board")}${nav("master", "book", "Approved handoff", approved)}
+    <aside class="sidebar"><div class="brand"><bdi class="wordmark" dir="ltr">${dawkins() ? "YHWH" : "𐤉𐤄𐤅𐤄"}</bdi><span>${dawkins() ? "PRACTICE REVIEW" : "LET THERE BE LESS BULLSHIT"}</span></div>
+      <label class="company-switch"><span class="company-symbol">${icon("folder")}</span><span><small>COMPANY</small><select id="company-select" aria-label="Company workspace">${state.companies.map((item) => `<option value="${item.id}" ${item.id === c.id ? "selected" : ""}>${escape(item.name)}</option>`).join("")}</select></span></label>
+      <nav><div class="nav-label">WORKSPACE</div>${nav("home", "home", "Overview")}${nav("room", "layers", "Try a change", waiting)}${nav("review", "git", "Code review")}${nav("board", "board", "Tasks")}${nav("master", "book", "Accepted changes", approved)}
       <div class="nav-label with-space">THE USUAL PLACES <span title="Local draft destinations">DRAFTS</span></div>${state.destinations.map((d) => nav(d.id, d.icon, d.name, c.proposals.filter((p) => !isClosed(p)).length)).join("")}
       <div class="nav-label with-space">THE COMPANY</div>${nav("company", "people", "People & context")}${nav("facts", "spark", "Did you know?")}
       <div class="branch-note">${icon("git")}<span><b>mistress</b> drafts<br><b>master</b> approved</span></div></nav>
-      <div class="sidebar-bottom"><div class="local-note"><span class="online-dot"></span> Local rehearsal workspace</div>${button("new-company", "New company", "plus", "wide ghost")}${dawkins() ? button("settings", "Settings", "", "wide quiet") : ""}</div></aside>
-    <section class="workspace"><header class="toolbar"><div class="breadcrumb">${icon("folder")}<span>${escape(reviewing ? reviewing.root.split("/").filter(Boolean).at(-1) : c.name)}</span><b>/</b><span>${escape(pageTitle())}</span></div><div class="toolbar-actions">${smallButton("search", "search", "Search proposals")}${button("export", "Export handoff", "download", "quiet")}</div></header>
+      <div class="sidebar-bottom"><div class="local-note"><span class="online-dot"></span> Local files. I know where these are.</div>${button("new-company", "New company", "plus", "wide ghost")}${dawkins() ? button("settings", "Settings", "", "wide quiet") : ""}</div></aside>
+    <section class="workspace"><header class="toolbar"><div class="breadcrumb">${icon("folder")}<span>${escape(reviewing ? reviewing.root.split("/").filter(Boolean).at(-1) : c.name)}</span><b>/</b><span>${escape(pageTitle())}</span></div><div class="toolbar-actions">${smallButton("search", "search", "Search proposals")}${button("export", "Export files", "download", "quiet")}</div></header>
       <div class="workspace-body"><main class="page" id="main-content">${pageContent(c, p)}</main>
-        <aside class="god-panel"><div class="god-heading"><span class="god-avatar">${icon("sun")}</span><div><strong>Yahweh</strong><small><span class="online-dot"></span> ${state.settings.mode === "codex" ? "Codex · xhigh · full access" : state.settings.mode === "offline" ? "Offline rehearsal" : "Local model · " + escape(state.settings.model)}</small></div>${smallButton("settings", "settings", "Agent settings")}</div>
-          <div class="god-intro"><span class="eyebrow">YOUR AGENT, NOT YOUR MANAGER</span><p>${reviewing ? `${escape(reviewing.round?.id || "All rounds accepted")} · ${escape(reviewing.round?.title || "Inspect the finished handoff")}<br>Discuss the displayed hunk and feedback.` : "The company is simulated.<br>The small improvements are real."}</p></div>
-          <div class="chat-log" role="log" aria-label="Conversation with Yahweh">${c.messages.length ? c.messages.map((m) => `<div class="chat-message ${m.role}"><div class="message-author">${m.role === "assistant" ? icon("sun") : '<span class="mini-avatar">Y</span>'}<b>${m.role === "assistant" ? "Yahweh" : "You"}</b><time>${new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div><p>${escape(m.content)}</p></div>`).join("") : `<div class="chat-message assistant"><div class="message-author">${icon("sun")}<b>Yahweh</b></div><p>Where are you? Ah. ${escape(c.name)}. Give me the situation. I will come down and have a look.</p></div>`}${busy ? '<div class="thinking"><i></i> Coming down to inspect the thing…</div>' : ""}</div>
-          <div class="chat-bottom"><div class="chat-suggestions">${button("chat-scope", "Make it smaller", "", "chip")}${button("chat-evidence", "What needs evidence?", "", "chip")}</div><form id="chat-form"><textarea id="chat-input" aria-label="Message Yahweh" placeholder="Give Yahweh the situation…" rows="2" ${busy ? "disabled" : ""}>${escape(chatDraft)}</textarea><div class="composer-bottom"><span>${icon("shield")} ${state.settings.mode === "codex" ? "Codex · full access" : "Stays in this workspace"}</span><button class="send-button" aria-label="Send message" ${busy ? "disabled" : ""}>${dawkins() ? "Send" : icon("arrow")}</button></div></form><p class="chat-disclaimer">${state.settings.mode === "offline" ? "Scripted demo · Choose Codex or Ollama in Settings." : "AI rehearsal · People’s reactions are imagined."}</p></div></aside>
+        <aside class="god-panel"><div class="god-heading"><span class="god-avatar">${icon("sun")}</span><div><strong>Yahweh</strong><small><span class="online-dot"></span> ${state.settings.mode === "codex" ? "Codex · xhigh · full access" : state.settings.mode === "offline" ? "Offline practice" : "Local model · " + escape(state.settings.model)}</small></div>${smallButton("settings", "settings", "Agent settings")}</div>
+          ${walkthroughHint(c, p)}<div class="god-intro"><span class="eyebrow">SHOW ME WHAT BROKE</span><p>${reviewing ? `${escape(reviewing.round?.id || "All rounds accepted")} · ${escape(reviewing.round?.title || "Inspect the saved review")}<br>Discuss the displayed hunk and feedback.` : "The people are made up.<br>The git repos are real."}</p></div>
+          <div class="chat-log" role="log" aria-label="Conversation with Yahweh">${c.messages.length ? c.messages.map((m) => `<div class="chat-message ${m.role}"><div class="message-author">${m.role === "assistant" ? icon("sun") : '<span class="mini-avatar">Y</span>'}<b>${m.role === "assistant" ? "Yahweh" : "You"}</b><time>${new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div><p>${escape(m.content)}</p></div>`).join("") : `<div class="chat-message assistant"><div class="message-author">${icon("sun")}<b>Yahweh</b></div><p>Where are you? Ah. ${escape(c.name)}. Show me the code. I’ll come down and look.</p></div>`}${busy ? '<div class="thinking"><i></i> Coming down. Where’s the damn code…</div>' : ""}</div>
+          <div class="chat-bottom"><div class="chat-suggestions">${button("chat-scope", "Make it smaller", "", "chip")}${button("chat-evidence", "What did we check?", "", "chip")}</div><form id="chat-form"><textarea id="chat-input" aria-label="Message Yahweh" placeholder="Show me what’s wrong…" rows="2" ${busy ? "disabled" : ""}>${escape(chatDraft)}</textarea><div class="composer-bottom"><span>${icon("shield")} ${state.settings.mode === "codex" ? "Codex · full access" : "Stays in this workspace"}</span><button class="send-button" aria-label="Send message" ${busy ? "disabled" : ""}>${dawkins() ? "Send" : icon("arrow")}</button></div></form><p class="chat-disclaimer">${state.settings.mode === "offline" ? "Fixed replies. No model is running. Choose one in Settings to ask questions." : "I made up the replies. Ask the real people before believing them."}</p></div></aside>
       </div><footer class="statusbar"><span><span class="online-dot"></span> ${busy ? "Working…" : codeReview.dirty ? "Unsaved review edits" : "All changes saved locally"}</span><span>${reviewing ? `${reviewing.rounds.length} rounds <i>·</i> ${reviewing.rounds.filter((item) => item.status === "accepted").length} accepted` : `${c.proposals.length} proposals <i>·</i> ${approved} approved`} <i>·</i> ${state.settings.mode === "codex" ? "Codex · full access" : "Nothing posted externally"} ${icon("shield")}</span></footer>
     </section></div>`;
   $(".page").scrollTop = scroll;
@@ -111,14 +111,14 @@ function pageTitle() {
   return (
     {
       home: "Overview",
-      room: "Rehearsal room",
+      room: "Try a change",
       review: "Code review",
-      board: "Kanbun board",
-      master: "Approved handoff",
+      board: "Tasks",
+      master: "Accepted changes",
       company: "People & context",
-      chat: "Group Chat",
-      mail: "Electronic Mail",
-      forge: "Code Place",
+      chat: "Chat",
+      mail: "Mail",
+      forge: "PR",
     }[page] || "Workspace"
   );
 }
@@ -144,10 +144,10 @@ function pageContent(c, p) {
 function home(c, p) {
   const active = c.proposals.filter((p) => !isClosed(p));
   const approved = c.proposals.filter((p) => p.status === "approved");
-  return `${heading("WELCOME TO YHWH", "Learn by doing one small task.", "YHWH helps you review a change, hear simulated colleagues’ concerns, and prepare a handoff you can approve.")}
+  return `${heading("WELCOME TO YHWH", "Let’s fix one thing.", "Read a patch. Try the arguments. Write a message that says what changed. I’ll help. I have opinions.")}
   ${walkthrough()}
-  <div class="section-heading"><h2>Your next small step</h2><span>${active.length} waiting in the wings</span></div>
-  ${active.length ? `<article class="next-step"><div class="next-step-top"><span class="round-number">ROUND ${String(c.proposals.indexOf(active[0]) + 1).padStart(2, "0")}</span>${badge(active[0].status)}</div><h2>${escape(active[0].title)}</h2><p>${escape(active[0].summary)}</p><div class="workflow-line"><span class="current">1 <b>Propose</b></span><i></i><span>2 <b>Rehearse</b></span><i></i><span>3 <b>Refine</b></span><i></i><span>4 <b>Approve</b></span></div><div class="next-step-bottom"><span>${icon("git")}${active[0].repoId ? "Real patch · isolated repository" : "Communication proposal"} <b>·</b> ${c.people.length} company voices</span>${button("open-proposal", "Enter the rehearsal", "arrow", "primary", `data-id="${active[0].id}"`)}</div></article>` : `<div class="empty-state">${icon("check")}<h2>${c.proposals.length ? "And the review was good." : "Every company starts somewhere."}</h2><p>${c.proposals.length ? "Your remaining proposals are approved or set aside. Add the next small improvement." : "Add a proposal or import a local repository to begin."}</p>${button("new-proposal", "New proposal", "plus", "primary")}</div>`}
+  <div class="section-heading"><h2>Your next small step</h2><span>${active.length} waiting</span></div>
+  ${active.length ? `<article class="next-step"><div class="next-step-top"><span class="round-number">ROUND ${String(c.proposals.indexOf(active[0]) + 1).padStart(2, "0")}</span>${badge(active[0].status)}</div><h2>${escape(active[0].title)}</h2><p>${escape(active[0].summary)}</p><div class="workflow-line"><span class="current">1 <b>Propose</b></span><i></i><span>2 <b>Try it</b></span><i></i><span>3 <b>Edit</b></span><i></i><span>4 <b>Approve</b></span></div><div class="next-step-bottom"><span>${icon("git")}${active[0].repoId ? "Real patch · isolated repository" : "Message change"} <b>·</b> ${c.people.length} company voices</span>${button("open-proposal", "Open the change", "arrow", "primary", `data-id="${active[0].id}"`)}</div></article>` : `<div class="empty-state">${icon("check")}<h2>${c.proposals.length ? "And the review was good." : "Every company starts somewhere."}</h2><p>${c.proposals.length ? "Your remaining proposals are approved or set aside. Add the next small improvement." : "Add a proposal or import a local repository to begin."}</p>${button("new-proposal", "New proposal", "plus", "primary")}</div>`}
   <div class="section-heading"><h2>The usual places</h2><span>Drafts, ready for your judgment</span></div>
   <div class="destinations">${state.destinations.map((d) => `<button class="destination-card ${d.id}" data-action="${d.id}"><span class="destination-icon">${icon(d.icon)}</span><h3>${d.name}${icon("arrow")}</h3><p>${d.slogan}</p><span class="destination-count">${active.length} suggested ${active.length === 1 ? "draft" : "drafts"} <i></i></span></button>`).join("")}</div>
   <section aria-label="Character tips" ${dawkins() ? "hidden" : ""}><div class="section-heading"><h2>Did you know?</h2>${button("facts", "Browse tips", "spark", "text-button")}</div>${factCard()}</section>
@@ -157,12 +157,12 @@ function home(c, p) {
       .slice(0, 6)
       .map(
         (p, index) =>
-          `<button class="proposal-row" data-action="open-proposal" data-id="${p.id}"><span class="row-number">${String(index + 1).padStart(2, "0")}</span><div><strong>${escape(p.title)}</strong><small>${p.repoId ? "Code Place" : "Company proposal"} <b>·</b> ${p.rehearsals.length} ${p.rehearsals.length === 1 ? "rehearsal" : "rehearsals"}</small></div>${badge(p.status)}${icon("arrow")}</button>`,
+          `<button class="proposal-row" data-action="open-proposal" data-id="${p.id}"><span class="row-number">${String(index + 1).padStart(2, "0")}</span><div><strong>${escape(p.title)}</strong><small>${p.repoId ? "PR" : "Company proposal"} <b>·</b> ${p.rehearsals.length} ${p.rehearsals.length === 1 ? "review" : "reviews"}</small></div>${badge(p.status)}${icon("arrow")}</button>`,
       )
       .join("") ||
     '<p class="muted padded">The next useful idea belongs here.</p>'
   }</div>
-  <div class="home-footnote">${icon("shield")} A rehearsal room, with a door to the real world. You decide what leaves.</div>`;
+  <div class="home-footnote">${icon("shield")} The files are yours. Copy the messages when you’re happy with them.</div>`;
 }
 function sampleTask() {
   for (const c of state.companies) {
@@ -177,19 +177,19 @@ function walkthrough() {
   const p = sample.proposal;
   const steps = [
     ["Inspect the sample change", "Open The proposal, then The patch. The first change removes the exact requests and rich version pins in requirements.txt. Keep Include checked.", "room", "brief", false],
-    ["Record what you checked", "Return to The proposal. In Verification evidence, describe the patch you read and say that runtime comparisons are still pending.", "room", "brief", !!p.evidence],
-    ["Hear the company and respond", "Click Rehearse company. Read the three reactions in The company, add your feedback, then click Revise the handoff.", "room", "company", !!(p.rehearsals.length && p.feedback.length && p.revisions.length)],
-    ["Review the sample email and drafts", "Open Electronic Mail in the left sidebar. Check its subject, evidence, and review clarification. Review Group Chat and Code Place too; you can edit all three drafts.", "mail", "brief", false],
-    ["Approve and find the result", "Return to The handoff in the Rehearsal room. Click Approve round and confirm. Find the saved messages in Approved handoff and the round in Kanbun’s Approved column.", "room", "drafts", p.status === "approved"],
+    ["Record what you checked", "Return to The proposal. In Checks, describe the patch you read and say that other dependency versions are still untested.", "room", "brief", !!p.evidence],
+    ["Hear the company and respond", "Click Try the review. Read the three reactions in The company, add your feedback, then click Rewrite the messages.", "room", "company", !!(p.rehearsals.length && p.feedback.length && p.revisions.length)],
+    ["Review the sample email and drafts", "Open Mail in the left sidebar. Check its subject, evidence, and review clarification. Review Chat and PR too; you can edit all three drafts.", "mail", "brief", false],
+    ["Approve and find the result", "Return to Messages in the Try a change. Click Approve round and confirm. Find the saved messages in Accepted changes and the round in Kanbun’s Approved column.", "room", "drafts", p.status === "approved"],
   ];
   return `<section class="walkthrough" aria-label="Sample walkthrough"><div class="walkthrough-label">${icon("play")} HANDS-ON WALKTHROUGH <span>Sample data only</span></div>
-    <h2>Approve your first sample handoff</h2><p>Use <strong>${escape(sample.company.name)}</strong> to review “${escape(p.title)}” and finish with an approved email, team update, and code review description.</p>
+    <h2>Approve your first sample change</h2><p>Use <strong>${escape(sample.company.name)}</strong> to review “${escape(p.title)}” and finish with an approved email, team update, and code review description.</p>
     <p class="walkthrough-orientation">Start here in <strong>Overview</strong>. The left sidebar opens your workspace and sample apps. The middle panel is where you review and edit. Yahweh’s conversation is on the right. Return to Overview whenever you need this guide.</p>
-    <div class="walkthrough-start">${button("walkthrough", p.status === "approved" ? "View completed handoff" : p.rehearsals.length || p.evidence ? "Continue offline walkthrough" : "Start offline walkthrough", "arrow", "primary")}<small>Starting selects Offline rehearsal in Settings. No model, sign-in, or real account connection is needed.</small></div>
+    <div class="walkthrough-start">${button("walkthrough", p.status === "approved" ? "Read the result" : p.rehearsals.length || p.evidence ? "Continue offline walkthrough" : "Start offline walkthrough", "arrow", "primary")}<small>Starting selects Offline practice in Settings. No model, sign-in, or real account connection is needed.</small></div>
     <ol class="walkthrough-steps">${steps.map(([title, description, target, section, done], index) => `<li><span class="walkthrough-number">${index + 1}</span><div><h3>${escape(title)}${done ? `<span class="walkthrough-recorded">${icon("check")} Saved</span>` : ""}</h3><p>${escape(description)}</p>${button("walkthrough", `Open step ${index + 1}`, "arrow", "text-button", `data-page="${target}" data-tab="${section}"`)}</div></li>`).join("")}</ol>
-    <div class="walkthrough-result">${icon("check")}<p><strong>Success looks like:</strong> this round is Approved, its three final messages appear in Approved handoff, and the sample patch has a local approval commit. Runtime checks remain pending. Nothing is sent.</p></div>
-    <p class="walkthrough-note">Electronic Mail is a local sample draft surface; this demo has no email account or inbox. Keep this task in the sample apps. Real account connections can wait.</p>
-    ${p.status === "approved" ? `<p class="walkthrough-complete">${icon("check")} Sample handoff approved and saved. You can revisit it with the button above.</p>` : ""}</section>`;
+    <div class="walkthrough-result">${icon("check")}<p><strong>Success looks like:</strong> this round is Approved, its three final messages appear in Accepted changes, and the sample patch has a local approval commit. Other dependency versions are untested. Nothing is sent.</p></div>
+    <p class="walkthrough-note">The email is a file here. There’s no mail account connected. Read it, edit it, copy it. That’s all this button does.</p>
+    ${p.status === "approved" ? `<p class="walkthrough-complete">${icon("check")} Sample change approved and saved. You can revisit it with the button above.</p>` : ""}</section>`;
 }
 function walkthroughHint(c, p) {
   const sample = sampleTask();
@@ -197,27 +197,27 @@ function walkthroughHint(c, p) {
   let instruction;
   let next = "";
   if (p.status === "approved") {
-    instruction = "Sample task complete: the final messages and local approval commit are saved. Open Approved handoff to read all three messages, then Kanbun board to find this round in Approved. Nothing has been sent.";
-    next = button("master", "View approved handoff", "arrow", "quiet");
+    instruction = "Sample task complete: the final messages and local approval commit are saved. Open Accepted changes to read all three messages, then Tasks to find this round in Approved. Nothing has been sent.";
+    next = button("master", "Read accepted changes", "arrow", "quiet");
   } else if (p.status === "rejected") {
     instruction = "This sample round is set aside. Click Reopen round below to continue the walkthrough.";
   } else if (page === "room" && tab === "brief") {
-    instruction = "Read the title and summary below, then click The patch. After inspecting it, return here and enter this in Verification evidence: “Reviewed requirements.txt: exact requests and rich version pins are removed. Runtime comparisons are still pending.” Then click Rehearse company below.";
+    instruction = "Read the title and summary below, then click The patch. After inspecting it, return here and enter this in Checks: “Reviewed requirements.txt: exact requests and rich version pins are removed. Other dependency versions are still untested.” Then click Try the review below.";
   } else if (page === "room" && tab === "patch") {
-    instruction = "The red lines remove requests==2.32.3 and rich==13.9.4; the green lines keep the package names without exact versions. Leave Include checked. Next click The proposal and record what you inspected in Verification evidence. This patch review does not establish runtime compatibility.";
+    instruction = "The red lines remove requests==2.32.3 and rich==13.9.4; the green lines keep the package names without exact versions. Leave Include checked. Next click The proposal and record what you inspected in Checks. This patch review does not establish runtime compatibility.";
   } else if (page === "room" && tab === "company") {
     instruction = p.rehearsals.length
-      ? "Read Alex, Morgan, and Casey’s reactions below. In Review feedback, enter “Keep this to the dependency pins; runtime comparisons are still pending.” Leave Respond as set to Yourself, click Add feedback, then Revise the handoff. You should see three revised drafts."
-      : "Click Run first rehearsal below. In Offline rehearsal, three scripted company reactions appear without needing an account. Then add your own feedback and revise the handoff.";
+      ? "Read Alex, Morgan, and Casey’s reactions below. In Review feedback, enter “Keep this to the dependency pins; other dependency versions are still untested.” Leave Respond as set to Yourself, click Add feedback, then Rewrite the messages. You should see three revised drafts."
+      : "Click Try the review below. In Offline practice, three scripted company reactions appear without needing an account. Then add your own feedback and revise the messages.";
   } else if (page === "mail") {
-    instruction = "This is your sample email draft. Check the Subject, Evidence supplied for review, and Review clarification. It should say runtime comparisons are still pending. Edit the text if needed; edits save locally. Review Group Chat and Code Place from the left sidebar, then return to The handoff to approve.";
+    instruction = "This is your sample email draft. Check the Subject, Evidence supplied for review, and Review clarification. It should say other dependency versions are still untested. Edit the text if needed; edits save locally. Review Chat and PR from the left sidebar, then return to Messages to approve.";
     next = button("walkthrough", "Review all drafts & approve", "arrow", "quiet", 'data-page="room" data-tab="drafts"');
   } else if (page === "room" && tab === "drafts") {
-    instruction = "Read the Group Chat, Electronic Mail, and Code Place drafts below. Check that your feedback and pending verification are represented accurately. You can edit each draft. Then click Approve round at the bottom and confirm the local sample approval.";
+    instruction = "Read the Chat, Mail, and PR drafts below. Check that your feedback and missing checks are represented accurately. You can edit each draft. Then click Approve round at the bottom and confirm the local sample approval.";
     next = button("walkthrough", "Open sample email", "mail", "quiet", 'data-page="mail"');
   } else if (["chat", "forge"].includes(page)) {
-    instruction = "Review this sample draft and edit it if needed. Code Place describes the change, verification, and rollback; Group Chat is the short team update. Return to The handoff to review all three drafts and approve the sample round.";
-    next = button("walkthrough", "Return to The handoff", "arrow", "quiet", 'data-page="room" data-tab="drafts"');
+    instruction = "Review this sample draft and edit it if needed. PR describes the change, verification, and rollback; Chat is the short team update. Return to Messages to review all three drafts and approve the sample round.";
+    next = button("walkthrough", "Return to Messages", "arrow", "quiet", 'data-page="room" data-tab="drafts"');
   }
   if (!instruction) return "";
   return `<aside class="walkthrough-hint" aria-label="Walkthrough guidance"><strong>${icon("play")} SAMPLE WALKTHROUGH</strong><p>${escape(instruction)}</p>${state.settings.mode !== "offline" && !isClosed(p) ? `<p>Choose <strong>Start offline walkthrough</strong> in Overview to use scripted reactions without a model.</p>${button("walkthrough", "Use offline walkthrough", "play", "quiet")}` : ""}${next}</aside>`;
@@ -227,32 +227,32 @@ function proposalPicker(c, p) {
 }
 function room(c, p) {
   if (!p)
-    return `${heading("A SMALL BEGINNING", "Rehearsal room", "Give the company something concrete to react to.")}${emptyStart()}`;
+    return `${heading("A SMALL BEGINNING", "Try a change", "Show me something we can actually change.")}${emptyStart()}`;
   const closed = isClosed(p);
-  return `${heading(`ROUND ${String(c.proposals.indexOf(p) + 1).padStart(2, "0")} · ${escape(state.statuses[p.status]).toUpperCase()}`, "The rehearsal room", "A proposal. A few objections. A better way to say it.")}
- ${walkthroughHint(c, p)}${proposalPicker(c, p)}<div class="round-title"><h2>${escape(p.title)}</h2>${badge(p.status)}</div>
+  return `${heading(`ROUND ${String(c.proposals.indexOf(p) + 1).padStart(2, "0")} · ${escape(state.statuses[p.status]).toUpperCase()}`, "Try a change", "Here’s the change. Tell me what’s wrong. I can take it. Mostly.")}
+ ${proposalPicker(c, p)}<div class="round-title"><h2>${escape(p.title)}</h2>${badge(p.status)}</div>
  <div class="tabs" role="tablist" aria-label="Review sections">${[
    ["brief", "file", "The proposal"],
    ["patch", "git", "The patch"],
    ["company", "people", "The company"],
-   ["drafts", "messages", "The handoff"],
+   ["drafts", "messages", "Messages"],
  ]
    .map(
      ([id, name, label]) =>
        `<button role="tab" aria-selected="${tab === id}" class="${tab === id ? "selected" : ""}" data-action="tab" data-tab="${id}">${icon(name)}${label}${id === "company" && p.rehearsals.length ? `<span>${p.rehearsals.length}</span>` : ""}</button>`,
    )
    .join("")}</div>
- <div class="tab-content">${tab === "brief" ? brief(c, p) : tab === "patch" ? patch(p) : tab === "company" ? reactions(c, p) : handoff(p)}</div>
- <div class="review-actions"><div>${closed ? `<span class="muted">${p.status === "approved" ? "Final packet recorded · " + escape(p.approvedCommit?.slice(0, 8) || "communication only") : "Set aside for now"}</span>` : button("reject", "Set aside", "", "quiet")}${p.status === "rejected" ? button("reopen", "Reopen round", "refresh", "quiet") : ""}</div><div>${closed ? "" : `${button("rehearse", "Rehearse company", "play", "secondary")}${button("approve", "Approve round", "check", "primary")}`}</div></div>`;
+ <div class="tab-content">${tab === "brief" ? brief(c, p) : tab === "patch" ? patch(p) : tab === "company" ? reactions(c, p) : messageDrafts(p)}</div>
+ <div class="review-actions"><div>${closed ? `<span class="muted">${p.status === "approved" ? "Final text saved · " + escape(p.approvedCommit?.slice(0, 8) || "communication only") : "Set aside for now"}</span>` : button("reject", "Set aside", "", "quiet")}${p.status === "rejected" ? button("reopen", "Reopen round", "refresh", "quiet") : ""}</div><div>${closed ? "" : `${button("rehearse", "Try the review", "play", "secondary")}${button("approve", "Approve round", "check", "primary")}`}</div></div>`;
 }
 function brief(c, p) {
   const closed = isClosed(p),
     repo = c.repositories.find((r) => r.id === p.repoId);
-  return `<div class="callout">${icon("sun")}<p><strong>“Let me come down and see.”</strong> Give the company an observable change. Put the evidence beside it. We can negotiate the rest.</p></div>
+  return `<div class="callout">${icon("sun")}<p><strong>“Let me come down and see.”</strong> Show me the patch and the commands you ran. If something’s missing, say so. I’ve made worse mistakes.</p></div>
  <label class="field">Proposal title<input data-field="title" value="${escape(p.title)}" ${closed ? "readonly" : ""}></label>
  <label class="field">What changes, and why?<textarea rows="5" data-field="summary" ${closed ? "readonly" : ""}>${escape(p.summary)}</textarea></label>
- <label class="field">Verification evidence <span>Commands, results, or remaining gaps. Plans are not results.</span><textarea rows="4" data-field="evidence" placeholder="Not yet verified. What would establish that this change works?" ${closed ? "readonly" : ""}>${escape(p.evidence)}</textarea></label>
- <div class="repository-info">${icon("git")}<div><b>${escape(repo?.name || "Communication-only proposal")}</b><p>${repo ? `Draft: <code>mistress</code> → approved: <code>master</code><br>Source commit: <code>${escape(p.sourceCommit?.slice(0, 12))}</code>` : "No code changes are attached to this round."}</p></div>${repo ? '<span class="badge local">Isolated copy</span>' : ""}</div>
+ <label class="field">Checks <span>What ran? What happened? What have we not checked?</span><textarea rows="4" data-field="evidence" placeholder="Nothing checked yet. What should we run?" ${closed ? "readonly" : ""}>${escape(p.evidence)}</textarea></label>
+ <div class="repository-info">${icon("git")}<div><b>${escape(repo?.name || "Message only")}</b><p>${repo ? `Draft: <code>mistress</code> → approved: <code>master</code><br>Source commit: <code>${escape(p.sourceCommit?.slice(0, 12))}</code>` : "No code changes are attached to this round."}</p></div>${repo ? '<span class="badge local">Isolated copy</span>' : ""}</div>
  ${p.dependency ? `<p class="muted dependency">${icon("layers")} Follows “${escape(c.proposals.find((x) => x.id === p.dependency)?.title)}”. Approve that round first.</p>` : ""}`;
 }
 function patch(p) {
@@ -278,10 +278,10 @@ function patch(p) {
          )
          .join("")
  }
- <p class="muted">Approving applies only the included hunks in the local rehearsal copy. Dependent patches may need editing after a partial approval. Binary changes are reviewed as a whole file.</p>`;
+ <p class="muted">Approving applies only the included hunks in the local repo copy. Dependent patches may need editing after a partial approval. Binary changes are reviewed as a whole file.</p>`;
 }
 function reactions(c, p) {
-  return `<div class="section-heading"><div><h2>Let the humans object.</h2><p class="muted">Simulated roles, with the concerns you gave them.</p></div>${!isClosed(p) ? button("rehearse", p.rehearsals.length ? "Rehearse again" : "Run first rehearsal", "play", "secondary") : ""}</div>
+  return `<div class="section-heading"><div><h2>Let the humans object.</h2><p class="muted">I’m making up their replies from what you told me. I haven’t asked them.</p></div>${!isClosed(p) ? button("rehearse", p.rehearsals.length ? "Try again" : "Try the review", "play", "secondary") : ""}</div>
  ${
    !p.rehearsals.length
      ? `<div class="cast-preview">${c.people.map((person, index) => `<div class="person-preview"><span class="person-avatar color-${index % 3}">${escape(person.name[0])}</span><div><b>${escape(person.name)}</b><small>${escape(person.role)}</small><p>${escape(person.concern)}</p></div></div>`).join("")}</div>`
@@ -290,21 +290,21 @@ function reactions(c, p) {
          .reverse()
          .map(
            (round) =>
-             `<div class="rehearsal"><div class="rehearsal-label">REHEARSAL ${round.round}<span>${round.mode === "codex" ? "Codex simulation" : round.mode === "offline" ? "Scripted simulation" : "Local model simulation"} · ${new Date(round.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>${round.reactions.map((r, index) => `<article class="reaction"><span class="person-avatar color-${index % 3}">${escape(r.name[0])}</span><div><div class="reaction-heading"><b>${escape(r.name)}</b><span>${escape(r.role)}</span><em class="${r.verdict}">${r.verdict === "support" ? "Ready to review" : "Has a concern"}</em></div><p>${escape(r.content)}</p></div></article>`).join("")}</div>`,
+             `<div class="rehearsal"><div class="rehearsal-label">TRY ${round.round}<span>${round.mode === "codex" ? "Codex simulation" : round.mode === "offline" ? "Scripted simulation" : "Local model simulation"} · ${new Date(round.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>${round.reactions.map((r, index) => `<article class="reaction"><span class="person-avatar color-${index % 3}">${escape(r.name[0])}</span><div><div class="reaction-heading"><b>${escape(r.name)}</b><span>${escape(r.role)}</span><em class="${r.verdict}">${r.verdict === "support" ? "Ready to review" : "Has a concern"}</em></div><p>${escape(r.content)}</p></div></article>`).join("")}</div>`,
          )
          .join("")
  }
- <div class="feedback-section"><div class="section-heading"><h2>You play the company, too.</h2></div>${p.feedback.map((f) => `<div class="feedback"><b>${escape(f.author)}</b><p>${escape(f.content)}</p></div>`).join("")}${!isClosed(p) ? `<form id="feedback-form"><label class="field">Respond as<select name="personId"><option value="">Yourself</option>${c.people.map((person) => `<option value="${person.id}">${escape(person.name)} · ${escape(person.role)}</option>`).join("")}</select></label><label class="field">Review feedback<textarea name="content" rows="3" placeholder="What would this person actually ask? What needs to change?" required></textarea></label><div class="form-actions">${button("revise", "Revise the handoff", "refresh", "secondary")}<button class="button primary" ${busy ? "disabled" : ""}>${icon("plus")} Add feedback</button></div></form>` : ""}</div>`;
+ <div class="feedback-section"><div class="section-heading"><h2>You play the company, too.</h2></div>${p.feedback.map((f) => `<div class="feedback"><b>${escape(f.author)}</b><p>${escape(f.content)}</p></div>`).join("")}${!isClosed(p) ? `<form id="feedback-form"><label class="field">Respond as<select name="personId"><option value="">Yourself</option>${c.people.map((person) => `<option value="${person.id}">${escape(person.name)} · ${escape(person.role)}</option>`).join("")}</select></label><label class="field">Review feedback<textarea name="content" rows="3" placeholder="What would this person actually ask? What needs to change?" required></textarea></label><div class="form-actions">${button("revise", "Rewrite the messages", "refresh", "secondary")}<button class="button primary" ${busy ? "disabled" : ""}>${icon("plus")} Add feedback</button></div></form>` : ""}</div>`;
 }
-function handoff(p) {
+function messageDrafts(p) {
   return `<div class="section-heading"><div><h2>What you’ll actually share.</h2><p class="muted">Edit each draft. Copy it when you’re ready.</p></div>${!isClosed(p) ? button("revise", "Revise from feedback", "refresh", "quiet") : ""}</div>${state.destinations.map((d) => draftEditor(p, d)).join("")}`;
 }
 function draftEditor(p, d) {
-  return `<section class="draft-editor"><header><div><span class="destination-icon ${d.id}">${icon(d.icon)}</span><div><h3>${d.name}</h3><small>${d.description}</small></div></div>${button("copy-draft", "Copy draft", "copy", "quiet", `data-destination="${d.id}"`)}</header><textarea data-draft="${d.id}" rows="${d.id === "chat" ? 5 : 12}" aria-label="${d.name} draft" ${isClosed(p) ? "readonly" : ""}>${escape((p.final || p.drafts)[d.id])}</textarea><footer><span class="draft-indicator"></span> ${p.status === "approved" ? "Approved packet" : "Suggested by Yahweh"} <span>Local draft · You choose where to post</span></footer></section>`;
+  return `<section class="draft-editor"><header><div><span class="destination-icon ${d.id}">${icon(d.icon)}</span><div><h3>${d.name}</h3><small>${d.description}</small></div></div>${button("copy-draft", "Copy draft", "copy", "quiet", `data-destination="${d.id}"`)}</header><textarea data-draft="${d.id}" rows="${d.id === "chat" ? 5 : 12}" aria-label="${d.name} draft" ${isClosed(p) ? "readonly" : ""}>${escape((p.final || p.drafts)[d.id])}</textarea><footer><span class="draft-indicator"></span> ${p.status === "approved" ? "Saved messages" : "Suggested by Yahweh"} <span>Local draft · You choose where to post</span></footer></section>`;
 }
 function destination(c, p) {
   const d = state.destinations.find((d) => d.id === page);
-  return `${heading("THE USUAL PLACES", d.name, d.slogan)}${walkthroughHint(c, p)}<div class="callout compact">${icon("shield")}<p>Suggestions for your ${d.id === "chat" ? "team conversation" : d.id === "mail" ? "email app" : "work repository"}. Copy and post them yourself after review.</p></div>${p ? `${proposalPicker(c, p)}${badge(p.status)}<div class="spacer"></div>${draftEditor(p, d)}${button("open-proposal", "Back to the full round", "arrow", "secondary", `data-id="${p.id}"`)}` : emptyStart()}`;
+  return `${heading("THE USUAL PLACES", d.name, d.slogan)}<div class="callout compact">${icon("shield")}<p>Suggestions for your ${d.id === "chat" ? "team conversation" : d.id === "mail" ? "email app" : "work repository"}. Copy and post them yourself after review.</p></div>${p ? `${proposalPicker(c, p)}${badge(p.status)}<div class="spacer"></div>${draftEditor(p, d)}${button("open-proposal", "Back to the full round", "arrow", "secondary", `data-id="${p.id}"`)}` : emptyStart()}`;
 }
 function board(c) {
   const columns = ["draft", "review", "changes", "approved", "rejected"];
@@ -319,14 +319,14 @@ function board(c) {
     .join("")}</div>`;
 }
 function people(c) {
-  return `${heading("THE PEOPLE IN THE ROOM", "A company is made of people.", "Give each person a concern worth taking seriously.")}<form id="company-form"><label class="field">Company name<input name="name" value="${escape(c.name)}" required maxlength="120"></label><label class="field">What are you trying to change?<textarea rows="3" name="goal" required>${escape(c.goal)}</textarea></label><label class="field">Context the simulation should know<textarea rows="6" name="context" placeholder="Existing workflow, constraints, interpersonal context, evidence…">${escape(c.context)}</textarea></label><div class="section-heading"><h2>The company voices</h2>${button("add-person", "Add person", "plus", "quiet")}</div><div id="people-fields">${c.people.map((p, i) => personFields(p, i)).join("")}</div><div class="form-actions"><span class="muted">Imagined reactions, never claims about real people.</span><button class="button primary">${icon("check")} Save company</button></div></form><div class="section-heading"><h2>Rehearsal repositories</h2>${button("import", "Import Git range", "git", "quiet")}</div>${c.repositories.map((r) => `<div class="repository-info">${icon("git")}<div><b>${escape(r.name)}</b><p>${escape(r.source)}<br><code>${escape(r.base)}..${escape(r.draft)}</code> → local <code>mistress / master</code></p></div><span class="badge local">Isolated copy</span></div>`).join("") || '<p class="muted">No repository is attached. Communication proposals work on their own.</p>'}`;
+  return `${heading("THE PEOPLE IN THE ROOM", "A company is made of people.", "Give each person a concern worth taking seriously.")}<form id="company-form"><label class="field">Company name<input name="name" value="${escape(c.name)}" required maxlength="120"></label><label class="field">What are you trying to change?<textarea rows="3" name="goal" required>${escape(c.goal)}</textarea></label><label class="field">What should I know?<textarea rows="6" name="context" placeholder="How things work, what’s broken, who cares about it…">${escape(c.context)}</textarea></label><div class="section-heading"><h2>The people</h2>${button("add-person", "Add person", "plus", "quiet")}</div><div id="people-fields">${c.people.map((p, i) => personFields(p, i)).join("")}</div><div class="form-actions"><span class="muted">Imagined reactions, never claims about real people.</span><button class="button primary">${icon("check")} Save company</button></div></form><div class="section-heading"><h2>Copies of your repos</h2>${button("import", "Import Git range", "git", "quiet")}</div>${c.repositories.map((r) => `<div class="repository-info">${icon("git")}<div><b>${escape(r.name)}</b><p>${escape(r.source)}<br><code>${escape(r.base)}..${escape(r.draft)}</code> → local <code>mistress / master</code></p></div><span class="badge local">Isolated copy</span></div>`).join("") || '<p class="muted">No repository is attached. Message changes work on their own.</p>'}`;
 }
 function personFields(p, index) {
   return `<div class="person-fields" data-person="${escape(p.id || "")}"><span class="person-avatar color-${index % 3}">${index + 1}</span><div><div class="field-row"><label class="field">Name<input data-person-field="name" value="${escape(p.name)}" required></label><label class="field">Role<input data-person-field="role" value="${escape(p.role)}" required></label></div><label class="field">What matters to this person?<textarea data-person-field="concern" rows="2" required>${escape(p.concern)}</textarea></label></div>${smallButton("remove-person", "close", "Remove person")}</div>`;
 }
 function master(c) {
   const approved = c.proposals.filter((p) => p.status === "approved");
-  return `${heading("ONLY WHAT SURVIVED REVIEW", "The approved handoff.", "Final messages and change descriptions. The rehearsal stays backstage.", button("export", "Export MASTER.md", "download", "primary"))}${approved.length ? approved.map((p) => `<article class="final-packet"><div class="section-heading"><h2>${escape(p.title)}</h2>${badge("approved")}</div><p class="muted">${new Date(p.approvedAt).toLocaleString()} ${p.approvedCommit ? "· Commit " + escape(p.approvedCommit.slice(0, 12)) : ""}</p>${state.destinations.map((d) => `<div class="final-draft"><h3>${icon(d.icon)}${d.name}${button("copy-final", "Copy", "copy", "quiet", `data-id="${p.id}" data-destination="${d.id}"`)}</h3><p>${escape(p.final[d.id])}</p></div>`).join("")}</article>`).join("") : `<div class="empty-state">${icon("book")}<h2>No commandments yet.</h2><p>Approve a rehearsed round and its final messages will appear here. Export creates MASTER.md, Kanbun.md, a company snapshot, and approved patches.</p>${button("room", "Go to the rehearsal", "arrow", "secondary")}</div>`}`;
+  return `${heading("ONLY WHAT SURVIVED REVIEW", "The accepted changes.", "The messages and patches you approved. Plain text. I kept the receipts.", button("export", "Export MASTER.md", "download", "primary"))}${approved.length ? approved.map((p) => `<article class="final-packet"><div class="section-heading"><h2>${escape(p.title)}</h2>${badge("approved")}</div><p class="muted">${new Date(p.approvedAt).toLocaleString()} ${p.approvedCommit ? "· Commit " + escape(p.approvedCommit.slice(0, 12)) : ""}</p>${state.destinations.map((d) => `<div class="final-draft"><h3>${icon(d.icon)}${d.name}${button("copy-final", "Copy", "copy", "quiet", `data-id="${p.id}" data-destination="${d.id}"`)}</h3><p>${escape(p.final[d.id])}</p></div>`).join("")}</article>`).join("") : `<div class="empty-state">${icon("book")}<h2>No commandments yet.</h2><p>Approve a reviewed change and its final messages will appear here. Export creates MASTER.md, Kanbun.md, a company snapshot, and approved patches.</p>${button("room", "Open the change", "arrow", "secondary")}</div>`}`;
 }
 function emptyStart() {
   return `<div class="empty-state">${icon("layers")}<h2>Let there be a proposal.</h2><p>Start with one small improvement, or turn an existing local Git range into review rounds.</p><div>${button("new-proposal", "New proposal", "plus", "primary")}${button("import", "Import Git", "git", "secondary")}</div></div>`;
@@ -402,7 +402,7 @@ function toast(message, error = false) {
 }
 function fail(error) {
   toast(
-    error.message.replace(/^Error invoking remote method '[^']+': Error: /, ""),
+    (dawkins() ? "That failed. " : "Well, shit. That failed. ") + error.message.replace(/^Error invoking remote method '[^']+': Error: /, ""),
     true,
   );
 }
@@ -421,38 +421,38 @@ function closeDialog() {
 function showFacts() {
   const fact = state.facts[state.factIndex];
   showDialog(
-    `<div class="startup-fact"><span class="fact-emblem">${icon("sun")}</span><div class="eyebrow">DID YOU KNOW?</div><h2>${escape(fact.title)}</h2><p>${escape(fact.text)}</p><blockquote>“${escape(fact.evidence)}”</blockquote><small>We The Nameless · ${escape(fact.source)}<br>A fact about the literary character, with a workplace interpretation.</small></div><div class="modal-actions fact-dialog-actions">${button("fact-dialog-next", "Another fact", "refresh", "quiet")}${button("disable-facts", "Don’t show this again", "", "quiet")}${button("close-dialog", "Let there be work", "arrow", "primary")}</div>`,
+    `<div class="startup-fact"><span class="fact-emblem">${icon("sun")}</span><div class="eyebrow">DID YOU KNOW?</div><h2>${escape(fact.title)}</h2><p>${escape(fact.text)}</p><blockquote>“${escape(fact.evidence)}”</blockquote><small>We The Nameless · ${escape(fact.source)}<br>From your Genesis. Yes, I really did say that.</small></div><div class="modal-actions fact-dialog-actions">${button("fact-dialog-next", "Another fact", "refresh", "quiet")}${button("disable-facts", "Don’t show this again", "", "quiet")}${button("close-dialog", "Let there be work", "arrow", "primary")}</div>`,
     "A small revelation",
   );
 }
 function showSettings() {
   showDialog(
-    `<h2>${dawkins() ? "Preferences" : "Divine preferences."}</h2><p class="muted">Codex is the default for conversation, company reviews, and handoff revisions. Ollama and the scripted offline rehearsal remain available.</p><form id="settings-form"><label class="field">Interface<select name="theme"><option value="yhwh" ${!dawkins() ? "selected" : ""}>YHWH</option><option value="dawkins" ${dawkins() ? "selected" : ""}>dawkins · DOS / TTY</option></select></label><label class="field">Rehearsal engine<select name="mode"><option value="codex" ${state.settings.mode === "codex" ? "selected" : ""}>Codex · xhigh thinking · full access</option><option value="ollama" ${state.settings.mode === "ollama" ? "selected" : ""}>Local model · Ollama</option><option value="offline" ${state.settings.mode === "offline" ? "selected" : ""}>Offline rehearsal · scripted, no model needed</option></select></label><div data-engine="codex" ${state.settings.mode === "codex" ? "" : "hidden"}><div class="setup-note">Uses your installed Codex CLI, configured model, and sign-in.<br>Run <code>codex login</code> in a terminal first.<br>Matches <code>lordhavemercy -f</code>: xhigh reasoning, full filesystem and network access, no approval prompts.<br>Chat can carry out requested work in the selected review workspace or proposal’s rehearsal repository.</div></div><div data-engine="ollama" ${state.settings.mode === "ollama" ? "" : "hidden"}><label class="field">Ollama model name<input name="model" value="${escape(state.settings.model)}" required></label><div class="setup-note">Local endpoint: <code>127.0.0.1:11434</code><br>Start Ollama, then run <code>ollama pull ${escape(state.settings.model)}</code>.<br>Chat, company reviews, and handoff revisions use this model.</div></div><label class="checkbox-field"><input name="showFacts" type="checkbox" ${state.settings.showFacts ? "checked" : ""}> Show “Did you know?” when the app opens</label><div class="form-actions">${button("open-folder", "Open data folder", "folder", "quiet")}<button class="button primary">Save preferences</button></div></form>`,
+    `<h2>${dawkins() ? "Preferences" : "Divine preferences."}</h2><p class="muted">Codex is the default for conversation, company reviews, and message edits. Ollama and the offline practice remain available.</p><form id="settings-form"><label class="field">Interface<select name="theme"><option value="yhwh" ${!dawkins() ? "selected" : ""}>YHWH</option><option value="dawkins" ${dawkins() ? "selected" : ""}>dawkins · DOS / TTY</option></select></label><label class="field">Model<select name="mode"><option value="codex" ${state.settings.mode === "codex" ? "selected" : ""}>Codex · xhigh thinking · full access</option><option value="ollama" ${state.settings.mode === "ollama" ? "selected" : ""}>Local model · Ollama</option><option value="offline" ${state.settings.mode === "offline" ? "selected" : ""}>Offline practice · scripted, no model needed</option></select></label><div data-engine="codex" ${state.settings.mode === "codex" ? "" : "hidden"}><div class="setup-note">Uses your installed Codex CLI, configured model, and sign-in.<br>Run <code>codex login</code> in a terminal first.<br>Matches <code>lordhavemercy -f</code>: xhigh reasoning, full filesystem and network access, no approval prompts.<br>Chat can carry out requested work in the selected review workspace or proposal’s copied repository.</div></div><div data-engine="ollama" ${state.settings.mode === "ollama" ? "" : "hidden"}><label class="field">Ollama model name<input name="model" value="${escape(state.settings.model)}" required></label><div class="setup-note">Local endpoint: <code>127.0.0.1:11434</code><br>Start Ollama, then run <code>ollama pull ${escape(state.settings.model)}</code>.<br>Chat, company reviews, and message edits use this model.</div></div><label class="checkbox-field"><input name="showFacts" type="checkbox" ${state.settings.showFacts ? "checked" : ""}> Show “Did you know?” when the app opens</label><div class="form-actions">${button("open-folder", "Open data folder", "folder", "quiet")}<button class="button primary">Save preferences</button></div></form>`,
     "Settings",
   );
 }
 function showNewCompany() {
   showDialog(
-    `<h2>A new corner of creation.</h2><p class="muted">Any company. One concrete goal. You can edit the people next.</p><form id="new-company-form"><label class="field">Company name<input name="name" placeholder="The Actual Company" required maxlength="120" autofocus></label><label class="field">What should get better?<textarea name="goal" placeholder="Make useful work easier to review and share." required rows="3"></textarea></label><label class="field">Context<textarea name="context" rows="4" placeholder="The situation, the constraints, and what the team needs…"></textarea></label><div class="form-actions"><button class="button primary">${icon("plus")} Create workspace</button></div></form>`,
+    `<h2>A new corner of creation.</h2><p class="muted">Who are we helping? What needs fixing? Start there.</p><form id="new-company-form"><label class="field">Company name<input name="name" placeholder="The Actual Company" required maxlength="120" autofocus></label><label class="field">What should get better?<textarea name="goal" placeholder="Make useful work easier to review and share." required rows="3"></textarea></label><label class="field">What should I know?<textarea name="context" rows="4" placeholder="The situation, the constraints, and what the team needs…"></textarea></label><div class="form-actions"><button class="button primary">${icon("plus")} Create workspace</button></div></form>`,
     "New company",
   );
 }
 function showNewProposal() {
   showDialog(
-    `<h2>One useful thing.</h2><p class="muted">A communication-only proposal to start. Import Git for proposals with real patches.</p><form id="new-proposal-form"><label class="field">Proposal title<input name="title" placeholder="Document the one-command setup" required maxlength="200"></label><label class="field">What changes, and why?<textarea name="summary" rows="6" placeholder="What gets better? What is deliberately kept small?" required></textarea></label><div class="form-actions"><button class="button primary">${icon("plus")} Add proposal</button></div></form>`,
+    `<h2>One useful thing.</h2><p class="muted">Start with a message. Use Import Git to review code you already wrote.</p><form id="new-proposal-form"><label class="field">Proposal title<input name="title" placeholder="Document the one-command setup" required maxlength="200"></label><label class="field">What changes, and why?<textarea name="summary" rows="6" placeholder="What gets better? What can wait?" required></textarea></label><div class="form-actions"><button class="button primary">${icon("plus")} Add proposal</button></div></form>`,
     "New proposal",
   );
 }
 function showImport() {
   showDialog(
-    `<h2>Bring the work you already did.</h2><p class="muted">Choose a local Git repository after entering the references. Each non-merge commit becomes a round, in order. We clone it into this workspace and prepare <code>mistress</code> and <code>master</code>.</p><form id="import-form"><div class="field-row"><label class="field">Base reference<input name="base" value="main" required></label><label class="field">Draft reference<input name="draft" value="HEAD" required></label></div><div class="callout compact">${icon("shield")}<p>Your source branches, working files, index, and hooks are preserved. Rehearsal commits live in a separate copy.</p></div><p class="muted">Committed changes only · up to 100 commits · base must be an ancestor of draft. Repeat to add another repository.</p><div class="form-actions"><button class="button primary">${icon("folder")} Choose repository</button></div></form>`,
+    `<h2>Bring the work you already did.</h2><p class="muted">Choose a local Git repository after entering the references. Each non-merge commit becomes a round, in order. We clone it into this workspace and prepare <code>mistress</code> and <code>master</code>.</p><form id="import-form"><div class="field-row"><label class="field">Base reference<input name="base" value="main" required></label><label class="field">Draft reference<input name="draft" value="HEAD" required></label></div><div class="callout compact">${icon("shield")}<p>Your source branches, working files, index, and hooks are preserved. Practice commits live in a separate copy.</p></div><p class="muted">Committed changes only · up to 100 commits · base must be an ancestor of draft. Repeat to add another repository.</p><div class="form-actions"><button class="button primary">${icon("folder")} Choose repository</button></div></form>`,
     "Import work",
   );
 }
 function showApprove() {
   const p = proposal();
   showDialog(
-    `<span class="approval-emblem">${icon("check")}</span><h2>Make this round a keeper.</h2><p>${escape(p.title)}</p><ul class="approval-list"><li>${icon("check")} Record the three final handoff drafts.</li><li>${icon("check")} Move this round to Approved on Kanbun.</li><li>${icon("git")} ${p.repoId ? "Apply included hunks and commit on the isolated master branch." : "Save a communication-only approval."}</li></ul><p class="muted">No external messages are sent. No source repository is changed.</p><div class="modal-actions">${button("close-dialog", "Keep reviewing", "", "quiet")}${button("confirm-approve", "Approve round", "check", "primary")}</div>`,
+    `<span class="approval-emblem">${icon("check")}</span><h2>Make this round a keeper.</h2><p>${escape(p.title)}</p><ul class="approval-list"><li>${icon("check")} Save all three messages.</li><li>${icon("check")} Move this round to Approved in Tasks.</li><li>${icon("git")} ${p.repoId ? "Apply included hunks and commit on the isolated master branch." : "Save the approved messages."}</li></ul><p class="muted">No external messages are sent. No source repository is changed.</p><div class="modal-actions">${button("close-dialog", "Keep reviewing", "", "quiet")}${button("confirm-approve", "Approve round", "check", "primary")}</div>`,
     "Approve round",
   );
 }
@@ -589,7 +589,7 @@ async function action(name, element) {
   if (name === "confirm-approve") {
     closeDialog();
     await run("approve");
-    toast("Round approved. Final packet saved.");
+    toast("Round approved. Final text saved.");
     return;
   }
   if (name === "copy-draft") {
@@ -612,7 +612,7 @@ async function action(name, element) {
   if (name === "export") {
     await saveVisible();
     const target = page === "review" ? await api.reviewExport() : await api.exportCompany(company().id);
-    if (target) toast("Handoff exported to " + target);
+    if (target) toast("Files exported to " + target);
     return;
   }
   if (name === "open-folder") {
@@ -752,7 +752,7 @@ document.addEventListener("submit", async (event) => {
     }
     if (form.id === "feedback-form") {
       await run("feedback", input, { page: "room", tab: "company" });
-      toast("Feedback recorded. Revise the handoff when ready.");
+      toast("Feedback recorded. Rewrite the messages when ready.");
     }
     if (form.id === "company-form") {
       input.people = [...document.querySelectorAll(".person-fields")].map(
@@ -795,7 +795,7 @@ document.addEventListener("submit", async (event) => {
           page = "room";
           tab = "brief";
           await refreshHunks();
-          toast("Git range imported into an isolated rehearsal copy.");
+          toast("Git range imported into a separate repo copy.");
         }
       } finally {
         busy = false;
@@ -841,7 +841,7 @@ document.addEventListener("drop", (event) => {
   const taskId = event.dataTransfer.getData("text/plain");
   if (!company().tasks.some((t) => t.id === taskId)) return;
   if (!["draft", "review", "approved"].includes(column.dataset.drop)) {
-    toast("Independent tasks use Up next, In rehearsal, or Approved.");
+    toast("Independent tasks use Up next, In review, or Approved.");
     return;
   }
   run("moveTask", { taskId, status: column.dataset.drop }).catch(fail);

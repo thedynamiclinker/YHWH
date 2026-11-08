@@ -140,7 +140,7 @@ def save_copy(state, r, copy):
             or set(copy["descriptions"]) != set(r["commits"])
             or any(not isinstance(value, str) or not value.strip()
                    for value in copy["descriptions"].values())):
-        raise ValueError("Supply an MR description for every repository in this round.")
+        raise ValueError("Supply a PR description for every repository in this round.")
     state["rounds"].setdefault(r["id"], {})["copy"] = copy
     save(state_path(), state)
 
@@ -307,13 +307,13 @@ def record(round_, state):
         return
     text = text.replace("No rounds have been accepted yet. Run `./review start` to begin or resume.\n", "")
     section = [f'\n{marker}\n## {round_["id"]}: {copy["title"]}',
-               "### TEAMS", copy["teams"], "### GitLab MR"]
+               "### Message", copy["teams"], "### PR"]
     for repo, sha in entry["accepted_commits"].items():
         section.extend([f"#### {repo}", f'**Title:** {copy["mr_title"]}',
                         copy["descriptions"][repo],
                         f'Commit: `{sha}`. Review base: `{entry["before"][repo]}`. '
-                        f'Target branch: `{"master" if repo == "es" else "main"}` after preceding rounds merge.'])
-    section.extend(["### Validation", copy["validation"], ""])
+                        f'Accepted branch: `master`.'])
+    section.extend(["### Checks", copy["validation"], ""])
     path.write_text(text.rstrip() + "\n" + "\n\n".join(section))
 
 
@@ -347,7 +347,7 @@ def accept(plan, state, r):
     if state["rounds"].get(r["id"], {}).get("drafts"):
         raise RuntimeError("There is unfinished editor text. Save it or discard drafts before acceptance.")
     if state["rounds"].get(r["id"], {}).get("status") == "changes_requested":
-        raise RuntimeError("Changes are requested. Revise the patch/copy, then use 'resolve' before accepting.")
+        raise RuntimeError("Changes are requested. Revise the patch or message, then use 'resolve' before accepting.")
     before, after = {}, {}
     copy = details(r, state)
     # Prepare every commit first, without touching any checkout or its real index.
@@ -412,13 +412,13 @@ def edit(state, r, repo=None):
 
 def show(r, state, full=False):
     copy = details(r, state)
-    print(f'\n{r["id"]}: {copy["title"]}\n\nTEAMS: {copy["teams"]}\n')
+    print(f'\n{r["id"]}: {copy["title"]}\n\nMessage: {copy["teams"]}\n')
     for repo, commit in r["commits"].items():
         print(f"{repo}: {commit[:12]}")
         print(git(repo, "show", "--format=", "--stat", commit).rstrip())
         if full:
             print(patch(r, repo))
-    print(f'\nValidation: {copy["validation"]}')
+    print(f'\nChecks: {copy["validation"]}')
     for note in state["rounds"].get(r["id"], {}).get("comments", []):
         print(f'COMMENT ({note["anchor"] or "round"}): {note["text"]}')
 
