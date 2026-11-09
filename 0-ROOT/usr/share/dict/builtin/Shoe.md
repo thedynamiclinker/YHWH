@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/parts/Foot]], [[Clothes]]

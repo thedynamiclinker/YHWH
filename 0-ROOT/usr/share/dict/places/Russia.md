@@ -1,0 +1,1 @@
+Type: [[Cold]], [[Place]], [[North]], [[Of]], [[China]], [[And]], [[East]], [[Of]], [[Europe]]

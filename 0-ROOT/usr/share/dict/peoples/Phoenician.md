@@ -1,0 +1,1 @@
+Type: [[First]], [[Alphabet]], [[But]], [[Not]], [[Really]]

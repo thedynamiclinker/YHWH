@@ -1,0 +1,2 @@
+Type: [[North]], [[Part]], [[Of]], [[Jew]], [[Land]], [[In]], [[Old]], [[usr/share/dict/religion/books/Bible|Bible]], [[Time]]
+Type: [[Jew]], [[Country]], [[Now]], [[That]], [[Many]], [[People]], [[Very]], [[Angry]], [[At]]

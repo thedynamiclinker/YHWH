@@ -1,0 +1,1 @@
+Type: [[Think]], [[Bad]], [[Thing]], [[May]], [[Happen]]

@@ -1,0 +1,1 @@
+Type: [[Black]], [[Magic]]

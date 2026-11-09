@@ -1,0 +1,1 @@
+Type: [[Go]], [[From]], [[Together]], [[To]], [[Not]], [[Together]]
