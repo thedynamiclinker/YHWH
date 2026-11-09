@@ -40,7 +40,7 @@ const { git } = require("../app/repository.cjs");
   }
   try {
     await launch();
-    await page.getByRole("heading", { name: "Let's read some code." }).waitFor();
+    await page.getByRole("heading", { name: "How should these commits look?" }).waitFor();
     assert.equal(await page.locator(".tw-content").evaluate(el => el.scrollTop), 0);
     assert.equal(await page.locator(".tw-modal").count(), 0);
     await page.screenshot({ path: path.join(artifacts, "thwh-tutor-welcome.png") });

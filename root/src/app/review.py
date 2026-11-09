@@ -108,9 +108,14 @@ def snapshot(plan, state):
     chunks = hunks(r) if r else []
     index = max(0, min(entry.get("hunk", 0), max(0, len(chunks) - 1)))
     view = {"root": str(ROOT), "active": state.get("active", False),
-            "rounds": [{"id": item["id"], "title": details(item, state)["title"],
+            "rounds": [{**details(item, state),
                         "status": state["rounds"].get(item["id"], {}).get("status", "prepared")}
                        for item in plan["rounds"]],
+            "instructions": state.get("instructions", ""),
+            "instructionsDraft": state.get("instructions_draft"),
+            "requests": [{"roundId": item["id"], **note}
+                         for item in plan["rounds"]
+                         for note in state["rounds"].get(item["id"], {}).get("comments", [])],
             "round": details(r, state) if r else None,
             "status": entry.get("status", "prepared"), "hunk": index,
             "hunks": [{**c, "id": hunk_id(c), "seen": hunk_id(c) in entry.get("seen", [])}
@@ -153,6 +158,22 @@ def act(plan, state, action, data):
         return
     if action == "pause":
         state["active"] = False
+        save(state_path(), state)
+        return
+    if action in ("draft-instructions", "save-instructions"):
+        if data.get("revision") and data["revision"] != snapshot(plan, state)["revision"]:
+            raise RuntimeError("The review changed. Refresh before saving; your text is retained.")
+        text = data.get("text")
+        if not isinstance(text, str) or len(text) > 100_000:
+            raise ValueError("Keep the sequence instructions under 100,000 characters.")
+        if action == "draft-instructions":
+            if text == state.get("instructions", ""):
+                state.pop("instructions_draft", None)
+            else:
+                state["instructions_draft"] = text
+        else:
+            state["instructions"] = text
+            state.pop("instructions_draft", None)
         save(state_path(), state)
         return
     if not r and action == "position":
@@ -345,6 +366,8 @@ def finish_pending(plan, state):
 
 
 def accept(plan, state, r):
+    if "instructions_draft" in state:
+        raise RuntimeError("Save the commit sequence instructions before acceptance.")
     if state["rounds"].get(r["id"], {}).get("drafts"):
         raise RuntimeError("There is unfinished editor text. Save it or discard drafts before acceptance.")
     if state["rounds"].get(r["id"], {}).get("status") == "changes_requested":
@@ -446,13 +469,19 @@ def main():
     p.add_argument("command", nargs="?", default="start", choices=(
         "start", "status", "show", "accept", "comment", "reject", "resolve", "edit", "edit-patch", "sync", "task-add", "task-move",
         "read", "pause", "next", "previous", "save-copy", "save-patch", "position", "draft",
-        "discard-drafts", "save-field"))
+        "discard-drafts", "save-field", "draft-instructions", "save-instructions"))
     p.add_argument("text", nargs="*")
     p.add_argument("--diff", action="store_true", help="show every diff with 'show'")
     args = p.parse_args()
     ROOT = args.root.expanduser().resolve()
     if not (ROOT / ".review/plan.json").is_file():
         raise RuntimeError(f"No prepared review at {ROOT}. Choose a folder containing .review/plan.json.")
+    # State is replaced atomically. Reading it must remain possible while the
+    # terminal holds its session lock; every decision still checks that lock
+    # and the snapshot revision before changing anything.
+    if args.json and args.command == "read":
+        print(json.dumps(snapshot(json.loads((ROOT / ".review/plan.json").read_text()), read_state())))
+        return
     with locked():
         plan = json.loads((ROOT / ".review/plan.json").read_text())
         state = read_state()

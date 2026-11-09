@@ -31,6 +31,7 @@ process.stdin.on("end", () => {
     answer = JSON.stringify({ chat: "A small improvement for review.", mail: "Subject: Small change\\nPlease review.", forge: "Small change\\nVerification remains pending." });
   }
   console.log("Progress output must not become the answer.");
+  if (behavior.largeProgress) process.stdout.write("x".repeat(5 * 1024 * 1024));
   fs.writeFileSync(output, behavior.answer ?? answer);
 });
 `, { mode: 0o700 });

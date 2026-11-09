@@ -6,6 +6,7 @@ const actions = new Set([
   "read", "start", "pause", "next", "previous", "comment", "reject",
   "resolve", "save-copy", "save-patch", "accept",
   "position", "draft", "discard-drafts", "save-field",
+  "draft-instructions", "save-instructions",
 ]);
 
 // Python must read an actual file, including in a packaged Electron application.

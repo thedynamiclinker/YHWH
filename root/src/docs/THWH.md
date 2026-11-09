@@ -3,7 +3,21 @@
 From the vault, run `make -C root` to build and open it. From `root/`, use `make`. `make yhwh` opens the company app.
 Both run from source. `make help` lists the commands.
 
-Start with **Start practice**. Two tiny repos, mostly Python, four changes:
+Your prepared review opens directly. **Start** and **Changes** have a
+**How should these commits look?** box for rough instructions, examples, or
+reactions about the whole sequence. **Save instructions** keeps them in the
+workspace's `.review/state.json`. **Apply saved requests** uses Codex to revise
+the draft history using those instructions and all unhandled review comments.
+It reads the task/context files before editing and preserves the original
+source branch and accepted commits. Review its result and updated patches.
+Ollama and fixed replies cannot apply changes; the app explains this if selected.
+
+The assistant receives the whole sequence and saved instructions on every turn.
+Enter sends chat; Shift+Enter adds a line. Unsent chat survives a restart, and a
+failed model call preserves the request for retry. Changing the appearance keeps
+the conversation. External CLI changes refresh while the editors are idle.
+
+**Practice review** is optional. Two tiny repos, mostly Python, four changes:
 
 - Remove an exact package version from `requirements.txt`.
 - Replace a local logging helper with Python's `logging.basicConfig`.
@@ -39,11 +53,11 @@ Older greeting samples remain in `practice-review/`; they aren't deleted.
 
 | Page | What it does |
 | --- | --- |
-| Start | Shows the current change. Read the patch opens Diff. |
+| Start | Saves instructions for the whole sequence and shows the current change. Read the patch opens Diff. |
 | Diff | Shows a hunk or the full diff. Read · next marks the hunk read. Clicking a file only moves there. |
 | Messages | Edits the title, message, PR text, and checks. Typing saves a draft; Save or Ctrl+S puts the text in the record. |
 | Comments | Saves comments on the current hunk or whole change. Request changes stops acceptance. Request fixed lets review continue. |
-| Changes | Lists the prepared changes and their current state. |
+| Changes | Lists the sequence and saves or applies instructions and review comments. |
 | Files | Reads the task, other review files, accepted changes, and task list. |
 
 **Accept…** opens a window listing the repos and final text. Confirming makes

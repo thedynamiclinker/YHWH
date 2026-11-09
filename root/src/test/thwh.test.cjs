@@ -7,6 +7,8 @@ const { createReview } = require("./review-fixture.cjs");
 const { invoke } = require("../app/review.cjs");
 const { parsePair, nextPair } = require("../app/circus.cjs");
 const { answer } = require("../app/thwh.cjs");
+const { codex } = require("../app/codex.cjs");
+const { createCodex } = require("./codex-fixture.cjs");
 const dataDirectory = require("../app/thwh-profile.cjs");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
@@ -162,4 +164,103 @@ test("Practice replies say they cannot answer questions and name the pending act
   "Why does this code work?", () => assert.fail("Practice must not call a model"));
   assert.match(content, /haven't answered your question/);
   assert.match(content, /Waiting for: Open Diff/);
+});
+
+test("The assistant sees the whole sequence, shared instructions and comments on later rounds", async () => {
+  const settings = { energy: 0, mode: "codex", messages: [
+    { role: "user", content: "Keep this understanding when I change the theme.", root: "/review", energy: 100 },
+  ] };
+  const view = { root: "/review", round: { id: "R01" }, hunks: [], comments: [],
+    rounds: [{ id: "R01" }, { id: "R02", title: "Install the commands" }],
+    instructions: "First PR only removes versions. No README edits.",
+    requests: [{ roundId: "R02", text: "Put this before streaming." }],
+    documents: ["The Review/The Task.md"] };
+  await answer(view, settings, "Apply my saved requests.", async messages => {
+    assert.match(messages[0].content, /Install the commands/);
+    assert.match(messages[0].content, /Put this before streaming/);
+    assert.match(messages[0].content, /First PR only removes versions/);
+    assert.match(messages[0].content, /back up mutable draft refs/);
+    assert.match(messages[1].content, /change the theme/);
+    return "Revised the draft history.";
+  });
+  let saves = 0;
+  await assert.rejects(answer(view, settings, "Don't lose this request.", async () => { throw new Error("Model stopped"); }, async () => { saves++; }), /Model stopped/);
+  assert.equal(saves, 1);
+  assert.equal(settings.messages.at(-1).content, "Don't lose this request.");
+  assert.equal(settings.messages.at(-1).role, "user");
+  await answer(view, settings, "Don't lose this request.", async messages => {
+    assert.equal(messages.filter(m => m.content === "Don't lose this request.").length, 1);
+    return "Retried successfully.";
+  });
+  assert.equal(settings.messages.filter(m => m.content === "Don't lose this request.").length, 1);
+});
+
+test("Sequence instructions survive restarts and changing rounds; stale saves cannot overwrite them", async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "sequence-review-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await createReview(root);
+  const initial = await invoke(root, "read");
+  let view = await invoke(root, "draft-instructions", { text: "No README edits.", revision: initial.revision });
+  await assert.rejects(invoke(root, "accept"), /Save the commit sequence instructions/);
+  await assert.rejects(invoke(root, "save-instructions", { text: "stale", revision: initial.revision }), /review changed/);
+  view = await invoke(root, "save-instructions", { text: view.instructionsDraft, revision: view.revision });
+  assert.equal(view.instructionsDraft, null);
+  await invoke(root, "comment", { text: "Tiny diffs in every round.", onHunk: false });
+  view = await invoke(root, "accept");
+  assert.equal(view.round.id, "R02");
+  assert.equal(view.instructions, "No README edits.");
+  assert.equal(view.requests[0].roundId, "R01");
+  assert.equal(view.requests[0].text, "Tiny diffs in every round.");
+  view = await invoke(root, "draft-instructions", { text: "No README edits." });
+  assert.equal(view.instructionsDraft, null);
+});
+
+test("Long Codex tool output cannot overflow the buffer and lose the final answer", async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "codex-progress-"));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const fake = await createCodex(directory);
+  const previous = process.env.YHWH_CODEX;
+  process.env.YHWH_CODEX = fake.executable;
+  t.after(() => { if (previous === undefined) delete process.env.YHWH_CODEX; else process.env.YHWH_CODEX = previous; });
+  await fs.writeFile(fake.response, JSON.stringify({ largeProgress: true, answer: "The draft sequence is ready." }));
+  assert.equal(await codex([{ role: "user", content: "Revise the sequence." }], directory), "The draft sequence is ready.");
+});
+
+test("The desktop can read the review while a terminal session owns the decision lock", async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "review-read-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await createReview(root);
+  const { spawn } = require("node:child_process");
+  const lock = spawn("python3", ["-c", "import fcntl, sys; f=open(sys.argv[1], 'w'); fcntl.flock(f, fcntl.LOCK_EX); print('locked', flush=True); sys.stdin.read()", path.join(root, ".review/lock")]);
+  t.after(() => lock.kill());
+  await new Promise((resolve, reject) => { lock.stdout.once("data", resolve); lock.once("error", reject); });
+  const view = await invoke(root, "read");
+  assert.equal(view.round.id, "R01");
+  await assert.rejects(invoke(root, "start"), /busy in another process/);
+});
+
+test("Restarting a review recognizes recorded old acceptances and preserves feedback with backups", async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "review-restart-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const plan = await createReview(root);
+  await invoke(root, "accept");
+  const heads = Object.fromEntries(await Promise.all(Object.keys(plan.repositories).map(async repo => [repo,
+    (await promisify(execFile)("git", ["-C", path.join(root, repo), "rev-parse", "master"])).stdout.trim()])));
+  // Reproduce the live conflict: decisions were reset but master and its record remain.
+  await fs.writeFile(path.join(root, ".review/state.json"), JSON.stringify({ rounds: {
+    R01: { comments: [{ text: "Keep the first PR tiny.", at: new Date().toISOString() }] },
+  }, instructions: "No README edits." }));
+  const result = await promisify(execFile)("python3", [path.resolve(__dirname, "../scripts/reset-review.py"), "--root", root]);
+  assert.match(result.stdout, /0\/2 rounds accepted/);
+  const view = await invoke(root, "read");
+  assert.equal(view.instructions, "No README edits.");
+  assert.equal(view.requests[0].text, "Keep the first PR tiny.");
+  assert.equal(view.round.id, "R01");
+  for (const [repo, metadata] of Object.entries(plan.repositories)) {
+    const output = await promisify(execFile)("git", ["-C", path.join(root, repo), "rev-parse", "master"]);
+    assert.equal(output.stdout.trim(), metadata.base);
+    const refs = await promisify(execFile)("git", ["-C", path.join(root, repo), "for-each-ref", "--format=%(objectname)", "refs/heads/review-backup/"]);
+    assert.ok(refs.stdout.includes(heads[repo]));
+  }
+  assert.ok((await fs.readdir(path.join(root, ".review"))).some(name => name.startsWith("restart-backup-")));
 });

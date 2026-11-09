@@ -4,6 +4,7 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { createReview } = require("./review-fixture.cjs");
+const { createCodex } = require("./codex-fixture.cjs");
 const { git } = require("../app/repository.cjs");
 (async () => {
   const root = path.resolve(__dirname, "..");
@@ -13,7 +14,8 @@ const { git } = require("../app/repository.cjs");
   await fs.mkdir(path.join(reviewRoot, "The Review"));
   await fs.rename(path.join(reviewRoot, "Kanbun.md"), path.join(reviewRoot, "The Review/The Board.md"));
   await fs.writeFile(path.join(reviewRoot, "The Review/The Task.md"), "# Task\nA real review task.");
-  const env = { ...process.env, THWH_DATA_DIR: path.join(temp, "profile"), YHWH_REVIEW_ROOT: reviewRoot };
+  const codex = await createCodex(temp);
+  const env = { ...process.env, THWH_DATA_DIR: path.join(temp, "profile"), YHWH_REVIEW_ROOT: reviewRoot, YHWH_CODEX: codex.executable };
   delete env.ELECTRON_RUN_AS_NODE;
   const artifacts = path.join(root, "build/screenshots");
   await fs.mkdir(artifacts, { recursive: true });
@@ -30,7 +32,33 @@ const { git } = require("../app/repository.cjs");
   }
   try {
     await launch();
-    await click("tutorial-skip"); // This suite exercises the real workspace controls.
+    // A prepared review opens directly, without a tutorial gate or a crafted prompt.
+    await page.getByRole("heading", { name: "How should these commits look?" }).waitFor();
+    await page.locator("#sequence-instructions").fill("First PR only removes versions. No README edits. Keep every diff tiny.");
+    await page.waitForFunction(async () => !!(await window.yhwh.reviewRead()).instructionsDraft);
+    await page.locator("#assistant-message").fill("An unfinished thought about the sequence.");
+    await app.close(); app = null;
+    await launch();
+    assert.match(await page.locator("#sequence-instructions").inputValue(), /Keep every diff tiny/);
+    assert.equal(await page.locator("#assistant-message").inputValue(), "An unfinished thought about the sequence.");
+    await click("apply-requests");
+    await page.locator(".tw-chat-log article.assistant").last().waitFor();
+    const sent = JSON.parse((await fs.readFile(codex.requests, "utf8")).trim().split("\n").at(-1));
+    assert.equal(sent.cwd, reviewRoot);
+    assert.match(sent.messages[0].content, /First PR only removes versions/);
+    assert.match(sent.messages[0].content, /Small change 2/);
+    assert.equal((await view()).instructionsDraft, null);
+    // A failed model call retains both the submitted request and the input for retry.
+    await fs.writeFile(codex.response, JSON.stringify({ exit: 1 }));
+    await page.locator("#assistant-message").fill("Please make round two smaller.");
+    await page.locator("#assistant-message").press("Enter");
+    await page.locator(".tw-error").waitFor();
+    assert.equal(await page.locator("#assistant-message").inputValue(), "Please make round two smaller.");
+    assert.match(await page.locator(".tw-chat-log article.user").last().textContent(), /round two smaller/);
+    await fs.writeFile(codex.response, "{}");
+    await page.locator("#assistant-message").press("Enter");
+    await page.waitForFunction(() => !document.querySelector(".tw-error") && !document.querySelector("#energy").disabled);
+    assert.equal(await page.locator("#assistant-message").inputValue(), "");
     await require("./help-menu-test.cjs")(app);
     assert.equal(await page.locator("body").getAttribute("data-theme"), "yhwh");
     assert.equal(await page.locator("input[type=radio]").count(), 0);
@@ -98,8 +126,8 @@ const { git } = require("../app/repository.cjs");
     await page.locator("#settings-form button[type=submit]").click();
     await page.locator("#assistant-message").fill("What are we reviewing?");
     await page.locator("#assistant-form button[type=submit]").click();
-    await page.locator(".tw-chat-log article.assistant").waitFor();
-    assert.doesNotMatch(await page.locator(".tw-chat-log").textContent(), /Yahweh|Genesis|come down/i);
+    await page.waitForFunction(() => document.querySelector(".tw-chat-log article.assistant:last-child")?.textContent.includes("No model is running."));
+    assert.doesNotMatch(await page.locator(".tw-chat-log article.assistant").last().textContent(), /Yahweh|Genesis|come down/i);
     await go(3);
     await page.locator("#review-note").fill("Please explain the evidence.");
     await click("reject");
@@ -140,6 +168,16 @@ const { git } = require("../app/repository.cjs");
     await page.locator("#energy").press("End");
     await page.waitForFunction(() => document.body.dataset.theme === "yhwh");
     await page.locator(".tw-divine-orbit").waitFor();
+    // Real profiles retain zoom. Large text must keep the assistant and footer on screen.
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.setZoomLevel(2));
+    await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth + 1);
+    const layout = await page.evaluate(() => ({ width: innerWidth, height: innerHeight,
+      assistant: document.querySelector("#assistant-message").getBoundingClientRect().toJSON(),
+      footer: document.querySelector(".tw-status").getBoundingClientRect().toJSON() }));
+    assert.ok(layout.assistant.right <= layout.width + 1);
+    assert.ok(layout.assistant.bottom <= layout.height + 1);
+    assert.ok(layout.footer.bottom <= layout.height + 1);
+    await page.screenshot({ path: path.join(artifacts, "thwh-zoomed.png") });
     console.log("✓ THWH: all three desktop themes, in-place switching, durable drafts, plain assistant, hunk markers, notes, rejection, paired acceptance and completion");
   } catch (error) {
     if (page) await page.screenshot({ path: path.join(artifacts, "thwh-failure.png") }).catch(() => {});
