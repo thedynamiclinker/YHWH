@@ -137,3 +137,12 @@ test("Nietzsche and dawkins share plain assistant behavior; YHWH retains its sou
     else assert.match(prompt, /without religious imagery/);
   }
 });
+
+test("Practice replies say they cannot answer questions and name the pending action", async () => {
+  const settings = { energy: 100, mode: "offline", messages: [] };
+  const content = await answer({ root: "/practice", tutorial: { active: true, step: 0,
+    lessons: [{ text: "Read the patch.", waiting: "Open Diff." }] } }, settings,
+  "Why does this code work?", () => assert.fail("Practice must not call a model"));
+  assert.match(content, /haven't answered your question/);
+  assert.match(content, /Waiting for: Open Diff/);
+});

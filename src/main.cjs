@@ -88,12 +88,12 @@ app
     });
     handle("review:export", async () => {
       const result = await dialog.showOpenDialog(window, {
-        title: "Export the selected review's handoff into a new subfolder",
+        title: "Export the selected review's files into a new subfolder",
         properties: ["openDirectory", "createDirectory"],
       });
       if (result.canceled) return null;
       const view = await review.act("read");
-      const target = await fs.mkdtemp(path.join(result.filePaths[0], "review-handoff-"));
+      const target = await fs.mkdtemp(path.join(result.filePaths[0], "review-files-"));
       await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.master) : "MASTER.md"), view.master);
       await fs.writeFile(path.join(target, thwh ? path.basename(view.paths.board) : "Kanbun.md"), view.board);
       return target;
@@ -110,7 +110,7 @@ app
     });
     handle("repository:import", async ({ companyId, base, draft }) => {
       const result = await dialog.showOpenDialog(window, {
-        title: "Choose a local Git repository to rehearse",
+        title: "Choose a local Git repository to copy and review",
         properties: ["openDirectory"],
       });
       if (result.canceled) return null;
@@ -118,7 +118,7 @@ app
     });
     handle("workspace:export", async (companyId) => {
       const result = await dialog.showOpenDialog(window, {
-        title: "Export handoff into a new subfolder",
+        title: "Export files into a new subfolder",
         properties: ["openDirectory", "createDirectory"],
       });
       if (result.canceled) return null;
@@ -147,7 +147,7 @@ app
           label: "File",
           submenu: [
             {
-              label: "Export handoff",
+              label: "Export files",
               accelerator: "CmdOrCtrl+Shift+E",
               click: () => window.webContents.send("ui:export"),
             },

@@ -10,7 +10,7 @@ import unicodedata
 import webbrowser
 
 
-PAGES = ("Start", "Diff", "Messages", "Notes", "Roadmap", "Context")
+PAGES = ("Start", "Diff", "Messages", "Comments", "Changes", "Files")
 HELP_LINKS = json.loads(Path(__file__).with_name("help-links.json").read_text())
 
 
@@ -190,7 +190,7 @@ class Review:
         self.put(height - 3, 1, footer, "title")
         self.put(height - 2, 1, "Your progress is saved. Esc returns to the review." if modal else
                  "? help   q save & pause   Tab switch view   1-6 views   ] Electron / 50%")
-        self.put(height - 1, 1, f"Lines {self.offset+1}-{min(self.offset+available, len(rendered))}/{len(rendered)}  ·  Local rehearsal · nothing posted")
+        self.put(height - 1, 1, f"Lines {self.offset+1}-{min(self.offset+available, len(rendered))}/{len(rendered)}  ·  Local review · nothing posted")
         self.screen.refresh()
         return available
 
@@ -323,10 +323,10 @@ class Review:
 
     def copy_lines(self):
         copy = self.engine.details(self.round, self.state)
-        lines = [("TEAMS", "title"), copy["teams"], "", ("GITLAB MR", "title"), copy["mr_title"]]
+        lines = [("MESSAGE", "title"), copy["teams"], "", ("PR", "title"), copy["mr_title"]]
         for repo, description in copy["descriptions"].items():
             lines.extend(["", (repo, "title"), description])
-        lines.extend(["", ("VALIDATION / LIMITS", "title"), copy["validation"], "",
+        lines.extend(["", ("CHECKS", "title"), copy["validation"], "",
                       "Recorded checks describe the prepared draft. Code edits need their own checks."])
         return lines
 
@@ -350,10 +350,10 @@ class Review:
             return "The story, one useful change at a time", lines, "1 current step   6 context & evidence"
         if not self.round:
             return "Every round is accepted locally", [
-                "The finished Teams messages, MR descriptions, commit IDs, and validation are in:",
+                "The messages, PR descriptions, commit IDs, and checks are in:",
                 "The Review/The Accepted Rounds.md", "",
-                "You can review the handoff in Context. Sending the messages and opening the real MRs are separate steps.",
-            ], "6 open handoff & board   q save & close"
+                "You can review the record in Files. Sending the messages and opening the PRs are separate steps.",
+            ], "6 open record & board   q save & close"
         copy = self.engine.details(self.round, self.state)
         title = f"{self.round['id']}: {copy['title']}"
         if self.page == 0:
@@ -361,8 +361,8 @@ class Review:
             lines = [("YOUR NEXT SMALL STEP", "title"),
                      f"Read hunk {self.entry['hunk'] + 1} of {len(self.chunks)}. Press Enter when you're ready.", "",
                      ("WHY THIS CHANGE", "title"), copy["teams"], "",
-                     "This is a rehearsal: you review as the company; the prepared patch and message are your proposal.",
-                     "Accepting records one local commit per participating repository and saves the final handoff text.", "",
+                     "Here are the proposed patches and messages. Read them. Say what needs fixing.",
+                     "Accept makes one local commit in each repo and saves the final text.", "",
                      f"Saved notes: {note_count}. Draft text is kept even if you leave an editor.",
                      "You can stop after one hunk. q saves your place; the same command brings you back."]
             if self.entry.get("status") == "changes_requested":
@@ -388,7 +388,7 @@ class Review:
         drafts = list(self.entry.get("drafts", {}))
         if drafts:
             lines.extend(["", "Unfinished editor drafts: " + ", ".join(drafts), "Open the same editor to resume its draft."])
-        return title + " / Notes", lines, "c add note   n request changes   e edit copy   E edit patch   r resolve"
+        return title + " / Comments", lines, "c add note   n request changes   e edit copy   E edit patch   r resolve"
 
     def advance(self):
         if self.page == 0:
@@ -410,7 +410,7 @@ class Review:
         elif self.page == 2:
             self.accept_round()
         elif self.page == 5 and self.document is None:
-            selected = self.choose("Context files", self.documents)
+            selected = self.choose("Review files", self.documents)
             if selected is not None:
                 self.document, self.offset = self.documents[selected], 0
 
@@ -429,13 +429,14 @@ class Review:
                   ("mr_title", None, "MR title")]
         fields += [("descriptions", repo, f"{repo} MR description") for repo in self.round["commits"]]
         fields += [("validation", None, "Validation and limits")]
-        selected = self.choose("What would you like to edit?", [f[2] for f in fields])
+        labels = {"Round title": "Change title", "Teams message": "Message", "MR title": "PR title", "Validation and limits": "Checks"}
+        selected = self.choose("What would you like to edit?", [labels.get(f[2], f[2].replace(" MR description", " PR description")) for f in fields])
         if selected is None:
             return
         field, repo, label = fields[selected]
         key = label
         value = copy[field][repo] if repo else copy[field]
-        text = self.editor(label, key, value)
+        text = self.editor(labels.get(label, label.replace(" MR description", " PR description")), key, value)
         if text is not None:
             self.engine.act(self.plan, self.state, "save-field", {"key": key, "text": text})
             self.go(2)
@@ -448,7 +449,7 @@ class Review:
             return
         repo = repos[selected]
         key = repo + " patch"
-        text = self.editor(f"Edit {repo} unified diff (Git checks it before acceptance)", key,
+        text = self.editor(f"Edit {repo} unified diff (Git checks that it applies before committing)", key,
                            self.engine.patch(self.round, repo))
         if text is not None:
             self.engine.act(self.plan, self.state, "save-patch", {"repo": repo, "patch": text})
@@ -458,7 +459,7 @@ class Review:
 
     def accept_round(self):
         if self.entry.get("status") == "changes_requested":
-            raise RuntimeError("This round has requested changes. Review Notes, revise with e/E, then r to resolve.")
+            raise RuntimeError("This round has requested changes. Read Comments, revise with e/E, then r to resolve.")
         if self.entry.get("drafts"):
             raise RuntimeError("There is unfinished editor text. Resume it, save it with Ctrl-S, or discard drafts with D.")
         seen = set(self.entry.get("seen", []))
@@ -554,18 +555,18 @@ class Review:
     def shortcuts(self):
         lines = [
             "You play the reviewer. The proposed commits and messages are already prepared.",
-            "", "Enter: Start -> one hunk at a time -> messages -> acceptance preview.",
-            "Reading a hunk saves your place. Only y in the acceptance preview adds commits.", "",
+            "", "Enter: Start -> one hunk at a time -> messages -> Accept window.",
+            "Reading a hunk saves your place. Only y in the Accept window adds commits.", "",
             "Up/Down or j/k: scroll. PgUp/PgDn or Space: scroll a page. Home/End: top/bottom.",
             "Left/Right or p/y: previous/next hunk. f: choose a file/hunk. d: whole diff.",
-            "Tab/Shift-Tab: switch views. 1-6: Start, Diff, Messages, Notes, Roadmap, Context.",
-            "c: leave an anchored comment. n: request changes. r: mark changes addressed.",
+            "Tab/Shift-Tab: switch views. 1-6: Start, Diff, Messages, Comments, Changes, Files.",
+            "c: leave a comment on this hunk. n: request changes. r: mark changes addressed.",
             "e: edit a message, title, or validation. E: edit a repository patch.",
             "Editors: arrows/Home/End, Backspace/Delete, Enter for a newline, Ctrl-S saves.",
             "Esc leaves the editor with a saved draft; opening it again resumes the text.",
-            "D: explicitly discard unfinished drafts. a: acceptance preview. q: save and pause.",
+            "D: explicitly discard unfinished drafts. a: Accept window. q: save and pause.",
             "s: discuss this hunk. S: assistant settings. t: the three-stop YHWH-ness slider.", "",
-            "Context contains the original task, company conversation, evidence, board, and handoff.",
+            "Files contain the original task, company conversation, evidence, board, and record.",
             "The validation describes executed draft checks and their limits. Edits need new checks.",
             "Everything stays local. mainer is the preserved source; master receives accepted rounds.",
             "If a patch conflicts, the error stays on screen; revise it with E before accepting.", "",

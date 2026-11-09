@@ -59,8 +59,8 @@ async function answer(view, settings, message, model) {
   let content;
   if (settings.mode === "offline") {
     content = view.tutorial?.active
-      ? `Practice guidance: ${view.tutorial.lessons[view.tutorial.step]?.text || "Practice complete. Return to your workspace, or restart practice from the completion card."}`
-      : `${settings.energy === 100 ? "Let me come down and see. " : ""}${view.round ? `${view.round.id}: ${view.round.title}. Inspect hunk ${view.hunk + 1}/${view.hunks.length}, record a concrete observation in Notes, and check the validation in Messages. ${view.comments.length ? `Latest note: ${view.comments.at(-1).text}. ` : ""}` : "Every round is accepted locally. Inspect the final handoff in Context."}This is scripted guidance; choose Codex or Ollama for a conversation.`;
+      ? `No model is running in practice, so I haven't answered your question. I can only repeat the current instructions.\n\n${view.tutorial.lessons[view.tutorial.step]?.text || "Done. The commits and message are in Files → Accepted changes. Use Back to my code to leave practice."}\n\n${view.tutorial.lessons[view.tutorial.step]?.waiting ? `Waiting for: ${view.tutorial.lessons[view.tutorial.step].waiting}` : ""}`
+      : `${settings.energy === 100 ? "Let me come down and see. " : ""}${view.round ? `${view.round.id}: ${view.round.title}. Read hunk ${view.hunk + 1}/${view.hunks.length}, leave a comment in Comments, and read Checks in Messages. ${view.comments.length ? `Latest comment: ${view.comments.at(-1).text}. ` : ""}` : "All changes are committed locally. The record is in Files → Accepted changes. "}No model is running. This is a fixed reply; choose Codex or Ollama in settings to ask questions.`;
   } else {
     const prompt = settings.energy === 100 ? persona.prompt : "You are a concise, practical code review assistant. Use plain language without religious imagery or roleplay.";
     content = await model([

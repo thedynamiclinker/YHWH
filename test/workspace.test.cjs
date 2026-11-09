@@ -222,7 +222,7 @@ test("Feedback becomes the final handoff; the rehearsal transcript does not", as
       proposalId: first.id,
       title: "Rewrite history",
     }),
-    /immutable/,
+    /approved text is saved/,
   );
 });
 

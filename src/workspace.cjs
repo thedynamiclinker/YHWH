@@ -8,29 +8,29 @@ const { codex } = require("./codex.cjs");
 const destinations = [
   {
     id: "chat",
-    name: "Group Chat",
-    slogan: "Let’s go, department.",
+    name: "Chat",
+    slogan: "Say what changed. Save everyone the meeting.",
     icon: "messages",
     description: "The message to your colleagues",
   },
   {
     id: "mail",
-    name: "Electronic Mail",
-    slogan: "As per my last electronic mail.",
+    name: "Mail",
+    slogan: "A letter. It doesn’t need a ceremony.",
     icon: "mail",
-    description: "The considered follow-up",
+    description: "The longer message",
   },
   {
     id: "forge",
-    name: "Code Place",
-    slogan: "We put the code in the code place.",
+    name: "PR",
+    slogan: "Here’s the patch. Here’s why.",
     icon: "git",
     description: "The change and its review",
   },
 ];
 const statuses = {
   draft: "Up next",
-  review: "In rehearsal",
+  review: "In review",
   changes: "Needs changes",
   approved: "Approved",
   rejected: "Set aside",
@@ -94,20 +94,20 @@ function companyFrom(input) {
       {
         id: id(),
         name: "Alex",
-        role: "Technical lead",
-        concern: "Keep the scope small and show the behavioral evidence.",
+        role: "Programmer",
+        concern: "Show me the patch and what you ran.",
       },
       {
         id: id(),
         name: "Morgan",
-        role: "Delivery lead",
+        role: "Maintainer",
         concern: "What helps the team today, and how do we undo it?",
       },
       {
         id: id(),
         name: "Casey",
-        role: "Domain expert",
-        concern: "Preserve the existing workflow and explain what changes.",
+        role: "User",
+        concern: "Keep the useful bits working. Tell me what changes.",
       },
     ],
     proposals: [],
@@ -252,7 +252,7 @@ class Workspace {
       }),
     }).catch((error) => {
       throw new Error(
-        `The local model did not answer. Start Ollama and pull “${this.state.settings.model}”, or choose Offline rehearsal in settings. ${error.message}`,
+        `The local model did not answer. Start Ollama and pull “${this.state.settings.model}”, or choose Offline practice in settings. ${error.message}`,
       );
     });
     if (!response.ok)
@@ -361,8 +361,8 @@ class Workspace {
           ], null, review?.root || (proposal?.repoId ? this.repoPath(proposal.repoId) : this.directory));
         } else if (review) {
           answer = review.round
-            ? `Let me come down and see. ${review.round.id}: ${review.round.title}. We are inspecting hunk ${review.position} of ${review.total} in ${review.hunk?.repo || "this round"}. ${review.comments.length ? `The latest recorded feedback is: “${review.comments.at(-1).text}”. ` : ""}Put a concrete objection beside this hunk with Comment or Request changes. Revise the patch and handoff, then resolve the request before accepting the paired round. I am in the scripted offline mode; choose Codex or Ollama in Settings for a free-form discussion of the code.`
-            : "And the review was good. Every round in this workspace has been accepted. Inspect the finished handoff before posting it.";
+            ? `Let me come down and see. ${review.round.id}: ${review.round.title}. We are inspecting hunk ${review.position} of ${review.total} in ${review.hunk?.repo || "this round"}. ${review.comments.length ? `The latest recorded feedback is: “${review.comments.at(-1).text}”. ` : ""}Put a concrete objection beside this hunk with Comment or Request changes. Revise the patch and message, then resolve the request before accepting the paired round. I am in the scripted offline mode; choose Codex or Ollama in Settings for a free-form discussion of the code.`
+            : "And the review was good. Every round in this workspace has been accepted. Inspect the saved review before posting it.";
         } else answer = persona.reply(content, company, proposal);
         company.messages.push(
           { id: id(), role: "user", content, at: now() },
@@ -375,7 +375,7 @@ class Workspace {
           !["reopen"].includes(action)
         )
           throw new Error(
-            "This round is closed. Approved packets are immutable.",
+            "This round is closed. The approved text is saved. Start a new change to revise it.",
           );
         if (action === "editProposal") {
           if (input.title !== undefined)
@@ -481,7 +481,7 @@ class Workspace {
                 proposal.evidence && proposal.feedback.length
                   ? "support"
                   : "concern",
-              content: `${person.concern}\n\n${proposal.evidence ? `I can review the evidence you supplied: “${proposal.evidence.slice(0, 200)}”.` : "I do not see verification evidence yet. What did you actually check?"} ${proposal.feedback.length ? `The latest review clarification is “${proposal.feedback.at(-1).content.slice(0, 180)}”. ${index % 2 ? "Keep that in the final handoff and retain the rollback plan." : "If it changes the code scope, make the corresponding edit in the patch too."}` : `For “${proposal.title}”, keep the first review limited to this one change.`}`,
+              content: `${person.concern}\n\n${proposal.evidence ? `I can review the evidence you supplied: “${proposal.evidence.slice(0, 200)}”.` : "What did you run? I don’t see any checks yet."} ${proposal.feedback.length ? `The latest review clarification is “${proposal.feedback.at(-1).content.slice(0, 180)}”. ${index % 2 ? "Keep that in the final message and say how to undo the change." : "If that changes the code, edit the patch too."}` : `For “${proposal.title}”, keep the first review limited to this one change.`}`,
             }));
           proposal.round += 1;
           proposal.rehearsals.push({
@@ -495,7 +495,7 @@ class Workspace {
             : "review";
         } else if (action === "revise") {
           if (!proposal.feedback.length && !proposal.rehearsals.length)
-            throw new Error("Rehearse the company or add feedback first.");
+            throw new Error("Try the review or add a comment first.");
           proposal.revisions.push({
             at: now(),
             drafts: structuredClone(proposal.drafts),
@@ -546,7 +546,7 @@ class Workspace {
         } else if (action === "approve") {
           if (!proposal.rehearsals.length)
             throw new Error(
-              "Rehearse this round at least once before approving.",
+              "Click Try the review once before approving this change.",
             );
           if (
             proposal.dependency &&
@@ -635,7 +635,7 @@ class Workspace {
   master(companyId) {
     const company = this.company(companyId);
     return (
-      `# ${company.name} — approved handoff\n\n${company.goal}\n\nThese are drafts for a human to share. Approval commits attached patches only in isolated rehearsal copies.\n\n` +
+      `# ${company.name} — accepted changes\n\n${company.goal}\n\nThese are drafts for a human to share. Approval commits attached patches only in isolated rehearsal copies.\n\n` +
       company.proposals
         .filter((p) => p.status === "approved")
         .map(

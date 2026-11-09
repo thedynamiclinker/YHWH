@@ -731,6 +731,7 @@ b {
   margin-bottom: 24px;
 }
 .walkthrough-hint .button { margin-top: 6px; }
+.god-panel > .walkthrough-hint { margin: 0; padding: 16px 20px; border-radius: 0; flex-shrink: 1; min-height: 100px; max-height: 40%; overflow: auto; }
 .fact-dialog-actions { flex-wrap: wrap; gap: 10px; }
 .fact-card {
   padding: 20px 18px;

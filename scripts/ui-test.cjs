@@ -98,7 +98,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     await page.locator('.walkthrough-start [data-action="walkthrough"]').click();
     await page.locator('[data-field="evidence"]').waitFor();
     assert.equal((await page.evaluate(() => window.yhwh.read())).settings.mode, "offline");
-    assert.match(await page.locator(".walkthrough-hint").textContent(), /Verification evidence/);
+    assert.match(await page.locator(".walkthrough-hint").textContent(), /Checks/);
     await page.locator('[data-tab="patch"]').click();
     await page.locator(".diff-hunk").waitFor();
     assert.match(
@@ -271,7 +271,7 @@ const { createCodex } = require("../test/codex-fixture.cjs");
     await page.waitForFunction(() =>
       document
         .querySelector("#toast")
-        .textContent.startsWith("Handoff exported"),
+        .textContent.startsWith("Files exported"),
     );
     const [folder] = await fs.readdir(exportDirectory);
     assert.ok(

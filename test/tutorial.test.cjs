@@ -25,10 +25,10 @@ test("Practice teaches actual review decisions while preserving the selected wor
   await tutorial.load();
   let { view } = await tutorial.control("start");
   assert.equal(view.tutorial.step, 0);
-  assert.equal(view.hunks.length, 2);
+  assert.equal(view.hunks.length, 4);
   assert.notEqual(view.root, realRoot);
   const originalSampleHeads = await Promise.all(Object.keys(view.patches).map(repo => git(path.join(view.root, repo), ["rev-parse", "master"])));
-  await assert.rejects(tutorial.act("accept"), /Finish the practice lessons/);
+  await assert.rejects(tutorial.act("accept"), /waiting for step 1/);
   await tutorial.act("start");
   view = await tutorial.act("position", { screen: { page: 1 } });
   assert.equal(view.tutorial.step, 1);
@@ -36,36 +36,38 @@ test("Practice teaches actual review decisions while preserving the selected wor
   assert.equal(tutorial.state.step, 1, "navigation alone does not mark a hunk read");
   await tutorial.act("previous");
   await tutorial.act("next");
+  await tutorial.act("next");
+  await tutorial.act("next");
   view = await tutorial.act("next");
   assert.equal(view.tutorial.step, 2);
-  await tutorial.act("draft", { key: "comment", text: "A useful fallback." });
+  await tutorial.act("draft", { key: "comment", text: "Zero is a real limit. Keep it." });
   assert.equal(tutorial.state.step, 2, "a note draft is not a saved observation");
   await tutorial.control("leave");
   tutorial = new Tutorial(profile, review);
   await tutorial.load();
   ({ view } = await tutorial.control("start"));
   assert.equal(view.tutorial.step, 2);
-  assert.equal(view.drafts.comment, "A useful fallback.");
+  assert.equal(view.drafts.comment, "Zero is a real limit. Keep it.");
   view = await tutorial.act("comment", { text: view.drafts.comment, onHunk: true });
   assert.equal(view.tutorial.step, 3);
-  view = await tutorial.act("reject", { text: "Explain the missing-name behavior." });
+  view = await tutorial.act("reject", { text: "Say which files changed and what you checked." });
   assert.equal(view.tutorial.step, 4);
   assert.equal(view.status, "changes_requested");
-  await tutorial.act("draft", { key: "Teams message", text: "Both apps now greet unnamed visitors as friend." });
+  await tutorial.act("draft", { key: "Teams message", text: "Use Python logging and find files beside the code." });
   assert.equal(tutorial.state.step, 4);
-  view = await tutorial.act("save-field", { key: "Teams message", text: "Both apps now greet unnamed visitors as friend." });
+  view = await tutorial.act("save-field", { key: "Teams message", text: "Use Python logging and find files beside the code." });
   assert.equal(view.tutorial.step, 5);
   view = await tutorial.act("resolve");
   assert.equal(view.tutorial.step, 6);
   view = await tutorial.act("accept");
   assert.equal(view.tutorial.step, 7);
   assert.equal(view.round, null);
-  assert.match(view.master, /Both apps now greet unnamed visitors as friend/);
+  assert.match(view.master, /Use Python logging/);
   assert.match(view.board, /\[x\] \[R01\]/);
-  for (const [i, repo] of ["sample-api", "sample-web"].entries()) {
+  for (const [i, repo] of ["sample-tools", "sample-files"].entries()) {
     const sample = path.join(view.root, repo);
     assert.notEqual(await git(sample, ["rev-parse", "master"]), originalSampleHeads[i]);
-    assert.match(await git(sample, ["show", "master:greeting.cjs"]), /friend/);
+    assert.match(await git(sample, ["show", i === 0 ? "master:run.py" : "master:words.py"]), i === 0 ? /import logging/ : /__file__/);
   }
   view = await tutorial.act("position", { screen: { page: 5, record: "master" } });
   assert.equal(view.tutorial.step, 8);
@@ -85,7 +87,8 @@ test("Practice teaches actual review decisions while preserving the selected wor
   assert.equal(view.tutorial.step, 0);
   assert.equal(view.comments.length, 0);
   assert.equal(view.hunks.some(h => h.seen), false);
-  assert.equal(view.round.teams, "Improve greetings.");
+  assert.equal(view.round.teams, "Clean things up.");
+  assert.equal(view.tutorial.completed, false);
   assert.equal(await fs.readFile(path.join(realRoot, ".review/state.json"), "utf8"), stateBefore);
 });
 
@@ -110,4 +113,23 @@ test("Practice works without a prepared workspace; skipping and resuming survive
   assert.equal(view.tutorial.step, 1);
   await assert.rejects(fs.access(missing));
   await assert.rejects(tutorial.control("arbitrary"), /Unknown practice action/);
+});
+
+test("The Python tutorial keeps old practice files and starts its own review", async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-python-practice-"));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const old = path.join(directory, "practice-review");
+  await fs.mkdir(old);
+  await fs.writeFile(path.join(old, "my-note.txt"), "Keep the old sample too.\n");
+  await fs.writeFile(path.join(directory, "tutorial.json"), JSON.stringify({ active: true, step: 5, completed: true }));
+  const tutorial = new Tutorial(directory, new Review(path.join(directory, "review.json"), path.join(directory, "real")));
+  await tutorial.load();
+  const view = await tutorial.act("read");
+  assert.equal(view.tutorial.step, 0);
+  assert.equal(view.tutorial.completed, false);
+  assert.equal(await fs.readFile(path.join(old, "my-note.txt"), "utf8"), "Keep the old sample too.\n");
+  assert.match(view.patches["sample-tools"], /logging\.basicConfig/);
+  assert.match(view.patches["sample-files"], /__file__/);
+  assert.match(view.patches["sample-files"], /limit \?\? 10/);
+  assert.match(view.round.validation, /other dependency versions are untested/);
 });

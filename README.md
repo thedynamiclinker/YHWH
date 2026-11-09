@@ -5,9 +5,9 @@ An Electron rehearsal room for getting useful work through a company, one small 
 The new paired-review app is **THWH**: run `make` or `make thwh` to build and launch it.
 Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
 nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
-(0%, monochrome DOS/TTY-style Electron). New users can choose **Start practice review**
+(0%, monochrome DOS/TTY-style Electron). New users can choose **Start practice**
 on the opening screen: eight hands-on lessons teach a complete paired review on
-separate sample repositories, with saved progress and offline guidance.
+two small Python repos, with one JavaScript fix as well. Instructions sit beside the code, say what action they are waiting for, and keep your place. Practice chat explicitly says it only repeats instructions.
 See [the THWH guide](doc/THWH.md) for controls and shared state.
 
 ## Run it
@@ -40,7 +40,7 @@ make yhwh THEME=dawkins
 
 Dawkins keeps the desktop controls and saved work in a plain black, monospaced interface with square controls and no decorative widgets. THWH’s slider switches levels in the same window. In the company app, choose **Settings → Interface → dawkins** to switch in place. That selection is saved; `npm start` resumes it, while `make yhwh` uses its explicit `THEME` value (default `yhwh`). Character tips stay available on demand, but Dawkins hides the Overview tip card and suppresses the startup popup. The ncurses review remains available through `./review --root PATH start`.
 
-The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline rehearsal** in Settings; other conversation, company reviews, and handoff revisions use the selected engine (initially Codex).
+The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline practice** in Settings; other conversation, company reviews, and message edits use the selected engine (initially Codex).
 
 Character tips from _We The Nameless_ live below the sample apps in Overview and in **Did you know?** in the sidebar. Their popup is off by default for fresh profiles. You can enable it in Settings. **Don’t show this again** in any tips popup saves the preference across restarts; closing it normally or pressing Escape leaves that preference alone. Tips remain available in the app either way. Existing profiles retain their saved startup preference.
 
@@ -60,9 +60,9 @@ Choose **Code review** in the sidebar. The initial workspace is the current dire
 1. Choose **Start / resume review**. **Pause review** stops the desktop session while preserving your place.
 2. Read **One hunk**. Use **Previous** and **Read · next** to move through the participating repositories. Reading a hunk does not approve it. **Full diff** shows the entire paired patch.
 3. Add a **Comment** or **Request changes**, attached either to the displayed hunk or the whole round. Requests hold the round and block acceptance.
-4. You or your agent can revise **Message & MR** and **Edit patch**. Use the save buttons; pending patch and copy edits also save when you leave the page, change sections, perform a review action, or close the app. Patch drafts are checked against the accepted branches at acceptance. Saving a draft does not establish that it applies or passes tests.
+4. You or your agent can revise **Message & PR** and **Edit patch**. Use the save buttons; pending patch and copy edits also save when you leave the page, change sections, perform a review action, or close the app. Patch drafts are checked against the accepted branches at acceptance. Saving a draft does not establish that it applies or passes tests.
 5. Choose **Resolve & resume** after addressing requested changes. Inspect the result, then **Accept paired round**. The confirmation lists the repositories whose local `master` branches will change.
-6. The existing engine prepares every commit before moving either ref. It records accepted final messages in `The Review/The Accepted Rounds.md`, moves review cards in `The Review/The Board.md`, and opens the next round. Older workspaces retain their `MASTER.md` / `Kanbun.md` convention. **Handoff & board** displays those actual files. **Copy handoff** copies the accepted text; **Export handoff** saves the selected review's `MASTER.md` and `Kanbun.md` into a new subfolder.
+6. The existing engine prepares every commit before moving either ref. It records accepted final messages in `The Review/The Accepted Rounds.md`, moves review cards in `The Review/The Board.md`, and opens the next round. Older workspaces retain their `MASTER.md` / `Kanbun.md` convention. **Record & tasks** displays those actual files. **Copy record** copies the accepted text; **Export files** saves the selected review's `MASTER.md` and `Kanbun.md` into a new subfolder.
 
 The desktop and `./review start` use **one Python implementation**, the same `.review/state.json`, edits, lock, and acceptance journal. From this vault:
 
@@ -77,7 +77,7 @@ Your coding agent can read `.review/state.json`, inspect `./review show --diff`,
 
 Yahweh's conversation receives the current review, displayed hunk, and recorded comments while this page is open. Codex supports free-form discussion and can carry out requested work in that review workspace. Ollama supports discussion, and offline mode explains the workflow using scripted responses. Existing company rehearsal conversations remain saved with their company.
 
-Keys outside editors: Enter/`y` next, `p` previous, `d` full diff, `c`/`n` focus the comment editor, `e` message/MR, Shift+`E` patch, `a` acceptance confirmation, `q` pause. Use the explicit **Comment** or **Request changes** button to submit feedback.
+Keys outside editors: Enter/`y` next, `p` previous, `d` full diff, `c`/`n` focus the comment editor, `e` message/PR, Shift+`E` patch, `a` acceptance confirmation, `q` pause. Use the explicit **Comment** or **Request changes** button to submit feedback.
 
 The shared engine uses POSIX file locking and requires Python 3 on Linux/macOS. Set `YHWH_PYTHON` for a specific interpreter and `YHWH_REVIEW_ROOT` to override the initial review workspace. Acceptance updates the selected workspace's real local `master` refs; the original POC's separate rehearsal approvals still operate on isolated copies.
 
@@ -85,15 +85,15 @@ The shared engine uses POSIX file locking and requires Python 3 on Linux/macOS. 
 
 1. In **Overview**, choose **Start offline walkthrough**. This selects The Example Company, its first proposal, and the scripted offline engine. The left sidebar opens pages and sample apps; the middle panel holds your work; Yahweh’s conversation stays on the right.
 2. Read **The proposal**, then open **The patch**. In `requirements.txt`, exact `requests` and `rich` pins become package names without pinned versions. Leave **Include** checked for this sample task.
-3. Return to **The proposal**. In **Verification evidence**, enter: “Reviewed requirements.txt: exact requests and rich version pins are removed. Runtime comparisons are still pending.” This records an inspection, not a claim that the dependencies were tested.
-4. Choose **Rehearse company**. Read Alex, Morgan, and Casey’s scripted reactions in **The company**. In **Review feedback**, enter: “Keep this to the dependency pins; runtime comparisons are still pending.” Click **Add feedback**, then **Revise the handoff**.
-5. Open **Electronic Mail** in the sidebar or use **Open sample email**. Check its subject, evidence, and review clarification. Edit it if needed; edits save locally. Review **Group Chat** and **Code Place** as well. These are local draft surfaces; there is no configured sample email account or inbox.
-6. Use **Review all drafts & approve** to return to **The handoff** (or select that tab in the Rehearsal room). Read all three drafts, then click **Approve round** at the bottom and confirm. This applies the patch and creates a commit only in the isolated sample repository.
-7. Open **Approved handoff** to see the three saved, immutable messages and approval commit. Open **Kanbun board** to find the round in **Approved**. This is a completed sample handoff; runtime comparisons remain pending and nothing has been sent externally. Keep real account connections for later.
+3. Return to **The proposal**. In **Checks**, enter: “Reviewed requirements.txt: exact requests and rich version pins are removed. Runtime comparisons are still pending.” This records an inspection, not a claim that the dependencies were tested.
+4. Choose **Try the review**. Read Alex, Morgan, and Casey’s scripted reactions in **The company**. In **Review feedback**, enter: “Keep this to the dependency pins; runtime comparisons are still pending.” Click **Add feedback**, then **Rewrite the messages**.
+5. Open **Mail** in the sidebar or use **Open sample email**. Check its subject, evidence, and review clarification. Edit it if needed; edits save locally. Review **Chat** and **PR** as well. These are local draft surfaces; there is no configured sample email account or inbox.
+6. Use **Review all drafts & approve** to return to **Messages** (or select that tab in the Try a change). Read all three drafts, then click **Approve round** at the bottom and confirm. This applies the patch and creates a commit only in the isolated sample repository.
+7. Open **Accepted changes** to see the three saved, immutable messages and approval commit. Open **Tasks** to find the round in **Approved**. This is a completed sample change; runtime comparisons remain pending and nothing has been sent externally. Keep real account connections for later.
 
-The in-app guide follows you into the sample review and draft pages. Overview derives its saved-step indicators from the proposal’s evidence, feedback, revisions, and approval, so returning after a restart does not erase your work. Once approved, **View completed handoff** reopens the saved result. You can also review the remaining example proposals using **Enter the rehearsal**.
+The in-app guide follows you into the sample review and draft pages. Overview derives its saved-step indicators from the proposal’s evidence, feedback, revisions, and approval, so returning after a restart does not erase your work. Once approved, **Read the result** reopens the saved result. You can also review the remaining example proposals using **Open the change**.
 
-The three deliberately generic destinations are **Group Chat** (“Let’s go, department”), **Electronic Mail** (“As per my last electronic mail”), and **Code Place** (“We put the code in the code place”). They are local review surfaces. The app does not connect to or post into a real messaging, email, or repository service.
+The three draft pages are **Chat**, **Mail**, and **PR**. They hold local text files. The app does not connect to or post into a real messaging, email, or repository service.
 
 **Set aside** preserves a proposal without approving it. Set-aside proposals can reopen. Approved rounds retain their exact final packet.
 
@@ -134,11 +134,11 @@ The app invokes `codex` directly with an argument array and sends conversation c
 
 Codex runs with full filesystem and network permissions and no approval prompts. Chat can use its tools for work you request. Its working directory is the selected code-review workspace, the selected proposal's isolated rehearsal repository, or the app's workspace directory for a company without a repository. These directories establish context; full-access Codex can also reach files outside them. Context goes to the provider configured in Codex, so the app does not promise local-only inference in this mode.
 
-Company reviews and handoff revisions use JSON schemas for their final responses. Only the final answer is displayed; CLI progress is kept separate. Requests allow up to 30 minutes for xhigh reasoning. A missing CLI, authentication failure, or invalid response reports an error and preserves the previous saved conversation and rehearsal state. Any filesystem changes made by Codex tools remain on disk even if the request later fails.
+Company reviews and message edits use JSON schemas for their final responses. Only the final answer is displayed; CLI progress is kept separate. Requests allow up to 30 minutes for xhigh reasoning. A missing CLI, authentication failure, or invalid response reports an error and preserves the previous saved conversation and rehearsal state. Any filesystem changes made by Codex tools remain on disk even if the request later fails.
 
-Existing version-1 workspaces switch to Codex once when opened, retaining their Ollama model name, startup-card preference, companies, and saved work. Later choices of **Ollama** or **Offline rehearsal** persist across restarts.
+Existing version-1 workspaces switch to Codex once when opened, retaining their Ollama model name, startup-card preference, companies, and saved work. Later choices of **Ollama** or **Offline practice** persist across restarts.
 
-**Offline rehearsal** is a clearly labeled deterministic demonstration. It uses the company’s concerns, supplied evidence, and feedback to produce review reactions and revise draft text. Chat has scripted responses for scope, evidence, approval, and a few character-specific topics. It is not a general language model and does not infer new facts about the company.
+**Offline practice** is a clearly labeled deterministic demonstration. It uses the company’s concerns, supplied evidence, and feedback to produce review reactions and revise draft text. Chat has scripted responses for scope, evidence, approval, and a few character-specific topics. It is not a general language model and does not infer new facts about the company.
 
 For optional local inference, use **Local model · Ollama** in Settings:
 
@@ -156,9 +156,9 @@ Ollama writes conversation, imagined review reactions, and draft text; it has no
 
 Company state lives under Electron’s user-data directory in `workspace/workspace.json`; app-owned repositories live alongside it. On Linux the default is generally `~/.config/𐤉𐤄𐤅𐤄/workspace`. **Settings → Open data folder** shows the actual location.
 
-JSON is replaced atomically. A small approval journal coordinates Git commits and JSON saves: an interrupted approval is either retained with its saved final packet or rolled back to its preceding rehearsal commit on restart. Only one app instance can open a given user-data directory.
+JSON is replaced atomically. A small approval journal coordinates Git commits and JSON saves: an interrupted approval is either retained with its saved final text or rolled back to its preceding rehearsal commit on restart. Only one app instance can open a given user-data directory.
 
-**Export handoff** creates a new timestamped company subfolder containing:
+**Export files** creates a new timestamped company subfolder containing:
 
 - `MASTER.md`: only approved final messages and change descriptions, with rehearsal commit IDs.
 - `Kanbun.md`: an Obsidian-compatible board of rounds and independent tasks.
@@ -181,7 +181,7 @@ npm run package
 
 The core tests use real temporary Git repositories. They cover preparation, feedback, final exports, ordered approvals, hunk selection, failed patches, untouched source repositories, arbitrary companies, independent tasks, persistence failures, crash recovery, Codex default migration, CLI arguments and working directories, structured responses, process failures, and the Ollama HTTP boundary. Automated Codex tests use a disposable executable and do not require a sign-in or paid inference. The Ollama boundary test serves controlled responses on local port 11434; stop Ollama before running that test suite.
 
-The UI tests launch actual Electron with isolated temporary data. They exercise default Codex chat through the disposable executable, engine selection, the original company workflow, and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, final handoff, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `artifacts/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
+The UI tests launch actual Electron with isolated temporary data. They exercise default Codex chat through the disposable executable, engine selection, the original company workflow, and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, saved messages, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `artifacts/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
 
 Packaging creates a host-platform application under `dist/`. It needs no development server or frontend build step. On NixOS use the native launcher or run a packaged `resources/app.asar` with native Electron; the packaged upstream Linux binary needs a conventional Linux library environment. `YHWH_DATA_DIR=/some/isolated/directory npm start` starts a separate data profile for experiments.
 
