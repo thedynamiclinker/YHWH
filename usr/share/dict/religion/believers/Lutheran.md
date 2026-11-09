@@ -1,0 +1,1 @@
+Def: [[Person]], [[Who]], [[Like]], [[usr/share/dict/religion/books/Bible|Bible]], [[More]], [[Than]], [[Church]]

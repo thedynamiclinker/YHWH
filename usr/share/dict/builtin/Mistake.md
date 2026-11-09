@@ -1,0 +1,2 @@
+Type: [[Thing]], [[That]], [[Is]], [[Not]], [[Good]], [[To]], [[Do]]
+Type: [[When]], [[You]] [[Do]], [[Thing]], [[That]], [[Is]], [[Not]], [[Good]], [[But]], [[You]], [[Not]], [[Know]], [[It]], [[Is]], [[Not]], [[Good]]

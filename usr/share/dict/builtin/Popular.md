@@ -1,0 +1,1 @@
+Type: [[When]], [[Many]], [[Person]], [[Like]], [[You]]

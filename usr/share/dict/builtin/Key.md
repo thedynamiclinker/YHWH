@@ -1,0 +1,1 @@
+Type: [[Thing]], [[To]], [[Open]], [[Other]], [[Thing]]

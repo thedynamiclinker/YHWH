@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Boot|Boot]], [[Country]]

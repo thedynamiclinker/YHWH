@@ -1,0 +1,1 @@
+Type: [[Have]], [[Good]], [[Mind]]

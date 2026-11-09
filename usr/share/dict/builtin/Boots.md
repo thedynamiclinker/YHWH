@@ -1,0 +1,1 @@
+Type: [[Multiple]], [[usr/share/dict/builtin/Boot|Boot]]

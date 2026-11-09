@@ -1,0 +1,1 @@
+Type: [[Dead]], [[Mind]], [[Living]], [[Body]]

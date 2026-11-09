@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+The tutorial is still confusing and it's not obvious when we're not understanding something vs when you're missing something.
+
+Make the tutorial language python, make the tutorial examples of changes to the hypothetical codebase be simple, abstract changes to an example codebase and STOP using so much jargon!
+
+Assume we're extremely competent developers but we either (1) don't know the meaning of, or just (2) have to squint at to figure out what simple words you're trying to say, or (3) just generally hate seeing words like 'Gitlab MR' (it's a PR, no need to say GitHub) and 'handoff' or 'anchored note' or 'Preview acceptance' ...
+
+Basically Grug it all. Make it like Thing Explainer. We can handle COMPLEX and TECHNICAL ideas, but not JARGON that bullshit manager people and devs who only program at work on macs or windows use. Speak to us like how Linus or Guido or Ken Thompson would talk. You can use 'cat' or 'grep' or 'diff' or 'patch' or git terminology as normal colloquial words (cuz we *are* native speakers of 'actual programmer'), but words like ''
+
+Defcon people jargon = 100% fine.
+Manager jargon = Evil.
+Jargon that sometimes passes as 'developer' but which doesn't show up anywhere on the average advanced Linux distro = Evil.
+For example: If you install (say) Gentoo or LFS, you'll see ALL THE SOFTWARE all over the stack, but it's './configure && make', not Install XCode or wsl. It's 'ls (or find) /etc | sort | uniq' not fucking 'SELECT * FROM /ETC ORDER BY ALPHANUMERIC DROP DUPLICATES'. emerge is just lots of bash and python, the EBUILDS and Arch's PKGBUILDs are the grub config files are self `tail`'ing shell scripts. /etc config files are program specific "List Of Lines" format, not generally json. Why? Because it's a COMPUTER! For DEVELOPERS. It's for programmers. We need to be able to grep the damn things. So List Of Lines over json and never ever xml unless it's required and when it is that goes in /usr/share, not /etc.
+
+Also the interface gets a bit crowded when the tutorial is showing. Make better use of available space by putting the tutorial text somewhere we're not using.
+
+Read through this book: ~/obsidian/Sudocode/ starting from README and following the links until you get to lost+found. Make the whole interface and tutorial sound like how either 0 talks or how 1 talks or how the Authors talk. Except the YHWH stuff. All interface text should be YHWH's personality from the YHWH character in '/home/jason/obsidian/We The Nameless/01-genesis', but with Sudocode's opinions about code and 0 and 1 and The Authors' vocabulary from /home/jason/obsidian/Sudocode/. That's programmer. You can also use examples from Linus, Guido, Ken, etc. Talking like them is good too.
+
+At least that's the opinions and diction and native language and jargon that the WHOLE INTERFACE should have. Then to 'make the interface YHWH', get it drunk and make it like the YHWH in We The Nameless. It can switch from Sudocode talking to slightly more unhinged when it (The Interface) is "Mad about something", e.g., if it's describing an error it ran into or an error it fixed. i.e., in the code examples, make them python like I said above, but keep SOME javascript patches and make the interface itself sort of bitch about the fact that it had to change x to y because javascript has [insert one sentence micro rant about some dumb property of javascript].
+
+Every button and piece of the interface should have THAT personality.
+
+Basically just do all the obvious things.
+EOF

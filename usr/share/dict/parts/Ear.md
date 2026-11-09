@@ -1,0 +1,1 @@
+Type: [[Strange]], [[Shape]], [[On]], [[Head]], [[Side]], [[With]], [[Hole]], [[In]], [[Middle]]

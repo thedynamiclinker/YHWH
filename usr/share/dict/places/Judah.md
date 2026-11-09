@@ -1,0 +1,1 @@
+Type: [[South]], [[Part]], [[Of]], [[Jew]], [[Land]], [[In]], [[Old]], [[usr/share/dict/religion/books/Bible|Bible]], [[Time]]

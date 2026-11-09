@@ -1,0 +1,1 @@
+Type: [[Thing]], [[Person]], [[Give]], [[You]]
