@@ -1,9 +1,7 @@
-#!/usr/bin/env bash
 
-lordhavemercy -f --verbose << "EOF"
-Jokes to put somewhere in the interface.
+## /var/mail/yhwh
 
-# YHWH answers fan mail
+YHWH answers fan mail.
 
 > Host: User1 said, "I like YHWH-ness."
 > YHWH: Ew Gay.

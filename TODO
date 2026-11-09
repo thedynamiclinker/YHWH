@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Fix the build and fix any bugs in the tutorial.
+EOF
