@@ -11,7 +11,7 @@ Don't be limited by the current layout of the codebase.
 
 Reorganize everything so that it's (1) hidden from the top level, and (2) feels nice and organized like the above projects EVEN IF I look in there.
 
-Keep the 
+Keep the Makefile, EDITING.md, 'The Book of Life.md', and TODO-1
 
 Also move everything in 0-ROOT/ to .
 EOF
