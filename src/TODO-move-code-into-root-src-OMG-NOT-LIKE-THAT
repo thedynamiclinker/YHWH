@@ -20,4 +20,8 @@ Also move everything in 0-ROOT/ to .
 CURRENT PROMPT:
 
 Above when I said root/src/ I literally meant `root/src` the src subdir of root user's home dir. Refactor codebase so that fact is true and doesn't break the build.
+
+UPDATE:
+
+OMG I DID NOT MEAN MY SYSTEM'S /root lol (its ok nothing bad happened)
 EOF
