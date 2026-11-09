@@ -43,7 +43,8 @@ run-isolated: build-yhwh ## Open YHWH with a fresh retained trial profile
 	printf 'Trial data is retained at: %s\nResume with: YHWH_DATA_DIR="%s" make -C "$(ROOT_DIR)" yhwh\n' "$$profile" "$$profile"; \
 	YHWH_DATA_DIR="$$profile" $(MAKE) -C "$(ROOT_DIR)" run-yhwh
 
-reset: ## Reset THWH tutorial progress and sample repos (close the app first)
+reset: ## Reset tutorial and accepted review rounds, with backups (close the app first)
+	python3 "$(APP_DIR)/scripts/reset-review.py" --root "$(REVIEW_ROOT)"
 	node "$(APP_DIR)/scripts/reset-tutorial.cjs"
 
 guide: ## Read the usage guide and walkthrough

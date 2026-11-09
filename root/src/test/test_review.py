@@ -66,6 +66,47 @@ class ReviewTests(unittest.TestCase):
         self.assertIn("One small useful change.", (self.root / "MASTER.md").read_text())
         self.assertIn("- [x] [R01]", (self.root / "Kanbun.md").read_text())
 
+    def reset(self):
+        review.save(self.root / ".review/plan.json", self.plan)
+        profile = self.root / "profile"
+        profile.mkdir(exist_ok=True)
+        (profile / "tutorial.json").write_text('{"completed": true}')
+        (profile / "practice-review-python").mkdir(exist_ok=True)
+        (profile / "thwh.json").write_text('{"theme": "dawkins"}')
+        result = subprocess.run(
+            ["make", "reset", f"REVIEW_ROOT={self.root}"],
+            cwd=Path(__file__).resolve().parents[2],
+            env={**os.environ, "THWH_DATA_DIR": str(profile)},
+            text=True, capture_output=True,
+        )
+        return result, profile
+
+    def test_make_reset_restarts_tutorial_and_accepted_work_with_backups(self):
+        self.accept()
+        accepted = {repo: review.git(repo, "rev-parse", "master").strip()
+                    for repo in self.plan["repositories"]}
+        result, profile = self.reset()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse((profile / "tutorial.json").exists())
+        self.assertFalse((profile / "practice-review-python").exists())
+        self.assertTrue((profile / "thwh.json").exists())
+        self.assertEqual(review.read_state(), {"rounds": {}, "active": False})
+        backup, = (self.root / ".review").glob("restart-backup-*")
+        self.assertIn("<!-- accepted:R01 -->", (backup / "MASTER.md").read_text())
+        for repo, metadata in self.plan["repositories"].items():
+            self.assertEqual(review.git(repo, "rev-parse", "master").strip(), metadata["base"])
+            self.assertEqual(review.git(repo, "rev-parse", f"review-backup/{backup.name.removeprefix('restart-backup-')}").strip(), accepted[repo])
+            self.assertEqual(review.git(repo, "rev-parse", "mistress").strip(), metadata["source"])
+        self.assertNotIn("<!-- accepted:", (self.root / "MASTER.md").read_text())
+
+    def test_make_reset_refuses_unrecorded_work_before_clearing_tutorial(self):
+        review.git("alpha", "update-ref", "refs/heads/master", self.round["commits"]["alpha"])
+        result, profile = self.reset()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unrecorded changes", result.stderr)
+        self.assertTrue((profile / "tutorial.json").exists())
+        self.assertFalse(list((self.root / ".review").glob("restart-backup-*")))
+
     def test_rejection_preserves_comments_and_blocks_acceptance(self):
         review.comment(self.state, self.round, "Please simplify this", "value.txt", reject=True)
         with self.assertRaisesRegex(RuntimeError, "Changes are requested"):

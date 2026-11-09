@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Restart prepared review decisions, preserving prepared work and backups."""
-import fcntl
+import argparse
 import importlib.util
 import json
 from pathlib import Path
@@ -8,7 +8,9 @@ import shutil
 import subprocess
 from datetime import datetime, timezone
 
-root = Path.cwd()
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--root', required=True, type=Path, help='Review workspace to reset')
+root = parser.parse_args().root.expanduser().resolve()
 spec = importlib.util.spec_from_file_location('review', Path(__file__).resolve().parents[1] / 'app/review.py')
 review = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(review)
@@ -50,7 +52,7 @@ with review.locked():
     fresh = {'rounds': {}, 'active': False}
     review.save(review.state_path(), fresh)
     accepted = review.document_path('master')
-    text = accepted.read_text()
+    text = accepted.read_text() if accepted.exists() else "# Accepted rounds\n"
     accepted.write_text(text.split('<!-- accepted:', 1)[0].rstrip() + '\n\nNo rounds have been accepted yet. Run `./review start` to begin or resume.\n')
     review.board(plan, fresh)
     view = review.snapshot(plan, review.read_state())

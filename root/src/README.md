@@ -24,9 +24,14 @@ prints this walkthrough. The Makefile also exposes core tests, desktop and
 headless UI tests, packaging, the Nix shell, and optional Ollama commands.
 
 Close THWH and run `make reset` to restore the tutorial's first-launch welcome
-and remove its practice repositories and saved progress. Your real reviews,
-settings, and chats are retained. This uses the app's profile location, including
-`THWH_DATA_DIR` when set.
+and remove its practice repositories and saved progress. It also resets accepted
+rounds in `REVIEW_ROOT` (the current directory by default), returning each repository’s `master`
+branch to the review plan’s base and clearing review decisions. Previous decisions,
+review documents, and accepted commits are backed up before resetting; prepared
+commits and edited patches are retained. Reset stops if an acceptance is pending,
+`master` has unrecorded changes, or a branch that needs resetting is checked out.
+Settings and chats are retained. Tutorial reset uses the app’s profile location,
+including `THWH_DATA_DIR` when set.
 
 The visible **Help** menu in both desktop apps has **About Us** and **About YHWH**,
 which open in your browser. All three THWH desktop levels share this menu.
