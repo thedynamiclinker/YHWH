@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+const { spawn } = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+if (args.includes("--help") || args.includes("-h")) {
+  console.log("THWH — one small review step at a time.\n\nthwh [--theme yhwh|nietzsche|dawkins] [--root PATH]\n\nyhwh: 100%, Electron (default on first launch)\nnietzsche: 50%, minimal Electron + Nietzsche Family Circus\ndawkins: 0%, monochrome DOS/TTY-style Electron\n\nThe three-stop slider changes levels in place and keeps your saved review.\nFor ncurses, use make review-start REVIEW_ROOT=PATH.");
+  process.exit(0);
+}
+const get = key => args.includes(key) ? args[args.indexOf(key) + 1] : undefined;
+const directory = require("../app/thwh-profile.cjs")();
+const preferences = path.join(directory, "thwh.json");
+let settings = {};
+try { settings = JSON.parse(fs.readFileSync(preferences, "utf8")); } catch {}
+const theme = get("--theme") || (settings.energy === 0 ? "dawkins" : settings.energy === 50 ? "nietzsche" : "yhwh");
+if (!['yhwh', 'nietzsche', 'dawkins'].includes(theme)) {
+  console.error("Use thwh [--theme yhwh|nietzsche|dawkins] [--root PATH]"); process.exit(1);
+}
+const env = { ...process.env, THWH_DATA_DIR: directory, THWH_PREFERENCES: preferences, THWH_LAUNCHER: __filename };
+delete env.ELECTRON_RUN_AS_NODE;
+let root = get("--root") || env.YHWH_REVIEW_ROOT;
+try { root ||= JSON.parse(fs.readFileSync(path.join(directory, "review.json"), "utf8")).root; } catch {}
+root ||= process.cwd();
+const executable = require("../scripts/runtime.cjs")();
+const launchArgs = [path.resolve(__dirname, ".."), "--thwh", "--theme", theme, "--root", root, ...args.filter(a => a === "--disable-gpu")];
+const child = spawn(executable, launchArgs, { env, stdio: "inherit" });
+child.on("error", error => { console.error(error.message); process.exitCode = 1; });
+child.on("exit", code => { process.exitCode = code ?? 1; });
