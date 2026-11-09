@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+The repo is currently messy with lots of stuff at the top level and it's distracting. I want to make the top level very simple.
+
+My concept of 'simple' is something like ~/src/{exec,personal,secret} or ~/git/mine/notarealdeveloper/is-instance/, but suited to this project.
+
+Move ALL of the *generated* code that you've created (the entire node project and all files related to it) to root/src/
+
+Don't be limited by the current layout of the codebase.
+
+Reorganize everything so that it's (1) hidden from the top level, and (2) feels nice and organized like the above projects EVEN IF I look in there.
+
+Keep the 
+
+Also move everything in 0-ROOT/ to .
+EOF
