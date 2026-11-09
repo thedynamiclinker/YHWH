@@ -8,7 +8,7 @@ THEME ?= yhwh
 MODEL ?= qwen3:8b
 export MODEL
 
-.PHONY: help install thwh yhwh build-thwh build-yhwh run-thwh run-yhwh dawkins run-isolated guide test test-ui test-ui-headless package review-start review-status nix-shell ollama-serve ollama-pull ollama-models
+.PHONY: help install thwh yhwh build-thwh build-yhwh run-thwh run-yhwh dawkins run-isolated reset guide test test-ui test-ui-headless package review-start review-status nix-shell ollama-serve ollama-pull ollama-models
 
 help: ## List commands and show how to get started
 	@printf '\nmake -C root builds and opens THWH; make -C root yhwh opens the company app.\nBoth run from root/src; there is no frontend compilation step.\nStart practice needs no model or login. Requires Node.js >=22.12, npm, Git, Python 3, and a desktop display.\n\n'
@@ -42,6 +42,9 @@ run-isolated: build-yhwh ## Open YHWH with a fresh retained trial profile
 	@profile=$$(mktemp -d /tmp/yhwh-trial.XXXXXX) || exit 1; \
 	printf 'Trial data is retained at: %s\nResume with: YHWH_DATA_DIR="%s" make -C "$(ROOT_DIR)" yhwh\n' "$$profile" "$$profile"; \
 	YHWH_DATA_DIR="$$profile" $(MAKE) -C "$(ROOT_DIR)" run-yhwh
+
+reset: ## Reset THWH tutorial progress and sample repos (close the app first)
+	node "$(APP_DIR)/scripts/reset-tutorial.cjs"
 
 guide: ## Read the usage guide and walkthrough
 	@cat "$(APP_DIR)/README.md"

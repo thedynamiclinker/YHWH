@@ -23,6 +23,11 @@ data folder; the command prints the folder and how to resume it. `make guide`
 prints this walkthrough. The Makefile also exposes core tests, desktop and
 headless UI tests, packaging, the Nix shell, and optional Ollama commands.
 
+Close THWH and run `make reset` to restore the tutorial's first-launch welcome
+and remove its practice repositories and saved progress. Your real reviews,
+settings, and chats are retained. This uses the app's profile location, including
+`THWH_DATA_DIR` when set.
+
 The visible **Help** menu in both desktop apps has **About Us** and **About YHWH**,
 which open in your browser. All three THWH desktop levels share this menu.
 
