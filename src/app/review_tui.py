@@ -483,7 +483,7 @@ class Review:
     def open_electron(self, energy=50):
         import os
         import subprocess
-        launcher = os.environ.get("THWH_LAUNCHER", str(Path(__file__).resolve().parents[1] / "thwh"))
+        launcher = os.environ.get("THWH_LAUNCHER", str(Path(__file__).resolve().parents[1] / "bin/thwh"))
         self.position()
         subprocess.Popen(["node", launcher, "--theme", "yhwh" if energy == 100 else "nietzsche", "--root", str(self.engine.ROOT)],
                          start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

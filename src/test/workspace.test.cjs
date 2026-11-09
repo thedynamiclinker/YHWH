@@ -4,14 +4,14 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const http = require("node:http");
-const { Workspace } = require("../src/workspace.cjs");
+const { Workspace } = require("../app/workspace.cjs");
 const { createCodex } = require("./codex-fixture.cjs");
 const {
   git,
   createDemo,
   hunks,
   selectedPatch,
-} = require("../src/repository.cjs");
+} = require("../app/repository.cjs");
 
 async function setup(t, mode = "offline") {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-test-"));

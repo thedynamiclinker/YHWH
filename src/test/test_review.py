@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-loader = importlib.machinery.SourceFileLoader("local_review", str(Path(__file__).resolve().parents[1] / "review"))
+loader = importlib.machinery.SourceFileLoader("local_review", str(Path(__file__).resolve().parents[1] / "bin/review"))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 review = importlib.util.module_from_spec(spec)
 loader.exec_module(review)

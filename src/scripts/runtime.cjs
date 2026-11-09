@@ -18,7 +18,7 @@ module.exports = function electronExecutable() {
     );
     if (result.status !== 0)
       throw new Error(
-        "Could not obtain the NixOS Electron runtime. Run nix-shell shell.nix, or set YHWH_ELECTRON to a native Electron executable.",
+        "Could not obtain the NixOS Electron runtime. Run make nix-shell, or set YHWH_ELECTRON to a native Electron executable.",
       );
     return path.join(
       result.stdout.trim().split("\n").at(-1),

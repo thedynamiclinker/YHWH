@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { createReview } = require("../test/review-fixture.cjs");
-const { git } = require("../src/repository.cjs");
+const { createReview } = require("./review-fixture.cjs");
+const { git } = require("../app/repository.cjs");
 (async () => {
   const root = path.resolve(__dirname, "..");
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-ui-"));
@@ -15,7 +15,7 @@ const { git } = require("../src/repository.cjs");
   await fs.writeFile(path.join(reviewRoot, "The Review/The Task.md"), "# Task\nA real review task.");
   const env = { ...process.env, THWH_DATA_DIR: path.join(temp, "profile"), YHWH_REVIEW_ROOT: reviewRoot };
   delete env.ELECTRON_RUN_AS_NODE;
-  const artifacts = path.join(root, "artifacts");
+  const artifacts = path.join(root, "build/screenshots");
   await fs.mkdir(artifacts, { recursive: true });
   let app, page;
   const errors = [];
@@ -23,7 +23,7 @@ const { git } = require("../src/repository.cjs");
   const view = () => page.evaluate(() => window.yhwh.reviewRead());
   const go = async n => { await page.locator(`nav [data-page="${n}"]`).click(); await page.waitForFunction(n => document.querySelector(".tw-page-name")?.textContent === ["Start", "Diff", "Messages", "Comments", "Changes", "Files"][n], n); };
   async function launch() {
-    app = await electron.launch({ executablePath: require("./runtime.cjs")(), args: [root, "--thwh", "--disable-gpu"], env, timeout: 60000 });
+    app = await electron.launch({ executablePath: require("../scripts/runtime.cjs")(), args: [root, "--thwh", "--disable-gpu"], env, timeout: 60000 });
     page = await app.firstWindow();
     page.on("pageerror", error => errors.push(error.message));
     await page.locator(".tw-app").waitFor();

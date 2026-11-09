@@ -4,10 +4,10 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { createReview } = require("./review-fixture.cjs");
-const { invoke } = require("../src/review.cjs");
-const { parsePair, nextPair } = require("../src/circus.cjs");
-const { answer } = require("../src/thwh.cjs");
-const dataDirectory = require("../src/thwh-profile.cjs");
+const { invoke } = require("../app/review.cjs");
+const { parsePair, nextPair } = require("../app/circus.cjs");
+const { answer } = require("../app/thwh.cjs");
+const dataDirectory = require("../app/thwh-profile.cjs");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 
@@ -19,10 +19,11 @@ test("Both Make launch paths select the Dawkins Electron theme", async t => {
   await fs.writeFile(executable, '#!/usr/bin/env node\nrequire("node:fs").writeFileSync(process.env.LAUNCH_CAPTURE, JSON.stringify(process.argv.slice(2)));\n', { mode: 0o755 });
   for (const target of ["run-thwh", "run-yhwh"]) {
     await promisify(execFile)("make", [target, "THEME=dawkins", `REVIEW_ROOT=${directory}`], {
-      cwd: path.resolve(__dirname, ".."),
+      cwd: path.resolve(__dirname, "../.."),
       env: { ...process.env, YHWH_ELECTRON: executable, THWH_DATA_DIR: path.join(directory, "profile"), LAUNCH_CAPTURE: capture },
     });
     const args = JSON.parse(await fs.readFile(capture, "utf8"));
+    assert.equal(args[0], path.resolve(__dirname, ".."));
     assert.equal(args[args.indexOf("--theme") + 1], "dawkins");
     assert.equal(args.includes("--thwh"), target === "run-thwh");
   }

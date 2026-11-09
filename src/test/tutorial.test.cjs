@@ -3,9 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { Tutorial } = require("../src/tutorial.cjs");
-const { Review } = require("../src/review.cjs");
-const { git } = require("../src/repository.cjs");
+const { Tutorial } = require("../app/tutorial.cjs");
+const { Review } = require("../app/review.cjs");
+const { git } = require("../app/repository.cjs");
 const { createReview } = require("./review-fixture.cjs");
 
 test("Practice teaches actual review decisions while preserving the selected workspace", async t => {

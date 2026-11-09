@@ -3,18 +3,18 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { createDemo, git } = require("../src/repository.cjs");
-const { createCodex } = require("../test/codex-fixture.cjs");
+const { createDemo, git } = require("../app/repository.cjs");
+const { createCodex } = require("./codex-fixture.cjs");
 
 (async () => {
   const root = path.join(__dirname, "..");
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-ui-"));
-  const artifacts = path.join(root, "artifacts");
+  const artifacts = path.join(root, "build/screenshots");
   await fs.mkdir(artifacts, { recursive: true });
   const codex = await createCodex(temp);
   const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, "data"), YHWH_CODEX: codex.executable };
   delete env.ELECTRON_RUN_AS_NODE;
-  const executablePath = require("./runtime.cjs")();
+  const executablePath = require("../scripts/runtime.cjs")();
   let app, page;
   const errors = [];
   async function launch(theme) {

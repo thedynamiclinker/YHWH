@@ -8,7 +8,7 @@ nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins
 (0%, monochrome DOS/TTY-style Electron). New users can choose **Start practice**
 on the opening screen: eight hands-on lessons teach a complete paired review on
 two small Python repos, with one JavaScript fix as well. Instructions sit beside the code, say what action they are waiting for, and keep your place. Practice chat explicitly says it only repeats instructions.
-See [the THWH guide](doc/THWH.md) for controls and shared state.
+See [the THWH guide](docs/THWH.md) for controls and shared state.
 
 ## Run it
 
@@ -38,17 +38,17 @@ make thwh THEME=dawkins
 make yhwh THEME=dawkins
 ```
 
-Dawkins keeps the desktop controls and saved work in a plain black, monospaced interface with square controls and no decorative widgets. THWH’s slider switches levels in the same window. In the company app, choose **Settings → Interface → dawkins** to switch in place. That selection is saved; `npm start` resumes it, while `make yhwh` uses its explicit `THEME` value (default `yhwh`). Character tips stay available on demand, but Dawkins hides the Overview tip card and suppresses the startup popup. The ncurses review remains available through `./review --root PATH start`.
+Dawkins keeps the desktop controls and saved work in a plain black, monospaced interface with square controls and no decorative widgets. THWH’s slider switches levels in the same window. In the company app, choose **Settings → Interface → dawkins** to switch in place. That selection is saved; `npm --prefix src start` resumes it, while `make yhwh` uses its explicit `THEME` value (default `yhwh`). Character tips stay available on demand, but Dawkins hides the Overview tip card and suppresses the startup popup. The ncurses review remains available through `./src/bin/review --root PATH start`.
 
 The first launch opens directly to a hands-on walkthrough in **Overview**, with a fictional company and a real example Git repository containing four draft commits. Choose **Start offline walkthrough** to work through the first sample proposal without an account or model. The button selects **Offline practice** in Settings; other conversation, company reviews, and message edits use the selected engine (initially Codex).
 
 Character tips from _We The Nameless_ live below the sample apps in Overview and in **Did you know?** in the sidebar. Their popup is off by default for fresh profiles. You can enable it in Settings. **Don’t show this again** in any tips popup saves the preference across restarts; closing it normally or pressing Escape leaves that preference alone. Tips remain available in the app either way. Existing profiles retain their saved startup preference.
 
-On NixOS, `npm start` automatically obtains the native `electron` from your configured `<nixpkgs>`, because npm’s generic Linux binary does not resolve NixOS libraries. You can also use:
+On NixOS, `npm --prefix src start` automatically obtains the native `electron` from your configured `<nixpkgs>`, because npm’s generic Linux binary does not resolve NixOS libraries. You can also use:
 
 ```sh
-nix-shell shell.nix
-npm start
+make nix-shell
+make run-yhwh
 ```
 
 Set `YHWH_ELECTRON` to use a particular native Electron executable. The npm runtime is pinned to Electron 45.2.3; the NixOS runtime follows your nixpkgs. The application was exercised here with native Electron 43.8.3.
@@ -64,16 +64,16 @@ Choose **Code review** in the sidebar. The initial workspace is the current dire
 5. Choose **Resolve & resume** after addressing requested changes. Inspect the result, then **Accept paired round**. The confirmation lists the repositories whose local `master` branches will change.
 6. The existing engine prepares every commit before moving either ref. It records accepted final messages in `The Review/The Accepted Rounds.md`, moves review cards in `The Review/The Board.md`, and opens the next round. Older workspaces retain their `MASTER.md` / `Kanbun.md` convention. **Record & tasks** displays those actual files. **Copy record** copies the accepted text; **Export files** saves the selected review's `MASTER.md` and `Kanbun.md` into a new subfolder.
 
-The desktop and `./review start` use **one Python implementation**, the same `.review/state.json`, edits, lock, and acceptance journal. From this vault:
+The desktop and `./src/bin/review start` use **one Python implementation**, the same `.review/state.json`, edits, lock, and acceptance journal. From this vault:
 
 ```sh
-./review --root /path/to/review status
-./review --root /path/to/review start
-./review --root /path/to/review comment "Please simplify this step."
-./review --root /path/to/review resolve
+./src/bin/review --root /path/to/review status
+./src/bin/review --root /path/to/review start
+./src/bin/review --root /path/to/review comment "Please simplify this step."
+./src/bin/review --root /path/to/review resolve
 ```
 
-Your coding agent can read `.review/state.json`, inspect `./review show --diff`, and revise with the same CLI. The desktop refreshes shared changes every four seconds while its editors are idle; **Refresh** also reloads immediately. A stale decision or save is rejected so a concurrent CLI edit cannot silently be overwritten. Local editor text remains visible; refresh and compare it with the shared version before saving again. Pause a terminal's interactive review with `q` before using desktop actions, because the terminal holds the workspace lock for its entire session.
+Your coding agent can read `.review/state.json`, inspect `./src/bin/review show --diff`, and revise with the same CLI. The desktop refreshes shared changes every four seconds while its editors are idle; **Refresh** also reloads immediately. A stale decision or save is rejected so a concurrent CLI edit cannot silently be overwritten. Local editor text remains visible; refresh and compare it with the shared version before saving again. Pause a terminal's interactive review with `q` before using desktop actions, because the terminal holds the workspace lock for its entire session.
 
 Yahweh's conversation receives the current review, displayed hunk, and recorded comments while this page is open. Codex supports free-form discussion and can carry out requested work in that review workspace. Ollama supports discussion, and offline mode explains the workflow using scripted responses. Existing company rehearsal conversations remain saved with their company.
 
@@ -117,11 +117,11 @@ Git imports in the company rehearsal create separate rounds per repository. The 
 
 ## Yahweh’s voice and the three engines
 
-The persona was derived from the user’s `We The Nameless/01-genesis/*.tex`, especially chapters 3, 4, 6, 8, 11, and 18. A complete local snapshot now lives in `gen/context/we-the-nameless/01-genesis/`. The app bundles selected character evidence and chapter references, so it does not depend on that directory being present after installation. It does not modify or build the book.
+The persona was derived from the user’s `We The Nameless/01-genesis/*.tex`, especially chapters 3, 4, 6, 8, 11, and 18. A complete local snapshot now lives in `src/reference/we-the-nameless/01-genesis/`. The app bundles selected character evidence and chapter references, so it does not depend on that directory being present after installation. It does not modify or build the book.
 
 The key distinction is between YHWH and the commentator. This character is embodied, curious, proud, emotionally reactive, able to regret a decision, and open to negotiation. He asks where people are, comes down to inspect events, notices a fallen face, and bargains with Abraham. The commentator’s recurring lines are not treated as YHWH’s own speech. His private dialogue can be theatrical; workplace drafts remain brief and constructive.
 
-`src/persona.cjs` contains the character prompt, original-source references, startup facts, and offline dialogue. The facts describe the literary portrayal, with explicitly humorous workplace interpretations. This is a source-grounded adaptation; an LLM’s personality cannot be guaranteed identical to a literary character in every exchange.
+`src/app/persona.cjs` contains the character prompt, original-source references, startup facts, and offline dialogue. The facts describe the literary portrayal, with explicitly humorous workplace interpretations. This is a source-grounded adaptation; an LLM’s personality cannot be guaranteed identical to a literary character in every exchange.
 
 **Codex** is the default, matching the locally installed `lordhavemercy -f` command:
 
@@ -174,33 +174,52 @@ Shortcuts: **Ctrl/Cmd+K** searches proposals, **Ctrl/Cmd+S** saves the current e
 ## Verify and package
 
 ```sh
-npm test
-npm run test:ui
-npm run package
+make test
+make test-ui
+make package
 ```
 
 The core tests use real temporary Git repositories. They cover preparation, feedback, final exports, ordered approvals, hunk selection, failed patches, untouched source repositories, arbitrary companies, independent tasks, persistence failures, crash recovery, Codex default migration, CLI arguments and working directories, structured responses, process failures, and the Ollama HTTP boundary. Automated Codex tests use a disposable executable and do not require a sign-in or paid inference. The Ollama boundary test serves controlled responses on local port 11434; stop Ollama before running that test suite.
 
-The UI tests launch actual Electron with isolated temporary data. They exercise default Codex chat through the disposable executable, engine selection, the original company workflow, and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, saved messages, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `artifacts/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
+The UI tests launch actual Electron with isolated temporary data. They exercise default Codex chat through the disposable executable, engine selection, the original company workflow, and the shared CLI/desktop hunk review, including comments, change requests, stale edits, patch revisions, failed paired approval, agent feedback, pause/restart, saved messages, compact layout, and completion. All review decisions use disposable repositories. Screenshots go to `src/build/screenshots/`. UI tests require a desktop display; on a headless Linux runner use Xvfb. The test disables GPU acceleration to make rendering predictable.
 
-Packaging creates a host-platform application under `dist/`. It needs no development server or frontend build step. On NixOS use the native launcher or run a packaged `resources/app.asar` with native Electron; the packaged upstream Linux binary needs a conventional Linux library environment. `YHWH_DATA_DIR=/some/isolated/directory npm start` starts a separate data profile for experiments.
+Packaging creates a host-platform application under `src/build/packages/`. It needs no development server or frontend build step. On NixOS use the native launcher or run a packaged `resources/app.asar` with native Electron; the packaged upstream Linux binary needs a conventional Linux library environment. `YHWH_DATA_DIR=/some/isolated/directory npm --prefix src start` starts a separate data profile for experiments.
 
 ## Code map
 
-- `src/workspace.cjs`: companies, proposals, rehearsals, decisions, persistence, model calls, and exports.
-- `src/repository.cjs`: preparation/import, hunk selection, and isolated Git commits.
-- `src/persona.cjs`: the source-grounded character and startup facts.
-- `src/codex.cjs`: Codex CLI invocation, structured output, and process errors.
-- `src/main.cjs` / `src/preload.cjs`: Electron window and narrow IPC boundary.
-- `src/renderer.js` / `src/style.css`: the local interface.
-- `src/review.py`: the shared interactive CLI and JSON review engine.
-- `src/review.cjs` / `src/review-ui.js`: the desktop process boundary and review presentation.
+- `src/app/workspace.cjs`: companies, proposals, rehearsals, decisions, persistence, model calls, and exports.
+- `src/app/repository.cjs`: preparation/import, hunk selection, and isolated Git commits.
+- `src/app/persona.cjs`: the source-grounded character and startup facts.
+- `src/app/codex.cjs`: Codex CLI invocation, structured output, and process errors.
+- `src/app/main.cjs` / `src/app/preload.cjs`: Electron window and narrow IPC boundary.
+- `src/app/renderer.js` / `src/app/style.css`: the local interface.
+- `src/app/review.py`: the shared interactive CLI and JSON review engine.
+- `src/app/review.cjs` / `src/app/review-ui.js`: the desktop process boundary and review presentation.
 
 ## Vault layout and provenance
 
-`gen/` contains the creation prompts and source context; `src/` is the application; `test/` and `scripts/` verify and operate it; `assets/` contains the original design assets; `doc/` contains product and engineering explanations. Generated packages go to `dist/` and test screenshots to `artifacts/`. The vault's existing `The Book of Life.md`, `doc/` notes, Git repository, and `.obsidian/` settings are preserved.
+The root holds the book, editing/task files, the Makefile, and the `etc/`, `usr/`, and `var/` trees promoted from `0-ROOT/`. All application material lives in `src/`:
 
-See [gen/README.md](gen/README.md) for literary sources and [doc/Migration.md](doc/Migration.md) for the source layout and shared review engine.
+```text
+src/
+├── app/          Electron interface and shared Python review engine
+├── assets/       Icons, font, and font license
+├── bin/          thwh and review commands
+├── build/        Generated packages/ and screenshots/ (ignored by Git)
+├── docs/         Product, engineering, and voice notes
+├── reference/    Literary sources and illustrations
+├── scripts/      Launch/runtime support and maintenance commands
+├── test/         Core tests, UI workflows, and fixtures
+├── node_modules/ Installed dependencies (ignored by Git)
+├── package.json
+├── package-lock.json
+├── shell.nix
+└── README.md
+```
+
+Run `make` commands from the vault root. For direct npm use, run `npm --prefix src ...` there or change into `src/`. The command-line programs live at `src/bin/thwh` and `src/bin/review`; no launchers or npm files are needed at the top level.
+
+See [reference/README.md](reference/README.md) for literary sources and [docs/Migration.md](docs/Migration.md) for the source layout and shared review engine.
 
 The application has no production npm dependencies. Electron, Playwright, and the packager are development dependencies; versions are locked. The Phoenician font is Noto Sans Phoenician, distributed under the bundled `assets/OFL.txt` license. The icon is an original SVG.
 

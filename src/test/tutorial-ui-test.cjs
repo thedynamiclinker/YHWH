@@ -3,9 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { createReview } = require("../test/review-fixture.cjs");
-const { invoke } = require("../src/review.cjs");
-const { git } = require("../src/repository.cjs");
+const { createReview } = require("./review-fixture.cjs");
+const { invoke } = require("../app/review.cjs");
+const { git } = require("../app/repository.cjs");
 
 (async () => {
   const root = path.resolve(__dirname, "..");
@@ -18,8 +18,8 @@ const { git } = require("../src/repository.cjs");
   const env = { ...process.env, THWH_DATA_DIR: path.join(temp, "profile"), YHWH_REVIEW_ROOT: realRoot,
     YHWH_CODEX: path.join(temp, "no-model-needed") };
   delete env.ELECTRON_RUN_AS_NODE;
-  const executablePath = require("./runtime.cjs")();
-  const artifacts = path.join(root, "artifacts");
+  const executablePath = require("../scripts/runtime.cjs")();
+  const artifacts = path.join(root, "build/screenshots");
   await fs.mkdir(artifacts, { recursive: true });
   let app, page;
   const errors = [];

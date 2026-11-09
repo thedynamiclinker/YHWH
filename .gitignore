@@ -1,7 +1,6 @@
-node_modules/
-dist/
-artifacts/
-.test-data/
+/src/node_modules/
+/src/build/
+/src/.test-data/
 *.log
 __pycache__/
 .obsidian/workspace.json

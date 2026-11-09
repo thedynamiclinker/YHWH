@@ -5,19 +5,19 @@ const os = require("node:os");
 const path = require("node:path");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
-const { createReview } = require("../test/review-fixture.cjs");
-const { git } = require("../src/repository.cjs");
+const { createReview } = require("./review-fixture.cjs");
+const { git } = require("../app/repository.cjs");
 
 (async () => {
   const root = path.join(__dirname, "..");
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-review-ui-"));
   const reviewRoot = path.join(temp, "review workspace");
-  const artifacts = path.join(root, "artifacts");
+  const artifacts = path.join(root, "build/screenshots");
   await fs.mkdir(artifacts, { recursive: true });
   const plan = await createReview(reviewRoot);
   const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, "data"), YHWH_REVIEW_ROOT: reviewRoot };
   delete env.ELECTRON_RUN_AS_NODE;
-  const executablePath = require("./runtime.cjs")();
+  const executablePath = require("../scripts/runtime.cjs")();
   const errors = [];
   let app, page;
   async function launch() {
@@ -37,7 +37,7 @@ const { git } = require("../src/repository.cjs");
   const click = async (action) => page.locator(`[data-action="code-${action}"]`).click();
   const section = async (id) => page.locator(`[data-section="${id}"]`).click();
   const read = () => page.evaluate(() => window.yhwh.reviewRead());
-  const cli = (...args) => promisify(execFile)("python3", [path.join(root, "review"), "--root", reviewRoot, ...args]);
+  const cli = (...args) => promisify(execFile)("python3", [path.join(root, "bin/review"), "--root", reviewRoot, ...args]);
   try {
     await launch();
     await assert.rejects(fs.access(path.join(reviewRoot, ".review/state.json")));

@@ -70,16 +70,16 @@ The **Amount of YHWH-ness** slider has three stops:
 | 50% · nietzsche | Quiet editor colors and Nietzsche Family Circus. |
 | 0% · dawkins | Black background, monospaced text, plain controls, no decoration. |
 
-The slider keeps your drafts, chat input, and position. `./thwh` remembers the
+The slider keeps your drafts, chat input, and position. `./src/bin/thwh` remembers the
 selection. `make thwh` passes its `THEME` value, which defaults to `yhwh`.
 `make yhwh THEME=dawkins` gives the company app the same plain appearance.
 Help → About Us / About YHWH opens the source books in your browser.
 
 ```sh
-./thwh --theme yhwh
-./thwh --theme nietzsche
-./thwh --theme dawkins
-./thwh --root /path/to/review
+./src/bin/thwh --theme yhwh
+./src/bin/thwh --theme nietzsche
+./src/bin/thwh --theme dawkins
+./src/bin/thwh --root /path/to/review
 make thwh THEME=nietzsche REVIEW_ROOT=/path/to/review
 ```
 
@@ -90,8 +90,8 @@ that panel with instructions.
 
 ## Files and code
 
-`src/review.py` owns the review and Git operations. Both desktop apps and
-`src/review_tui.py` call it. The CLI uses the same `.review/state.json`, patch
+`src/app/review.py` owns the review and Git operations. Both desktop apps and
+`src/app/review_tui.py` call it. The CLI uses the same `.review/state.json`, patch
 edits, drafts, and read markers. Old editor keys still say `MR` and `Teams`
 inside saved state so existing CLI and desktop drafts remain readable; those
 names aren't labels in the interface.
@@ -111,9 +111,9 @@ Set `THWH_DATA_DIR` for a separate app data directory. `YHWH_PYTHON`,
 are still recognized. Codex needs `codex login`; Ollama needs a running server
 and an installed model. Fixed replies need neither.
 
-`src/tutorial.cjs` makes and checks the samples. `src/thwh-ui.js` shows them.
-See [Yahweh's character notes](../sound/Yahweh-character.md) for the voice.
+`src/app/tutorial.cjs` makes and checks the samples. `src/app/thwh-ui.js` shows them.
+See [Yahweh's character notes](voice/Yahweh-character.md) for the voice.
 
 Run `npm test` for the core tests. `npm run test:ui` runs the desktop tests,
 including a complete practice review, restart, and all three appearances.
-Tests use temporary repos and save screenshots in `artifacts/`.
+Tests use temporary repos and save screenshots in `src/build/screenshots/`.

@@ -1,6 +1,6 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { git } = require("../src/repository.cjs");
+const { git } = require("../app/repository.cjs");
 
 async function createReview(root) {
   await fs.mkdir(path.join(root, ".review"), { recursive: true });

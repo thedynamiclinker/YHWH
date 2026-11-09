@@ -1,4 +1,4 @@
-/* Presentation for the same durable session used by ./review start. */
+/* Presentation for the same durable session used by the terminal review. */
 class CodeReview {
   constructor() {
     this.view = null;
@@ -64,7 +64,7 @@ class CodeReview {
     const labels = { prepared: "Draft prepared", review: "In review", changes_requested: "Changes requested", accepted: "Accepted locally" };
     const controls = `${button("code-refresh", "Refresh", "refresh", "quiet")}${button("code-choose", "Choose workspace", "folder", "quiet")}`;
     const title = heading("ONE SMALL CHANGE AT A TIME", "Code review", "Read the patch. Tell me what’s wrong. We’ll fix it.", `<div class="code-heading-actions">${controls}</div>`);
-    if (!v) return `${title}<div class="callout">${icon("folder")}<p>Open a prepared review workspace containing <code>.review/plan.json</code>. The app and <code>./review start</code> use the same saved decisions and repository branches.</p></div>${this.error ? `<p class="code-error" role="alert">${escape(this.error)}</p>` : ""}${button("code-choose", "Open review workspace", "folder", "primary")}`;
+    if (!v) return `${title}<div class="callout">${icon("folder")}<p>Open a prepared review workspace containing <code>.review/plan.json</code>. The app and terminal review use the same saved decisions and repository branches.</p></div>${this.error ? `<p class="code-error" role="alert">${escape(this.error)}</p>` : ""}${button("code-choose", "Open review workspace", "folder", "primary")}`;
     const progress = v.rounds.filter((round) => round.status === "accepted").length;
     return `${title}
       <div class="repository-info code-root">${icon("git")}<div><b>${escape(v.root.split("/").filter(Boolean).at(-1))}</b><p>${escape(v.root)}</p></div><span class="badge local">${v.active ? "Review running" : "Paused"}</span></div>
@@ -99,7 +99,7 @@ class CodeReview {
       <div class="code-comments">${v.comments.map((note) => `<article class="feedback"><small>${escape(note.anchor || "Whole round")} · ${escape(new Date(note.at).toLocaleString())}</small><p>${escape(note.text)}</p></article>`).join("") || '<p class="muted">Give the agent a concrete observation. I save the file and hunk with your comment.</p>'}</div>
       <label class="field">Your review comment<textarea id="code-comment" rows="3" ${busy ? "disabled" : ""} placeholder="What should change here, and why?">${escape(this.commentDraft)}</textarea></label>
       <div class="code-comment-actions"><label class="checkbox-field"><input id="code-on-hunk" type="checkbox" ${this.onHunk ? "checked" : ""} ${!hunk ? "disabled" : ""}> Attach to displayed hunk</label><div>${button("code-comment", "Comment", "messages", "secondary")}${button("code-reject", "Request changes", "", "quiet")}</div></div>
-      ${v.status === "changes_requested" ? '<div class="callout"><p>Changes requested. Your agent can read the shared comments, revise the patch and message, then resolve the request here or with <code>./review resolve</code>.</p></div>' : ""}`;
+      ${v.status === "changes_requested" ? '<div class="callout"><p>Changes requested. Your agent can read the shared comments, revise the patch and message, then resolve the request here or in the terminal review.</p></div>' : ""}`;
   }
   records(v) {
     return `<div class="section-heading"><h2>Accepted changes · ${escape(v.paths.master)}</h2>${button("code-copy-master", "Copy record", "copy", "quiet")}</div><pre class="code-document">${escape(v.master || "No rounds accepted yet.")}</pre><h2>${escape(v.paths.board)}</h2><pre class="code-document">${escape(v.board)}</pre>`;

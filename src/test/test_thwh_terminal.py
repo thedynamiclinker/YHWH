@@ -20,7 +20,7 @@ class TerminalTests(unittest.TestCase):
         test_review.ReviewTests.setUp(self)
         (self.root / ".review").mkdir()
         (self.root / ".review/plan.json").write_text(json.dumps(self.plan))
-        self.engine = Path(__file__).resolve().parents[1] / "src/review.py"
+        self.engine = Path(__file__).resolve().parents[1] / "app/review.py"
 
     def terminal(self, rows=48, columns=160, overrides=None):
         master, slave = pty.openpty()

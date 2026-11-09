@@ -15,7 +15,8 @@ import subprocess
 import sys
 import tempfile
 
-# A CLI symlink keeps its directory as the default review workspace.
+# A CLI symlink can belong to a workspace; keep its directory as the default.
+# The desktop and Makefile pass the selected workspace explicitly with --root.
 ROOT = Path(os.path.abspath(__file__)).parent
 
 DOCUMENTS = (
@@ -425,7 +426,7 @@ def show(r, state, full=False):
 
 def interactive(plan, state):
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        raise RuntimeError("Open a terminal and run ./review start. Use show --diff for plain output.")
+        raise RuntimeError(f"Open a terminal and run {shlex.join([sys.argv[0], '--root', str(ROOT), 'start'])}. Use show --diff for plain output.")
     import curses
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from review_tui import Review
@@ -531,7 +532,7 @@ if __name__ == "__main__":
     try:
         main()
     except (EOFError, KeyboardInterrupt):
-        print("\nPaused. Resume with ./review start.")
+        print(f"\nPaused. Resume with {shlex.join([sys.argv[0], '--root', str(ROOT), 'start'])}.")
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         print(f"review: {error}", file=sys.stderr)
         sys.exit(1)

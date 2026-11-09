@@ -9,7 +9,7 @@ import subprocess
 from datetime import datetime, timezone
 
 root = Path.cwd()
-spec = importlib.util.spec_from_file_location('review', Path(__file__).resolve().parents[1] / 'src/review.py')
+spec = importlib.util.spec_from_file_location('review', Path(__file__).resolve().parents[1] / 'app/review.py')
 review = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(review)
 review.ROOT = root

@@ -6,8 +6,8 @@ const path = require("node:path");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { createReview } = require("./review-fixture.cjs");
-const { invoke, Review } = require("../src/review.cjs");
-const { git } = require("../src/repository.cjs");
+const { invoke, Review } = require("../app/review.cjs");
+const { git } = require("../app/repository.cjs");
 
 test("Desktop and CLI share hunk position, anchored feedback, revisions, and paired acceptance", async (t) => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "yhwh-review-"));
@@ -34,7 +34,7 @@ test("Desktop and CLI share hunk position, anchored feedback, revisions, and pai
   view = await invoke(root, "save-patch", { repo: "alpha", patch: view.patches["alpha"].replace("+first change", "+revised first change") });
   assert.equal(view.hunk, 0);
   const execute = promisify(execFile);
-  const cli = path.join(__dirname, "../review");
+  const cli = path.join(__dirname, "../bin/review");
   await execute("python3", [cli, "--root", root, "resolve"]);
   view = await invoke(root, "read");
   assert.equal(view.status, "review");
