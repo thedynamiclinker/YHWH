@@ -1,0 +1,17 @@
+# Copy to ~/.config/yhwh/rc and edit paths to suit your machine.
+/
+    theme=yhwh
+    energy=100
+    font_size=16
+    show_hidden=false
+    settings_fields='theme,energy,font_size,show_hidden,bg,stylesheet,plugins,layout'
+    plugins='[]'
+    layout='{"files":"left","terminal":"bottom"}'
+
+$HOME/Desktop
+    title='Desktop — what are we making?'
+
+# For a local /some/directory/.yhwh/rc, a scope of . means /some/directory.
+# Relative assets in a local config resolve from that containing directory.
+# .
+#     bg='pictures/boop.png'

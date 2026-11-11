@@ -2,6 +2,10 @@
 
 An Electron rehearsal room for getting useful work through a company, one small change at a time. The layout takes cues from Obsidian: a narrow tool ribbon, company sidebar, central workspace, and a persistent conversation with Yahweh.
 
+This is the older shared source. The project-level `make` now opens the
+independent filesystem app in [`yhwh/`](../../yhwh/README.md). The commands
+in this guide remain available through `make -C root`.
+
 The new paired-review app is **THWH**: from the vault, run `make -C root` to build and launch it.
 Its three-stop **Amount of YHWH-ness** slider selects YHWH (100%, Electron),
 nietzsche (50%, minimal Electron with Nietzsche Family Circus), or dawkins

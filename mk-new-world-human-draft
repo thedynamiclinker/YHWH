@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+All relative paths below are relative to the repo / vault root.
+
+Refactor the existing functionality as follows:
+
+0. The directory currently called yhwh should be renamed to yhwh-default
+    because we're gonna need a directory called yhwh for a different purpose
+    in what follows.
+
+1. Refactor the existing code to separate code from data & share functionality.
+
+    Make sure there's no remaining shared functionality in root/src.
+
+    If there is, then factor it out and put it in yhwh/lib
+
+    Also put yhwh-3d into yhwh/src/yhwh-three & rename 3d to three throughout.
+
+    Also put yhwh-obsidian into yhwh/src/yhwh-obsidian
+
+    Also put yhwh into yhwh/src/yhwh-default
+
+    Any shared functionality between the default and three and obsidian
+        versions should go in yhwh/lib.
+
+    Rename bin/yhwh to bin/yhwh-default in preparation for the stuff below.
+
+    Also fix up the top level Makefile and any subdirectory Makefiles
+        to make sure everything works as expected. We should be able
+        to type 'make' from the repo root to build and open the app.
+
+    Typing 'make' should do that by invoking ONLY stuff that lives in yhwh/.
+        The yhwh/ dir should be self contained and not depend on anything out
+        in $(pwd), aka the repo root. The repo root is where we'll be typing
+        english and spending our time writing and running prompts that change
+        the generated source code (automatically) and sometimes we'll need
+        to head down into yhwh/ to edit something manually, e.g.,
+        the generated interface text in yhwh/etc/.
+
+    Basically the mental model is a bit like linux from scratch.
+
+    The repo root is the running system (sort of), where the user
+    is following the Linux from Scratch tutorial (or creating it
+    for the first time, if we're Gerard Beekmans.)
+
+    The yhwh/ directory is sort of like the directory /tools in the
+    pre-chroot system of LFS. But not exactly, because we're not gonna
+    be symlinking it since this isn't a full bootstrap of an actual
+    full OS yet, we're just borrowing from the mental model because
+    EVENTUALLY we want to make this usable as a distro or window manager
+    for one. For now though, think LFS as a metaphor, and imagine we're
+    just building full filesystem generalized obsidian with yhwh in it.
+
+    So, against that background...
+
+    Naturally 'make install' should install directories into a prefix.
+
+    That prefix WON'T be inside yhwh/.
+
+    We'll install everything into $(pwd)/mnt/sinai/{bin,lib,etc}
+    in the manner that it'll be installed in the user's system.
+
+    'make develop' should be an editable install like 'pip install -e'
+    and should not touch mnt/sinai. It can put things in $(pwd)/bin
+    and those scripts can reference stuff in yhwh/.
+
+    Most of the time, we'll be doing 'make develop' not 'make install'.
+
+    'make install' should install things ONLY into mnt/sinai and
+    nowhere else.
+
+    If there's one executable for each interface skin (e.g., default, three),
+    then 'make develop' should install those in $(pwd)/bin, and 'make install'
+    should put them into mnt/sinai/bin
+
+    The make target 'make install' should install the app and its config
+        directory into mnt/sinai/bin in the form of N+1 scripts where N
+        is the number of skins, currently 3.
+        Those scripts should be called yhwh{,-default,-three,obsidian} and
+        should be 4 (or N+1) executables that don't point to the
+        source code anymore, to the extent that that's possible in nodejs.
+        If it's not possible, then just make it work.
+        But here's what I'm going for:
+    The 'make install' target should emulate installing the app "as it will
+        be after we ship it." So it's like 'pip install' in python.
+    The 'make develop' target should emulate installing the app "in
+        editable mode" So it's like 'pip install -e .' in python.
+    If nodejs can do anything remotely like that, then do that.
+    If it can't, then just make whichever of the two make targets more
+        closely resembles what you implemented, and make the other target
+        exist but be a stub that says "Not implemented yet" plus the
+        reasons. If you can't implement both, then add whichever one
+        you didn't do yet to the COVENANT kanban board.
+
+    Back to the refactor.
+
+    Ok so...
+
+    Any interface text that we might want to change should be kept
+        in a separate location from the js code, let's put it in
+        yhwh/etc since it's static config that we're gonna be editing
+        to change the interface's text behavior.
+
+    What to put in yhwh/etc:
+
+        Any interface config variables that determine things like the geometry
+            (width, height) of various components should be in
+            yhwh/etc/ in a file or file.d called geometry or workspace or ui
+            or whatever is most standard in the electron space.
+
+        Emulate what a linux or unix distro would do whenever possible.
+        I want the messy implementation code and stuff that would scare
+        a human to be in yhwh/src, but I want the human readable and machine
+        readable config to be in yhwh/etc, same as how unix does.
+
+    Any internal support scripts should be in yhwh/bin.
+
+    Any internal importable libraries should be in yhwh/lib.
+
+    Any build outputs should be put in yhwh/var/tmp/yhwh. (Like Gentoo)
+
+    /var/lib/yhwh/world
+
+2. Move amr to bin2/imperative. Those are the 'do this' software 2.0 scripts
+    we used to build the system.
+
+3. After you've moved everything out of root/ and the directory is empty,
+    move job/the-root-enterprise/* into root/ and delete job.
+
+4. 'make develop' should put stuff in the repo's top level bin, lib, etc
+    etc. 'make uninstall' should uninstall those.
+
+5. If you see anything in the repo talking about the workflow involving
+    the kanban board and agent-generated rough draft prompts that are
+    edited by humans before being approved, then 
+
+EOF

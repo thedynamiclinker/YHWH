@@ -1,1 +1,0 @@
-Type: [[Any]], [[usr/share/dict/atomic/More|More]]

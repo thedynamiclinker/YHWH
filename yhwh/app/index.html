@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>YHWH</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../build/ui/renderer.css">
+</head>
+<body class="theme-dark">
+  <header class="titlebar">
+    <button class="brand" data-command="about" title="About YHWH"><span class="paleo">𐤉𐤄𐤅𐤄</span><span>YHWH</span></button>
+    <span class="window-title">Files, a shell, and somewhere to think</span>
+    <div class="personality"><label for="energy">YHWH-ness</label><input id="energy" type="range" min="0" max="100" value="100" aria-label="YHWH-ness"><button id="mode-name" data-command="modes">YHWH</button></div>
+    <button data-command="offerings">Offerings</button><button data-command="help" title="Help">?</button>
+  </header>
+  <div class="tab-strip"><nav id="tabs" aria-label="App tabs"></nav><button data-command="new-tab" title="New tab (Ctrl+T)" aria-label="New tab">＋</button><button class="quiet" data-command="palette" title="Command palette (Ctrl+P)">⌘</button></div>
+  <div class="workspace workspace-split mod-root" id="workspace">
+    <nav class="ribbon side-dock-ribbon" aria-label="Tools">
+      <button data-command="toggle-files" title="File manager (Ctrl+E)" aria-label="Toggle file manager">▤</button>
+      <button data-command="open-file" title="Open file (Ctrl+O)" aria-label="Open file">⌕</button>
+      <button data-command="toggle-terminal" title="Terminal (Ctrl+B)" aria-label="Toggle terminal">›_</button>
+      <button data-command="palette" title="Command palette (Ctrl+P)" aria-label="Command palette">⌘</button>
+      <div class="ribbon-spacer"></div>
+      <button data-command="upgrades" title="Coming soon" aria-label="YHWH upgrades">✦</button>
+      <button data-command="settings" title="Settings (Ctrl+,)" aria-label="Settings">⚙</button>
+    </nav>
+    <div id="navigation-area" class="navigation-area">
+      <section id="files" class="file-manager workspace-leaf" aria-label="File manager">
+        <header class="pane-header"><span>Files</span><div><button data-command="new-file" title="New file (Ctrl+N)" aria-label="New file">＋</button><button data-command="new-directory" title="New directory" aria-label="New directory">▱＋</button><button data-command="expand-files" title="Expand file manager (Ctrl+D)" aria-label="Expand file manager">⛶</button></div></header>
+        <div class="navigation-buttons"><button data-command="back" title="Back (Alt+Left)" aria-label="Back">←</button><button data-command="forward" title="Forward (Alt+Right)" aria-label="Forward">→</button><button class="up-button" data-command="parent" title="Parent directory (Alt+Up)" aria-label="Parent directory">↑ <span>..</span></button><button data-command="home" title="Home directory" aria-label="Home directory">⌂</button><button data-command="open-directory" title="Choose directory" aria-label="Choose directory">…</button></div>
+        <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
+        <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files">·</button></div>
+        <div id="file-list" role="listbox" tabindex="0" aria-label="Directory contents"></div>
+        <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" title="Refresh" aria-label="Refresh directory">↻</button></footer>
+      </section>
+      <div class="resize-handle sidebar-resize" role="separator" aria-label="Resize file manager"></div>
+    </div>
+    <main class="focus-area workspace-split" id="focus-area">
+      <div id="center-panels" class="center-panels">
+        <section class="document workspace-leaf" id="document" aria-label="Document">
+          <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Toggle source / pretty view (Ctrl+Shift+E)">Live Preview</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
+          <div class="document-title" id="title-row" hidden><input id="file-title" aria-label="Filename" spellcheck="false"><span id="dirty-indicator"></span><button data-command="save" title="Save (Ctrl+S)" aria-label="Save file">Save</button></div>
+          <div id="documents"></div>
+        </section>
+      </div>
+      <section id="terminal-panel" class="terminal-panel workspace-leaf" aria-label="Terminal" hidden>
+        <div class="resize-handle terminal-resize" role="separator" aria-label="Resize terminal"></div>
+        <header class="pane-header"><span>Terminal <small id="terminal-cwd"></small></span><div><span class="sync-label" id="shell-state">↔ Files</span><button data-command="expand-terminal" title="Expand terminal (Ctrl+Shift+B)" aria-label="Expand terminal">⛶</button><button data-command="toggle-terminal" title="Hide terminal" aria-label="Hide terminal">×</button></div></header>
+        <div id="terminals"></div>
+      </section>
+    </main>
+    <aside id="right-panels" class="right-panels"></aside>
+  </div>
+  <footer class="statusbar status-bar"><button id="divine-footnote" data-command="edit-footer"></button><span class="status-spacer"></span><button data-command="focus-editor" id="cursor-position">Ready</button><span id="file-encoding"></span><button id="language-button" data-command="language">Plain text</button></footer>
+  <dialog id="dialog"></dialog><div id="toast" role="status" aria-live="polite"></div>
+  <style id="user-theme"></style>
+  <script type="module" src="../build/ui/renderer.js"></script>
+</body>
+</html>

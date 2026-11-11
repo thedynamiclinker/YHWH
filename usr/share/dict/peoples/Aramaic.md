@@ -1,1 +1,0 @@
-Type: [[Old]], [[Jew]], [[Type]], [[Of]], [[Language]], [[Used]], [[For]], [[usr/share/dict/religion/books/Bible|Bible]], [[And]], [[Empire]], [[Stuff]]
