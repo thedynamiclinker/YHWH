@@ -15,6 +15,10 @@ make check                   # core tests + real Electron/WebGL UI test
 
 Put the parent repository's `bin` in PATH to run `yhwh-3d` from anywhere. The default app's git-style command discovery can then dispatch `yhwh 3d` to this command. This app does not install or replace `yhwh` or its completion files. `yhwh-3d --help` describes the launcher.
 
+From the parent project directory, use `make 3d`, `make 3d-build`,
+`make 3d-install`, or `make 3d-check`. Plain `make` there opens the default
+app in `yhwh/`; the commands above run from this directory.
+
 Requires Node 22.12+, npm, Python 3, Bash, the `file` command, and a desktop display. On NixOS the launcher uses native nixpkgs Electron, as the original app does. Set `YHWH_ELECTRON` to use an existing runtime. Set `YHWH_3D_DATA_DIR` for an isolated profile; otherwise state goes in `$XDG_STATE_HOME/yhwh-3d` or `~/.local/state/yhwh-3d`. This version's real terminal uses a Unix PTY (Linux/macOS); a Windows ConPTY backend is not implemented.
 
 ## Navigation and editing

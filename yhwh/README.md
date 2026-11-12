@@ -8,7 +8,9 @@ make               # Install dependencies if needed, build, open through ./bin/y
 make install       # Build; install ../bin/yhwh and ../bin/completions/
 ```
 
-From the containing directory, use `make -C yhwh`. After installation:
+From the containing project directory, plain `make` builds and opens this app;
+`make help` lists the project commands. `make -C yhwh` still works directly.
+After installation:
 
 ```sh
 export PATH="/path/to/YHWH/bin:$PATH"

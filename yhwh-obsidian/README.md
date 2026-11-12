@@ -9,6 +9,10 @@ account required. Works with the native editor, workspace, themes and plugins.
 
 From the parent YHWH checkout:
 
+`make obsidian` shows CLI help. `make obsidian-build` builds from source,
+`make obsidian-check` type-checks and tests, and
+`make obsidian-install VAULT="/path/to/vault"` uses the installer below.
+
 ```sh
 bin/yhwh-obsidian                         # help; changes nothing
 bin/yhwh-obsidian install /path/to/vault
