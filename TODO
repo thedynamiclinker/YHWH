@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+We quit the shitty job! Hallelujah! 
+
+Ok so, now we're cleaning up and preparing for new product focused direction of our company LD instead of services. So for this task: We want to take ./root/src/ in this vault and the ./root/src/Makefile and move them out to the top level into a folder called yhwh.
+
+Todo for you:
+
+(1) We're going to start from the existing YHWH and THWH interfaces in root/src/. Anything in those that is already implemented CAN be used to implement the app below, but any of it can also be discarded. The app below is what we want to exist in $(pwd)/yhwh/. Hereafter, all references to the app should be taken to have $(pwd)/yhwh as its root (where we're going) or $(pwd)/root/src/ as its root (where we're coming from) based on context. You can tell which I mean in the context of the stuff below in each sentence. Then we're deleting $(pwd)/root/src/ when we've migrated to $(pwd)/yhwh and have a self contained app with 'make <TAB>' as the top level control interface and 'make help' as the top level documentation. The $(pwd)/yhwh dir should end up with Makefile and ONE app that you create initially by starting with the YHWH layout ('make yhwh' interface) that's now in $(pwd)/root/src/.
+
+(2) Remove any cruft or fluff related to the code review interface.
+
+(3) While keeping the vibes of the 'make yhwh' interface, and keeping the Paleo hebrew logos and 'YHWH-ness' meter and all that (e.g., keep Nietzsche and Dawkins mode), do the following...
+
+HERE'S WHAT WE WANT
+===================
+
+The electron app should be basically the same thing as obsidian, with the extra paleo hebrew and YHWH personality in the interface. By YHWH personality, I mean the character from "~/obsidian/We The Nameless/{01-genesis,02-exodus}/**/*.tex
+
+Try to put all the buttons in the same place as obsidian, and extra stuff (e.g., Nietzsche family circus, YHWH-ness bar) in the empty space that obsidian doesn't use. 
+
+The core central gui interface should be like obsidian with a file manager sidebar, but UNLIKE obsidian, I don't want per-vault config stored in a .obsidian or .anything directory!!!
+
+It is *that* decision CREATES the concept of 'vaults' and or 'codebases' and glues the user's feet to the ground the same way VS Code does.
+
+So, here's our design and what I want you to build.
+
+The basic functionality of obsidian, but without all the fluff and plugins YET.
+
+I want your design to support a plugin system, and I want you to convince yourself of that by building such a system and adding ONE hello-world plugin.
+
+THE INTERFACE
+
+    - The overall interface should work like this:
+
+    SUMMARY
+
+        - File Manager: Shown by default, where obsidian puts it, same look, text, size, but more like our YHWH app is now. ctrl+e is a toggle that opens and shuts it. 
+          ctrl+d is a toggle that makes the file manager take over the full focus area. Not 'fullscreen', just like how nemo looks maximized, it should take up
+          that amount of space.
+        - Terminal: Not shown by default, always implicitly running (like 'guake' but at the bottom). ctrl+b toggles open and shut.
+        - 
+        - CLI: There should be a command line interface called 'yhwh' that works like 'obsidian-cli' by default.
+
+    FILE MANAGER ON THE LEFT, WITH 'cd ..' AS CENTRAL
+
+        - The left bar is a ranger-like or nemo-like FILE MANAGER. An actual one...
+        - ... One in which 'cd ..' or the equivalent functionality is a core part of the interface.
+        - ... 'cd ..' should be EASY. It's alt+up in nemo, it's 'left' arrow key in ranger. THAT is how important it is to NOT have a 'vault' concept.
+        - By default, when the file manager pane is focused, it should behave like nemo but be tiny and compact like ranger.
+        - If we need to 'focus' on file management, there should be a small button and corresponding key combo to expand out the small left FM into
+          a larger nemo like one that occupies the central text window without closing any open files.
+
+    TERMINAL AT THE BOTTOM, HIDDEN BY DEFAULT, SHIFT+ALT
+
+    The mental model is this:
+    - The app is not for managing 'vaults', obsidian is designed wrong.
+    - The app is not for managing 'repos', vscode is designed wrong.
+    - The app is SHAPED like obsidian had a baby with vscode, but it's designed for going all around one's entire filesystem like nemo or ranger or just lots of 'cd' can.
+    - The app has as dynamic an interface as Obsidian: any component should be able to be moved with some plugin or by dropping in some js or css or html etc.
+    - Things like gnome shell and cinnamon (I hear) also work like this.
+    - Tiling window managers aim to achieve the same thing but it's entirely shattered into pieces and up to the user to make it.
+
+    - The main 'developer workflow' or 'obsidian workflow' is
+        1. Text window is core and central, because most files we developers care about are text. The list-of-lines style text that git is good at.
+           That fact determines the ideal layout of the interface.
+        2. All mimetimes are supported IN PRINCIPLE. Now, that doesn't mean we need a pdf viewer at this stage.
+           It means that 'New file' should not assume markdown. File types should be detected and highlighted appropriately using the same techniques
+           that something like gedit or vim or vscode uses. There are open source libraries for doing this.
+           So a file called 'boop' with no extension should be highlighted as markdown IFF gedit would detect it as markdown.
+        3. SOME file types have a natural 'pretty' mode.
+           For markdown, it's 'render the markdown like obsidian does by default.'
+           For json, it's 'pipe the text through jq'.
+           For html, it's 'whatever an html linter would do.'
+           If the mimetype or shebang or magic number based 'what file type is this' detection fails, it should be trivial to change it in a small gedit like menu
+           at the bottom right of the screen. Overriding the default inference globally for some extension or filename-regex should be trivial, and should use the
+           hierarchical config system described below. (SEE HIERARCHICAL CONFIG)
+           Whenever a file format 
+            The 'pretty' mode should act like obsidian's default view (the 'editing' view).
+         
+    - HIERARCHICAL CONFIG 
+
+    The config should work like this:
+
+    No ~/.yhwh directory required. The 'vault' concept is optional and per-directory.
+    All user level config for the interface goes in ~/.config/yhwh/* by default.
+    System wide can be /etc/yhwh/* with the same layout inside it.
+    Any specific folder can have a .yhwh directory in it to override the config at any higher level.
+    However, /etc/yhwh/ and ~/.config/yhwh/ should both have the ability to specify config stuff
+    anywhere in the filesystem, in the obvious format, namely:
+
+```yhwh
+# yhwh.conf
+/
+    key='value'
+
+/etc
+    title='Welcome to /etc you filthy bastard' # idk why lol, just an example
+
+$HOME/Desktop
+    key='different value'
+    bg="$IMAGES/wallpapers/bg.png"
+
+$PRIVATE/nothing-to-see-here/pr0n
+    bg="$(ls "$STUFF/screenshots/*.png" | sort -R | head -1)"
+
+# So:
+# 1. env vars in your shell's environment should "just work"
+# 2. The /etc/yhwh -> ~/.config/yhwh -> (local directory .yhwh/ if present) chainmap should work as expected
+# 3. The config language should just be the one above: path names on unindented lines, indented (indents required) shell variable assignments below
+# 4. Can name mangle the shell variables to avoid conflicting with extern stuff if needed, so it's fine if bg inside these files sets yhwh_bg outside.
+#    Hell we could even prefer bg if it's already present in the environment and not override it, but always prefer yhwh_bg if present.
+#    So cautious and not override by default, but yhwh is like sudo. Actually the mangling is probably a better default but you get the idea.
+```
+
+    Finally, the file manager and terminal should be kept in sync by default in any given FOCUS window (I mean like we want app level tabs not tabs on terminal
+    AND fm AND reading view. That's hell. We're either reading a file in the main reading view or we're not. If we're not, we want fm and terminal, and
+    we want them sync'ed by default because THEY'RE BOTH THE SAME APP: THEY'RE FOR NAVIGATION. We only glue TWO to every IDE because neither has
+    ever figured out how to be good enough to replace the other completely. Ideally this will eventually decouple and the layout here will just be
+    two apps glued together, like a much better ranger mated with obsidian. For now though, let's keep the 3 things: FM, terminal, and "whatever else we're doing"
+    in the text view area. But eventually text view area can be a browser and the navigation FM + TERM thing can be a separate plugin or app, idk.
+    The point is that we almost never want the FM and TERM to be in separate places. What we DO want is something like app-level tabs where ctrl+t
+    and all the usual terminal / browser tab management keys can be used to quickly open a separate focused 'navigate with shell + fm' and then whenever
+    you open a program from either that FM or TERM in that 'app-level tab' there are quick keyboard shortcuts to toggle whether the fm is shown, toggle the term,
+    toggle both, and it's intuitive and hard to forget how to give any of the 3 all your visual space or none of it. Make the keyboard combinations
+    default to possibly several redundant and easily guessable defaults familiar from other apps like chrome, obsidian, gedit, and so on.
+    Basically, ANY app like this (vscode, obsidian) is gonna have so many keyboard combinations that conflict with your linux window manager
+    keybindings (which are a more general form of muscle memory at a deeper level since you use window manager more) SO naturally it's ok to
+    have multiple keybindings that do the same thing in this system, especially since the WM will almost always win, so whatever combo someone is
+    used to from their OS will win, and people on different OS'ed shouldn't lose access to the potentially shadowed thing that their OS used for that.
+
+    # Btw, use this to sync the terminal with the left hand FM if it helps.
+    cd() {
+        builtin cd "$@" || return
+        # Put arbitrary cd hooks here
+    }
+
+
+If any of that wasn't clear, that's ok. Just do your best, be less vscode and much more obsidian, but keep just the subset of obsidian that I've described above,
+plus the ability to do themes in the HIERARCHICAL CONFIG system above at any level. Support obsidian themes and plugins if possible,
+make the thing in electron, have a similar but more minimal settings menu, allow the user to use the config files to IN PRINCIPLE change what the settings
+menu looks like by default, and do all the above in the way that is most minimal, simple, reliable, cross platform, and as flexible as possible so we don't
+need to change the fundamental architecture going forward, we just need to add plugins or change config defaults or move things around, etc.
+
+Tl;dr: YHWH app in $(pwd)/root/src/ --> 
+
+EOF

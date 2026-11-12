@@ -1,4 +1,20 @@
 {
+  "terminal:clear-terminal": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "L"
+    }
+  ],
+  "terminal:close-terminal": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "X"
+    }
+  ],
   "editor:swap-line-down": [
     {
       "modifiers": [
@@ -258,6 +274,53 @@
         "Shift"
       ],
       "key": "Q"
+    }
+  ],
+  "editor:toggle-checklist-status": [],
+  "global-search:open": [
+    {
+      "modifiers": [
+        "Alt",
+        "Mod",
+        "Shift"
+      ],
+      "key": "F"
+    }
+  ],
+  "ghostty-terminal:open": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "B"
+    }
+  ],
+  "terminal:open-terminal.default.current": [
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "T"
+    }
+  ],
+  "terminal:open-terminal.external.current": [
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "G"
+    }
+  ],
+  "ghostty-terminal:open-split": [
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "N"
     }
   ]
 }
