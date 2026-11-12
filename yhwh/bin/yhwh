@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+require('../scripts/cli.cjs').main(process.argv.slice(2), __dirname).catch(error => { console.error(`yhwh: ${error.message}`); process.exitCode = 1; });
