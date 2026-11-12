@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec '/home/jason/obsidian/YHWH/yhwh-3d/bin/yhwh-3d' "$@"
