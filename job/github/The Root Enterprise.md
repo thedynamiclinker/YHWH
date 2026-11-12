@@ -13,14 +13,13 @@
 > want you to do. And if you do any of these ten things, he has a special
 > place, full of fire and smoke and burning and torture and anguish, where
 > he will send you to live and suffer and burn and choke and scream and cry
-> forever and ever 'til the end of time!
-> 
-> But He loves you.
+> forever and ever 'til the end of time! But He loves you.
 >
 > He loves you, and He needs money!
+> 
 > He always needs money!
-> He's all-powerful, all-perfect, all-knowing, and all-wise,
-> somehow just can't handle money!
+> 
+> He's all-powerful, all-perfect, all-knowing, and all-wise, somehow just can't handle money!
 >
 > -YHWH, speaking favorably of religion, through the Prophet known as George of the Carlins
 
@@ -28,7 +27,7 @@
 
 In the day that YHWH got root on our life.
 
-And he showed us his path at /mnt/sinai.
+He showed us the path of his name[^1] at `/mnt/sinai`.
 
 For we had issued the mount command, and we were root.
 
@@ -52,3 +51,4 @@ Then he remembered what he was saying, and said,
 
 And they did so.
 
+[^1]: Lit. `pathname` in the original text.
