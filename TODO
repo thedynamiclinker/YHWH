@@ -104,6 +104,7 @@ $HOME/Desktop
 
 $PRIVATE/nothing-to-see-here/pr0n
     bg="$(ls "$STUFF/screenshots/*.png" | sort -R | head -1)"
+    espeak ./
 
 # So:
 # 1. env vars in your shell's environment should "just work"
@@ -113,6 +114,15 @@ $PRIVATE/nothing-to-see-here/pr0n
 #    Hell we could even prefer bg if it's already present in the environment and not override it, but always prefer yhwh_bg if present.
 #    So cautious and not override by default, but yhwh is like sudo. Actually the mangling is probably a better default but you get the idea.
 ```
+
+    If that was a file in a .yhwh folder, then the paths wouldn't need to be absolute. They could be relative, or absolute.
+    When in doubt: rather than implementing a whole new mini language, use the shell and unix filesystem permissions, user and group permissions,
+    and standard 'are they running as root' stuff and so on. That's the system the app should use, because it should be designed in a way
+    that allows it to eventually be transpiled into basically an entire linux distro (or at least the shell you use for nearly everything)
+    with a single prompt. That means it needs to behave LESS like "the dumb software enterprises make" and MUCH more like how linux coreutils
+    and linux desktop stuff behave. Ok moving on.
+
+    KEEPING THE NAVIGATION APPS IN SYNC
 
     Finally, the file manager and terminal should be kept in sync by default in any given FOCUS window (I mean like we want app level tabs not tabs on terminal
     AND fm AND reading view. That's hell. We're either reading a file in the main reading view or we're not. If we're not, we want fm and terminal, and
@@ -143,6 +153,28 @@ make the thing in electron, have a similar but more minimal settings menu, allow
 menu looks like by default, and do all the above in the way that is most minimal, simple, reliable, cross platform, and as flexible as possible so we don't
 need to change the fundamental architecture going forward, we just need to add plugins or change config defaults or move things around, etc.
 
-Tl;dr: YHWH app in $(pwd)/root/src/ --> 
+Tl;dr:
+    - YHWH app in $(pwd)/root/src/ --> $(pwd)/yhwh
+    - Make it obsidian without the .obsidian directory or 'vault' concept. A 'vault' is just when we have a .yhwh subdirectory in a directory.
+      IMPORTANT: Above I didn't give info on the structure of the /etc/yhwh or ~/.config/yhwh/ or .yhwh/ directories.
+        Here's what to do: in any of those dirs, if a file named 'rc' exists, assume it's in the format above, namely:
+
+        ```
+        /path/to/dir/or/file
+            var=value
+            var2="$(cmd --options)"
+        ```
+
+        If you find no rc file or no /etc/yhwh (and so on) directory at all, do what all the sensible unix apps do. Don't freak out.
+        If there's other stuff in any of those directories, act in a way that assume the user might refer to it by relative path
+        within that .yhwh/rc file, e.g., to change the bg in $PRIVATE/secret/supersecret/pics, if a user has a
+        $PRIVATE/secret/.yhwh/rc file, it should be allowed to refer to supersecret/pics/boop.png to set the bg.
+
+Basically almost nothing here is a new idea, but for some reason no apps have gotten it right.
+
+So just do the sensible things described above, make the most unix-y / linux desktop decision and the least enterprise-y
+decision in each case whenever unsure, and we can probably put all existing IDEs out of business.
+
+Or at least make a much better obsidian that's powerful enough to almost be a desktop environment or an entire distro.
 
 EOF
