@@ -1,12 +1,13 @@
-# YHY: declarative app descriptions
+# YHY: declarative descriptions
 
-This directory is the declarative description of the apps we're building and the features they should have. These documents describe the intended apps, their behavior, and their constraints. They describe the target, not a claim that every feature is already implemented.
+This directory is the declarative description of the apps we're building, the features they should have, and the workflow for getting the work done. These documents describe the intended behavior and constraints. They describe the target, not a claim that every feature is already implemented.
 
-Each document corresponds to an imperative prompt in the parent directory, with the same filename and a `.md` extension:
+The imperative prompts are archived in `yamr/`. Their filenames begin with `YYYYMMDD-HHMMSS`, taken from each file's last modified time in local time. The declarative files keep the descriptive names with a `.md` extension:
 
 - [[mk-yhwh]] describes YHWH: an Electron app with Obsidian's central text view, a real file manager, a synchronized terminal, filesystem-wide navigation, hierarchical configuration, plugins, and YHWH's personality.
 - [[mk-yhwh-3d]] describes the same app with a gorgeous, science-fiction or video-game-like 3D interface, shared configuration, and its own executable.
 - [[mk-yhwh-obsidian]] describes an Obsidian plugin that brings as much of those apps as possible into the limits of a normal plugin, with commands for installation and community publication.
+- [[mk-the-workflow]] describes COVENANT, prompt drafts in `אמר/`, and human review before YHWH does the work.
 
 Relative filesystem paths in these descriptions are rooted at the parent project directory.
 
