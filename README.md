@@ -1,16 +1,17 @@
 # YHWH
 
-Run `make` to build and open the default app. `make help` lists build,
-interface, installation and test commands. Everything needed by the application
-lives in [yhwh/](yhwh/README.md); the surrounding vault holds human work.
+Run `make` to build and open the default app.
+Run `make help` for more info.
 
-Write brief tasks in [COVENANT](COVENANT.md), then use:
-
-```text
-yhwh begin → yhwh review → yhwh run → yhwh add → yhwh commit
-kanban        tmp/          run/       doc/imperative/   doc/declarative/ + Git
+```sh
+yhwh todo   # not implemented yet. this should add whatever the user types to COVENANT.md
+yhwh begin
+yhwh review
+yhwh run
+yhwh add
+yhwh commit
 ```
 
-Humans approve instructions and accept results. An executable in `run/` also
-works directly as an ordinary Bash script, with no automatic bookkeeping.
-See [AGENTS.md](AGENTS.md) and [doc/README.md](doc/README.md).
+Everything needed by the application lives in [yhwh/](yhwh/README.md).
+The surrounding vault holds human work.
+
