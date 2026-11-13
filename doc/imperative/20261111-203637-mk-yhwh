@@ -16,7 +16,7 @@ Todo for you:
 
 (1) We're going to start from the existing YHWH and THWH interfaces in root/src/. Anything in those that is already implemented CAN be used to implement the app below, but any of it can also be discarded. The app below is what we want to exist in $(pwd)/yhwh/. Hereafter, all references to the app should be taken to have $(pwd)/yhwh as its root (where we're going) or $(pwd)/root/src/ as its root (where we're coming from) based on context. You can tell which I mean in the context of the stuff below in each sentence. Then we're deleting $(pwd)/root/src/ when we've migrated to $(pwd)/yhwh and have a self contained app with 'make <TAB>' as the top level control interface and 'make help' as the top level documentation. The $(pwd)/yhwh dir should end up with Makefile and ONE app that you create initially by starting with the YHWH layout ('make yhwh' interface) that's now in $(pwd)/root/src/.
 
-(2) Remove any cruft or fluff related to the code review interface.
+(2) Remove any cruft or fluff related to echoiq or the code review interface.
 
 (3) While keeping the vibes of the 'make yhwh' interface, and keeping the Paleo hebrew logos and 'YHWH-ness' meter and all that (e.g., keep Nietzsche and Dawkins mode), do the following...
 

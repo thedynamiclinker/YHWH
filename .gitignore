@@ -1,6 +1,7 @@
 *.log
 __pycache__/
 build
+root/src
 node_modules
 root/src/build/packages/YHWH-linux-x64/YHWH
 .obsidian/workspace.json

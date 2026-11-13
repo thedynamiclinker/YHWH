@@ -3,7 +3,7 @@
 lordhavemercy -f --verbose << "EOF"
 The tutorial is still confusing and it's not obvious when we're not understanding something vs when you're missing something.
 
-Make the tutorial language python, make the tutorial examples of changes to the hypothetical codebase be simple, abstract changes to an example codebase and STOP using so much jargon!
+Make the tutorial language python, make the tutorial examples of changes to the hypothetical codebase be simple ones inspired by the changes we need to accept for echoiq but with the echoiq and cardiology details removed (more abstract and simple) and STOP using so much jargon!
 
 Assume we're extremely competent developers but we either (1) don't know the meaning of, or just (2) have to squint at to figure out what simple words you're trying to say, or (3) just generally hate seeing words like 'Gitlab MR' (it's a PR, no need to say GitHub) and 'handoff' or 'anchored note' or 'Preview acceptance' ...
 

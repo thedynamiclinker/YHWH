@@ -10,7 +10,7 @@ The self-contained app lives in `./yhwh/`. Its starting point is the existing YH
 
 Migration copies the starting files rather than moving them. The shared source remains available while [[mk-yhwh-3d|the 3D app]] is developed independently. The original prompt also calls that parallel version [[mk-yhwh-3d|mk-yhwh-webgl]]. Retirement of `./root/src/` follows completion of the self-contained migration, rather than being part of the initial copy.
 
-`./yhwh/` contains one app and its Makefile. The code review interface is outside this app's scope. `make <TAB>` is the top-level control interface, and `make help` is the top-level documentation.
+`./yhwh/` contains one app and its Makefile. EchoIQ and the code review interface are outside this app's scope. `make <TAB>` is the top-level control interface, and `make help` is the top-level documentation.
 
 ## The interface
 

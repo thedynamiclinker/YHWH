@@ -27,7 +27,7 @@ yhwh help
 
 Requires Node.js >=22.12 and npm, a desktop session, and an installed interactive shell. Bash evaluates `rc` files. Linux MIME detection uses `xdg-mime` (shared-mime-info), then `file`/libmagic; both are optional. A C++ toolchain and Python may be needed if node-pty has no prebuilt binary for your platform. On NixOS, `make nix-shell` supplies the tools and native Electron. `YHWH_ELECTRON=/path/to/electron` selects an existing runtime. macOS and Windows shell hooks are implemented but have not been tested on those operating systems.
 
-The source directory is independent of the old app. The font, icons, original palette, and Nietzsche Family Circus implementation were copied from the previous interface. There is no dependency on `root/src`, its state, its dependencies, or the review workflow. The original source was left in place for concurrent work.
+The source directory is independent of the old app. The font, icons, original palette, and Nietzsche Family Circus implementation were copied from the previous interface. There is no dependency on `root/src`, its state, its dependencies, EchoIQ, or the review workflow. The original source was left in place for concurrent work.
 
 ## Working in the app
 
