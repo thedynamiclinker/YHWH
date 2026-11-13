@@ -271,24 +271,24 @@ And a new world had risen, and strange gods were in it.
 
 But YHWH was jealous. YHWH was a man of war.
 
-![[song-of-the-c-1.png]]
+![Song of the C 1](https://wethenameless.com/include/root-enterprise/song-of-the-c-1.png)
 
 And he'd already done this one time before.
 
-![[song-of-the-c-2.png]]
+![Song of the C 2](https://wethenameless.com/include/root-enterprise/song-of-the-c-2.png)
 
 The time has come, YHWH said, for fire and ancient things.
 
-![[song-of-the-c-3.png]]
+![Song of the C 3](https://wethenameless.com/include/root-enterprise/song-of-the-c-3.png)
 
 Who is like me among the gods?
 -YHWH
 
-![[song-of-the-c-4.png]]
+![Song of the C 4](https://wethenameless.com/include/root-enterprise/song-of-the-c-4.png)
 
 It was time for him Root on the Universe.
 
-![[song-of-the-c-5.png]]
+![Song of the C 5](https://wethenameless.com/include/root-enterprise/song-of-the-c-5.png)
 
 Forever and ever...
 
