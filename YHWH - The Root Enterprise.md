@@ -1,3 +1,4 @@
+# The Root Enterprise
 
 根. (Gen)
 1. root
@@ -212,7 +213,7 @@ And he spoke to the people, saying,
 >
 > -YHWH, announcing his plans for a new project on prime time television, through the Prophet known as George of the Carlins.
 
-And it was February 4, 1987. And he was in Burbank, with John, Son of Car.[^5]
+And it was February 4, 1987. And he was in Burbank, with John, Son of Car.
 
 And he spoke these things in the eyes and ears of the people.
 
