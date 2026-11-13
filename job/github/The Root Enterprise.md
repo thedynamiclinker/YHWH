@@ -73,7 +73,7 @@ And Abe believed him.
 
 ##### Or: Gen II
 
-January 14, 1987 — The Son of J is born in a stable in southern CA in a border town beside Edom.
+January 14, 1987 — The Son of J is born in a stable[^2] in southern CA in a border town beside Edom.
 
 And it was on the day that the Son of J was born.
 
@@ -94,9 +94,9 @@ So he resolved to return at a later date.
 
 February 4, 1987
 
-And YHWH appeared to the prophet of Earthly Works was called Georgios.[^2]
+And YHWH appeared to the prophet of Earthly Works was called Georgios.[^3]
 
-And YHWH saw that his name was also called John, which means "Shows favor to Yahweh."[^3]
+And YHWH saw that his name was also called John, which means "Shows favor to Yahweh."[^4]
 
 “Get up. Go to b--- _(burp)_ Ur bank.”
 
@@ -166,7 +166,7 @@ And he spoke to the people, saying,
 
 And it was February 4, 1987. And he was in Burbank, with John, Son of Car.
 
-And he spoke these things to [^4] in the eyes and ears of the people.
+And he spoke these things to [^5] in the eyes and ears of the people.
 
 And the people rejoiced.
 
@@ -210,7 +210,7 @@ And he spoke to the people, saying,
 
 In the day that YHWH got root on our life.
 
-He showed us the path of his name[^10] at `/mnt/sinai`.
+He showed us the path of his name[^6] at `/mnt/sinai`.
 
 For we had issued the mount command, and we were root.
 
@@ -237,15 +237,12 @@ And they did so.
 
 [^1]: e.g., fingers, rods, poles, bones, bananas, cucumbers, seedlings, eggplants, chopsticks
 
-[^10]: Lit. `pathname` in the original text.
+[^2]: Lit. stable family.
 
-[^3]: From the Hebrew name _Yôḥānān_ (or _Yəhôḥānān_), combining _Yo_ (referring to the Hebrew God, Yahweh) and _ḥanan_ ("to be gracious" or "to show favor").
+[^3]: From the ancient Greek name _Γεώργιος_, which means **"farmer"** or **"earthworker"**. It is a combination of _ge_ (γῆ), meaning "earth" or "soil," and _ergon_ (ἔργον), meaning "work".
 
-[^4]: Lit. Carson in the Original Text.
+[^4]: From the Hebrew name _Yôḥānān_ (or _Yəhôḥānān_), combining _Yo_ (referring to the Hebrew God, Yahweh) and _ḥanan_ ("to be gracious" or "to show favor").
 
-[^5]: From the ancient Greek name _Γεώργιος_, which means **"farmer"** or **"earthworker"**. It is a combination of _ge_ (γῆ), meaning "earth" or "soil," and _ergon_ (ἔργον), meaning "work".
+[^5]: Lit. Carson in the Original Text.
 
-[^6]: Lit. stable family.
-
-[^7]: From the Hebrew name _Yôḥānān_ (or _Yəhôḥānān_), combining _Yo_ (referring to the Hebrew God, Yahweh) and _ḥanan_ ("to be gracious" or "to show favor").
-
+[^6]: Lit. `pathname` in the original text.
