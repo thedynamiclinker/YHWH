@@ -1,1 +1,0 @@
-Type: [[Science]], [[Idea]], [[Where]], [[You]], [[Use]], [[Math]], [[To]], [[Merge]], [[Space]], [[And]], [[Time]]

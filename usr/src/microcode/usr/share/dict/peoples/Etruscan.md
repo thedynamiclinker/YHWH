@@ -1,1 +1,0 @@
-Type: [[Old]], [[Italy]], [[Thing]]

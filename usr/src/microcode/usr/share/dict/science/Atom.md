@@ -1,1 +1,0 @@
-Type: [[Small]], [[Thing]], [[That]], [[All]], [[Stuff]], [[Is]], [[Made]], [[Of]]

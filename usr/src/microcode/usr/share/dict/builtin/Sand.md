@@ -1,1 +1,0 @@
-Type: [[Very]], [[Many]], [[Small]], [[Rock]]

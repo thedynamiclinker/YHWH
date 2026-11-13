@@ -1,1 +1,0 @@
-Type: [[Many]], [[Thought]], [[With]], [[Same]], [[Type]]

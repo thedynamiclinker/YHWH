@@ -1,1 +1,0 @@
-Type: [[Thing]], [[Face]], [[Do]], [[When]], [[You]], [[Happy]]

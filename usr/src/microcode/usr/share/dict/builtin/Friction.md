@@ -1,1 +1,0 @@
-Type: [[When]], [[One]], [[Thing]], [[Rub]], [[On]], [[Other]], [[Thing]]

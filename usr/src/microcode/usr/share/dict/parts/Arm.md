@@ -1,1 +1,0 @@
-Type: [[Two]], [[Big]], [[Sticks]], [[On]], [[Left]], [[And]], [[Right]], [[Of]], [[Body]]

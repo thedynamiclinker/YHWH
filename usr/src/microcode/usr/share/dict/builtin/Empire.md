@@ -1,1 +1,0 @@
-Type: [[Big]], [[Angry]], [[Country]], [[With]], [[Harem]], [[Of]], [[Many]], [[Other]], [[Country]]

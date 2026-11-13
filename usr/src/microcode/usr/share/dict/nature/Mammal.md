@@ -1,1 +1,0 @@
-Type: [[Animal]], [[With]], [[Tits]]

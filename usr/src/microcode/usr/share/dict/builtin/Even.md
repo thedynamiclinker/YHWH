@@ -1,1 +1,0 @@
-Type: [[Way]], [[To]], [[Show]], [[Surprise]]

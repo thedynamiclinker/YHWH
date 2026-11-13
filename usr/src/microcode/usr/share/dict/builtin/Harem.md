@@ -1,1 +1,0 @@
-Type: [[Collection]], [[Of]], [[Things]], [[You]], [[Fuck]], [[In]], [[Some]], [[Way]]

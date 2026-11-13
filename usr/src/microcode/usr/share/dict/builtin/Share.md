@@ -1,1 +1,0 @@
-Type: [[Give]], [[Some]], [[Of]], [[Your]], [[Things]], [[To]], [[Other]], [[People]]

@@ -1,1 +1,0 @@
-Type: [[Look]], [[North]], [[Then]], [[Turn]], [[Left]]

@@ -1,1 +1,0 @@
-Type: [[Not]], [[Open]], [[Because]], [[Something]], [[Cover]], [[Open]], [[Place]]

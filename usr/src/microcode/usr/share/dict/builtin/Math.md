@@ -1,1 +1,0 @@
-Type: [[Code]], [[With]], [[No]], [[Computer]]

@@ -1,1 +1,0 @@
-Type: [[Many]], [[Tiny]], [[Hair]], [[Twist]], [[Together]], [[And]], [[Get]], [[Strong]]

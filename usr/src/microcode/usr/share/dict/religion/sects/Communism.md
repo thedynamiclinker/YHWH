@@ -1,1 +1,0 @@
-Type: [[Pretend]], [[To]], [[Share]], [[But]], [[Take]], [[Instead]]

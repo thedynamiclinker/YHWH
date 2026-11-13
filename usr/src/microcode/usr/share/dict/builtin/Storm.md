@@ -1,1 +1,0 @@
-Type: [[When]], [[Sky]], [[Get]], [[Loud]], [[And]], [[Make]], [[Rain]]

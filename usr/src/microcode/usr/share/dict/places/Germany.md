@@ -1,1 +1,0 @@
-Type: [[Place]], [[In]], [[Europe]], [[With]], [[Long]], [[Words]]

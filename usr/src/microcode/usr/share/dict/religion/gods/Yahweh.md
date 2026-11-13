@@ -1,1 +1,0 @@
-Type: [[Minor]], [[Storm]], [[God]], [[Who]], [[Got]], [[Popular]]

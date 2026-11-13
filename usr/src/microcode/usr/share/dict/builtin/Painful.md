@@ -1,1 +1,0 @@
-Type: [[Feel]], [[Bad]]

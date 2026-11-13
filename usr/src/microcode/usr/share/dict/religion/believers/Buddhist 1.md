@@ -1,1 +1,0 @@
-Type: [[Calm]], [[People]], [[Who]], [[Want]], [[To]], [[Die]], [[But]], [[Not]], [[Now]]

@@ -1,1 +1,0 @@
-Type: [[Shoe]], [[With]], [[Long]], [[Neck]]

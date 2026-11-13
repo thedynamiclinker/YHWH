@@ -1,1 +1,0 @@
-Type: [[Mind]], [[Without]], [[Body]]

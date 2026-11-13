@@ -1,1 +1,0 @@
-Type: [[Word]], [[To]], [[Try]], [[Make]], [[People]], [[Feel]], [[Like]], [[They]], [[Are]], [[Tribe]]

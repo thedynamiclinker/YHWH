@@ -1,1 +1,0 @@
-Type: [[First]], [[usr/src/microcode/usr/share/dict/religion/books/Bible|Bible]], [[People]]

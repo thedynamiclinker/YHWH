@@ -1,1 +1,0 @@
-Type: [[When]], [[usr/src/microcode/usr/share/dict/atomic/A|A]], [[Thing]], [[Is]], [[Lots]] [[More|More]], [[Long]], [[Than]], [[It]], [[Is]], [[Wide]]

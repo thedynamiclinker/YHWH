@@ -1,1 +1,0 @@
-Type: [[Thing]], [[That]], [[Make]], [[You]], [[Slip]]

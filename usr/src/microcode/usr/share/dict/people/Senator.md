@@ -1,1 +1,0 @@
-Type: [[Latin]], [[Word]], [[Meaning]], [[Old]], [[Person]]

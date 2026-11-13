@@ -1,1 +1,0 @@
-Type: [[Same]], [[Thing]], [[Less]], [[Cost]]

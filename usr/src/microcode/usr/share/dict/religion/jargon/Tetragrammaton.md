@@ -1,1 +1,0 @@
-Type: [[Fancy]], [[Greek]], [[Word]], [[For]], [[YHWH]]

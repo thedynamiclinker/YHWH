@@ -1,1 +1,0 @@
-Type: [[Hot]], [[Orange]], [[Air]], [[That]], [[Sometimes]], [[Happen]], [[On]], [[Wood]]

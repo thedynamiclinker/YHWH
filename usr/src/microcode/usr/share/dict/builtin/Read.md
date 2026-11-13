@@ -1,1 +1,0 @@
-Type: [[Turn]], [[Shape]], [[Outside]], [[Head]], [[Into]], [[Idea]], [[In]], [[Head]]

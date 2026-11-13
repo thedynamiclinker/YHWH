@@ -1,1 +1,0 @@
-Type: [[Version]], [[Of]], [[Arabic]], [[Alphabet]], [[For]], [[Chinese]], [[Language]]

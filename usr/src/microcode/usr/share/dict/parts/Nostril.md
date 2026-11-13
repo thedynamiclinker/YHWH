@@ -1,1 +1,0 @@
-Type: [[Two]], [[Hole]], [[On]], [[Bottom]], [[Of]], [[Nose]]

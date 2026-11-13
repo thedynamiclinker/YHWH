@@ -1,1 +1,0 @@
-Type: [[When]], [[Stuff]], [[Come]], [[Out]], [[Of]], [[Thing]]

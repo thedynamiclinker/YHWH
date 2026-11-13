@@ -1,1 +1,0 @@
-Type: [[Red]], [[Water]], [[Inside]], [[You]]

@@ -1,7 +1,0 @@
-/* Preserve whitespace and indentation in Reading mode. */
-.markdown-reading-view .markdown-preview-sizer p {
-    white-space: pre-wrap;
-    tab-size: 4;
-    -moz-tab-size: 4;
-}
-

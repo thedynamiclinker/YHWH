@@ -1,1 +1,0 @@
-Type: [[Head]], [[Clothes]]
