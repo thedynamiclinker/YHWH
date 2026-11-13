@@ -8,7 +8,7 @@ THEME ?= yhwh
 MODEL ?= qwen3:8b
 export MODEL
 
-.PHONY: help install thwh yhwh build-thwh build-yhwh run-thwh run-yhwh dawkins run-isolated reset guide test test-ui test-ui-headless package review-start review-status nix-shell ollama-serve ollama-pull ollama-models
+.PHONY: help install thwh yhwh build-thwh build-yhwh run-thwh run-yhwh dawkins run-isolated reset guide test test-ui test-ui-headless package review-start review-status verify-migration nix-shell ollama-serve ollama-pull ollama-models
 
 help: ## List commands and show how to get started
 	@printf '\nmake -C root builds and opens THWH; make -C root yhwh opens the company app.\nBoth run from root/src; there is no frontend compilation step.\nStart practice needs no model or login. Requires Node.js >=22.12, npm, Git, Python 3, and a desktop display.\n\n'
@@ -67,6 +67,9 @@ review-start: ## Open the shared terminal review in REVIEW_ROOT
 
 review-status: ## Show the paired review without accepting rounds
 	"$(APP_DIR)/bin/review" --root "$(REVIEW_ROOT)" status
+
+verify-migration: ## Verify the original source inventory and repository bundles
+	python3 "$(APP_DIR)/scripts/verify-migration.py"
 
 nix-shell: ## Enter the Nix development shell with native Electron
 	nix-shell "$(APP_DIR)/shell.nix"
