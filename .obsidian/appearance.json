@@ -22,5 +22,6 @@
   "monospaceFontFamily": "Noto Sans Mono",
   "baseFontSize": 18,
   "baseFontSizeAction": true,
-  "nativeMenus": false
+  "nativeMenus": false,
+  "showRibbon": true
 }

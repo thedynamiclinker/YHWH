@@ -10,9 +10,19 @@
   "terminal:close-terminal": [
     {
       "modifiers": [
-        "Mod"
+        "Mod",
+        "Shift"
       ],
       "key": "X"
+    }
+  ],
+  "terminal:rename-terminal": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "R"
     }
   ],
   "editor:swap-line-down": [
@@ -296,31 +306,73 @@
       "key": "B"
     }
   ],
-  "terminal:open-terminal.default.current": [
-    {
-      "modifiers": [
-        "Alt",
-        "Shift"
-      ],
-      "key": "T"
-    }
-  ],
-  "terminal:open-terminal.external.current": [
-    {
-      "modifiers": [
-        "Alt",
-        "Shift"
-      ],
-      "key": "G"
-    }
-  ],
   "ghostty-terminal:open-split": [
     {
       "modifiers": [
-        "Alt",
+        "Mod",
         "Shift"
       ],
-      "key": "N"
+      "key": "S"
+    },
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "\\"
+    }
+  ],
+  "terminal:export-settings.current-file": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "E"
+    }
+  ],
+  "terminal:toggle-focus-on-last-terminal": [],
+  "terminal:open-terminal.default.current": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "B"
+    }
+  ],
+  "terminal:focus-on-last-terminal": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "ArrowDown"
+    },
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "ArrowUp"
+    }
+  ],
+  "terminal:import-settings.current-file": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "I"
+    }
+  ],
+  "terminal:open-terminal.integrated.current": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "G"
     }
   ]
 }
