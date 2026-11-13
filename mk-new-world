@@ -1,0 +1,1155 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+All relative paths below are relative to the repo / vault root,
+unless explicitly stated otherwise.
+
+Refactor the existing functionality as follows:
+
+0. The directory currently called yhwh is the source code for one
+   of our three interfaces. Move it to yhwh/src/yhwh-default.
+
+   We're gonna need a new top-level directory called yhwh for a
+   different purpose in what follows.
+
+   The three existing interfaces should end up here:
+
+       yhwh/src/yhwh-default
+       yhwh/src/yhwh-three
+       yhwh/src/yhwh-obsidian
+
+   The old yhwh-3d should become yhwh/src/yhwh-three.
+   Rename 3d to three throughout the project wherever it refers
+   to this interface, including commands, filenames, imports,
+   configuration, documentation, and build targets.
+
+   The old yhwh-obsidian should become yhwh/src/yhwh-obsidian.
+
+   Preserve existing functionality during these moves.
+
+1. Refactor the existing code to separate code from data and share
+   functionality.
+
+   Make sure there's no remaining shared functionality in root/src.
+
+   If there is, factor it out and put it in yhwh/lib.
+
+   Any shared functionality between the default, three, and
+   obsidian versions should go in yhwh/lib.
+
+   Don't duplicate shared functionality merely because the
+   interfaces are now in different source directories.
+
+   Use this general filesystem layout:
+
+       yhwh/
+           bin/
+           etc/
+           lib/
+           src/
+               yhwh-default/
+               yhwh-three/
+               yhwh-obsidian/
+           var/
+               lib/yhwh/
+               tmp/yhwh/
+
+   This is a conceptual layout, not a demand to create empty
+   directories or introduce unnecessary abstraction.
+
+   Keep implementation-specific source code in src, reusable
+   importable libraries in lib, internal executable scripts in
+   bin, and human-readable and machine-readable configuration
+   in etc.
+
+   The yhwh/ directory should be self-contained.
+
+   It must not depend on files outside yhwh/ in order to build,
+   run, test, or install the application, except for ordinary
+   external system dependencies such as Node.js and installed
+   packages.
+
+   It IS allowed to install files or symlinks into an external
+   prefix. Installing into a prefix is not the same thing as
+   depending on that prefix.
+
+   The top-level Makefile should delegate to yhwh/ as appropriate.
+
+   Fix the top-level Makefile and any subdirectory Makefiles
+   so that everything works as expected.
+
+   Typing 'make' from the repo root should build and open the
+   default app.
+
+   It should do so by invoking ONLY functionality implemented
+   inside yhwh/, without requiring an installation first.
+
+   The repo root is where we'll be typing English and spending
+   our time writing and running prompts that change generated
+   source code automatically.
+
+   Sometimes we'll need to head down into yhwh/ to edit
+   something manually, e.g., the generated interface text
+   in yhwh/etc/.
+
+   Basically the mental model is a bit like Linux From Scratch.
+
+   The repo root is the running system (sort of), where the user
+   is following the Linux From Scratch tutorial (or creating it
+   for the first time, if we're Gerard Beekmans).
+
+   The yhwh/ directory is sort of like /tools in the pre-chroot
+   system of LFS.
+
+   But not exactly, because we're not gonna be symlinking it
+   into a chroot or bootstrapping an actual OS yet.
+
+   We're borrowing from the mental model because EVENTUALLY
+   we want to make this usable as a distro or window manager
+   for one.
+
+   For now, think LFS as a metaphor, and imagine we're building
+   a full-filesystem generalized Obsidian with yhwh in it.
+
+   So, against that background...
+
+   The user's ~/world directory is our installation prefix
+   and the beginnings of our future installed system.
+
+   Do not install anything into the repository root.
+
+   This is important because the repo will be shared by humans
+   using BOTH Git and Obsidian Sync.
+
+   Generated installation files, machine-specific symlinks,
+   and local runtime state should not be synced between users.
+
+   'make develop' should behave like 'pip install -e .'.
+
+   It should install symlinks into:
+
+       ~/world/bin
+       ~/world/lib
+       ~/world/etc
+
+   and other appropriate directories under ~/world as needed.
+
+   Those symlinks should point back into yhwh/ in the local
+   checkout on that user's machine.
+
+   Changes to the source and configuration should therefore
+   take effect without reinstalling, to the extent possible
+   in Node.js and Electron.
+
+   Don't symlink individual files unnecessarily when a sensible
+   directory-level symlink will do.
+
+   Don't overwrite unrelated files already installed in ~/world.
+
+   'make install' should behave like 'pip install .'.
+
+   It should install a standalone, non-editable copy into:
+
+       ~/world/mnt/sinai
+
+   with an appropriate Unix-style directory layout:
+
+       ~/world/mnt/sinai/bin
+       ~/world/mnt/sinai/lib
+       ~/world/mnt/sinai/etc
+       ~/world/mnt/sinai/var
+
+   and whatever else is needed.
+
+   Installed executables must not reference source files in
+   the original checkout.
+
+   They may depend on Node.js or other documented runtime
+   dependencies, but not on the source tree.
+
+   Prefer standard Node.js/Electron package-management,
+   executable-entry-point, and distribution mechanisms
+   rather than inventing our own packaging system.
+
+   The distinction should be:
+
+       make develop   editable installation into ~/world
+       make install   non-editable installation into
+                      ~/world/mnt/sinai
+
+   Both should be implementable.
+
+   If there's a genuine technical obstacle, implement the
+   working target and make the other a stub that explains
+   exactly what's missing and why.
+
+   Add the unfinished implementation to the COVENANT kanban
+   board rather than silently pretending it works.
+
+   'make uninstall' should remove ~/world.
+
+   This is deliberately broader than uninstalling one package.
+   For now, ~/world is a dedicated prefix owned by this project.
+
+   Never delete ~/world without first verifying that the
+   resolved path is exactly the intended ~/world directory.
+
+   Do not follow symlinks outside the prefix while deleting.
+
+   Don't delete unrelated user data if the directory has
+   acquired any. Report such conflicts rather than guessing.
+
+   'make check' should run the project's tests.
+
+   It should not install or uninstall anything.
+
+   Keep the Make targets consistent, idempotent where
+   appropriate, and documented.
+
+   The make targets should work from the repo root without
+   relying on the caller's current working directory being
+   embedded in generated files incorrectly.
+
+   Build outputs should be put in:
+
+       yhwh/var/tmp/yhwh
+
+   Like Gentoo's build directory conventions.
+
+   Do not confuse temporary build artifacts with persistent
+   application state or installed package metadata.
+
+   The installed prefix should maintain:
+
+       var/lib/yhwh/world
+
+   For example:
+
+       ~/world/var/lib/yhwh/world
+
+   and:
+
+       ~/world/mnt/sinai/var/lib/yhwh/world
+
+   This is a bare-bones Gentoo-inspired record of what's
+   installed into a given prefix.
+
+   Whenever make install, make develop, make uninstall, or
+   future commands like 'yhwh install' install or remove
+   packages, update the corresponding prefix's world file.
+
+   Use a simple, documented, deterministic format.
+
+   Don't claim to be implementing all of Portage.
+
+   Make sure package records are added only after successful
+   installation and removed when their installations are
+   successfully removed.
+
+   Since 'make uninstall' removes ~/world itself, the world
+   files inside it will naturally disappear too.
+
+   Back to the refactor.
+
+   Any interface text that we might want to change should
+   be kept separately from the JavaScript implementation.
+
+   Put it in yhwh/etc.
+
+   Any interface configuration variables that determine
+   things like geometry (width, height, layout, workspace
+   dimensions, etc.) should also be in yhwh/etc.
+
+   Use sensible Electron/Node.js configuration formats and
+   naming conventions.
+
+   Emulate what a Linux or Unix distro would do whenever
+   possible.
+
+   I want the messy implementation code and stuff that would
+   scare a human to be in yhwh/src, but the human-readable
+   and machine-readable configuration in yhwh/etc.
+
+   Same general idea as Unix.
+
+   Any internal support scripts should be in yhwh/bin.
+
+   Any internal importable libraries should be in yhwh/lib.
+
+   Avoid mixing build-time configuration, installed defaults,
+   and user-specific mutable runtime settings without making
+   the distinction explicit.
+
+2. Move amr to bin2/imperative.
+
+   Those are the "do this" Software 2.0 scripts we used
+   to build the system.
+
+   Preserve their contents and history as much as possible.
+
+   Update references to their old paths.
+
+   bin2/ is for the imperative English programs and supporting
+   prompt-generation machinery used to develop the system.
+
+   yhwh/bin is for the application's internal executables.
+
+   Don't conflate these two purposes.
+
+3. After you've moved everything needed out of root/, move
+   job/the-root-enterprise/* into root/ and delete job.
+
+   Before doing this, inspect root/ carefully.
+
+   If anything currently in root/ is still used by any of the
+   yhwh interfaces or the shared libraries, move it to its
+   proper location in yhwh/ and update its references.
+
+   Preserve any other useful data rather than deleting it.
+
+   Don't overwrite files when moving the enterprise contents.
+
+   Include hidden files when moving the enterprise directory.
+
+   Delete job only after verifying that its contents have
+   been moved successfully and nothing needed remains.
+
+4. Implement the executable interface.
+
+   The installed system should expose four executables:
+
+       yhwh
+       yhwh-default
+       yhwh-three
+       yhwh-obsidian
+
+   The three interface-specific executables launch their
+   respective interfaces.
+
+   The bare 'yhwh' executable is different.
+
+   It should behave like a Git-style command multiplexer.
+
+   For example:
+
+       yhwh
+       yhwh --help
+       yhwh open
+       yhwh open default
+       yhwh open three
+       yhwh open obsidian
+       yhwh begin
+       yhwh review
+       yhwh run
+       yhwh add
+       yhwh commit
+
+   'yhwh' by itself should display a nice Unix-style help
+   screen, explaining the available subcommands.
+
+   'yhwh open' and 'yhwh open default' should launch the
+   default interface.
+
+   'yhwh open three' should launch the three interface.
+
+   'yhwh open obsidian' should launch the obsidian interface.
+
+   The command multiplexer should support external subcommands
+   in the same general style as Git.
+
+   If an executable called yhwh-boop is anywhere on PATH,
+   then:
+
+       yhwh boop
+
+   should invoke it.
+
+   The multiplexer should also discover external subcommands
+   for its help output.
+
+   A subcommand's own --help output should be used to obtain
+   a short one-line description for the main help screen.
+
+   Its full help should remain accessible via:
+
+       yhwh boop --help
+
+   Prefer a simple convention for extracting the one-line
+   description from a command's help text.
+
+   Handle missing, broken, or nonconforming external commands
+   gracefully.
+
+   Don't execute arbitrary discovered subcommands merely
+   to list them unless they're explicitly being invoked in
+   a safe help/introspection mode.
+
+   Avoid infinite recursion if the multiplexer encounters
+   itself on PATH.
+
+   Prefer conventional Unix behavior for exit codes, stdout,
+   stderr, help, version information, and unknown commands.
+
+   When in doubt, make choices based on how applications
+   beloved by Unix developers tend to work.
+
+   Both editable and non-editable installations should expose
+   the same command-line behavior.
+
+5. Replace the old prompt/kanban workflow with the new one.
+
+   Remove obsolete documentation describing the old workflow,
+   especially where it contradicts what follows.
+
+   The new workflow is:
+
+       kanban -> tmp -> run -> doc/imperative
+                                  |
+                                  v
+                            doc/declarative
+                                  |
+                                  v
+                               git commit
+
+   The commands corresponding to these stages are:
+
+       yhwh begin
+       yhwh review
+       yhwh run
+       yhwh add
+       yhwh commit
+
+   This is the workflow for the new world of software
+   development.
+
+   Humans should type as little as possible.
+
+   Agents should do the repetitive work, including naming
+   files, generating prompts, asking implementation questions,
+   summarizing completed changes, maintaining documentation,
+   and preparing commits.
+
+   Humans remain responsible for approving the implementation
+   instructions before executing them and for deciding whether
+   the results are satisfactory before committing.
+
+   A. KANBAN -> TMP: 'yhwh begin'
+
+   Humans write short English todo items in the COVENANT
+   kanban board.
+
+   These should be brief descriptions of what we want.
+
+   We shouldn't have to write elaborate prompts ourselves.
+
+   Implement:
+
+       yhwh begin
+       yhwh begin <todo-item-name>
+
+   With no arguments, 'yhwh begin' should open an interactive
+   terminal UI listing available todo items from kanban.
+
+   The user should be able to select the item to begin.
+
+   With an argument, select that item directly.
+
+   Provide shell tab completion for todo-item basenames
+   in kanban.
+
+   Resolve names unambiguously, and handle duplicate basenames
+   without accidentally choosing the wrong task.
+
+   Once the task has been selected, an agent should generate
+   its best guess of how to implement it.
+
+   Put that draft in:
+
+       tmp/
+
+   Give it a good descriptive filename.
+
+   Preserve a stable association with its kanban item.
+
+   Importantly, the autogenerated file should contain any
+   QUESTIONS the agent wants humans to answer before it can
+   be confident about the implementation details.
+
+   The questions should be concrete, concise, and answerable.
+
+   Prefer questions that identify genuine ambiguities,
+   architectural decisions, missing requirements, or
+   dependencies that would materially change the implementation.
+
+   Don't ask humans questions whose answers can be determined
+   reliably by inspecting the repository.
+
+   Don't invent questions merely to create a review step.
+
+   The draft should include:
+
+       - The original task and its intended result.
+       - The agent's proposed implementation.
+       - Any unresolved questions.
+       - Any known blockers or dependencies.
+       - Any assumptions the agent is making.
+
+   Prefer keeping this information together in the draft
+   file, using comments or clearly marked non-executable
+   sections as appropriate.
+
+   The draft may already contain a proposed lordhavemercy
+   heredoc, but it must be clear which portions are tentative
+   and which questions remain unresolved.
+
+   Nothing in tmp/ should execute automatically.
+
+   'yhwh begin' should not move a draft into run/.
+
+   B. TMP -> RUN: 'yhwh review'
+
+   Implement:
+
+       yhwh review
+       yhwh review <draft-name>
+
+   With no arguments, 'yhwh review' should launch an
+   interactive TUI listing the drafts in tmp/.
+
+   The user should be able to select a draft to review.
+
+   With an argument, select that draft directly.
+
+   Provide shell tab completion for basenames in tmp/.
+
+   Once a draft has been selected, show the questions
+   generated by 'yhwh begin'.
+
+   Let the human answer those questions interactively.
+
+   Keep the interaction simple.
+
+   Use multiple-choice questions where sensible and
+   short free-text answers where appropriate.
+
+   Don't force humans to answer questions that have
+   become irrelevant or can now be resolved automatically.
+
+   Preserve the answers so that interrupted reviews
+   can be resumed without retyping everything.
+
+   After the questions have been answered, the agent should
+   use those answers to generate its final implementation
+   prompt.
+
+   The resulting file must be an executable Bash script
+   containing the complete lordhavemercy heredoc:
+
+       #!/usr/bin/env bash
+
+       lordhavemercy -f --verbose << "EOF"
+       ...
+       EOF
+
+   Put that finalized script in:
+
+       run/
+
+   Give it a good descriptive filename.
+
+   Make it executable.
+
+   Preserve the relationship to the original kanban item
+   and draft in tmp/.
+
+   The final script should incorporate the human's answers,
+   resolve the questions, and describe the intended changes
+   clearly enough to execute without further guessing.
+
+   If important questions remain unanswered, don't pretend
+   the draft is ready.
+
+   Explain what's missing and leave it in tmp/.
+
+   Once a final script has been successfully created in run/,
+   remove or archive the superseded draft from tmp/ so the
+   active draft list doesn't accumulate completed reviews.
+
+   The human can now inspect the script in run/ manually.
+
+   Or the human can run it directly.
+
+   Or the human can use 'yhwh run'.
+
+   These are intentionally different execution paths.
+
+   C. EXECUTION: DIRECT SCRIPTS AND 'yhwh run'
+
+   Every executable script in run/ should work as an ordinary
+   standalone Bash script.
+
+   For example:
+
+       run/executable-todo-file
+
+   should execute that script directly.
+
+   This must NOT automatically invoke the workflow machinery.
+
+   In particular, direct execution should not automatically:
+
+       - Move the script into doc/imperative/.
+       - Generate declarative documentation.
+       - Stage Git changes.
+       - Create a Git commit.
+       - Remove the script from run/.
+
+   It should simply execute the lordhavemercy heredoc and
+   return the appropriate exit status.
+
+   This is important.
+
+   We want executable English scripts to remain ordinary
+   executable files, not magical objects that can only
+   be invoked through our CLI.
+
+   Separately, implement:
+
+       yhwh run
+       yhwh run <task-name>
+
+   With no arguments, this should launch an interactive
+   terminal UI listing the executable English scripts in:
+
+       run/
+
+   The user should be able to select:
+
+       - One task.
+       - Several tasks.
+       - All tasks.
+
+   and execute the selection.
+
+   Use a pleasant, conventional Unix TUI.
+
+   Keep it simple and keyboard-friendly.
+
+   Support shell tab completion for task names in run/.
+
+   Support multiple explicit task names where practical.
+
+   Resolve task names unambiguously.
+
+   Don't execute files outside run/ through path traversal,
+   ambiguous names, or accidental shell expansion.
+
+   Respect declared task dependencies when ordering execution.
+
+   Don't run conflicting tasks concurrently.
+
+   Sequential execution is fine as the default.
+
+   Execute the approved scripts using their intended
+   interpreter, preserving the lordhavemercy heredoc.
+
+   Display progress, output, and failures clearly.
+
+   A task that exits unsuccessfully must not be treated
+   as completed.
+
+   If one task fails, report the failure and leave it
+   available for inspection or retry.
+
+   Don't automatically retry failed tasks.
+
+   After 'yhwh run' finishes executing a task, the human
+   should be able to inspect the results before deciding
+   whether to accept them.
+
+   Successful execution is not the same thing as human
+   acceptance of the resulting changes.
+
+   Therefore, 'yhwh run' should NOT automatically commit
+   anything or generate declarative documentation.
+
+   It should record the execution result and preserve enough
+   information for the subsequent 'yhwh add' and
+   'yhwh commit' steps.
+
+   In particular, preserve the exact script that was
+   executed, even if the file in run/ is later edited.
+
+   The task should remain available for review until the
+   human accepts the results.
+
+   D. ACCEPTANCE AND IMPERATIVE HISTORY: 'yhwh add'
+
+   Implement:
+
+       yhwh add
+       yhwh add <task-name>
+
+   This is the human acceptance step.
+
+   The human runs 'yhwh add' after inspecting the results
+   of an executed task and deciding that they're satisfactory.
+
+   With no arguments, offer an interactive selection of
+   successfully executed tasks awaiting acceptance.
+
+   With an argument, select that task directly.
+
+   Support shell tab completion for eligible task names.
+
+   Don't accept a task that hasn't successfully executed.
+
+   Don't silently assume that a direct invocation of
+   run/executable-todo-file was tracked by 'yhwh run'.
+
+   If a directly executed script needs to enter the managed
+   workflow, require an explicit way to associate its
+   execution and results with the task.
+
+   When a task is accepted, archive the exact executable
+   English script that produced the accepted changes in:
+
+       doc/imperative/
+
+   Prefix its filename with a date-time stamp.
+
+   Use a stable, sortable, unambiguous timestamp format,
+   preferably UTC.
+
+   Choose a descriptive filename following the patterns
+   already present in doc/**/*.
+
+   Preserve the executable English heredoc itself.
+
+   This is our imperative history:
+
+       What did we tell the machine to do?
+
+   Don't rewrite the historical script after execution.
+
+   If a generated filename collides with an existing file,
+   resolve the collision without overwriting history.
+
+   Only remove the task from run/ after its archived copy
+   has been written successfully.
+
+   'yhwh add' should prepare the accepted task's changes
+   and imperative history for the next commit.
+
+   It should not create the Git commit.
+
+   It should not automatically generate the final
+   declarative summary; that's part of 'yhwh commit'.
+
+   If the user rejects the results, leave the task
+   unaccepted and provide a way to revise or rerun it.
+
+   E. DECLARATIVE HISTORY AND GIT COMMITS: 'yhwh commit'
+
+   Implement:
+
+       yhwh commit
+       yhwh commit <task-name>
+
+   This should take an accepted task, generate its declarative
+   documentation, and create the corresponding Git commit.
+
+   With no arguments, infer the task if there's exactly one
+   accepted task awaiting commit.
+
+   If there are multiple candidates, offer an interactive
+   selection rather than guessing.
+
+   The declarative documentation belongs in:
+
+       doc/declarative/
+
+   It should describe what is now true about the system
+   as a result of the accepted changes.
+
+   This is NOT a retelling of the commands we executed.
+
+   It should describe the resulting properties, features,
+   interfaces, invariants, or behavior of the system.
+
+   For example, instead of:
+
+       "Moved the old 3d source directory and updated imports."
+
+   Prefer something like:
+
+       "The three-dimensional interface is implemented in
+        yhwh/src/yhwh-three and launched by yhwh open three."
+
+   The declarative documentation should describe the
+   system as it now exists.
+
+   Not the chronological steps used to create it.
+
+   Sometimes an imperative script is a one-time maintenance
+   operation and produces no enduring declarative property.
+
+   In that case, it's fine for the declarative result to
+   compile away to nothing.
+
+   Don't manufacture meaningless documentation merely
+   because a task ran.
+
+   Use an agent prompt in bin2/ or an appropriate supporting
+   script to perform this transformation.
+
+   Inspect the actual changes and resulting system when
+   generating the summary, rather than assuming that every
+   sentence in the original prompt was implemented perfectly.
+
+   Follow existing conventions in doc/**/* for naming,
+   organization, and writing style.
+
+   If the task changes existing declarative documentation,
+   update the appropriate document rather than accumulating
+   contradictory descriptions.
+
+   Once the declarative documentation has been generated,
+   create the Git commit.
+
+   The Git commit message should consist of:
+
+       1. One newly generated concise summary line.
+
+       2. A blank line.
+
+       3. The body of the imperative heredoc that generated
+          the changes, formatted for a conventional Git
+          commit message.
+
+   Extract the body of the archived imperative heredoc,
+   excluding the Bash wrapper and heredoc delimiters.
+
+   Format that English using:
+
+       fold -s -w 72
+
+   Preserve the meaning and content of the original prompt.
+
+   Don't summarize the prompt body.
+
+   Don't replace it with a prose description of what changed.
+
+   The commit message should contain the actual English
+   instruction that caused the change, preceded by one
+   concise summary line.
+
+   The imperative script in doc/imperative/ remains the
+   authoritative exact historical record.
+
+   The Git commit message is its human-readable companion.
+
+   The commit should include:
+
+       - The accepted implementation changes.
+       - The archived imperative script.
+       - The new or updated declarative documentation.
+       - Any directly related supporting changes.
+
+   Associate the commit with the relevant completed task.
+
+   If multiple completed tasks are pending, handle them
+   deterministically and preserve their individual
+   associations.
+
+   Prefer one coherent commit per completed task.
+
+   Don't accidentally mix unrelated tasks into a commit.
+
+   Before committing, verify that the relevant imperative
+   script has been archived and that the declarative
+   documentation has been generated or explicitly determined
+   to be unnecessary.
+
+   'yhwh commit' should stage and commit the appropriate
+   changes automatically.
+
+   The normal successful result should be:
+
+       git status
+
+   showing a clean working tree.
+
+   However, don't delete, overwrite, or silently commit
+   unrelated human work just to achieve a clean status.
+
+   If unrelated changes or untracked files prevent a safe,
+   clean result, explain what's left and why.
+
+   Don't silently discard changes.
+
+   Don't create empty commits unless explicitly requested.
+
+   F. COMPLETE WORKFLOW
+
+   The intended normal sequence is:
+
+       1. Human writes a short todo in kanban.
+
+       2. 'yhwh begin' selects that todo and generates
+          a draft implementation prompt in tmp/,
+          including any questions for the human.
+
+       3. 'yhwh review' selects the draft, collects
+          answers to those questions, and generates
+          the final executable heredoc script in run/.
+
+       4. Human may inspect or edit the final script.
+
+       5. Human executes it directly or through 'yhwh run'.
+
+       6. If run directly, it behaves as an ordinary script,
+          without automatic workflow bookkeeping.
+
+       7. If run through 'yhwh run', the system records
+          the execution and waits for human acceptance.
+
+       8. Human inspects the results.
+
+       9. 'yhwh add' accepts the task, archives its exact
+          executed script in doc/imperative/, and prepares
+          the changes for commit.
+
+      10. 'yhwh commit' generates the declarative summary
+          in doc/declarative/ and commits everything using
+          the original imperative prompt as the commit
+          message body, with one summary line at the top.
+
+   The system should maintain enough task state to know
+   which kanban item, draft, executable script, accepted
+   changes, imperative history, declarative documentation,
+   and Git commit belong together.
+
+   Don't require humans to repeatedly type long filenames,
+   commit messages, or paths that the system already knows.
+
+   Support explicit task names for scripting and automation.
+
+   Also provide sensible interactive selection or automatic
+   inference when a task is unambiguous.
+
+   If there are several plausible tasks, ask the human to
+   select one rather than guessing.
+
+   The workflow should be recoverable after interruption.
+
+   In particular, a successful execution followed by a
+   failure to archive, document, or commit should not
+   automatically cause the task to execute again.
+
+   Record enough state to resume the unfinished phase.
+
+   Avoid duplicate archives, duplicate summaries, and
+   duplicate commits when commands are retried.
+
+   The workflow should be auto-documenting.
+
+   Each commit should make it possible to understand not
+   just what changed, but what English instruction caused
+   the change.
+
+   This is the central idea.
+
+6. Document the new architecture and workflow.
+
+   Update AGENTS.md to explain the workflow above.
+
+   AGENTS.md should tell agents how to work with:
+
+       kanban
+       tmp/
+       run/
+       doc/imperative/
+       doc/declarative/
+       yhwh/
+       bin2/
+
+   Document the five main workflow commands:
+
+       yhwh begin
+       yhwh review
+       yhwh run
+       yhwh add
+       yhwh commit
+
+   Explain that 'yhwh begin' generates draft prompts with
+   implementation questions.
+
+   Explain that 'yhwh review' collects human answers and
+   generates final executable scripts.
+
+   Explain that direct execution of a script in run/ does
+   not perform automatic workflow bookkeeping.
+
+   Explain that 'yhwh run' executes selected tasks and
+   records their results but does not accept or commit them.
+
+   Explain that 'yhwh add' is the acceptance and imperative
+   archival step.
+
+   Explain that 'yhwh commit' generates declarative
+   documentation and commits the changes with the original
+   imperative prompt as the commit message body.
+
+   Explain the difference between imperative instructions
+   and declarative descriptions.
+
+   Explain the intended relationship between executed
+   prompts and Git commits.
+
+   AGENTS.md should point agents to:
+
+       doc/README.md
+
+   for conventions specific to the doc/ hierarchy.
+
+   Update doc/README.md as necessary.
+
+   Inspect the existing documentation before rewriting it.
+
+   Preserve useful conventions and examples.
+
+   Remove obsolete descriptions of the previous workflow
+   wherever they contradict the new one.
+
+   Avoid duplicating large amounts of documentation between
+   AGENTS.md and doc/README.md.
+
+   Keep the documentation concise, discoverable, and useful
+   to both humans and agents.
+
+7. Integration and verification.
+
+   Make sure all existing interfaces still work.
+
+   Make sure the new directory layout doesn't break imports,
+   asset loading, Electron packaging, or configuration paths.
+
+   Verify that:
+
+       make
+       make check
+       make develop
+       make install
+
+   work as specified.
+
+   Verify that the editable installation uses symlinks
+   into the local checkout and that the non-editable
+   installation does not depend on the checkout.
+
+   Verify that:
+
+       yhwh
+       yhwh --help
+       yhwh open
+       yhwh open default
+       yhwh open three
+       yhwh open obsidian
+       yhwh begin
+       yhwh review
+       yhwh run
+       yhwh add
+       yhwh commit
+
+   behave as expected.
+
+   Verify external subcommand discovery with a temporary
+   yhwh-boop executable on PATH.
+
+   Verify that 'yhwh begin' discovers kanban items, supports
+   tab completion, and generates drafts with questions.
+
+   Verify that 'yhwh review' discovers drafts, supports
+   tab completion, collects answers, and produces executable
+   lordhavemercy heredoc scripts in run/.
+
+   Verify that executing a run/ script directly does not
+   automatically move it, document it, or commit anything.
+
+   Verify that 'yhwh run' can list, select, and execute
+   approved tasks while preserving their execution records
+   for later acceptance.
+
+   Verify that 'yhwh add' archives the exact executed script
+   in doc/imperative/ only after human acceptance.
+
+   Verify that 'yhwh commit' generates declarative
+   documentation and creates the corresponding Git commit.
+
+   Test the failure and retry paths without running
+   destructive or unrelated real tasks.
+
+   Test the generated Git commit messages.
+
+   Make sure the imperative prompt body is wrapped at
+   72 columns without destroying its meaning.
+
+   Verify that world files accurately reflect installations.
+
+   Test uninstall in an isolated HOME or disposable prefix
+   before allowing it to remove a real ~/world.
+
+   Don't run a destructive uninstall against the user's
+   existing ~/world merely to demonstrate that it works.
+
+   Ensure that temporary build outputs and machine-specific
+   runtime files are appropriately ignored by Git and
+   Obsidian Sync where applicable.
+
+   Don't ignore source files, prompts, or documentation
+   that are supposed to be shared.
+
+   Keep the repository usable by multiple humans on
+   different machines.
+
+   Make sure nothing requires hardcoded paths to one
+   particular person's home directory or checkout.
+
+   Don't make unrelated architectural changes merely
+   because we're refactoring the directory structure.
+
+   When implementation details are ambiguous, prefer
+   established Unix, Git, Gentoo, Node.js, and Electron
+   conventions over custom machinery.
+
+   When a standard solution already exists, use it.
+
+   If something genuinely cannot be completed, leave
+   the system in a working state, document the blocker,
+   and add the unfinished work to COVENANT.
+
+   Don't silently substitute a stub for functionality
+   that can reasonably be implemented.
+
+   Finally, give a concise report of what changed,
+   what was tested, what works, and what remains.
+
+   The goal is a system in which humans write brief
+   English descriptions of what they want, agents turn
+   those descriptions into executable English drafts,
+   agents ask questions where necessary, humans answer
+   them and review the final prompts, the prompts run,
+   humans inspect and accept the results, and the system
+   documents itself in both imperative and declarative
+   form before committing the changes.
+
+   The code is the implementation.
+
+   The imperative history says what we asked to happen.
+
+   The declarative documentation says what is now true.
+
+   And Git connects all three.
+
+EOF
