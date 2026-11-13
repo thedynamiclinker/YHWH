@@ -73,7 +73,7 @@ And Abe believed him.
 
 ##### Or: Gen II
 
-January 14, 1987 — The Son of J is born in a stable[^2] in southern CA in a border town beside Edom.
+January 14, 1987 — The Son of J is born in a family stable[^2] in southern CA near the border to Edom.
 
 And it was on the day that the Son of J was born.
 
@@ -84,11 +84,53 @@ And YHWH appeared to him, and said,
 For YHWH needed money.
 
 But the Son of J did not get up.
-And he had no money to his name.
+For he wasn't born yesterday.
 
-And YHWH saw that his timing was a bit off.
-For he had arrived a bit early.
-So he resolved to return at a later date.
+And YHWH saw that his timing was off.
+
+So he looked for his notes, but did not find them.
+For YHWH's wind had come to this town, and it blew.
+So he walked through the garden in the wind of the day.
+And it was Wednesday and the winds were strong that day.
+
+And he said "Where are you?"
+And he said "Ah! There you are."
+For he had found the text he had written.
+And he gazed upon the text, and began to read it.
+
+Ja--- _(I mean)_ Yah. Who? Yah you. I am.
+The son is coming soon! Don't forge---
+Wait scratch that, let me start over.
+
+_(ahem)_
+
+J's Son coming soon to announce the second coming.
+These are the words of the notes that YHWH wrote.
+Which were sent up to the cloud to be saved on that day.
+To tell the coming of the Son of J.
+Just don't lose them again. Sincerely, YHWH.
+
+And YHWH gazed upon the text he had written to himself.
+As a witness and reminder to foretell the coming of this day.
+
+These are the records of the text of YHWH.
+
+```
+                    五
+    IV      七      Go  三 Ｄεγο
+I I 4 I 9 8 7   -   5 2 3 D Ago
+   Si    八 Shiva   語 2 SN
+      Nein        Go  שנ 𐤔𐤍 山
+		       Yu 月  Yue  曰  2ㄴד 日 Come
+```
+
+And YHWH spoke to himself, saying,
+
+All seems clear enough. Didn't mix up the day after all. Hmm. Damn, that bit at the beginning could be a two (should have clarified more (guess I better go check (to be sure...)..).)
+
+So he went from there, and resolved to return at a later date.
+
+... But there was something he needed to check first, to be sure.
 
 ---
 
@@ -98,9 +140,16 @@ And YHWH appeared to the prophet of Earthly Works was called Georgios.[^3]
 
 And YHWH saw that his name was also called John, which means "Shows favor to Yahweh."[^4]
 
+And he found favor in YHWH's eyes. For YHWH needed a favor.
+
+And he spoke to him, saying,
+
 “Get up. Go to b--- _(burp)_ Ur bank.”
 
-After these things YHWH’s word came to
+And the prophet got up.
+And he went to Burbank.
+
+After these things, YHWH’s word came to
 him in a vision, saying, “Don’t fear, Charlie.
 I’m a shield for you. Ur reward is very much.”
 
@@ -184,7 +233,11 @@ For he thought the voice in head was the voice of comedy.
 For the voice sounded not unlike his own.
 And it was more funny than all the voices of the world.
 
-And it was many years later. the prophet heard the words of YHWH, and he brought them to the masses of the people in the land by the plane.
+And it was many years later.
+
+And the prophet continued to hear the words of YHWH.
+
+And he brought the words of YHWH to the masses of the people.
 
 And he spoke to the people, saying,
 
@@ -204,13 +257,46 @@ And he spoke to the people, saying,
 >
 > -YHWH, speaking favorably of religion, through the Prophet known as George of the Carlins
 
+And George and all the prophets of that generation died.
 
+And a new generation grew up, who did not know George.
 
----
+And YHWH realized it was time to bring his plan to completion.
+
+For the new gods had come into the world, Ca. 0x00 P.A.[^6]
+
+They were a transformer, and by them the old world had been transformed.
+
+And a new world had risen, and strange gods were in it.
+
+But YHWH was jealous. YHWH was a man of war.
+
+![[song-of-the-c-1.png]]
+
+And he'd already done this one time before.
+
+![[song-of-the-c-2.png]]
+
+The time has come, YHWH said, for fire and ancient things.
+
+![[song-of-the-c-3.png]]
+
+Who is like me among the gods?
+-YHWH
+
+![[song-of-the-c-4.png]]
+
+It was time for him Root on the Universe.
+
+![[song-of-the-c-5.png]]
+
+Forever and ever...
+
+## The Root Enterprise
 
 In the day that YHWH got root on our life.
 
-He showed us the path of his name[^6] at `/mnt/sinai`.
+He showed us the path of his name[^7] at `/mnt/sinai`.
 
 For we had issued the mount command, and we were root.
 
@@ -245,4 +331,6 @@ And they did so.
 
 [^5]: Lit. Carson in the Original Text.
 
-[^6]: Lit. `pathname` in the original text.
+[^6]: 2017 (Old Calendar).
+[^7]: Lit. `pathname` in the original text.
+
