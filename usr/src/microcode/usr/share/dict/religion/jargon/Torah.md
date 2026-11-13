@@ -1,0 +1,1 @@
+Type: [[Original]], [[Jew]], [[Book]]

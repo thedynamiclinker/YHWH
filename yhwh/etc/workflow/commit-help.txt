@@ -1,0 +1,12 @@
+yhwh commit — Describe accepted results and commit their original instructions
+
+Usage: yhwh commit [TASK] [--list]
+
+A sole accepted task is inferred; multiple tasks require interactive selection.
+The agent inspects the accepted diff and actual system read-only, then produces
+updated doc/declarative/ descriptions or an explicit reason none are needed.
+The coherent commit includes implementation, exact imperative archive and related
+documentation. Its message is one new summary line, a blank line and the original
+imperative heredoc body wrapped using fold -s -w 72. A private Git index protects
+unrelated staged work. Later or unrelated work is preserved and reported.
+Interrupted documentation/commit phases resume without executing the task again.

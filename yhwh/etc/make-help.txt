@@ -1,0 +1,24 @@
+YHWH: make builds and opens the default interface without installing.
+
+make build           Build all three interfaces
+make run             Open the built default interface
+make three           Build and open the spatial interface (OPEN=PATH)
+make obsidian        Show plugin installation/publication commands
+make obsidian-install VAULT=PATH   Install plugin assets into an existing vault
+make check           Core, workflow, packaging and headless Electron UI tests
+make test            Core tests (no desktop, installation or uninstallation)
+make test-ui         Electron UI tests on the current display
+make develop         Editable symlinks into ~/world
+make install         Standalone npm package into ~/world/mnt/sinai
+make uninstall       Remove verified, project-owned ~/world; refuse conflicts
+make package         Create an npm distribution tarball under var/tmp/yhwh
+make company         Open the preserved company/review rehearsal app
+make clean           Remove temporary build outputs
+
+Installation alone supports PREFIX=/disposable/prefix for testing.
+Uninstall always verifies exactly $HOME/world. It never follows symlink targets.
+Node >=22.12, npm, Make, Bash, Git, fold, Python 3 and file are required.
+Native node-pty compilation may need a C++ toolchain. UI checks need Xvfb.
+On NixOS use YHWH_ELECTRON=/native/electron or make nix-shell.
+Workflow generation additionally needs lordhavemercy and its authenticated agent,
+or a YHWH_AGENT executable implementing etc/workflow's JSON protocol.

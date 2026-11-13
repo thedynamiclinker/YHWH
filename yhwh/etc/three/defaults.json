@@ -1,0 +1,23 @@
+{
+  "theme": "yhwh",
+  "accent": "#d8bd85",
+  "bg": "",
+  "bloom": "0.8",
+  "motion": "1",
+  "particles": "1800",
+  "title": "YHWH Three",
+  "font_size": "15",
+  "theme_css": "",
+  "stylesheet": "",
+  "plugin": "",
+  "plugins": "",
+  "filetypes": "{}",
+  "settings_html": "",
+  "show_hidden": "false",
+  "sidebar_width": "248",
+  "terminal_height": "260",
+  "file_manager": "true",
+  "terminal": "false",
+  "live_preview": "true",
+  "settings_fields": "theme,bloom,motion,font_size,filetypes"
+}

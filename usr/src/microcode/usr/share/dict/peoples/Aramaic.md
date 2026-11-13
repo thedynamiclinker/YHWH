@@ -1,0 +1,1 @@
+Type: [[Old]], [[Jew]], [[Type]], [[Of]], [[Language]], [[Used]], [[For]], [[usr/src/microcode/usr/share/dict/religion/books/Bible|Bible]], [[And]], [[Empire]], [[Stuff]]

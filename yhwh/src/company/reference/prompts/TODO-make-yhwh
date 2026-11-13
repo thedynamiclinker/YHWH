@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+
+Write me a full working proof of concept of an electron app with a layout based generally on the look and feel of an app like obsidian. The goal of the app should be to give a GUI interface to the "simulated entire company" iterative workflow described in ~/obsidian/EchoIQ/TODO for arbitrary companies other than echoiq, the app should be called 𐤉𐤄𐤅𐤄, and the personality of the agent that the user interacts with should be exactly the personality of the YHWH character in ~/obsidian/We The Nameless/ that you find in the tex files there in 01-genesis. The interface should be a normal app that gives "Did you know" facts about YHWH when you open it, the apps interface should let you know easily see where Yahweh is posting suggestions for you to post in generalized email app, generalized teams like app generalized GitHub or getlab type work repository, etc, and the names of those apps should not be Outlook or teams, but rather abstract caricatures or racist jokes about a generic email app etc of the kind you find in things like The Lego movie where everybody cheers for a sports team named sports team, and they all say things like let's go sports team. Make the full working POC of that app and put it in a subdirectory of the current working directory called YHWH.
+
+Go!
+EOF

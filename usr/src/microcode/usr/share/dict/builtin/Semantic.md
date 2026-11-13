@@ -1,0 +1,1 @@
+Type: [[Meaning]], [[Thing]]

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+1. Replace all instances of twhw and TWHW in filenames with thwh and THWH. That's the feminine equivalent of YHWH in classical biblical hebrew.
+2. Add make targets 'make thwh' and 'make yhwh' to replace the 'make run'. The default make target should be to build AND run thwh (for now).
+   Eventually we'll merge them and change the default to yhwh. Then have the 'build + run' make targets each use 'make {build,run}-{t,y}hwh' which are more granular.
+   The obvious thing.
+3. Also add a help menu somewhere near where users usually expect it (or somewhere else if you think there's a better location) to all {y,t}hwh versions and at all levels of yhwh-ness. It should have one item saying "About Us" that links to https://www.amazon.com/stores/The-Nameless/author/B0HP8PGPW7 and "About YHWH" that links to https://www.amazon.com/clp/B0HNR3B4MB?lv=shuf&channelId=500
+EOF

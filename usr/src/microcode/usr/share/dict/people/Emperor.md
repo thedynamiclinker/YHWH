@@ -1,0 +1,1 @@
+Type: [[King]], [[But]], [[Not]], [[King]]

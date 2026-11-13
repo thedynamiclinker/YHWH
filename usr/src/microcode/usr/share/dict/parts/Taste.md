@@ -1,0 +1,1 @@
+Type: [[Thing]], [[Mouth]], [[Can]], [[Smell]]

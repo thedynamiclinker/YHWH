@@ -1,0 +1,1 @@
+Def: [[Person]], [[Who]], [[Want]], [[To]], [[Stop]], [[Being]], [[Alive]], [[But]], [[Who]], [[Not]], [[Have]], [[Depression]]

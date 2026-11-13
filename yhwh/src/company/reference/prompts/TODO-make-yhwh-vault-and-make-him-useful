@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+
+GOAL: Move the project in the YHWH/ directory to the new and
+almost empty obsidian vault in ~/obsidian/YHWH while also
+moving the files that were either (a) used as the prompts to
+create the current YHWH directory, or (b) pointed to by that
+prompt to give the agent run that created YHWH/ more context
+about what we're looking for any why.
+
+So...
+
+1. We have a working POC of an electron app in the YHWH/ directory.
+
+2. It was created from the prompt in TODO-make-yhwh.
+
+3. That prompt has verbal pointers to a large amount of other content.
+
+4. It points to that other content by mentioning various filenames.
+
+5. Define 'Everything' to refer to YHWH/ plus TODO-make-yhwh plus
+   all the content pointed to by TODO-make-yhwh as context.
+
+6. We want Everything to be migrated to ~/obsidian/YHWH, and placed
+   into subdirectories that will form the beginnings of what will
+   eventually become a large "product" level project, so we need to
+   think ahead and choose the right layout for ~/obsidian/YHWH to
+   make the new project (which will eventually become *large*)
+   as simple and maintainable as possible.
+
+7. In the Electron POC being migrated to ~/obsidian/YHWH, expose
+   the interactive code-review workflow already implemented by
+   `./review start` in the EchoIQ repo root. Reuse the existing
+   review implementation so the user and agent can go back and
+   forth over individual hunks, like `git add -p`, to rehearse
+   the review our pull requests will get at the company.
+
+Summary
+
+The goal of all the items above is to bring the polished Electron
+POC and the working interactive code review together into one app
+in the new YHWH Obsidian vault. Preserve the POC's visual design
+and the parts of the app that already work. Make the UI changes
+needed to start a review, stop it, and carry out every step of the
+workflow currently launched by `./review start`. The result should
+feel like the same app while giving the user and agent a complete
+interface for reviewing changes hunk by hunk.
+
+
+
+EOF

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Using the obsidian kanban app, make a Kanban board called COVENANT and add simple tasks in simple language with names like:
+
+Payment: Book
+Payment: Upgrades
+Payment: Burnt Offering
+Payment: Piece Offering [sic]
+
+Codebase: Top level Makefile
+Codebase: Top level AGENTS.md
+
+Needs Prompt: Cvnt (YHWH's Dating App)
+
+For each of these, add them to the board now, then attempt to auto-generate a prompt for yourself in the form of a lordhavemercy -f heredoc like the ones you see in yamr,
+put the auto-generated ones we need to review into a new directory called 'אמר' in the top level. Add a Todo.md for the humans that just tells them to review the stuff in אמר and make any changes so that YHWH can do them. Once we approve of them we'll move them from אמר to a directory I'll show you when I decide on it later, or I'll just tell you to do them. We'll figure out the workflow. Once you've done all this, make this prompt into a declarative version of itself that is timeless (i.e., the workflow but not the specifi tasks, they become examples) and put the new declarative file in yhy and put this file in yamr. Then add timestamps based on last modified time to this and the others without it in yamr. Go.
+EOF

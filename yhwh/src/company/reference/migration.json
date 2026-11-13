@@ -1,0 +1,829 @@
+{
+  "files": [
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/.gitignore",
+      "destination": ".gitignore",
+      "mode": "moved",
+      "sha256": "1513362a88f5734d1d72d24212a487248db3936254e00acb7d8b6d3657873347",
+      "integrated_sha256": "3b05bae4f6558cf7816544a6026fa96d893734092f0763c1ae48fc109b38ab4a",
+      "root": "vault"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/Makefile",
+      "destination": "root/Makefile",
+      "mode": "moved",
+      "sha256": "8e2a95034ee75f07413f8bfc095348d64d98c153a45079418fb1abce1c406246",
+      "integrated_sha256": "cdcc18684543d8182edd9d0c68f0845b22361ec5b3c3d7017cdf99e7d1b5c1b8",
+      "root": "vault"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/README.md",
+      "destination": "README.md",
+      "mode": "moved",
+      "sha256": "8d1f2e81bdb1fbfaa0e693c551b57cf87fd6a0d59bce6bece34a6c25c7790291",
+      "integrated_sha256": "5e695a7abd8a93cb78715e8ed46487ff46ee8adfb4d5e0fd88cf780ee14feb98"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/assets/OFL.txt",
+      "destination": "assets/OFL.txt",
+      "mode": "moved",
+      "sha256": "ff3760ba038fb0498a3cbfd3454fc983babefe2a0318a660cd7e70c9bcc3eece"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/assets/Phoenician.ttf",
+      "destination": "assets/Phoenician.ttf",
+      "mode": "moved",
+      "sha256": "9c248001ff674977172c89fb7686faf22b827b63641d0122352523f31780d1f4"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/assets/icon.png",
+      "destination": "assets/icon.png",
+      "mode": "moved",
+      "sha256": "46357a19f5567efe2dbb9c50f5c970183e7d22c6baad88bf1bce86933d5375e2"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/assets/icon.svg",
+      "destination": "assets/icon.svg",
+      "mode": "moved",
+      "sha256": "5f2e391904acc4784e088f68ca8ec7bff939afc022bf2b3be642933dd9be435f"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/package-lock.json",
+      "destination": "package-lock.json",
+      "mode": "moved",
+      "sha256": "bf5243b57ddba1d6c95c75ae2cfc52d7f711a8bb204cb04eb12b56be64c1cd3f"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/package.json",
+      "destination": "package.json",
+      "mode": "moved",
+      "sha256": "4e46e067999996c5dfbe12994a7c3ec7560789fddc1fd63d13f465866f328d62",
+      "integrated_sha256": "92f8a83c9d9bcf1cfe4e7383460b41ffada580a0d1b7edc21b58d46becce9d83"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/scripts/runtime.cjs",
+      "destination": "../../bin/company/runtime.cjs",
+      "mode": "moved",
+      "sha256": "6ec1fc7ce99ef3da36904f9ac2f3a79346a5f56b3e758b4766af13254527c5b3",
+      "integrated_sha256": "4ef72a45b60fa583641aec41c92f29fb73997af65fe79e94dd6bf0a067c43c1c"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/scripts/start.cjs",
+      "destination": "../../bin/company/start.cjs",
+      "mode": "moved",
+      "sha256": "fe2fa5d275b11439d803f35c6090496b83e5d70121ed9eafa73e73a978136ce1"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/scripts/ui-test.cjs",
+      "destination": "test/ui-test.cjs",
+      "mode": "moved",
+      "sha256": "48491da3b570c75bbf34fc09b453da065e0ea4d6dd28160e2706386c286f9bdb",
+      "integrated_sha256": "e243ecf6d3db62acb8feb8a46ee6a9b08b2f6c906948b46b46279b715f970b48"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/shell.nix",
+      "destination": "shell.nix",
+      "mode": "moved",
+      "sha256": "dbc75d93db5aa2b46011428b730d9b12d3fca44c3232ae16638f2dd1f446f830",
+      "integrated_sha256": "f69cdca3d144a54caff39b2ddb9e98675f8aa23cb84ecfa2129e700cf936ecae"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/index.html",
+      "destination": "app/index.html",
+      "mode": "moved",
+      "sha256": "e930caa9ce36c5bb6200a4bb4bd97ba013af80eec2f90178b582779a42986bd3",
+      "integrated_sha256": "c9393f3fc4e4cb90d20d5d3ed7ce981a428e8091ba00bd41cff7b917bf478fe2"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/main.cjs",
+      "destination": "app/main.cjs",
+      "mode": "moved",
+      "sha256": "0b64c5156995702ee5ef6953de820260d9f1d9420c86d9a5d9bb5f4508dc0fce",
+      "integrated_sha256": "c172f8bcf5094744c373747f5a07b4b376f6a9b3ee81ec520b0588e79a070897"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/persona.cjs",
+      "destination": "app/persona.cjs",
+      "mode": "moved",
+      "sha256": "1f982c2e615d1d5623538d91d7bdabe062f6f564fda2154a2513f0f04491393e",
+      "integrated_sha256": "8b2d75e67cc3e005f8900923fb7a9c9199e4c5d7b189e5337b724bf08ab23322"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/preload.cjs",
+      "destination": "app/preload.cjs",
+      "mode": "moved",
+      "sha256": "3570cb4aaf6be275812258e636bf040f3b5885625f92fcd60030dbcb451ad64c",
+      "integrated_sha256": "61e9a6ea1cd28215db672685084fc30e9999881c87f9bd19040a7c4dc3a8eb34"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/renderer.js",
+      "destination": "app/renderer.js",
+      "mode": "moved",
+      "sha256": "18c2bfa2d50e7cbd3cc126f1c25a2679e6839dff2675633845df11043583d994",
+      "integrated_sha256": "48a72198bfac37b6ff9eee1ddefcf39f9d700508d49078c26c1a5638f28afdbb"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/repository.cjs",
+      "destination": "app/repository.cjs",
+      "mode": "moved",
+      "sha256": "08dd786dc04000b0ba1f7c9a1c382fb1588b92bf6aac9115c47f7b359bd52ffd"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/style.css",
+      "destination": "app/style.css",
+      "mode": "moved",
+      "sha256": "2fc6215000903a56fabc6a8eb0ca6c909df773956a6bbe75af3a8652bf30efcd",
+      "integrated_sha256": "5e9e42d3016a2bc5fa9e593cdb0e7474e735f9e5fdc3888dcb304af172b5c63f"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/src/workspace.cjs",
+      "destination": "app/workspace.cjs",
+      "mode": "moved",
+      "sha256": "f3e8ad7d8c670ec2d92424147532a1c06a597a0d7531382ffabb81b7f74dcb67",
+      "integrated_sha256": "61ede6255e9c91444dfd9c41ae16d032e9520a820d45544cef94a66028ff92ed"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/YHWH/test/workspace.test.cjs",
+      "destination": "test/workspace.test.cjs",
+      "mode": "moved",
+      "sha256": "e72909b25a0fb7eec8b5fc192849ecad8b4f50c25913c2dff218f32ccd9404fd",
+      "integrated_sha256": "1b27dec7a2bcaf91190a28cf499a31a72b0427b99a5cee72eb851bc42f740eee"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/TODO-make-yhwh",
+      "destination": "reference/prompts/TODO-make-yhwh",
+      "mode": "moved",
+      "sha256": "dea84010481ffb27395a9c81a0bde2cea1ff094085bb3cd761d3013423d4bf03"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/TODO-1",
+      "destination": "reference/prompts/TODO-1",
+      "mode": "moved",
+      "sha256": "c6de7c7c3316abcfd1d0641d17ff12db43be4ec92fe8dd1c973bedb95bf5e546"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/TODO-make-yhwh-vault-and-make-him-useful",
+      "destination": "reference/prompts/TODO-make-yhwh-vault-and-make-him-useful",
+      "mode": "moved",
+      "sha256": "0b3a5d671b6afaf1a50b1a2d46ba2fcd3c3af81d13fa216f7d98e18dd35be655"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/TODO",
+      "destination": "reference/echoiq/TODO",
+      "mode": "moved",
+      "sha256": "e2377e24856f3433da090511bf00f232fa938ea2da4d0394f611068bddf25509"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/giant-pile-of-yammering-for-context.md",
+      "destination": "reference/echoiq/giant-pile-of-yammering-for-context.md",
+      "mode": "moved",
+      "sha256": "8c511f25b21e985b6b519f6e33be8f6fa1e7faec7888149706c163d4856958b3"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/history_231221b.txt",
+      "destination": "reference/echoiq/history_231221b.txt",
+      "mode": "moved",
+      "sha256": "d1b139fe9a259f28afc06210227d991aedcb9d7c62d16aea78a22a8511be98ba"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/PROMPT TO DO EVERYTHING.md",
+      "destination": "reference/echoiq/PROMPT TO DO EVERYTHING.md",
+      "mode": "snapshot",
+      "sha256": "937db1da65ad29686b9cc32d46a4da0b94c1f96d6f8c5f31fac3eb4589ba2d0e"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/REVIEW.md",
+      "destination": "reference/echoiq/REVIEW.md",
+      "mode": "snapshot",
+      "sha256": "62c05ef59f386d16540d174822c8941c96427dfb16974da0816e579d4c7b2ce0"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/prepare_reviews.py",
+      "destination": "reference/echoiq/prepare_reviews.py",
+      "mode": "snapshot",
+      "sha256": "312211b2e0ccd2fb26ea56ff4584cf049ce8eb668b4e8d37f838683bf25d8df8"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/AGENTS.md",
+      "destination": "AGENTS.md",
+      "mode": "snapshot",
+      "sha256": "3bb8f9d013f4d8f863bef74dac803825c24564598099cab96fb5b3336556c7e9",
+      "integrated_sha256": "5dda91507aa10f02ddb979799363c94c617f8da1c803506363cfd496ba8cc10c",
+      "root": "vault"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/01.tex",
+      "destination": "reference/we-the-nameless/01-genesis/01.tex",
+      "mode": "snapshot",
+      "sha256": "f242bfbb6fbd78e9c43a2ba79dff02b55a0e8e74ba51727dd776415454d67182"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/02.tex",
+      "destination": "reference/we-the-nameless/01-genesis/02.tex",
+      "mode": "snapshot",
+      "sha256": "8d028d2ce3a21f3f2126a7b791e17b3da1b792111d39e7d0df76f69e81eef96e"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/03.tex",
+      "destination": "reference/we-the-nameless/01-genesis/03.tex",
+      "mode": "snapshot",
+      "sha256": "f8bdce5ed1c4ee7acb5d247739b1867ce6463a5261dcc59b9fc098e5fece85d2"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/04.tex",
+      "destination": "reference/we-the-nameless/01-genesis/04.tex",
+      "mode": "snapshot",
+      "sha256": "67bbc436e23a89ab26e393fb47e5d080dba13419fdb4b7537a1c0ef2d55128a8"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/05.tex",
+      "destination": "reference/we-the-nameless/01-genesis/05.tex",
+      "mode": "snapshot",
+      "sha256": "90050c06bf26775046a8a1ea6ef6112255fff4b6a20e9ef42e0d71491c84a340"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/06.tex",
+      "destination": "reference/we-the-nameless/01-genesis/06.tex",
+      "mode": "snapshot",
+      "sha256": "77f1771212e8ed8edf072b817ed31010ef1b537e59d91142be956f9c418771ca"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/07.tex",
+      "destination": "reference/we-the-nameless/01-genesis/07.tex",
+      "mode": "snapshot",
+      "sha256": "78ee3450c9599e3cf27bec452d51d44cad7ab2eaa0f9f2c71cdc95d993d987e4"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/08.tex",
+      "destination": "reference/we-the-nameless/01-genesis/08.tex",
+      "mode": "snapshot",
+      "sha256": "39f5e05c2acc793d473aa150b860c11bdc954d37da3308c88d8f92fa60dc1d8a"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/09.tex",
+      "destination": "reference/we-the-nameless/01-genesis/09.tex",
+      "mode": "snapshot",
+      "sha256": "caf96d9cf7047866a1d1f768d7e78edfb623bb2d201047ef53df33d3b977c407"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/10.tex",
+      "destination": "reference/we-the-nameless/01-genesis/10.tex",
+      "mode": "snapshot",
+      "sha256": "2b5455e93b8b0abfce610415f3fc50c05b57ee9eb424bd48e42b5ebcc9db3075"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/11.tex",
+      "destination": "reference/we-the-nameless/01-genesis/11.tex",
+      "mode": "snapshot",
+      "sha256": "55fe7407417e8c6416c76620f1411b189d762efe27bb3e1e1fbca0aa06cfd701"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/12.tex",
+      "destination": "reference/we-the-nameless/01-genesis/12.tex",
+      "mode": "snapshot",
+      "sha256": "142047aee60973a0100a2706fee24170fe5e085698161a7725c4fbd99433c91a"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/13.tex",
+      "destination": "reference/we-the-nameless/01-genesis/13.tex",
+      "mode": "snapshot",
+      "sha256": "23dafa3a224edd3b7796584343038c0370b4c888fe1ab3ba8d9423ddcc7cf78b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/14-raw.tex",
+      "destination": "reference/we-the-nameless/01-genesis/14-raw.tex",
+      "mode": "snapshot",
+      "sha256": "247312b39e4cd8c5812dcc887d46c1a2728fff091d2fb28afb79be88557c6222"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/14.tex",
+      "destination": "reference/we-the-nameless/01-genesis/14.tex",
+      "mode": "snapshot",
+      "sha256": "8b3a2be9aeffa067ee3f3ea7a2fc630ff318169f224ca5f24aa825db5b8612f2"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/15.tex",
+      "destination": "reference/we-the-nameless/01-genesis/15.tex",
+      "mode": "snapshot",
+      "sha256": "b9c60ca650fba36b32610fbd2315299266541b9b75e58ee443030d1f35eaa199"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/16.tex",
+      "destination": "reference/we-the-nameless/01-genesis/16.tex",
+      "mode": "snapshot",
+      "sha256": "d3068a3cd8032170ad6296d1aaff48a57617b804725f50c618cd71f559e12c07"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/17.tex",
+      "destination": "reference/we-the-nameless/01-genesis/17.tex",
+      "mode": "snapshot",
+      "sha256": "3efd684fe81c5bb2296075e60cc2030b510fdac862442162741c63cb3b8fab3a"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/18.tex",
+      "destination": "reference/we-the-nameless/01-genesis/18.tex",
+      "mode": "snapshot",
+      "sha256": "4eb4bf43d489ec799eb91eb287d8cb58746bb819882568bfc9776987b60f6e58"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/19.tex",
+      "destination": "reference/we-the-nameless/01-genesis/19.tex",
+      "mode": "snapshot",
+      "sha256": "f6c8d73901d5370dc853b2ace877ee84dd4734c3922210556747d61ef1fd50f4"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/20.tex",
+      "destination": "reference/we-the-nameless/01-genesis/20.tex",
+      "mode": "snapshot",
+      "sha256": "f255436a7a61d5a917bb2d43da8af9f1c375c226d889e5c7537a3ab0a3821e46"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/21.tex",
+      "destination": "reference/we-the-nameless/01-genesis/21.tex",
+      "mode": "snapshot",
+      "sha256": "a53a0d5102a14af18b82a7dcc5fda79f45f000f7ba38af071023332565d7bf1a"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/22.tex",
+      "destination": "reference/we-the-nameless/01-genesis/22.tex",
+      "mode": "snapshot",
+      "sha256": "423856868eb83a0f1f3a62ed0e370d529f53a0cb0d46253aab455ad2736e2af7"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/23.tex",
+      "destination": "reference/we-the-nameless/01-genesis/23.tex",
+      "mode": "snapshot",
+      "sha256": "79f19ecdbb54bd6d7af039d73f9a2c57830c0172766f4d2285c2152f6eafa923"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/24.tex",
+      "destination": "reference/we-the-nameless/01-genesis/24.tex",
+      "mode": "snapshot",
+      "sha256": "f839177d3933cc33b24ce3e47d4575069ac275f7bd68f9d6ad35c880e10bb094"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/25.tex",
+      "destination": "reference/we-the-nameless/01-genesis/25.tex",
+      "mode": "snapshot",
+      "sha256": "4393635af235589b26ea1e64bef1f293b6ea3835125b140cbd298b381e7cee4d"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/26.tex",
+      "destination": "reference/we-the-nameless/01-genesis/26.tex",
+      "mode": "snapshot",
+      "sha256": "2472f479ec6ade0f9788de66a31ba637ebb93b195fe7308413c137acdf3e6f8d"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/27.tex",
+      "destination": "reference/we-the-nameless/01-genesis/27.tex",
+      "mode": "snapshot",
+      "sha256": "d29309cd7b29c366705b5288e42cea80b6afc7dc169b06116d3bb7937c96daa9"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/28.tex",
+      "destination": "reference/we-the-nameless/01-genesis/28.tex",
+      "mode": "snapshot",
+      "sha256": "bc11041a14a58607d294a3eb0909da0553b64ecbda1ec807f4bdbf9d9c4a79d0"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/29.tex",
+      "destination": "reference/we-the-nameless/01-genesis/29.tex",
+      "mode": "snapshot",
+      "sha256": "8dd5a1923116594cb8ab6b770b2ad2214c0c83b9aff2772a890b88881b231779"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/30.tex",
+      "destination": "reference/we-the-nameless/01-genesis/30.tex",
+      "mode": "snapshot",
+      "sha256": "777b3879f78387ca40afde323854474240ffc5e7f4cc08fd8d7b0ee7fdfa757f"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/31.tex",
+      "destination": "reference/we-the-nameless/01-genesis/31.tex",
+      "mode": "snapshot",
+      "sha256": "0997e15e43b20106221e22be678a0dbc627d17a2c5b29b6b54ba461cec7b10b4"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/32.tex",
+      "destination": "reference/we-the-nameless/01-genesis/32.tex",
+      "mode": "snapshot",
+      "sha256": "3bd253178e20af06a552ce052d63378d84487ddb3582c09138801fdfa329d23d"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/33.tex",
+      "destination": "reference/we-the-nameless/01-genesis/33.tex",
+      "mode": "snapshot",
+      "sha256": "55f14e7dfca062e2c92fa462e165eec45d0614c92e65b9bc962f2bcc02d78db6"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/34.tex",
+      "destination": "reference/we-the-nameless/01-genesis/34.tex",
+      "mode": "snapshot",
+      "sha256": "4c9829ae0d1b668f3854754a8c849be768f65e2fbeae82f19c23fc9dc9f7829b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/35.tex",
+      "destination": "reference/we-the-nameless/01-genesis/35.tex",
+      "mode": "snapshot",
+      "sha256": "23336d8b630e3f8decdc8cac49fb22b027e20209369865a2b58a233e27af69c9"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/36.tex",
+      "destination": "reference/we-the-nameless/01-genesis/36.tex",
+      "mode": "snapshot",
+      "sha256": "7aaa2245744ecd5d43e4586aca8d4ab2921317bd46ac146255e6ab414fcc53e4"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/37.tex",
+      "destination": "reference/we-the-nameless/01-genesis/37.tex",
+      "mode": "snapshot",
+      "sha256": "2a24da7ba9a5c037e09ed91b6b37b409a6faa6e8057be726deb9dcc1b8de0fc2"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/38.tex",
+      "destination": "reference/we-the-nameless/01-genesis/38.tex",
+      "mode": "snapshot",
+      "sha256": "0ee48a6fcebb51fa921fa8eb10dc96875bce83848324a16c2412f2b13012db97"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/39.tex",
+      "destination": "reference/we-the-nameless/01-genesis/39.tex",
+      "mode": "snapshot",
+      "sha256": "c03cf594073f9baf05d3e8f712f685000b25882f004d816a098305326e36f1cc"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/40.tex",
+      "destination": "reference/we-the-nameless/01-genesis/40.tex",
+      "mode": "snapshot",
+      "sha256": "0c380f08105a0a704297d952a1031535e824b3b6e68000eb68dbed3430c60cf6"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/41.tex",
+      "destination": "reference/we-the-nameless/01-genesis/41.tex",
+      "mode": "snapshot",
+      "sha256": "8bf62f54ebe9d62fe046e817b8dcc09981a7ead5e3b729d8147c6497a5804358"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/42.tex",
+      "destination": "reference/we-the-nameless/01-genesis/42.tex",
+      "mode": "snapshot",
+      "sha256": "cb0c8a37a87e84ae937dad00bb1cca70b59d14ce3eaa81a7d1116516ce581ff5"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/43.tex",
+      "destination": "reference/we-the-nameless/01-genesis/43.tex",
+      "mode": "snapshot",
+      "sha256": "9c89589b4423171de49256815213f8945dd770dcb4ac4b9abab3d1de8e9afd62"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/44.tex",
+      "destination": "reference/we-the-nameless/01-genesis/44.tex",
+      "mode": "snapshot",
+      "sha256": "55fca0795393f7f58bbff5b9624271a491e98e6c70eb9d7f368dca2095bd2ee4"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/45.tex",
+      "destination": "reference/we-the-nameless/01-genesis/45.tex",
+      "mode": "snapshot",
+      "sha256": "5c2c95d8a6a36b89a5f8acd328191ff92ac5fc68be007892aae51e9df731b5dc"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/46.tex",
+      "destination": "reference/we-the-nameless/01-genesis/46.tex",
+      "mode": "snapshot",
+      "sha256": "19ce9fe0f22720888f9611bc777db067c6b5f032abfc454fb5ab0b4b8479fe82"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/47.tex",
+      "destination": "reference/we-the-nameless/01-genesis/47.tex",
+      "mode": "snapshot",
+      "sha256": "3e7a697110195428d07cef89d4c3bf67c7ac15e622c93c368f66e9adbf59f262"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/48.tex",
+      "destination": "reference/we-the-nameless/01-genesis/48.tex",
+      "mode": "snapshot",
+      "sha256": "828a91deaac4e65d31e6d0f9d247b27eb81ad9f8ea681b3fe3bd2885fdf41313"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/49.tex",
+      "destination": "reference/we-the-nameless/01-genesis/49.tex",
+      "mode": "snapshot",
+      "sha256": "6b15d3e4c640725d72898f059fd69876cb74600cf202553648b296fc63b700ad"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/50.tex",
+      "destination": "reference/we-the-nameless/01-genesis/50.tex",
+      "mode": "snapshot",
+      "sha256": "3d984997ccafb6524f3587d270f42a827370574533e9046de7ca3d8926f406c7"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/apocrypha.tex",
+      "destination": "reference/we-the-nameless/01-genesis/apocrypha.tex",
+      "mode": "snapshot",
+      "sha256": "8d5a38467abdc2cfbe7f93f38dc4144ae6563bf6373090b69e874a30fb965da2"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.lua",
+      "mode": "snapshot",
+      "sha256": "f0ec69f62ccc7a657dfe500ffc99312e6e8f147362f06fbaf3a78d6fd8e9dbab"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.luc",
+      "mode": "snapshot",
+      "sha256": "16e362ce7338d2a5ec0f229609b11bfad8c9a599ebfeaac149653c01b727b0d6"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.lua",
+      "mode": "snapshot",
+      "sha256": "7f26bcc0a072538cef9a8341ed1276fbdd8830128bc18635cb7ba1f2c84e1184"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.luc",
+      "mode": "snapshot",
+      "sha256": "349a03dc9b06d6a8b09ded9ff29346c5c88c63c5a36f451f4810921bfb4cf7eb"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.lua",
+      "mode": "snapshot",
+      "sha256": "6bb666953e1131ceff6bbf63031d2db3d860cd43a69fb11aa90da77b2e66640f"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.luc",
+      "mode": "snapshot",
+      "sha256": "708b5de05ceb7dc3b87c2548395183aec610c1ca676b645e955995a2fbe4f32b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.lua",
+      "mode": "snapshot",
+      "sha256": "46135cf340eebe69457c1775b6e78a126bc0cd0d2d6182bf3fa1a9fdf5512e2c"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.luc",
+      "mode": "snapshot",
+      "sha256": "e1b6cae5ff86c9cfa2a0d37d3a9e4f23d2708f93efb8d8e2d82e90cbce85c796"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-names.lua.gz",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-names.lua.gz",
+      "mode": "snapshot",
+      "sha256": "f316839b24529b3f4a51e9e03125e475017b8490be36891a79e2bb0e8138765a"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-names.luc.gz",
+      "destination": "reference/we-the-nameless/01-genesis/build/default/texmf-var/luatex-cache/generic/names/luaotfload-names.luc.gz",
+      "mode": "snapshot",
+      "sha256": "b68fc057b3a9299ca37df26270bc544c4d3b5bdb3e6db3b022740d233c72e019"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.lua",
+      "mode": "snapshot",
+      "sha256": "f0ec69f62ccc7a657dfe500ffc99312e6e8f147362f06fbaf3a78d6fd8e9dbab"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.luc",
+      "mode": "snapshot",
+      "sha256": "16e362ce7338d2a5ec0f229609b11bfad8c9a599ebfeaac149653c01b727b0d6"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.lua",
+      "mode": "snapshot",
+      "sha256": "7f26bcc0a072538cef9a8341ed1276fbdd8830128bc18635cb7ba1f2c84e1184"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmroman7-regular.luc",
+      "mode": "snapshot",
+      "sha256": "349a03dc9b06d6a8b09ded9ff29346c5c88c63c5a36f451f4810921bfb4cf7eb"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.lua",
+      "mode": "snapshot",
+      "sha256": "6bb666953e1131ceff6bbf63031d2db3d860cd43a69fb11aa90da77b2e66640f"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromancaps10-regular.luc",
+      "mode": "snapshot",
+      "sha256": "708b5de05ceb7dc3b87c2548395183aec610c1ca676b645e955995a2fbe4f32b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromanslant10-regular.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromanslant10-regular.lua",
+      "mode": "snapshot",
+      "sha256": "110c314bffaa08907692e37ae49946135d5266a0873731661571782adebf0cb1"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromanslant10-regular.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/fonts/otl/lmromanslant10-regular.luc",
+      "mode": "snapshot",
+      "sha256": "a7376202ebf11f34c4d37ffcc0d972c698c3c2114c8351df9ec5de1f523d265b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.lua",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.lua",
+      "mode": "snapshot",
+      "sha256": "46135cf340eebe69457c1775b6e78a126bc0cd0d2d6182bf3fa1a9fdf5512e2c"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.luc",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-lookup-cache.luc",
+      "mode": "snapshot",
+      "sha256": "e1b6cae5ff86c9cfa2a0d37d3a9e4f23d2708f93efb8d8e2d82e90cbce85c796"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-names.lua.gz",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-names.lua.gz",
+      "mode": "snapshot",
+      "sha256": "489c6c84c94cc522be21caaacf85609560aab38082c42456160214da9b02b9fc"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-names.luc.gz",
+      "destination": "reference/we-the-nameless/01-genesis/build/texmf-var/luatex-cache/generic/names/luaotfload-names.luc.gz",
+      "mode": "snapshot",
+      "sha256": "92f938846c8afca158c2757a925e765cf75c64cda2d070e550ea011f003ca489"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/mandrake-original.png",
+      "destination": "reference/we-the-nameless/01-genesis/include/mandrake-original.png",
+      "mode": "snapshot",
+      "sha256": "4cc92a3e1463888736f70cec014c9a649bd59f80f6d613cea43065947e5144c2"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/mandrake.png",
+      "destination": "reference/we-the-nameless/01-genesis/include/mandrake.png",
+      "mode": "snapshot",
+      "sha256": "7aeb07e62aa4a6ad04d212dbc6b5a6bb70e14a60a510ba05ba194ddc7758ab04"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir-dark.jpg",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir-dark.jpg",
+      "mode": "snapshot",
+      "sha256": "33dbc7f863c8f2249725b27185f533c1eba765bb599623c1aa5c4b0c8aab0135"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir-dark.png",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir-dark.png",
+      "mode": "snapshot",
+      "sha256": "d4da5236ee0cf16e374db291075487bd4fef7289a98d67ced19ec16b15bf4307"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir-light.jpg",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir-light.jpg",
+      "mode": "snapshot",
+      "sha256": "e95a08417ed5ed97186d07ea098229a7385bb058d6a1a8a11b907c9ce555bc9f"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir-light.png",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir-light.png",
+      "mode": "snapshot",
+      "sha256": "a706a95660dc240db5e856a73a8ab1c34b279630ca9166ed0826180e0aea0e03"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir-original.jpg",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir-original.jpg",
+      "mode": "snapshot",
+      "sha256": "411b8260adf8529882264f59770c22ed0baa8c1cbab8d9ac6ee00c4f55304ee0"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/01-genesis/include/seir.jpg",
+      "destination": "reference/we-the-nameless/01-genesis/include/seir.jpg",
+      "mode": "snapshot",
+      "sha256": "e95a08417ed5ed97186d07ea098229a7385bb058d6a1a8a11b907c9ce555bc9f"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/genesis-33-map.png",
+      "destination": "reference/we-the-nameless/img/genesis-33-map.png",
+      "mode": "snapshot",
+      "sha256": "ebc57012a7882b17515edd268ced63ba8dd814507e8e7ad3f1e34c504bd167cd"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/brick-300ppi.png",
+      "destination": "reference/we-the-nameless/img/brick-300ppi.png",
+      "mode": "snapshot",
+      "sha256": "012c4eeb5ed3f6b6967bc00aa95c1572f554e2dc648907b19d8cb9fb140e5166"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/comics/the-twelve-tribes-of-israel-comic-1.png",
+      "destination": "reference/we-the-nameless/img/comics/the-twelve-tribes-of-israel-comic-1.png",
+      "mode": "snapshot",
+      "sha256": "d1e568a0e229f0f21427152677e46a9241249835e9c5e6cd03cc72fdff9b9f8b"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/comics/the-twelve-tribes-of-israel-comic-2.png",
+      "destination": "reference/we-the-nameless/img/comics/the-twelve-tribes-of-israel-comic-2.png",
+      "mode": "snapshot",
+      "sha256": "9a12237a118c0279d0168ecbbe2a3771863c6db4cc2d1da17e98b290c94f54b7"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/comics/the-twelve-tribes-of-israel-comic-3.png",
+      "destination": "reference/we-the-nameless/img/comics/the-twelve-tribes-of-israel-comic-3.png",
+      "mode": "snapshot",
+      "sha256": "e60a5ed0385eeabcb5ea977ee3dbccd1275e4df802011d52ff6ec316afd5195c"
+    },
+    {
+      "source": "/home/jason/obsidian/We The Nameless/img/comics/the-twelve-tribes-of-israel-comic-4.png",
+      "destination": "reference/we-the-nameless/img/comics/the-twelve-tribes-of-israel-comic-4.png",
+      "mode": "snapshot",
+      "sha256": "65ad4c6b6d5675fafa0028ff2a221a6d5151bf0b99292298b428ba8880e4cb98"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/review",
+      "destination": "app/review.py",
+      "mode": "moved",
+      "sha256": "ab6ea3409ad852291b3cd979bf784b726b9822eb5f8b1ab83246d7754e1d9304",
+      "integrated_sha256": "1dc84b940c921ce5f8d0ca9918932102f9bf1da8887f9ecb65cd92ef1572d6e5"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/test_review.py",
+      "destination": "test/test_review.py",
+      "mode": "moved",
+      "sha256": "77b9667622dec92f1777cf6b0e0d97377224009198ad9cf8ca52a0e8a262e0d4",
+      "integrated_sha256": "b90923b6d29eadb157486d72869f8210c39b02c3c118a8daff8f03efb7ea496e"
+    },
+    {
+      "source": "/home/jason/Desktop/echoiq/es",
+      "destination": "reference/echoiq/repositories/es.bundle",
+      "mode": "git bundle --all snapshot",
+      "sha256": "1db840fa1d109eaa5ece25fad3a47321f9eae4db867d720c3ced4021efae2838"
+    },
+    {
+      "source": "/home/jason/Desktop/echoiq/es-as",
+      "destination": "reference/echoiq/repositories/es-as.bundle",
+      "mode": "git bundle --all snapshot",
+      "sha256": "90ea592c1e58d0dd47e6c91e7f2264f5a85753b2930fe25b528e1c927c733d12"
+    },
+    {
+      "source": "/home/jason/Desktop/echoiq/es-hf",
+      "destination": "reference/echoiq/repositories/es-hf.bundle",
+      "mode": "git bundle --all snapshot",
+      "sha256": "c3ca4cb8e5e0a8f9c4147039606eefadfe438929d8cf442a027a99cd00909f89"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/.review/plan.json",
+      "destination": "reference/echoiq/review/plan.json",
+      "mode": "snapshot",
+      "sha256": "43097e168dffc2d0095d391bc996e451b421f0881085c3e4a9f1ce93a5b34746"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/.review/state.json",
+      "destination": "reference/echoiq/review/state.json",
+      "mode": "snapshot",
+      "sha256": "29517ea8b08e6ec04980c2aab37143e6d28d44ec90ccac00b2ca806d0d5c7eae"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/.review/PROVENANCE.md",
+      "destination": "reference/echoiq/review/PROVENANCE.md",
+      "mode": "snapshot",
+      "sha256": "08bed10054132d673f0f01ca1c64c1ff05e53b6269e549f66972bc935914de6c"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/.review/VALIDATION.md",
+      "destination": "reference/echoiq/review/VALIDATION.md",
+      "mode": "snapshot",
+      "sha256": "1a2e95e99e0b68b92445bb9d070f3c1884743a1e8055bb9d80f065ad94364f74"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/.review/R01.diff",
+      "destination": "reference/echoiq/review/R01.diff",
+      "mode": "snapshot",
+      "sha256": "f10d9b51059b12c35312a035f93b0ecace75dec3d2a404097e6da5e663564103"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/MASTER.md",
+      "destination": "reference/echoiq/review/MASTER.md",
+      "mode": "snapshot",
+      "sha256": "ca3b0cac7aafb66aafcd880f1f1166417714d15c5d35fd1fc6de636e1d973bd2"
+    },
+    {
+      "source": "/home/jason/obsidian/EchoIQ/Kanbun.md",
+      "destination": "reference/echoiq/review/Kanbun.md",
+      "mode": "snapshot",
+      "sha256": "2dfae5509f298082a52ddbf164edcffa74841f175f66d95160947afa48516411"
+    },
+    {
+      "source": "/home/jason/Desktop/es/Makefile",
+      "destination": "reference/echoiq/es-example/Makefile",
+      "mode": "snapshot",
+      "sha256": "afad6c0a06767129a565c72f4da00f1fb66d7208188d61c172cb77a2a67bb83a"
+    },
+    {
+      "source": "/home/jason/Desktop/es/pyproject.toml",
+      "destination": "reference/echoiq/es-example/pyproject.toml",
+      "mode": "snapshot",
+      "sha256": "4c169b420bb790349ffa1f969d8a5d4bb39862d6fd4b767f801c70e84eca6e19"
+    }
+  ]
+}

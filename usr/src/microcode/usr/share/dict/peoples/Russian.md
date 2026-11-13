@@ -1,0 +1,1 @@
+Type: [[Cold]], [[White]], [[People]], [[North]], [[Of]], [[China]], [[And]], [[East]], [[Of]], [[Europe]]

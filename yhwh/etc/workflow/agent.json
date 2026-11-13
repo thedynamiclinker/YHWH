@@ -1,0 +1,4 @@
+{
+  "command": "lordhavemercy",
+  "args": ["--profile", "chat", "--no-agents", "--quiet"]
+}

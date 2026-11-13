@@ -1,0 +1,18 @@
+{
+  "name": "yhwh",
+  "productName": "\ud802\udd09\ud802\udd04\ud802\udd05\ud802\udd04",
+  "version": "0.1.0",
+  "description": "A small-company rehearsal room, with an unusually opinionated deity.",
+  "private": true,
+  "main": "app/main.cjs",
+  "scripts": {
+    "start": "node ../../bin/company/start.cjs",
+    "start:thwh": "../../bin/company/thwh",
+    "test": "node --test test/*.test.cjs && python3 -m unittest discover -s test -p 'test_*.py'",
+    "test:ui": "node test/ui-test.cjs && node test/review-ui-test.cjs && node test/thwh-ui-test.cjs && node test/tutorial-ui-test.cjs",
+    "package": "make -C ../.. package"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

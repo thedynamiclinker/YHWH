@@ -1,0 +1,345 @@
+{
+  "repositories": {
+    "es-as": {
+      "base": "ff18cd87895294ca59f2cb85fd52a9f99aa50d13",
+      "source": "fcffa481c6c1858bc29df6fd73747b8676b3e29a",
+      "worktree": "/home/jason/obsidian/EchoIQ/.review/worktrees/es-as"
+    },
+    "es-hf": {
+      "base": "f1c251e635ece3f7163d0dc7833b77e9e82073ca",
+      "source": "7b991c911119eeb52c3e0fdc8f45ccb85d31d752",
+      "worktree": "/home/jason/obsidian/EchoIQ/.review/worktrees/es-hf"
+    },
+    "es": {
+      "base": "6d7cdf91da93050cac7b280831200696c40ea340",
+      "source": "d45e18558dcd6c094d41ccb220a3b67c1399d411",
+      "worktree": "/home/jason/obsidian/EchoIQ/.review/worktrees/es"
+    }
+  },
+  "rounds": [
+    {
+      "id": "R01",
+      "title": "Remove exact dependency pins and Python constraints",
+      "mr_title": "Remove exact dependency pins and Python constraints",
+      "teams": "Here's the small first step for the version upgrade: remove the exact dependency pins and Python constraints in both model repos. That lets us try other environments and compare the results.",
+      "descriptions": {
+        "es-as": "Remove exact dependency pins and the package-level Python constraint. Package names and model code stay the same; this permits testing other environments but does not establish runtime support or prediction equivalence.",
+        "es-hf": "Remove exact dependency pins and the package-level Python constraint. Package names and model code stay the same; this permits testing other environments but does not establish runtime support or prediction equivalence."
+      },
+      "validation": "Inspected both patches: only exact dependency specifiers and Python constraint lines change. Package metadata parses; model source, runtime selection, CI and README are untouched. Other Python/runtime combinations still need comparison runs.",
+      "commits": {
+        "es-as": "f8eafb30aa79695b48fdac74bb9e456b08ee6e48",
+        "es-hf": "9b4be7058b06244203676b365bd2e70b16bb1e9f"
+      }
+    },
+    {
+      "id": "R02",
+      "title": "Remove remaining build and development version pins",
+      "mr_title": "Remove remaining build and development version pins",
+      "teams": "Same idea for the build and development dependencies: let the installer resolve them too. This keeps the version settings from disagreeing across the different requirements files.",
+      "descriptions": {
+        "es-as": "Remove the remaining version restrictions in build and development dependencies, including the existing JavaScript development tools. Keep model behavior separate from dependency metadata.",
+        "es-hf": "Remove the remaining version restrictions in build and development dependencies, including the existing JavaScript development tools. Keep model behavior separate from dependency metadata."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "b9c5c7d716ee032f9597fd3a0a96f4cbc8a90a31",
+        "es-hf": "1d7ebb524de56b03e6bd121327e89f89c12f50b7"
+      }
+    },
+    {
+      "id": "R03",
+      "title": "Add make install and make develop",
+      "mr_title": "Add make install and make develop",
+      "teams": "Tiny quality-of-life follow-up: both repos now have `make install` and `make develop`. They use the Python on your PATH, with an optional `PYTHON=...` override.",
+      "descriptions": {
+        "es-as": "Add ordinary and editable make targets, consolidate installation metadata in pyproject.toml, and include the existing model resources in package metadata. Use the selected interpreter for pip.",
+        "es-hf": "Add ordinary and editable make targets, consolidate installation metadata in pyproject.toml, and include the existing model resources in package metadata. Use the selected interpreter for pip."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "cce95b8bb252bf3188461f175f18ac5321ed1357",
+        "es-hf": "9d1eab65acf0482b0cb6ca63bb153d047ccead20"
+      }
+    },
+    {
+      "id": "R04",
+      "title": "Replace esutils startup with standard logging",
+      "mr_title": "Replace esutils startup with standard logging",
+      "teams": "Found one installation step we can drop: these runners use `esutils` for startup/logging, which the standard library can handle here. This removes that private-package dependency from both repos.",
+      "descriptions": {
+        "es-as": "Replace esutils startup with explicit output-directory creation and standard logging, then remove the proprietary dependency. This removes one authentication-dependent installation step; the HF runner retains its log file.",
+        "es-hf": "Replace esutils startup with explicit output-directory creation and standard logging, then remove the proprietary dependency. This removes one authentication-dependent installation step; the HF runner retains its log file."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "8589f27516abd7b7b535e09fd504af5f20775544",
+        "es-hf": "5675a24993413224413757a089391df5d4a63823"
+      }
+    },
+    {
+      "id": "R05",
+      "title": "Find bundled model resources through package paths",
+      "mr_title": "Find bundled model resources through package paths",
+      "teams": "Next small installation fix: find the models and metadata relative to the installed package. That lets the same files be found when the caller is outside the checkout.",
+      "descriptions": {
+        "es-as": "Replace pkg_resources lookups with paths relative to package files. Bundle the HF seed CSV used by imputation so a wheel installation has the same resource as a checkout.",
+        "es-hf": "Replace pkg_resources lookups with paths relative to package files. Bundle the HF seed CSV used by imputation so a wheel installation has the same resource as a checkout."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "2220afec57b0ed4b1e0cd15db4b040fbc07a1a66",
+        "es-hf": "e60d42148cf2b973b8f86a545bcab0e41f1a23c6"
+      }
+    },
+    {
+      "id": "R06",
+      "title": "Handle current pandas and NumPy input types",
+      "mr_title": "Handle current pandas and NumPy input types",
+      "teams": "The upgrade checks turned up a few concrete pandas/NumPy compatibility fixes: recognize pandas dtypes directly and keep the missing-value masks as arrays. I've kept those separate so they're easy to review.",
+      "descriptions": {
+        "es-as": "Use pandas dtype checks for extension dtypes and boolean arrays for missing-variable masks. Preserve the HF modulo formula with a floating-point base under current NumPy, and update fixture readers for current pandas.",
+        "es-hf": "Use pandas dtype checks for extension dtypes and boolean arrays for missing-variable masks. Preserve the HF modulo formula with a floating-point base under current NumPy, and update fixture readers for current pandas."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "00eed84f372ec982b84de4defba6c95fdb0dda40",
+        "es-hf": "0ae7e07b8e6ebbada6e76fab6404d8c713429ab6"
+      }
+    },
+    {
+      "id": "R07",
+      "title": "Restore saved HF transformers with current scikit-learn",
+      "mr_title": "Restore saved HF transformers with current scikit-learn",
+      "teams": "HF has one extra compatibility fix: restore the saved transformer arrays as arrays, and use the loaded tree's fields to recognize its format. That gets rid of a hard-coded list of scikit-learn versions.",
+      "descriptions": {
+        "es-hf": "Reconstruct learned transformer arrays from JSON lists and inspect the actual tree node schema and sparse result type. This is HF-specific because AS does not reconstruct these saved scikit-learn transformers."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-hf": "f646d35f50d6c6258b3d246f2fcf2a751ba2e51c"
+      }
+    },
+    {
+      "id": "R08",
+      "title": "Install esas and eshf for the original runners",
+      "mr_title": "Install esas and eshf for the original runners",
+      "teams": "The original runners now have short installed commands: `esas` and `eshf`. Same file-output interfaces, and the HF default config comes from the installed package.",
+      "descriptions": {
+        "es-as": "Expose the existing file-output runners as installed commands. Defer model imports where needed so CLI setup can load independently, and resolve the HF default config relative to its package.",
+        "es-hf": "Expose the existing file-output runners as installed commands. Defer model imports where needed so CLI setup can load independently, and resolve the HF default config relative to its package."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "663c8a7b0e043fc98ea8bfefdcd8d39980dfac85",
+        "es-hf": "ecf54cdd40616612168fdf4b0332cdaaaf792aea"
+      }
+    },
+    {
+      "id": "R09",
+      "title": "Stream predictions with es-as and es-hf",
+      "mr_title": "Stream predictions with es-as and es-hf",
+      "teams": "Here's the comparison tool: `es-as` and `es-hf` print study results to stdout, so we can pipe them straight into `diff`. The existing `esas` and `eshf` commands still produce the original files.",
+      "descriptions": {
+        "es-as": "Add separate streaming commands using the existing calculations, Neda2/Neda3 selection, local CSV/JSON inputs and stdin. Keep diagnostics on stderr and allow the HF calculation to run without writing intermediate files.",
+        "es-hf": "Add separate streaming commands using the existing calculations, Neda2/Neda3 selection, local CSV/JSON inputs and stdin. Keep diagnostics on stderr and allow the HF calculation to run without writing intermediate files."
+      },
+      "validation": "es-as: 4 CLI checks passed at this draft prefix; es-hf: 14 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "d0d656f8bbc6074f8ff82df469eac50cffe28efe",
+        "es-hf": "0a10eb87d935d4c8e784639df189342f195a36ea"
+      }
+    },
+    {
+      "id": "R10",
+      "title": "Run ordered prediction batches across available CPUs",
+      "mr_title": "Run ordered prediction batches across available CPUs",
+      "teams": "The comparison commands can now use the available CPUs. Results stay in input order, and closing a pipe stops the workers, so `diff` and `head` work naturally.",
+      "descriptions": {
+        "es-as": "Add bounded multiprocessing with ordered result delivery and one numerical thread per worker. Sum HF model contributions in model-number order so loader completion timing does not add floating-point noise.",
+        "es-hf": "Add bounded multiprocessing with ordered result delivery and one numerical thread per worker. Sum HF model contributions in model-number order so loader completion timing does not add floating-point noise."
+      },
+      "validation": "es-as: 6 CLI checks passed at this draft prefix; es-hf: 20 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "7d1412a8387ae6f5f39724f8c4036920364e699f",
+        "es-hf": "259acb09be2026da2986667869737d79127ef15f"
+      }
+    },
+    {
+      "id": "R11",
+      "title": "Limit comparison runs to the first N input rows",
+      "mr_title": "Limit comparison runs to the first N input rows",
+      "teams": "We can now do a quick smoke run with `es-as -n 10` or `es-hf -n 10`. The limit is applied before batching, so serial and parallel runs compare the same studies in the same order.",
+      "descriptions": {
+        "es-as": "Add -n/--num-rows to the streaming commands and apply it before batching. Preserve input order for CSV, JSON and both Neda versions, including empty input limits.",
+        "es-hf": "Add -n/--num-rows to the streaming commands and apply it before batching. Preserve input order for CSV, JSON and both Neda versions, including empty input limits."
+      },
+      "validation": "es-as: 29 CLI checks passed at this draft prefix; es-hf: 42 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "8ad2ef9b3645ce8e415c4269ebe34c7d0f508738",
+        "es-hf": "14ae97107c781db010583439eebe3c7087c22fe4"
+      }
+    },
+    {
+      "id": "R12",
+      "title": "Choose decimal places for comparison output",
+      "mr_title": "Choose decimal places for comparison output",
+      "teams": "Another small comparison convenience: `--round 2` prints probabilities to two decimal places. It only changes the printed output; the calculations keep their full precision.",
+      "descriptions": {
+        "es-as": "Add --round N to format stdout floats with exactly N decimal places. Keep inference results unchanged and test formatting, trailing zeros and missing values.",
+        "es-hf": "Add --round N to format stdout floats with exactly N decimal places. Keep inference results unchanged and test formatting, trailing zeros and missing values."
+      },
+      "validation": "es-as: 36 CLI checks passed at this draft prefix; es-hf: 49 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "cf38d136cd8b4eec9fdcdb5daacff4f85d92b8f5",
+        "es-hf": "45ace8e035ab0a9ca3d3cadadd4e6677413cd98a"
+      }
+    },
+    {
+      "id": "R13",
+      "title": "Select the original runtime explicitly",
+      "mr_title": "Select the original runtime explicitly",
+      "teams": "The runners now accept `--runtime legacy`, making the original interpreter an explicit comparison baseline. The default remains the original runtime.",
+      "descriptions": {
+        "es-as": "Name the original runtime explicitly and route interpreter construction through the selected class. Keep the same calculation and default interpreter; expose the choice on both the legacy and streaming commands.",
+        "es-hf": "Name the original runtime explicitly and route interpreter construction through the selected class. Keep the same calculation and default interpreter; expose the choice on both the legacy and streaming commands."
+      },
+      "validation": "es-as: 38 CLI checks passed at this draft prefix; es-hf: 52 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "7f06c01e4ca84d0c77073b1a87cd0bdb8bef54c4",
+        "es-hf": "81edb3ab7726cc5f2a0fe9d3c1aa366198e1d67a"
+      }
+    },
+    {
+      "id": "R14",
+      "title": "Add the TensorFlow Lite interpreter option",
+      "mr_title": "Add the TensorFlow Lite interpreter option",
+      "teams": "We can now run the same model files with `--runtime tflite` and compare them against `--runtime legacy`. Both choices use the same preprocessing and probability calculation.",
+      "descriptions": {
+        "es-as": "Add TensorFlow's lite.Interpreter as a selectable runtime while preserving the original runtime default. This provides a comparison path for environments with a TensorFlow wheel.",
+        "es-hf": "Add TensorFlow's lite.Interpreter as a selectable runtime while preserving the original runtime default. This provides a comparison path for environments with a TensorFlow wheel."
+      },
+      "validation": "es-as: 38 CLI checks passed at this draft prefix; es-hf: 53 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "80484903a80abfa448b1adba4c61f3b464fa5dda",
+        "es-hf": "cde13bf6a6996c1d1918da3e38317b4fa1469f9b"
+      }
+    },
+    {
+      "id": "R15",
+      "title": "Add the LiteRT interpreter option",
+      "mr_title": "Add the LiteRT interpreter option",
+      "teams": "LiteRT is now available as `--runtime litert`, alongside the two existing choices. That gives us a direct way to compare all three interpreters on the same inputs.",
+      "descriptions": {
+        "es-as": "Add Google's ai-edge-litert Interpreter as the third runtime choice. Keep model files, preprocessing and output ordering shared across interpreter selections.",
+        "es-hf": "Add Google's ai-edge-litert Interpreter as the third runtime choice. Keep model files, preprocessing and output ordering shared across interpreter selections."
+      },
+      "validation": "es-as: 38 CLI checks passed at this draft prefix; es-hf: 55 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "5a9a7a1f5d42c4b6822638f2c49275b3607504fd",
+        "es-hf": "a6c613e93f95562390b2742774f1d63e304404fe"
+      }
+    },
+    {
+      "id": "R16",
+      "title": "Discover installed es subcommands on PATH",
+      "mr_title": "Discover installed es subcommands on PATH",
+      "teams": "Small bit of glue in `es`: installed commands like `es-as` can now be called as `es as`, with the same arguments. The existing model-column commands move to `es models as` and `es models hf`.",
+      "descriptions": {
+        "es": "Dispatch executable es-NAME programs on PATH with exec, preserving arguments, stdin, environment and exit status. Move the former as/hf metadata commands under models to avoid colliding with installed inference commands."
+      },
+      "validation": "All six es command-dispatch tests passed, including argv, stdin, environment, exit status, executable detection and built-in precedence. Installed es as/es hf help also worked from outside the repositories.",
+      "commits": {
+        "es": "b881125cfce4276daebbb4439b23398a67dbb64d"
+      }
+    },
+    {
+      "id": "R17",
+      "title": "Install packages independently of interpreter wheels",
+      "mr_title": "Install packages independently of interpreter wheels",
+      "teams": "Installation no longer requires all three interpreter packages. We can install the tools on a machine and choose the runtime separately when we're ready to run a comparison.",
+      "descriptions": {
+        "es-as": "Remove inference runtimes from mandatory installation dependencies. Until the following first-use installation change, install the selected runtime manually with python -m pip install tflite-runtime, tensorflow or ai-edge-litert.",
+        "es-hf": "Remove inference runtimes from mandatory installation dependencies. Until the following first-use installation change, install the selected runtime manually with python -m pip install tflite-runtime, tensorflow or ai-edge-litert."
+      },
+      "validation": "Changed Python files compile, package TOML parses, and patch whitespace checks pass. The completed sequence was built as wheels and passed the focused model/CLI checks described in the local validation report; these results do not certify all intermediate dependency combinations.",
+      "commits": {
+        "es-as": "9574a2d5ab7f42196826c987a0bf85a2defe9bf3",
+        "es-hf": "4eba07dfa4edc795b235b4c2b2a0bf2c7aadf4c9"
+      }
+    },
+    {
+      "id": "R18",
+      "title": "Install a missing runtime on first use",
+      "mr_title": "Install a missing runtime on first use",
+      "teams": "The comparison commands now install just the selected runtime if it's missing. An already installed runtime works directly, and installation output stays on stderr so pipes remain usable.",
+      "descriptions": {
+        "es-as": "Attempt to import the selected runtime first; install its package with the running Python only when it is missing. Distinguish a broken installed runtime from a missing one and provide a concrete repair command on failure.",
+        "es-hf": "Attempt to import the selected runtime first; install its package with the running Python only when it is missing. Distinguish a broken installed runtime from a missing one and provide a concrete repair command on failure."
+      },
+      "validation": "es-as: 38 CLI checks passed at this draft prefix; es-hf: 55 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "e059de3fd4556d5f10f725c1807de558a2fb3b1b",
+        "es-hf": "9edf7d25daa815e04cc5b0e6d993bf5675350477"
+      }
+    },
+    {
+      "id": "R19",
+      "title": "Explain unsupported interpreter wheels before installing",
+      "mr_title": "Explain unsupported interpreter wheels before installing",
+      "teams": "If the selected runtime has no wheel for this Python and platform, the CLI now says so before trying to install it. The check uses published wheel metadata rather than another version list for us to maintain.",
+      "descriptions": {
+        "es-as": "Check published PyPI wheel metadata before installing a missing interpreter. Explain unsupported combinations; if metadata is unavailable, let pip try the user's configured index or cache.",
+        "es-hf": "Check published PyPI wheel metadata before installing a missing interpreter. Explain unsupported combinations; if metadata is unavailable, let pip try the user's configured index or cache."
+      },
+      "validation": "es-as: 45 CLI checks passed at this draft prefix; es-hf: 60 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "1839af98e66f7090f35de82bbd8cbba392217dd8",
+        "es-hf": "5afedce56fe40fc31b2c647f3199ee6af0c6a7a4"
+      }
+    },
+    {
+      "id": "R20",
+      "title": "Offer a compatible Python for interactive comparisons",
+      "mr_title": "Offer a compatible Python for interactive comparisons",
+      "teams": "Last convenience for runtime comparisons: if this Python isn't supported, an interactive run can offer a compatible one through `uv`. You choose whether to proceed, and it reruns the same command arguments.",
+      "descriptions": {
+        "es-as": "Offer supported Python versions in a terminal, obtain uv if needed, and rerun the current package code with the same arguments. Keep noninteractive failures explicit and preserve each implementation's existing stdin and cache behavior.",
+        "es-hf": "Offer supported Python versions in a terminal, obtain uv if needed, and rerun the current package code with the same arguments. Keep noninteractive failures explicit and preserve each implementation's existing stdin and cache behavior."
+      },
+      "validation": "es-as: 50 CLI checks passed at this draft prefix; es-hf: 65 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "e5a9e5c1ad3fe1b7b5e33e979ca1f8d77e4aa2ee",
+        "es-hf": "6c2c640e652e741e72a8e4acc4380d61f9adb85d"
+      }
+    },
+    {
+      "id": "R21",
+      "title": "Document comparison commands and align upgrade checks",
+      "mr_title": "Document comparison commands and align upgrade checks",
+      "teams": "I've put the longer comparison examples in a separate CLI guide so the READMEs stay easy to scan. This also finishes the existing test/tooling updates, including one stale dependency assertion.",
+      "descriptions": {
+        "es-as": "Preserve the mainer documentation and test coverage, move the longer CLI instructions into CLI.md, and align stale Git-URL documentation and assertions with the package-index dependency. Complete the existing Python-on-PATH CI/tooling changes; verify the shared GitLab CI template exists before submission.",
+        "es-hf": "Preserve the mainer documentation and test coverage, move the longer CLI instructions into CLI.md, and align stale Git-URL documentation and assertions with the package-index dependency. Complete the existing Python-on-PATH CI/tooling changes; verify the shared GitLab CI template exists before submission."
+      },
+      "validation": "es-as: 50 CLI checks passed at this draft prefix; es-hf: 65 CLI checks passed at this draft prefix. Final installed-wheel checks also cover real inference, subprocesses and output formatting. These checks do not establish full-dataset equivalence.",
+      "commits": {
+        "es-as": "e162687c4f48101d14fcd291294f479313b72d7e",
+        "es-hf": "ddb64361d00e46af07e9740fd74cf2e2be137f41"
+      }
+    },
+    {
+      "id": "R22",
+      "title": "Keep larger HF samples for local comparison runs",
+      "mr_title": "Keep larger HF samples for local comparison runs",
+      "teams": "HF also has the existing 1,000- and 10,000-row samples available for longer local comparisons. I've kept those data files in their own change so they don't bury any code review.",
+      "descriptions": {
+        "es-hf": "Preserve the two larger input samples added on mainer as a separate data-only commit. They are local comparison fixtures, not evidence of model equivalence or a request to share dataset contents."
+      },
+      "validation": "Both sample files match the mainer blobs byte-for-byte. This commit adds data only.",
+      "commits": {
+        "es-hf": "b8ace4a568de088f85e81b1fd8ad09bce0ef1500"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Type: [[Bad]], [[Word]], [[You]], [[Call]], [[Person]]

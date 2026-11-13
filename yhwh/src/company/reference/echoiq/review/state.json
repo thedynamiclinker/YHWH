@@ -1,0 +1,41 @@
+{
+  "rounds": {
+    "R01": {
+      "status": "accepted",
+      "hunk": 3,
+      "accepted_commits": {
+        "es-as": "64c8b1690bde47e1a4cff883610489eb9c43bcb0",
+        "es-hf": "cb5b7008bb8dbbae98149df43fe2998525873e99"
+      },
+      "before": {
+        "es-as": "ff18cd87895294ca59f2cb85fd52a9f99aa50d13",
+        "es-hf": "f1c251e635ece3f7163d0dc7833b77e9e82073ca"
+      },
+      "accepted_at": "2026-11-06T03:45:02.365003+00:00"
+    },
+    "R02": {
+      "status": "accepted",
+      "hunk": 15,
+      "accepted_commits": {
+        "es-as": "d8574e853d4f80cba10ea529ab2fe4e5bacb5a81",
+        "es-hf": "623c99e89f9235959c9d76a51d449d838b10ed25"
+      },
+      "before": {
+        "es-as": "64c8b1690bde47e1a4cff883610489eb9c43bcb0",
+        "es-hf": "cb5b7008bb8dbbae98149df43fe2998525873e99"
+      },
+      "accepted_at": "2026-11-06T03:51:34.079377+00:00"
+    },
+    "R03": {
+      "status": "review",
+      "hunk": 1,
+      "comments": [
+        {
+          "text": "you can just delete this file because the requirements are already in pyproject.toml. This file is essentially empty now.",
+          "anchor": "es-as: diff --git a/dev-requirements.txt b/dev-requirements.txt @@ -1,9 +1,2 @@",
+          "at": "2026-11-06T03:54:03.318817+00:00"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+Inspect the repository and relevant code read-only before proposing implementation.
+You are drafting instructions, not executing them. Return ONLY a JSON object:
+{"title":"short descriptive name","intent":"intended result","implementation":"complete proposed implementation in English","questions":[{"id":"stable-id","prompt":"concrete ambiguity","choices":["choice A","choice B"],"required":true}],"blockers":[],"assumptions":[]}
+Questions must concern material choices that inspection cannot resolve. Omit choices
+for free text. Do not invent questions. Include the original task's actual intent.
+Use repo-relative paths. Respect AGENTS.md. Do not modify any files.

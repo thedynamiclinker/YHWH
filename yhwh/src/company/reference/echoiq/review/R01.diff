@@ -1,0 +1,93 @@
+# es-as
+
+diff --git a/pyproject.toml b/pyproject.toml
+index b7feba5..2d57723 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -7,18 +7,17 @@ name = "esas"
+ version = "0.2.4"
+ description = "EchoSolv Severe AS Model Inference Python Library."
+ readme = "README.md"
+-requires-python = ">=3.9,<3.10"
+ classifiers = [
+     "Programming Language :: Python :: 3",
+     "Operating System :: OS Independent"
+ ]
+ dependencies = [
+     "setuptools>=70.0.0,<80.9.0",
+-    "numpy==1.22.3",
+-    "pandas==1.4.2",
+-    "tflite-runtime==2.7.0",
+-    "scipy==1.8.0",
+-    "esutils==0.1.12"
++    "numpy",
++    "pandas",
++    "tflite-runtime",
++    "scipy",
++    "esutils"
+ ]
+ authors = [
+     { name = "Echo IQ", email = "support@echoiq.ai" }
+diff --git a/setup.py b/setup.py
+index c864f26..5a80a21 100644
+--- a/setup.py
++++ b/setup.py
+@@ -16,5 +16,4 @@ setuptools.setup(
+         "Programming Language :: Python :: 3",
+         "Operating System :: OS Independent",
+     ],
+-    python_requires=">=3.7.10",
+ )
+
+# es-hf
+
+diff --git a/pyproject.toml b/pyproject.toml
+index 36b6682..2b8937b 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -14,16 +14,15 @@ classifiers = [
+     "Operating System :: OS Independent"
+ ]
+ dependencies = [
+-    "tflite-runtime===2.14.0",
+-    "numpy==1.26.4",
+-    "pandas==1.5.3",
+-    "scikit-learn===1.5.2",
+-    "esutils===0.1.12",
+-    "lightgbm===4.6.0",
+-    "lambda-multiprocessing===0.5",
++    "tflite-runtime",
++    "numpy",
++    "pandas",
++    "scikit-learn",
++    "esutils",
++    "lightgbm",
++    "lambda-multiprocessing",
+     "setuptools>=70.0.0, <80.9.0",
+ ]
+-requires-python = ">=3.11.6,<3.12"
+ readme = "README.md"
+ 
+ # Add this section to control what gets included in your package
+diff --git a/requirements.txt b/requirements.txt
+index ff4f668..b94289a 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,9 +1,9 @@
+-tflite-runtime===2.14.0
+-numpy==1.26.4
+-pandas==1.5.3
+-scikit-learn===1.5.2
+-esutils===0.1.12
+-lightgbm===4.6.0
+-lambda-multiprocessing===0.5
++tflite-runtime
++numpy
++pandas
++scikit-learn
++esutils
++lightgbm
++lambda-multiprocessing
+ # PRD-5920: Pinning to less that 81 to avoid the deprecation warning 
+ setuptools >= 78.1.1, < 80.9.0
+\ No newline at end of file

@@ -1,0 +1,12 @@
+{
+  "theme": "yhwh",
+  "energy": "100",
+  "font_size": "16",
+  "show_hidden": "false",
+  "sidebar_width": "258",
+  "terminal_height": "240",
+  "file_manager": "true",
+  "terminal": "false",
+  "live_preview": "true",
+  "settings_fields": "theme,energy,font_size,show_hidden,bg,stylesheet,plugins"
+}

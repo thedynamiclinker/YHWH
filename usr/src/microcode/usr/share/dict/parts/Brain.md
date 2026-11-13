@@ -1,0 +1,1 @@
+Type: [[Computer]], [[Inside]], [[Head]]

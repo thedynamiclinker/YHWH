@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+require('./default/cli.cjs').main(process.argv.slice(2)).catch(error => { console.error('yhwh-default: '+error.message); process.exitCode=1; });

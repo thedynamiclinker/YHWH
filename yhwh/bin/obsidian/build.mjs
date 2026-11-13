@@ -1,0 +1,12 @@
+import { build } from 'esbuild';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import paths from '../../lib/paths.cjs';
+const root = join(paths.root, 'src/yhwh-obsidian'), out = paths.output('obsidian');
+await mkdir(out, { recursive: true });
+await build({ absWorkingDir: root, entryPoints: ['src/main.ts'], outfile: join(out, 'main.js'), bundle: true, format: 'cjs', target: 'es2020', external: ['obsidian'] });
+const font = await readFile(paths.etc('assets/Phoenician.ttf'));
+const css = await readFile(paths.etc('obsidian/styles.css'), 'utf8');
+const license = await readFile(paths.etc('assets/OFL.txt'), 'utf8');
+await writeFile(join(out, 'styles.css'), `/* ${license.replaceAll('*/','* /')} */\n@font-face{font-family:YHWH-Phoenician;src:url(data:font/ttf;base64,${font.toString('base64')}) format('truetype');font-display:swap}\n${css}`);
+console.log('Built Obsidian plugin:', out);

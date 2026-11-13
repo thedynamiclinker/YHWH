@@ -1,0 +1,22 @@
+yhwh — files, a shell, and executable English
+
+Usage: yhwh <command> [arguments]
+       yhwh --help | --version
+
+  open [default|three|obsidian] [PATH]  Open an interface (default: default)
+  begin [TODO]     Generate a draft and implementation questions in tmp/
+  review [DRAFT]   Answer questions and create an approved script in run/
+  run [TASK ...]   Execute scripts; record results for human inspection
+  add [TASK]      Accept results; archive exact instructions; prepare changes
+  commit [TASK]   Describe the resulting system and commit accepted work
+
+  create/read/append/prepend/list/search/move/rename/config
+                   Filesystem commands; see yhwh-default --help
+  completion bash|zsh  Print shell completion setup
+  commands             List available command names
+
+Each workflow command supports --help and --list. Explicit names support
+scripting; an interactive terminal offers selection when names are omitted.
+Direct run/SCRIPT execution performs no workflow bookkeeping.
+External yhwh-NAME executables on PATH are invoked by yhwh NAME.
+Their first nonempty --help line should be: yhwh-NAME — Short description

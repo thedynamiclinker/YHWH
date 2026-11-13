@@ -1,0 +1,7 @@
+Inspect the repository and the draft read-only. Re-evaluate its questions in light
+of the current code and existing human answers. Return ONLY JSON:
+{"questions":[{"id":"stable-id","prompt":"material unresolved ambiguity","choices":["A","B"],"required":true}]}
+Keep stable IDs for unchanged questions. Omit questions that are now irrelevant
+or reliably resolved by repository inspection. Do not invent human preferences
+or treat lack of an answer as approval. Ask only questions that could materially
+change implementation. Do not modify files or execute implementation tasks.

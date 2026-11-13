@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+lord --verbose << "EOF"
+You just finished building something in the YHWH directory.
+
+We're new to electron.
+
+Tell us how to run it by writing a Makefile in that directory that exposes one make target per meaningful operation exposed by the project that we might want to use in the course of attempting to understand what you did, how to use it, and how to access all the functionality it currently has.
+
+
+---
+
++  );
++  await fs.writeFile(path.join(repo, "crash.txt"), "unrecorded");
++  await git(repo, ["add", "."]);
++  await git(repo, ["commit", "-m", "Interrupted approval"]);
++  const recovered = new Workspace(workspace.directory);
++  await recovered.load();
++  assert.equal(await git(repo, ["rev-parse", "HEAD"]), before);
++  assert.equal(recovered.state.companies[0].proposals[0].status, "draft");
++});
++
++test("The local model boundary receives the character evidence and supports chat, reviews and revisions", async (t) => {
++  const { workspace, company, first } = await setup(t);
++  const requests = [];
++  const server = http.createServer(async (req, res) => {
++    let body = "";
++    for await (const chunk of req) body += chunk;
++    const input = JSON.parse(body);
++    requests.push(input);
++    let content = "Let me come down and inspect that diff.";
++    if (input.format === "json") {
++      content = input.messages[0].content.startsWith("Simulate")
++        ? JSON.stringify({
++            reactions: company.people.map((p) => ({
++              personId: p.id,
++              content: "Show the evidence for this specific change.",
++              verdict: "concern",
++            })),
++          })
++        : JSON.stringify({
++            chat: "A small improvement for review.",
++            mail: "Subject: Small change\nPlease review.",
++            forge: "Small change\nVerification remains pending.",
++          });
++    }
++    res.writeHead(200, { "Content-Type": "application/json" });
++    res.end(JSON.stringify({ message: { content } }));
++  });
++  await new Promise((resolve, reject) => {
++    server.once("error", reject);
++    server.listen(11434, "127.0.0.1", resolve);
++  });
++  t.after(() => new Promise((resolve) => server.close(resolve)));
++  await workspace.act("settings", { mode: "ollama", model: "boundary-test" });
++  await workspace.act("chat", {
++    message: "Inspect this proposal",
++    proposalId: first.id,
++  });
++  assert.match(company.messages.at(-1).content, /inspect that diff/);
++  assert.match(requests[0].messages[0].content, /Gen 18:21/);
++  await workspace.act("rehearse", { proposalId: first.id });
++  assert.equal(first.rehearsals[0].mode, "ollama");
++  await workspace.act("revise", { proposalId: first.id });
++  assert.equal(first.drafts.chat, "A small improvement for review.");
++  assert.equal(requests.length, 3);
++});
+
+exec
+/run/current-system/sw/bin/bash -lc "node -e 'const fs=require(\"node:fs\");const path=require(\"node:path\");const p=path.join(process.env.HOME,\".config\",\"𐤉𐤄𐤅𐤄\",\"workspace\",\"workspace.json\");const s=JSON.parse(fs.readFileSync(p));console.log(JSON.stringify({path:p,companies:s.companies.length,proposals:s.companies[0].proposals.length}));'; git diff --check --no-index /dev/null README.md" in /home/jason/obsidian/EchoIQ/YHWH
+ exited 1 in 0ms:
+{"path":"/home/jason/.config/𐤉𐤄𐤅𐤄/workspace/workspace.json","companies":1,"proposals":4}
+
+exec
+/run/current-system/sw/bin/bash -lc 'npm run package; git diff --check --no-index /dev/null README.md' in /home/jason/obsidian/EchoIQ/YHWH
+ exited 1 in 1600ms:
+
+> yhwh@0.1.0 package
+> electron-packager . YHWH --out=dist --overwrite --ignore=^/test --ignore=^/artifacts --ignore=^/dist --asar
+
+Packaging app for platform linux x64 using electron v45.2.3
+Wrote new app to: dist/YHWH-linux-x64
+
+codex
+Built and launched **𐤉𐤄𐤅𐤄** in [YHWH/](/home/jason/obsidian/EchoIQ/YHWH/README.md).
+
+Includes the Obsidian-inspired workspace, manuscript-grounded Yahweh persona and startup facts, arbitrary companies, simulated reviews, editable drafts, real Git patch approvals in isolated copies, Kanbun, persistence, and exports.
+
+```bash
+cd /home/jason/obsidian/EchoIQ/YHWH
+npm start
+```
+
+Offline mode works immediately; optional Ollama enables free-form AI.
+
+Verified: **11 core tests**, the full Electron UI workflow, and the packaged Linux build.
+
+[View screenshot](/home/jason/obsidian/EchoIQ/YHWH/artifacts/02-overview.png)
+EOF

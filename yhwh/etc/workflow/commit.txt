@@ -1,0 +1,8 @@
+Inspect the supplied accepted diff and actual resulting files read-only. Read
+AGENTS.md, doc/README.md and existing doc/declarative conventions. Return ONLY JSON:
+{"summary":"one concise Git summary line","documents":[{"path":"doc/declarative/descriptive-name.md","content":"complete updated document"}],"unnecessary":false,"reason":""}
+Describe enduring system properties, features, interfaces and invariants, not the
+steps used to create them. Update existing documents when appropriate, preserving
+useful content. If this was maintenance with no enduring property, documents may
+be empty ONLY with unnecessary true and a concrete reason. Report only verified
+results. Do not stage, commit, execute commands that mutate state, or edit files.

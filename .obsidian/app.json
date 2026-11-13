@@ -1,0 +1,37 @@
+{
+  "spellcheck": false,
+  "autoPairBrackets": false,
+  "showUnsupportedFiles": true,
+  "alwaysUpdateLinks": true,
+  "mobileToolbarCommands": [
+    "editor:undo",
+    "editor:redo",
+    "editor:cut",
+    "editor:copy",
+    "editor:attach-file",
+    "editor:insert-footnote",
+    "obsidian-tidy-footnotes:tidy-footnotes",
+    "editor:configure-toolbar",
+    "command-palette:open",
+    "editor:toggle-keyboard",
+    "editor:paste",
+    "editor:table-row-up",
+    "editor:table-row-down",
+    "editor:table-col-left",
+    "editor:table-col-right",
+    "editor:table-row-before",
+    "editor:table-row-after",
+    "editor:table-row-delete",
+    "editor:add-cursor-below",
+    "editor:add-cursor-above",
+    "editor:insert-tag",
+    "editor:insert-embed"
+  ],
+  "useTab": true,
+  "userIgnoreFilters": [
+    "yhwh/var",
+    "yhwh/node_modules",
+    ".git",
+    ".lord-agents.lock"
+  ]
+}

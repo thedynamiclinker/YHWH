@@ -1,0 +1,1 @@
+Type: [[Thing]], [[That]], [[Feel]], [[Like]], [[Move]], [[Big]], [[Rock]], [[But]], [[Sometimes]], [[Rock]], [[Only]], [[In]], [[Mind]]

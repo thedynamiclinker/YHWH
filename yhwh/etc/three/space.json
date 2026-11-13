@@ -1,0 +1,64 @@
+{
+  "camera": {
+    "fov": 43,
+    "near": 0.1,
+    "far": 350,
+    "position": [
+      0,
+      20,
+      31
+    ],
+    "minDistance": 14,
+    "maxDistance": 75,
+    "maxPolarAngle": 0.49
+  },
+  "fogDensity": 0.012,
+  "pixelRatioLimit": 1.6,
+  "exposure": 1.15,
+  "stars": 1800,
+  "grid": {
+    "radius": 22,
+    "sectors": 16,
+    "rings": 8,
+    "divisions": 128,
+    "y": -2
+  },
+  "bloom": {
+    "strength": 0.8,
+    "radius": 0.6,
+    "threshold": 0.55
+  },
+  "core": {
+    "radius": 2.7,
+    "wireRadius": 2.73,
+    "ringCount": 4,
+    "ringRadius": 3.6,
+    "ringSpacing": 0.36,
+    "ringTube": 0.012
+  },
+  "directory": {
+    "camera": [
+      0,
+      22,
+      34
+    ],
+    "entriesPerRing": 12,
+    "radius": 9,
+    "ringSpacing": 5.5
+  },
+  "logo": {
+    "width": 512,
+    "height": 160,
+    "scale": [
+      5.4,
+      1.68,
+      1
+    ]
+  },
+  "outerRing": {
+    "innerRadius": 21.98,
+    "outerRadius": 22,
+    "segments": 160,
+    "y": -1.95
+  }
+}

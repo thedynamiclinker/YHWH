@@ -1,0 +1,1 @@
+Type: [[Color]], [[You]], [[See]], [[When]], [[Both]], [[Eye]], [[Closed]]
