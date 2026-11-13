@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Brown]], [[Butt]], [[Stuff]]

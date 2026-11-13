@@ -1,2 +1,0 @@
-Def: [[Person]], [[Who]], [[Like]], [[New]], [[usr/share/dict/religion/books/Bible|Bible]], [[About]], [[America]]
-Def: [[Person]], [[Who]], [[Come]], [[To]], [[Your]], [[House]], [[When]], [[You]], [[No]], [[Want]], [[Them]], [[To]]

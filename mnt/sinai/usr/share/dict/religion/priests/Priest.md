@@ -1,1 +1,0 @@
-Type: [[Person]], [[Who]], [[Talk]], [[About]], [[Religion]], [[As]], [[usr/share/dict/atomic/A|A]], [[Job]]

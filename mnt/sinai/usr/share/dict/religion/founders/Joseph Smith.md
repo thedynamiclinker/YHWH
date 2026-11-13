@@ -1,2 +1,0 @@
-Def: [[Guy]], [[Who]], [[Write]], [[New]], [[usr/share/dict/religion/books/Bible|Bible]], [[About]], [[Jesus]], [[In]], [[America]]
-Def: [[Guy]], [[Who]], [[Build]], [[New]], [[Town]], [[Where]], [[You]], [[Can]], [[Do]], [[Polygamy]]
