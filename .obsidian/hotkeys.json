@@ -25,6 +25,25 @@
       "key": "R"
     }
   ],
+  "terminal:toggle-focus-on-last-terminal": [],
+  "terminal:open-terminal.default.current": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "B"
+    }
+  ],
+  "terminal:open-terminal.integrated.current": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "G"
+    }
+  ],
   "editor:swap-line-down": [
     {
       "modifiers": [
@@ -331,16 +350,6 @@
       "key": "E"
     }
   ],
-  "terminal:toggle-focus-on-last-terminal": [],
-  "terminal:open-terminal.default.current": [
-    {
-      "modifiers": [
-        "Mod",
-        "Shift"
-      ],
-      "key": "B"
-    }
-  ],
   "terminal:focus-on-last-terminal": [
     {
       "modifiers": [
@@ -366,13 +375,14 @@
       "key": "I"
     }
   ],
-  "terminal:open-terminal.integrated.current": [
+  "workspace:copy-full-path": [
     {
       "modifiers": [
+        "Alt",
         "Mod",
         "Shift"
       ],
-      "key": "G"
+      "key": "P"
     }
   ]
 }
