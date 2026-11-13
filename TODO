@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+All relative paths below are relative to the repo / vault root.
+
+Refactor the existing functionality as follows:
+
+1. Refactor the existing code to separate code from data & share functionality.
+    Make sure there's no remaining shared functionality in root/src.
+    If there is, then factor it out and put it in yhwh/src/lib
+    Also put yhwh-3d into yhwh/src/yhwh-three & rename 3d to three throughout.
+    Also put yhwh-obsidian into yhwh/src/yhwh-obsidian
+    Also put yhwh into yhwh/src/yhwh-default
+    Any shared functionality between the default and three and obsidian
+        versions should go in yhwh/src/lib.
+    Rename bin/yhwh to bin/yhwh-default in preparation for the stuff below.
+    Also fix up the top level Makefile and any subdirectory Makefiles
+        to make sure everything works as expected. We should be able
+        to type 'make' from the repo root to build and open the app.
+        Typing 'make' should do that by invoking ONLY stuff that lives in yhwh/
+    The make target 'make install' should install the app into the bin/
+        directory in the repo root in the form of N+1 scripts where N
+        is the number of skins, currently 3.
+    So 'make install' should install bin/yhwh{,-default,-three,obsidian}
+        as three executables that don't point to the source code anymore,
+        to the extent that that's possible in nodejs. If it's not possible,
+        then just make it work. But here's what I'm going for:
+    The 'make install' target should emulate installing the app "as it will
+        be after we ship it." So it's like 'pip install' in python.
+    The 'make develop' target should emulate installing the app "in
+        editable mode" So it's like 'pip install -e .' in python.
+    If nodejs can do anything remotely like that, then do that.
+    If it can't, then just make whichever of the two make targets more
+        closely resembles what you implemented, and make the other target
+        exist but be a stub that says "Not implemented yet" plus the
+        reasons. If you can't implement both, then add whichever one
+        you didn't do yet to the COVENANT kanban board.
+    Back to the refactor.
+    Ok so...
+    Any interface text that we might want to change should be kept
+        in a separate location from the js code, let's put it in
+        yhwh/etc since it's static config that we're gonna be editing
+        to change the interface's text behavior.
+    What to put in yhwh/etc:
+        Any interface config variables that determine things like the geometry
+            (width, height) of various components should be in
+            yhwh/etc/ in a file or file.d called geometry or workspace or ui
+            or whatever is most standard in the electron space.
+        Emulate what a linux or unix distro would do whenever possible.
+        I want the messy implementation code and stuff that would scare
+        a human to be in yhwh/src, but I want the human readable and machine
+        readable config to be in yhwh/etc, same as how unix does.
+        Any internal support scripts should be in yhwh/bin.
+        Any internal importable libraries should be in yhwh/lib.
+        Any build outputs should be put in yhwh/tmp or yhwh/var/lib/
+        in a separate location from the js code, let's put it in
+        yhwh/var since it's dynamic config that we're gonna be editing
+        to change the interface's text behavior.
+
+- Move amr to doc/bin
+EOF
