@@ -129,6 +129,10 @@ Refactor the existing functionality as follows:
     move job/the-root-enterprise/* into root/ and delete job.
 
 4. 'make develop' should put stuff in the repo's top level bin, lib, etc
-    etc.
+    etc. 'make uninstall' should uninstall those.
+
+5. If you see anything in the repo talking about the workflow involving
+    the kanban board and agent-generated rough draft prompts that are
+    edited by humans before being approved, then 
 
 EOF
