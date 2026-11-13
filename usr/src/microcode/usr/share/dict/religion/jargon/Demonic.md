@@ -1,0 +1,1 @@
+Type: [[Most]], [[Bad]], [[Thing]]

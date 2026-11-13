@@ -1,0 +1,5 @@
+**/node_modules
+**/__pycache__
+var/tmp/yhwh/packages
+var/tmp/yhwh/**/screenshots
+var/lib

@@ -1,0 +1,1 @@
+Type: [[Go]], [[Inside]], [[And]], [[Look]], [[Up]]

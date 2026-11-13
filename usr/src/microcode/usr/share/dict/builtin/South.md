@@ -1,0 +1,1 @@
+Type: [[Opposite]], [[Of]], [[North]]

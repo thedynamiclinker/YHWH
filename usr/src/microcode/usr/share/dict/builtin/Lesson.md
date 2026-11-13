@@ -1,0 +1,1 @@
+Type: [[Sentence]], [[List]], [[For]], [[Teaching]]

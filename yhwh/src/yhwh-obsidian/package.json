@@ -1,0 +1,13 @@
+{
+  "name": "yhwh-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An opinionated navigator, command line and 3D directory for Obsidian.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node ../../bin/obsidian/build.mjs",
+    "check": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "test:ui": "node test/obsidian-ui.cjs"
+  }
+}

@@ -1,0 +1,1 @@
+Type: [[Invisible]], [[Undead]], [[Person]]

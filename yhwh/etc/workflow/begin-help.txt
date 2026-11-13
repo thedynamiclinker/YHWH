@@ -1,0 +1,9 @@
+yhwh begin — Draft implementation instructions from a brief kanban task
+
+Usage: yhwh begin [TODO] [--list]
+
+With no name, choose a COVENANT or kanban/ item interactively. The agent inspects
+the repository read-only and writes tmp/NAME.md with the original task, intended
+result, implementation, genuine questions, blockers and assumptions. It never
+executes the draft or moves it to run/. Existing task associations are reused.
+Completion offers task basenames; duplicate basenames require a full listed name.

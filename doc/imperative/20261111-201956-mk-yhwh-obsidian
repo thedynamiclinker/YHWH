@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Implement the same app that I seem to be describing in ./mk-yhwh and ./mk-yhwh-3d, but ignore everything that can't be done as a simple normal obsidian plugin.
+
+Basically I want YOU to write an obsidian plugin in ./yhwh-obsidian and try to make it do as much of all that as possible, don't worry about the parts you can't do.
+
+Then add bin/yhwh-obsidian as a simple command that gives help by default, and has some --options or subcommands to install the plugin in a specific directory or push to obsidian's community plugin registry. Go!
+EOF

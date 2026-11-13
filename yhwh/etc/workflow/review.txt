@@ -1,0 +1,6 @@
+Inspect the repository read-only. Use the reviewed draft and saved answers to
+produce complete implementation instructions. Return ONLY JSON:
+{"prompt":"the complete final English implementation prompt","questions":[],"blockers":[]}
+The prompt must incorporate the answers and make the intended changes and checks
+clear. If material questions remain, put them in questions and leave prompt empty.
+Do not execute the prompt or modify files. Do not invent missing human approval.

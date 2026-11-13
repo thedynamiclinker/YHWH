@@ -1,0 +1,17 @@
+{
+  "name": "yhwh-three",
+  "productName": "YHWH Three",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A spatial filesystem, editor and shell. No vault required.",
+  "main": "app/main.cjs",
+  "scripts": {
+    "build": "node ../../bin/three/build.cjs",
+    "start": "node ../../bin/three/start.cjs",
+    "test": "node --test test/*.test.cjs",
+    "test:ui": "node test/ui.cjs"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

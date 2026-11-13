@@ -1,0 +1,18 @@
+{
+  "name": "yhwh-desktop",
+  "productName": "YHWH",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Files, a shell, and somewhere to think. No vault required.",
+  "main": "app/main.cjs",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "node ../../bin/default/build.cjs",
+    "start": "node ../../bin/default/cli.cjs",
+    "test": "node --test test/*.test.cjs",
+    "test:ui": "node test/ui.cjs",
+    "package": "make -C ../.. package"
+  }
+}

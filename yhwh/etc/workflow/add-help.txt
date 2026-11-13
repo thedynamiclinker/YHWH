@@ -1,0 +1,11 @@
+yhwh add — Accept successful results and archive exact imperative instructions
+
+Usage: yhwh add [TASK] [--list]
+
+Run this only after inspecting and accepting the result. Only recorded successful
+executions are eligible. The exact executed snapshot is archived under
+ doc/imperative/YYYYMMDD-HHMMSSZ-name-taskid-attempt
+before the unchanged run/ script is removed. Later script edits are preserved.
+The task's changes and archive are staged, without documentation or a commit.
+Pre-existing dirty files touched by the task, later edits and overlapping pending
+tasks are reported rather than silently included. Repeat acceptance is idempotent.

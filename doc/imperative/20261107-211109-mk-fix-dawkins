@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Fix the dawkins version of the 'make thwh' and 'make yhwh' interfaces. Doesn't need to BE ncurses. Should just be monospaced font and look aggressively over-minimal, sort of like DOS or an old TTY.
+EOF

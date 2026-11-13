@@ -1,0 +1,1 @@
+Type: [[Sharp]], [[Part]], [[On]], [[Front]], [[Of]], [[Face]]

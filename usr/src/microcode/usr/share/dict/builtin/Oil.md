@@ -1,0 +1,1 @@
+Type: [[Slippery]], [[Liquid]]

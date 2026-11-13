@@ -1,0 +1,16 @@
+yhwh run — Execute approved scripts and record results awaiting acceptance
+
+Usage: yhwh run [TASK ...] [--all] [--list]
+       yhwh run --retry TASK
+       yhwh run --baseline
+       yhwh run --record-direct TASK --baseline TREE --executed-script FILE --exit-code CODE
+
+Without names, Space selects tasks, a selects all and Enter executes sequentially.
+# yhwh-depends: name, other-name declares dependencies, ordered before dependents.
+Failure stops the batch and preserves the task; no automatic retries. --retry
+explicitly permits another attempt after inspection. Success preserves exact
+executed bytes, before/after Git trees and output; it does not accept or commit.
+Use yhwh add after inspecting results. Direct run/NAME execution has no managed
+bookkeeping. --baseline captures a tree before a direct execution. Recording a
+direct execution requires an explicit human attestation naming its exact saved
+script, baseline and exit code; it never assumes an untracked direct run succeeded.

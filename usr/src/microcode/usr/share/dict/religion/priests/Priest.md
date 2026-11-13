@@ -1,0 +1,1 @@
+Type: [[Person]], [[Who]], [[Talk]], [[About]], [[Religion]], [[As]], [[usr/src/microcode/usr/share/dict/atomic/A|A]], [[Job]]

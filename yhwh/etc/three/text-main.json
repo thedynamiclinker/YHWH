@@ -1,0 +1,16 @@
+{
+  "userdata": "userData",
+  "that-focus-tab-is-closed-": "That focus tab is closed.",
+  "only-the-application-window-can-access-files-": "Only the application window can access files.",
+  "opendirectory": "openDirectory",
+  "openfile": "openFile",
+  "unsupported-link-": "Unsupported link.",
+  "piece-offering-choose-a-file-to-stage-locally": "Piece Offering — choose a file to stage locally",
+  "staged-locally-upload-endpoint-has-not-been-conn": "Staged locally. Upload endpoint has not been connected.",
+  "unknown-action-": "Unknown action: {{0}}",
+  "yhwh-three": "YHWH Three",
+  "keep-editing": "Keep editing",
+  "discard-changes": "Discard changes",
+  "unsaved-changes": "Unsaved changes",
+  "close-yhwh-three-and-discard-unsaved-file-edits-": "Close YHWH Three and discard unsaved file edits?"
+}

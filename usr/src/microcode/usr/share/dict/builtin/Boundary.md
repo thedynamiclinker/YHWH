@@ -1,0 +1,1 @@
+Type: [[Place]], [[Between]], [[Inside]], [[And]], [[Outside]]

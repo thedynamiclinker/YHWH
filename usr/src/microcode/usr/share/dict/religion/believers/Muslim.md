@@ -1,0 +1,1 @@
+Type: [[Person]], [[Who]], [[Join]], [[Islam]], [[Tribe]]

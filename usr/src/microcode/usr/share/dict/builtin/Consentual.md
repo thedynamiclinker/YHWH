@@ -1,0 +1,1 @@
+Type: [[When]], [[The]], [[People]], [[Who]], [[Do]], [[Something]], [[Agree]], [[To]], [[Do]], [[It]], [[Before]], [[It]], [[Happen]]

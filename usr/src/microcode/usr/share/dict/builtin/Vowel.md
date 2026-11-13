@@ -1,0 +1,1 @@
+Type: [[Mouth]], [[Sound]], [[Without]], [[Friction]]

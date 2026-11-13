@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+user@world YHWH $ gs
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   TODO-1
+
+no changes added to commit (use "git add" and/or "git commit -a")
+user@world YHWH $ gg
+fatal: cannot lock ref 'HEAD': is at 3c6050c2213697ae3ac066ccbde005b26c27a3e7 but expected 876b3155d84ae4ae4a6e2878ddb8289842acb746
+
+QUESTION:
+
+... What?
+
+(fix it)
+EOF

@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""Executable entry point for the shared paired-review implementation."""
+from pathlib import Path
+import runpy
+import sys
+
+engine = Path(__file__).resolve().parents[2] / "lib/company/review.py"
+sys.path.insert(0, str(engine.parent))
+if __name__ == "__main__":
+    runpy.run_path(str(engine), run_name="__main__")

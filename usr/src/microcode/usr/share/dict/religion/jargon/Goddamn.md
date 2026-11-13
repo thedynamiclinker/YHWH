@@ -1,0 +1,1 @@
+Type: [[God]], [[Damn]]

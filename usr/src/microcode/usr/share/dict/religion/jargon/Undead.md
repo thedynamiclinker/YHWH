@@ -1,0 +1,1 @@
+Type: [[Dead]], [[Person]], [[With]], [[Living]], [[Body]], [[And]], [[Mind]]
