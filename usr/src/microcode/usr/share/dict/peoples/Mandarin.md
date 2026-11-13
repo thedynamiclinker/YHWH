@@ -1,1 +1,0 @@
-Type: [[Chinese]], [[Language]], [[With]], [[Original]], [[Meaning]], [[Bureaucrat]], [[Talk]]

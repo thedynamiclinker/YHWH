@@ -1,1 +1,0 @@
-Type: [[What]], [[Leader]], [[Do]]

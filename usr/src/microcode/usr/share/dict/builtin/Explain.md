@@ -1,1 +1,0 @@
-Type: [[Tell]], [[Big]], [[Thought]]

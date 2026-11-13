@@ -1,1 +1,0 @@
-Type: [[Jew]], [[With]], [[Name]], [[Meaning]], [[Drew]]

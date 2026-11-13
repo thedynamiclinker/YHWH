@@ -1,1 +1,0 @@
-Type: [[Thing]], [[Nose]], [[Can]], [[See]]

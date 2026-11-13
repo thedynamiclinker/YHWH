@@ -1,7 +1,0 @@
-#!/usr/bin/env node
-'use strict';
-const { pathToFileURL } = require('node:url');
-const { resolve } = require('node:path');
-import(pathToFileURL(resolve(__dirname, '../yhwh-obsidian/scripts/cli.mjs')).href)
-  .then(cli => cli.main(process.argv.slice(2)))
-  .catch(error => { console.error(`yhwh-obsidian: ${error.message}`); process.exitCode = 1; });

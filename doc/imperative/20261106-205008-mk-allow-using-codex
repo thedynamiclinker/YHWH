@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-lordhavemercy -f --verbose << "EOF"
-Make the existing POC in this repo support not just the ollama or qwen or whatever it is, but actually make it just use 'codex' with highest permissions and highest thinking level as the default. Keep the other models around for now but we really just want codex in the version you find in the lordhavemercy -f command to be the default.
-EOF

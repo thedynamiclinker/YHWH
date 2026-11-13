@@ -1,1 +1,0 @@
-Type: [[Old]], [[Thing]], [[That]], [[Hard]], [[To]], [[Change]]

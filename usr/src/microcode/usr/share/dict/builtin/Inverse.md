@@ -1,1 +1,0 @@
-Type: [[Opposite]], [[In]], [[Math]], [[Language]]

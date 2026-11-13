@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-lordhavemercy -f --verbose << "EOF"
-Turn the three mk-yhwh-* prompts in this directory into a declarative version of those imperatively worded files, and put each of the 3 new files in a new dir called yhy/ with the same filenames as the imperative versions but a .md extension, and add a yhy/README.md explaining that this is the declarative description of the apps we're building and what features they should have. Use [[obsidian]] links in the new .md files whenever the original files refer to each other. Go.
-EOF

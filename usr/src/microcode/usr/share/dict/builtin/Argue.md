@@ -1,1 +1,0 @@
-Type: [[Fight]], [[With]], [[Words]]

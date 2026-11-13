@@ -1,1 +1,0 @@
-Type: [[First]], [[Stop]], [[When]], [[You]], [[Walk]], [[Out]], [[Of]], [[Africa]]

@@ -1,1 +1,0 @@
-Type: [[Every]], [[Place]], [[Below]], [[Sky]]

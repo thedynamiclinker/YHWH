@@ -1,1 +1,0 @@
-Type: [[Bright]], [[Light]], [[In]], [[Sky]], [[During]], [[Storm]]

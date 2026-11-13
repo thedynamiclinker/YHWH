@@ -1,1 +1,0 @@
-Type: [[Word]], [[To]], [[Show]], [[You]], [[Are]], [[Angry]]

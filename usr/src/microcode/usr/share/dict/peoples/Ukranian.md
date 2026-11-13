@@ -1,1 +1,0 @@
-Type: [[Cold]], [[White]], [[People]], [[West]], [[Of]], [[Russia]]

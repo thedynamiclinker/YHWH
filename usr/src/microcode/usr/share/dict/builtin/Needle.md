@@ -1,1 +1,0 @@
-Type: [[Very]], [[Small]], [[Sharp]], [[Stick]]

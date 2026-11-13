@@ -1,1 +1,0 @@
-Type: [[Religion]], [[Of]], [[Many]], [[Arab]], [[And]], [[Also]], [[Europe]], [[Now]]

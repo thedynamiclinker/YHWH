@@ -1,1 +1,0 @@
-Type: [[Thing]], [[You]], [[Make]], [[From]], [[Think]]

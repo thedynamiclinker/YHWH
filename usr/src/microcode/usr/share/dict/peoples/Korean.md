@@ -1,1 +1,0 @@
-Type: [[Tiny]], [[Place]], [[On]], [[East]], [[China]]

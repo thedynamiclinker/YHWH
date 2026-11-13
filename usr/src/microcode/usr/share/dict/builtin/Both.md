@@ -1,1 +1,0 @@
-Type: [[Word]], [[Meaning]], [[All]], [[When]], [[Have]], [[Only]], [[Two]], [[Things]]

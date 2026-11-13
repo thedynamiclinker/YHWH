@@ -1,1 +1,0 @@
-Type: [[Thing]], [[Set]], [[With]], [[Connect]], [[Thing]], [[Set]]

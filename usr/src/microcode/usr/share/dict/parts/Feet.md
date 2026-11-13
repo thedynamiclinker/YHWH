@@ -1,1 +1,0 @@
-Type: [[Multiple]], [[usr/src/microcode/usr/share/dict/parts/Foot]]

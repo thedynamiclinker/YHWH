@@ -1,1 +1,0 @@
-Type: [[Person]], [[Who]], [[Does]], [[Communism]]
