@@ -9,7 +9,6 @@ The original files below are retained verbatim. They are historical inputs, incl
 | Migration and review request | [prompts/TODO-make-yhwh-vault-and-make-him-useful](prompts/TODO-make-yhwh-vault-and-make-him-useful) | Defines this migration and the desktop review integration |
 | Company workflow and earlier prompts | [echoiq/TODO](echoiq/TODO) | Describes the simulated company, paired reviews, MASTER.md, Kanbun.md, and the reasons behind them |
 | Group conversation | [echoiq/giant-pile-of-yammering-for-context.md](echoiq/giant-pile-of-yammering-for-context.md) | Explicitly referenced by TODO; images are embedded in the Markdown |
-| Shell-history context | [echoiq/history_231221b.txt](echoiq/history_231221b.txt) | Explicitly referenced by TODO as background for the workflow |
 | Earlier workflow prompt | [echoiq/PROMPT TO DO EVERYTHING.md](<echoiq/PROMPT TO DO EVERYTHING.md>) | Additional original account of the company workflow |
 | Existing review guide | [echoiq/REVIEW.md](echoiq/REVIEW.md) | Original CLI behavior and state ownership |
 | Existing prepared review | `echoiq/review/` | Original plan, R03 state, accepted handoff, board, provenance, validation, and first-round diff |
@@ -18,6 +17,8 @@ The original files below are retained verbatim. They are historical inputs, incl
 | Persona sources | `we-the-nameless/01-genesis/` | Complete source-directory snapshot, including all 50 chapters, alternate text, apocrypha, and included assets |
 | Manuscript illustrations | `we-the-nameless/img/` | The ordinary image paths referenced by the Genesis manuscripts |
 | Repository inputs and example layout | `echoiq/repositories/` | Complete Git bundles of `~/Desktop/es`, `./es-as`, and `./es-hf`, including all refs and reachable history |
+
+Shell-history exports are intentionally excluded from this repository because they contain credentials. The original `history_231221b.txt` export has also been removed from Git history.
 
 The Makefile and pyproject.toml mentioned as examples in TODO are readable directly in `es-example/` and also belong to the `es` bundle. Generic names such as `something.py`, `whatever.py`, and `requirements.txt` in the prose describe repository files or hypothetical command examples. Real repository content is preserved in the bundles; no guessed placeholder files were created.
 

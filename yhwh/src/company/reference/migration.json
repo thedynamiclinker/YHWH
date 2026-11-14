@@ -180,12 +180,6 @@
       "sha256": "8c511f25b21e985b6b519f6e33be8f6fa1e7faec7888149706c163d4856958b3"
     },
     {
-      "source": "/home/jason/obsidian/EchoIQ/history_231221b.txt",
-      "destination": "reference/echoiq/history_231221b.txt",
-      "mode": "moved",
-      "sha256": "d1b139fe9a259f28afc06210227d991aedcb9d7c62d16aea78a22a8511be98ba"
-    },
-    {
       "source": "/home/jason/obsidian/EchoIQ/PROMPT TO DO EVERYTHING.md",
       "destination": "reference/echoiq/PROMPT TO DO EVERYTHING.md",
       "mode": "snapshot",

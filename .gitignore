@@ -5,3 +5,8 @@ node_modules/
 /yhwh/var/lib/
 /.lord-agents.lock/
 .obsidian/workspace.json
+
+# Shell-history exports can contain credentials.
+.bash_history
+.zsh_history
+history_[0-9]*.txt
