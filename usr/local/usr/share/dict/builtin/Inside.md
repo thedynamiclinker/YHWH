@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Thing]]

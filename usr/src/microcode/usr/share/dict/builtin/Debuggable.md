@@ -1,1 +1,0 @@
-Type: [[Can]], [[usr/src/microcode/usr/share/dict/builtin/Debug]]

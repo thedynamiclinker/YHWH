@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/builtin/Rotate]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Past]]
+Type: [[usr/share/dict/builtin/Rotate]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Present]]

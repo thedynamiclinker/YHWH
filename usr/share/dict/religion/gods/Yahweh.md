@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Minor]], [[usr/share/dict/builtin/Storm]], [[usr/share/dict/religion/gods/God]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Got]], [[usr/share/dict/builtin/Popular]]

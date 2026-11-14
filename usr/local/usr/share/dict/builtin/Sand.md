@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Small]], [[usr/share/dict/atomic/Rock]]

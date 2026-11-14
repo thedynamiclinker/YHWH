@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Two]], [[usr/share/dict/atomic/Wet]], [[usr/share/dict/builtin/Balls]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/parts/Head]]

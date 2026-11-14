@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Science]], [[usr/share/dict/builtin/Idea]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Use]], [[usr/share/dict/builtin/Math]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/Merge]], [[usr/share/dict/atomic/Space]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Time]]

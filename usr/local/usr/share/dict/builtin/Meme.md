@@ -1,0 +1,2 @@
+Type: [[usr/local/usr/share/dict/builtin/Idea]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Spread]], [[usr/local/usr/share/dict/builtin/Really]], [[usr/share/dict/atomic/Good]]
+Type: [[usr/local/usr/share/dict/builtin/Idea]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Last]], [[usr/share/dict/atomic/Long]], [[usr/share/dict/atomic/Time]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/What]], [[usr/local/usr/share/dict/builtin/Leader]], [[usr/share/dict/atomic/Do]]

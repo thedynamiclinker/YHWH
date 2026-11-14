@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Living]], [[usr/share/dict/atomic/Before]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Now]]

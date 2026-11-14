@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Strange]], [[usr/share/dict/atomic/Shape]], [[usr/share/dict/atomic/On]], [[usr/local/usr/share/dict/parts/Head]], [[usr/share/dict/atomic/Side]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Hole]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Middle]]

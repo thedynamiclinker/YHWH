@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/After]], [[usr/share/dict/atomic/Now]]

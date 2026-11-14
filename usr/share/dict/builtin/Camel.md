@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/builtin/Sand]], [[usr/share/dict/atomic/Horse]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/One]], [[usr/share/dict/atomic/Bump]]
+Type: [[usr/share/dict/builtin/Sand]], [[usr/share/dict/atomic/Horse]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Two]], [[usr/share/dict/atomic/Bump]]

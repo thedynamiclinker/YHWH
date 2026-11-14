@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Way]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Space]]

@@ -1,1 +1,0 @@
-Type: [[Europe]], [[People]], [[Who]], [[Eat]], [[Cheese]], [[And]], [[Act]], [[Gay]]

@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Goal]], [[usr/share/dict/atomic/Done]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Small]], [[usr/local/usr/share/dict/builtin/Letter]]

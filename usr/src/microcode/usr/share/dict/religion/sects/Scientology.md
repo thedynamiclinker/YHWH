@@ -1,1 +1,0 @@
-Def: [[Famous]], [[People]], [[Religion]], [[That]], [[Make]], [[You]], [[Need]], [[Many]], [[Lawyer]]

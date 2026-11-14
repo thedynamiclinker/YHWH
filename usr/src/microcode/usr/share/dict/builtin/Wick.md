@@ -1,1 +1,0 @@
-Type: [[Little]], [[Rope]], [[You]], [[Put]], [[Fire]], [[On]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Event]], [[usr/share/dict/atomic/List]]

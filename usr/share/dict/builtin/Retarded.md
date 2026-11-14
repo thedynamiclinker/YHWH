@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/General]], [[usr/share/dict/atomic/Purpose]], [[usr/share/dict/builtin/Insult]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Sophisticated]], [[usr/share/dict/atomic/Meaning]]

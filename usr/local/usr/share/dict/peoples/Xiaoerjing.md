@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Version]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/peoples/Arabic]], [[usr/share/dict/builtin/Alphabet]], [[usr/share/dict/atomic/For]], [[usr/local/usr/share/dict/peoples/Chinese]], [[usr/share/dict/builtin/Language]]

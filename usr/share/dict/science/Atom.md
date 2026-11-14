@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Small]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/All]], [[usr/share/dict/atomic/Stuff]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/builtin/Made]], [[usr/share/dict/atomic/Of]]

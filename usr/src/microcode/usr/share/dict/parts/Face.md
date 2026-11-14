@@ -1,1 +1,0 @@
-Type: [[Front]], [[Of]], [[Head]]

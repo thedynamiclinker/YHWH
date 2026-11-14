@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/See]], [[usr/share/dict/atomic/Through]], [[usr/share/dict/atomic/Rock]]

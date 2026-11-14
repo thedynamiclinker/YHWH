@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Fight]], [[usr/share/dict/atomic/With]], [[usr/local/usr/share/dict/builtin/Words]]

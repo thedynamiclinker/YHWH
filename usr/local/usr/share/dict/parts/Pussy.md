@@ -1,0 +1,3 @@
+Type: [[usr/local/usr/share/dict/parts/Vagina]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/More]], [[usr/share/dict/atomic/Fun]]
+Type: [[usr/share/dict/atomic/Man]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Less]], [[usr/share/dict/atomic/Fun]]
+Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Cat]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/Laugh]]

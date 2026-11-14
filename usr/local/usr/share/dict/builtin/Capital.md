@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/Big]], [[usr/local/usr/share/dict/builtin/Letter]]
+Type: [[usr/local/usr/share/dict/builtin/Town]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Most]], [[usr/share/dict/people/Bureaucrat]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Dead]], [[usr/share/dict/builtin/Letter]]

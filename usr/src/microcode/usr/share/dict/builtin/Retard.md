@@ -1,1 +1,0 @@
-Type: [[Noun]], [[Form]], [[Of]], [[Retarded]]

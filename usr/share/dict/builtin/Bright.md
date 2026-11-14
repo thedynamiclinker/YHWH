@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Lots]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Light]]

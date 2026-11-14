@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Force]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/builtin/Lightning]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Keep]], [[usr/local/usr/share/dict/science/Atoms]], [[usr/share/dict/builtin/Together]]

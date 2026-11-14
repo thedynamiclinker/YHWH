@@ -13,6 +13,8 @@ run-thwh dawkins:
 run-yhwh:
 	node "$(APP_DIR)/bin/company/start.cjs" --theme "$(THEME)"
 
+.PHONY: reset
 reset:
+	@test -n "$(REVIEW_ROOT)" || { printf '%s\n' 'Use REVIEW_ROOT=/path/to/review'; exit 1; }
 	python3 "$(APP_DIR)/bin/company/reset-review.py" --root "$(REVIEW_ROOT)"
 	node "$(APP_DIR)/bin/company/reset-tutorial.cjs"

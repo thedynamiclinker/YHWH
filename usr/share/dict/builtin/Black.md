@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/See]], [[usr/share/dict/builtin/When]], [[usr/share/dict/builtin/Both]], [[usr/share/dict/parts/Eye]], [[usr/share/dict/builtin/Closed]]

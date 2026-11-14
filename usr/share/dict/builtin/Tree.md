@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/builtin/Living]], [[usr/share/dict/builtin/Stick]], [[usr/share/dict/builtin/Made]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Wood]]
+Type: [[usr/share/dict/builtin/Container]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Shared]], [[usr/share/dict/atomic/Ancestor]], [[usr/share/dict/builtin/Container]]

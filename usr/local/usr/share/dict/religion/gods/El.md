@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/First]], [[usr/share/dict/peoples/Jew]], [[usr/local/usr/share/dict/religion/gods/God]], [[usr/share/dict/atomic/Before]], [[usr/share/dict/places/Israel]], [[usr/share/dict/atomic/And]], [[usr/share/dict/places/Judah]], [[usr/share/dict/builtin/Merger]]
+Type: [[usr/share/dict/atomic/Top]], [[usr/share/dict/peoples/Jew]], [[usr/local/usr/share/dict/religion/gods/God]], [[usr/share/dict/atomic/Before]], [[usr/local/usr/share/dict/religion/gods/Yahweh]], [[usr/share/dict/builtin/Got]], [[usr/share/dict/builtin/Popular]]

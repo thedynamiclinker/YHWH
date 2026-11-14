@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Little]], [[usr/local/usr/share/dict/builtin/Rope]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Put]], [[usr/local/usr/share/dict/builtin/Fire]], [[usr/share/dict/atomic/On]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/parts/Body]], [[usr/share/dict/builtin/Shake]], [[usr/share/dict/atomic/From]], [[usr/share/dict/atomic/Funny]]

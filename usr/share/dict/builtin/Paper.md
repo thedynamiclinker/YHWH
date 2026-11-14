@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Thin]], [[usr/share/dict/builtin/Tree]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/Write]], [[usr/share/dict/atomic/On]]

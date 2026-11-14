@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Thought]], [[usr/local/usr/share/dict/builtin/Storage]]

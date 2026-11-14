@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Code]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/No]], [[usr/share/dict/builtin/Computer]]

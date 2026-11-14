@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Should]], [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/About]], [[usr/share/dict/atomic/Now]], [[usr/share/dict/atomic/Thing]]

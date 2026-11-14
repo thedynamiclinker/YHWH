@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/No]], [[usr/share/dict/atomic/Can]], [[usr/share/dict/builtin/See]]

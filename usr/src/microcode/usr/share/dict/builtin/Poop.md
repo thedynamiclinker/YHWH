@@ -1,1 +1,0 @@
-Type: [[usr/src/microcode/usr/share/dict/atomic/Brown]], [[Butt]], [[Stuff]]

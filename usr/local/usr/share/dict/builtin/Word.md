@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Talk]], [[usr/share/dict/atomic/Thing]]

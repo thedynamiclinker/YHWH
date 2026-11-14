@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Does]], [[usr/share/dict/religion/sects/Communism]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Give]], [[usr/share/dict/atomic/You]]

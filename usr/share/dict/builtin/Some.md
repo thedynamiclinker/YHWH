@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/More|More]], [[usr/share/dict/atomic/Than]], [[usr/share/dict/atomic/None]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Probably]], [[usr/share/dict/atomic/Less]], [[usr/share/dict/atomic/Than]], [[usr/share/dict/atomic/All]]

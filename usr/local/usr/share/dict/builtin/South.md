@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Opposite]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/North]]

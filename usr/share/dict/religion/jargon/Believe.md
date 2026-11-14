@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Serious]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Think]]

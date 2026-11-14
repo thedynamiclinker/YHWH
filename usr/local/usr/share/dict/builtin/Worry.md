@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Think]], [[usr/local/usr/share/dict/builtin/Bad]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/May]], [[usr/local/usr/share/dict/builtin/Happen]]

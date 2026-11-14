@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/Strange]]
+Type: [[usr/share/dict/atomic/Number]], [[usr/share/dict/atomic/You]], [[usr/local/usr/share/dict/builtin/Can't]], [[usr/share/dict/atomic/Cut]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Half]], [[usr/share/dict/atomic/Unless]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Cut]], [[usr/share/dict/atomic/One]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Half]]

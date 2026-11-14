@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/religion/gods/Yahweh]], [[usr/share/dict/atomic/Because]], [[usr/share/dict/peoples/Jews]], [[usr/share/dict/builtin/Write]], [[usr/share/dict/builtin/Without]], [[usr/share/dict/builtin/Vowels]]

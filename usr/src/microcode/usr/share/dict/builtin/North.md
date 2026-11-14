@@ -1,1 +1,0 @@
-Type: [[Direction]], [[Toward]], [[Magnet]], [[At]], [[Top]], [[Of]], [[Earth]]

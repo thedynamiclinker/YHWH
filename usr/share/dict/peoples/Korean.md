@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Tiny]], [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/On]], [[usr/share/dict/builtin/East]], [[usr/share/dict/places/China]]

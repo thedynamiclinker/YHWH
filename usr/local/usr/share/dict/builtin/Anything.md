@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Any]], [[usr/share/dict/atomic/Thing]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/nature/Sunrise]], [[usr/share/dict/builtin/Language]]

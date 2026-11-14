@@ -32,6 +32,10 @@
     "yhwh/var",
     "yhwh/node_modules",
     ".git",
-    ".lord-agents.lock"
+    ".lord-agents.lock",
+    "node_modules",
+    "build",
+    "dist",
+    "texmf-var"
   ]
 }

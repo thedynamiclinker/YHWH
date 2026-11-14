@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Specific]], [[usr/local/usr/share/dict/builtin/Story]], [[usr/share/dict/atomic/With]], [[usr/local/usr/share/dict/builtin/General]], [[usr/local/usr/share/dict/builtin/Lesson]]

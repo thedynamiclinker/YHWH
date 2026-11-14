@@ -6,7 +6,7 @@ RWX.
 
 ## README
 
-
+- Assorted things have been renamed.
 
 ## WRITEME
 

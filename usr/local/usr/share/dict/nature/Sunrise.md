@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/nature/Sun]], [[usr/share/dict/builtin/Rise]]

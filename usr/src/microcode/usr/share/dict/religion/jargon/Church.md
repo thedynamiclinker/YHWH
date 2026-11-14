@@ -1,1 +1,0 @@
-Type: [[Inside]], [[Place]], [[Where]], [[You]], [[Go]], [[To]], [[Do]], [[Religion]]

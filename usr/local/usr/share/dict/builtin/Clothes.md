@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/parts/Body]], [[usr/local/usr/share/dict/builtin/Cover]]

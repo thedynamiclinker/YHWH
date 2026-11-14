@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/parts/Eye]], [[usr/share/dict/atomic/Do]]

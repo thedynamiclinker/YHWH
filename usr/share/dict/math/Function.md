@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Math]], [[usr/share/dict/builtin/Machine]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Only]], [[usr/share/dict/builtin/Pretend]], [[usr/share/dict/atomic/About]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Build]]

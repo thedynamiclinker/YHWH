@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Bad]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/Call]], [[usr/share/dict/atomic/Person]]

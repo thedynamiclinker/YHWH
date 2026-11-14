@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/builtin/Size]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Up]], [[usr/share/dict/atomic/Down]], [[usr/share/dict/builtin/Direction]]
+Type: [[usr/share/dict/builtin/Size]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Back]], [[usr/share/dict/builtin/Direction]]

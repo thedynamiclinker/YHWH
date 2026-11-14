@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Past]]

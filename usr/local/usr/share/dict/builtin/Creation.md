@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Make]] [[usr/share/dict/atomic/New]], [[usr/share/dict/atomic/Thing]]

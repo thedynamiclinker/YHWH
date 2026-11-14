@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Opposite]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Break]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Computer]], [[usr/share/dict/builtin/Inside]], [[usr/share/dict/parts/Head]]

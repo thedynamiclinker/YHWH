@@ -1,0 +1,3 @@
+Type: [[usr/local/usr/share/dict/builtin/Red]], [[usr/local/usr/share/dict/builtin/Plus]], [[usr/local/usr/share/dict/builtin/Blue]]
+Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Red]], [[usr/share/dict/atomic/Wine]]
+Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Blue]], [[usr/local/usr/share/dict/builtin/Berry]]

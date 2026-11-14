@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Law]], [[usr/share/dict/atomic/Person]]

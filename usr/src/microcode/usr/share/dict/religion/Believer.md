@@ -1,1 +1,0 @@
-Def: [[Person]], [[Who]], [[Join]], [[Religion]], [[Group|Group]]

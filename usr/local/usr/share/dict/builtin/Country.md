@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Kingdom]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/No]], [[usr/local/usr/share/dict/builtin/King]]

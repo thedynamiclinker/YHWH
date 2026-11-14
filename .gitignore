@@ -10,6 +10,19 @@ __pycache__/
 .cache/
 coverage/
 *.tsbuildinfo
+
+# Native compiler and JVM output; Unix documentation such as *.o.md stays tracked.
+*.o
+*.obj
+*.a
+*.so
+*.so.[0-9]*
+*.dylib
+*.dll
+*.exe
+*.class
+*.jar
+*.pdb
 *.log
 *.tgz
 *.asar
@@ -43,6 +56,12 @@ coverage/
 # Typesetting output; manuscript source and intentional PDFs/images remain allowed.
 texmf-var/
 *.aux
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.dvi
+*.xdv
 *.fdb_latexmk
 *.fls
 *.synctex.gz

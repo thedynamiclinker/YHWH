@@ -1,0 +1,1 @@
+Def: [[usr/share/dict/religion/sects/Islam]], [[usr/local/usr/share/dict/religion/priests/Priest]]

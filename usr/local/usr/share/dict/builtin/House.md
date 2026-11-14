@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Box]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Live]], [[usr/share/dict/atomic/In]]

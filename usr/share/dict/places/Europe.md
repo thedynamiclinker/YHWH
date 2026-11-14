@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Group|Group]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/Up]], [[usr/share/dict/builtin/North]], [[usr/share/dict/atomic/Above]], [[usr/share/dict/places/Africa]]

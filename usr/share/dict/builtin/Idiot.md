@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Smart]], [[usr/share/dict/atomic/Person]]

@@ -1,0 +1,2 @@
+Type: [[usr/local/usr/share/dict/builtin/Yellow]], [[usr/local/usr/share/dict/builtin/Plus]], [[usr/local/usr/share/dict/builtin/Blue]]
+Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Grass]]

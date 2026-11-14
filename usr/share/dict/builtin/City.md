@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/builtin/People]], [[usr/share/dict/builtin/Dense]]

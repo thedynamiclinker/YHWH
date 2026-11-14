@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/atomic/Stuff]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/Up]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Down]]

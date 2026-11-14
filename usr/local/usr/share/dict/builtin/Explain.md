@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Tell]], [[usr/share/dict/atomic/Big]], [[usr/local/usr/share/dict/builtin/Thought]]

@@ -1,1 +1,0 @@
-Type: [[Living]], [[Before]], [[But]], [[Not]], [[Now]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Some]], [[usr/share/dict/builtin/Times]]

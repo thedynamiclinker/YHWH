@@ -1,1 +1,0 @@
-Type: [[Group|Group]], [[Of]], [[Country]], [[Up]], [[North]], [[Above]], [[Africa]]

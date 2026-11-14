@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/parts/Hair]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Has]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Yet]], [[usr/share/dict/builtin/Been]], [[usr/share/dict/atomic/Cut]]

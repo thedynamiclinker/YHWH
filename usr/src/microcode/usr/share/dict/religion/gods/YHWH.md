@@ -1,1 +1,0 @@
-Type: [[Name]], [[Of]], [[Yahweh]], [[Because]], [[Jews]], [[Write]], [[Without]], [[Vowels]]

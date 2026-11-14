@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Event]], [[usr/share/dict/atomic/Type]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Many]], [[usr/local/usr/share/dict/builtin/Instance]]

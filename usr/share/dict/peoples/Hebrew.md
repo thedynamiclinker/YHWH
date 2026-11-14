@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/Thing]]

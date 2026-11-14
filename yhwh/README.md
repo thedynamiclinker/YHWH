@@ -92,10 +92,12 @@ plugin `data.json` for plugin settings. Installed defaults and mutable state
 have separate ownership. No profile is installed into the vault root.
 
 Builds and dependencies are ignored by Git. Obsidian's excluded-file filters
-exclude `yhwh/var`, dependencies and Git internals. Each human must also add
+hide `yhwh/var`, dependencies and Git internals. Each human must also add
 `yhwh/var` and `yhwh/node_modules` to **Sync → Excluded folders**: Obsidian Sync's
 per-device exclusions are not a versioned application setting. Shared prompts,
-source, configuration and documentation remain visible and versioned.
+source, configuration and documentation remain visible and versioned. See
+[the collaboration and history guide](../GENTOO.md) for the per-device setup and
+which local reference copies are intentionally outside Git.
 
 Workflow commands operate on the caller's Git worktree, independently of the
 installation location. See [the workflow guide](../doc/README.md) in the vault.

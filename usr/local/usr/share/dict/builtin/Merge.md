@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Come]], [[usr/local/usr/share/dict/builtin/Together]]

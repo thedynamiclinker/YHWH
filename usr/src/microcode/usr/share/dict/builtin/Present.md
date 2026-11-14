@@ -1,2 +1,0 @@
-Type: [[Now]]
-Type: [[Gift]]

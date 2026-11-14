@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Show]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Are]], [[usr/share/dict/atomic/Angry]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Two]], [[usr/share/dict/atomic/Hole]], [[usr/share/dict/atomic/On]], [[usr/share/dict/builtin/Bottom]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/parts/Nose]]

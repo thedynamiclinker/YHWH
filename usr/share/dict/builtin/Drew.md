@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Pull]], [[usr/share/dict/atomic/Out]]

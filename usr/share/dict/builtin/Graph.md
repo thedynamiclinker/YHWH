@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/builtin/Set]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Connect]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/builtin/Set]]

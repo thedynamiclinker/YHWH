@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/builtin/City]], [[usr/share/dict/atomic/In]], [[usr/local/usr/share/dict/places/Italy]]
+Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Old]], [[usr/share/dict/atomic/Time]], [[usr/share/dict/builtin/When]], [[usr/local/usr/share/dict/places/Italy]], [[usr/share/dict/builtin/Had]], [[usr/share/dict/atomic/More|More]], [[usr/share/dict/atomic/Power]]

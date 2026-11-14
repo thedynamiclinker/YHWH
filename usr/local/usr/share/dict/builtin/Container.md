@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Have]], [[usr/local/usr/share/dict/builtin/Things]], [[usr/local/usr/share/dict/builtin/Inside]]
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Can]], [[usr/share/dict/atomic/Have]], [[usr/local/usr/share/dict/builtin/Things]], [[usr/local/usr/share/dict/builtin/Inside]]

@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Green]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/On]], [[usr/local/usr/share/dict/builtin/Tree]]

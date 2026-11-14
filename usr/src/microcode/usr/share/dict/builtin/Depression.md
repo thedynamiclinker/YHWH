@@ -1,1 +1,0 @@
-Type: [[Fancy]], [[Word]], [[For]], [[Sad]]

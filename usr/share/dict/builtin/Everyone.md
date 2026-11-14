@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/All]], [[usr/share/dict/builtin/Relevant]], [[usr/share/dict/builtin/People]]

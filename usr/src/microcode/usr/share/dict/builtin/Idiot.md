@@ -1,1 +1,0 @@
-Type: [[Very]], [[Not]], [[Smart]], [[Person]]

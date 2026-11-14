@@ -1,0 +1,3 @@
+Type: [[usr/share/dict/places/Egypt]], [[usr/share/dict/atomic/Thing]]
+Type: [[usr/share/dict/builtin/Dead]], [[usr/share/dict/atomic/Way]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/Write]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/atomic/The]], [[usr/share/dict/builtin/Letter]], [[usr/local/usr/share/dict/alphabet/latin/uppercase/A|A]], [[usr/share/dict/atomic/Is]], [[usr/local/usr/share/dict/alphabet/latin/uppercase/A|A]] [[usr/share/dict/atomic/Whole]], [[usr/share/dict/religion/jargon/Goddamn]], [[usr/share/dict/builtin/Bird]]
+Type: [[usr/local/usr/share/dict/builtin/I|I]], [[usr/share/dict/atomic/Am]], [[usr/share/dict/builtin/Serious]], [[usr/share/dict/atomic/Here]], [[usr/share/dict/atomic/Look]], [[usr/share/dict/alphabet/egyptian/𓄿]]

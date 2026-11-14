@@ -1,1 +1,0 @@
-buType: [[Go]], [[Other]], [[Place]]

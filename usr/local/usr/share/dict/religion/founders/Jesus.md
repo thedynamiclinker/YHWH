@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/atomic/Magic]], [[usr/share/dict/religion/jargon/Undead]], [[usr/share/dict/religion/gods/Vampire]], [[usr/share/dict/peoples/Jew]]
+Type: [[usr/share/dict/atomic/Good]], [[usr/share/dict/religion/gods/God]]

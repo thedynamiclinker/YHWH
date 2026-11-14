@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Learn]], [[usr/share/dict/atomic/About]], [[usr/share/dict/builtin/Things]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Life]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Them]]

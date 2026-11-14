@@ -1,1 +1,0 @@
-Type: [[Dead]], [[Language]], [[That]], [[You]], [[Need]], [[To]], [[Learn]], [[Before]], [[You]], [[Can]], [[Learn]], [[The]], [[Even]], [[More|More]], [[Dead]], [[Old]], [[Egyptian]], [[Language]]

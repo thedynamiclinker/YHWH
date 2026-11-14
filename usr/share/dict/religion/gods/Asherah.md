@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Wife]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/religion/gods/El]]

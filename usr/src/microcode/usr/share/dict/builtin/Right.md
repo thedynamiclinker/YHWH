@@ -1,1 +1,0 @@
-Type: [[Side]], [[Of]], [[Body]], [[Where]], [[Most]], [[People]], [[Hand]], [[More]], [[Strong]]

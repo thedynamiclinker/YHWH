@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/parts/Ejaculate]], [[usr/share/dict/atomic/Now]]

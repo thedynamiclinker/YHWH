@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Animal]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Can]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/In]], [[usr/share/dict/places/Sky]]

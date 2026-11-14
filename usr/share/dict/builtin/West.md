@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Look]], [[usr/share/dict/builtin/North]], [[usr/share/dict/atomic/Then]], [[usr/share/dict/atomic/Turn]], [[usr/share/dict/builtin/Left]]

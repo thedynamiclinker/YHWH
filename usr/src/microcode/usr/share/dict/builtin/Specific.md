@@ -1,1 +1,0 @@
-Type: [[About]], [[Few]], [[Thing]]

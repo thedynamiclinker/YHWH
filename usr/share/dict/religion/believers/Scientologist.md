@@ -1,0 +1,1 @@
+Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/religion/jargon/Believe]], [[usr/share/dict/builtin/Problem]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Alien]], [[usr/share/dict/religion/gods/Ghost]], [[usr/share/dict/builtin/Inside]], [[usr/share/dict/atomic/You]]

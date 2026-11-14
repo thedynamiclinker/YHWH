@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Know]], [[usr/share/dict/builtin/Reason]], [[usr/share/dict/builtin/Feeling]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/builtin/Drink]], [[usr/share/dict/parts/Blood]]

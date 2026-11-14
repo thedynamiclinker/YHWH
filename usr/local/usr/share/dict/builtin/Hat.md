@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/parts/Head]], [[usr/local/usr/share/dict/builtin/Clothes]]

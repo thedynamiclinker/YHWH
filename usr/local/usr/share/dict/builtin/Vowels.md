@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Multiple]], [[usr/local/usr/share/dict/builtin/Vowel]]

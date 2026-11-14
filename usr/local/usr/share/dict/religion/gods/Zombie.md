@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/religion/jargon/Undead]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/No]], [[usr/share/dict/parts/Mind]]
+Type: [[usr/share/dict/builtin/Living]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/No]], [[usr/share/dict/parts/Mind]]

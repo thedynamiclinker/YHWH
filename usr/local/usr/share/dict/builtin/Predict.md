@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Guess]], [[usr/share/dict/atomic/Before]]

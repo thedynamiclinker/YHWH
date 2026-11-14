@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/atomic/A|A]], [[usr/share/dict/atomic/Lot]]

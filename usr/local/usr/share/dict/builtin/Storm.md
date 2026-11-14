@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/places/Sky]], [[usr/share/dict/atomic/Get]], [[usr/local/usr/share/dict/builtin/Loud]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Make]], [[usr/local/usr/share/dict/builtin/Rain]]

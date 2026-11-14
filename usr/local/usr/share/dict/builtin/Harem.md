@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Collection]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Things]], [[usr/share/dict/atomic/You]], [[usr/local/usr/share/dict/builtin/Fuck]], [[usr/share/dict/atomic/In]], [[usr/local/usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Way]]

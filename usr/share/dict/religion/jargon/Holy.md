@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Most]], [[usr/share/dict/atomic/Good]], [[usr/share/dict/atomic/Thing]]

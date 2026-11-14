@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Part]]

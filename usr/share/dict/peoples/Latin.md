@@ -1,0 +1,2 @@
+Type: [[usr/share/dict/peoples/Roman]], [[usr/share/dict/builtin/Empire]], [[usr/share/dict/builtin/Language]]
+Type: [[usr/share/dict/builtin/Alphabet]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Use]], [[usr/share/dict/atomic/For]], [[usr/share/dict/peoples/English]]

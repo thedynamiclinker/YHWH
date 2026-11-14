@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/parts/Mouth]], [[usr/share/dict/atomic/Can]], [[usr/share/dict/parts/Smell]]

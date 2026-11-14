@@ -1,1 +1,0 @@
-Type: [[Thing]], [[That]], [[Cause]], [[Fear]]

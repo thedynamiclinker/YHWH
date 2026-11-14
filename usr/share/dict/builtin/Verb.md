@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Action]], [[usr/share/dict/builtin/Word]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Cause]], [[usr/share/dict/atomic/Fear]]

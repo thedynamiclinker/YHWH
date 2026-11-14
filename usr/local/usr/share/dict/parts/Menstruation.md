@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/builtin/Girls]], [[usr/share/dict/builtin/Bleed]], [[usr/share/dict/builtin/Every]], [[usr/share/dict/atomic/Time]], [[usr/share/dict/atomic/The]], [[usr/share/dict/nature/Moon]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/Around]]

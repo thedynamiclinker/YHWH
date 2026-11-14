@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/International]], [[usr/local/usr/share/dict/builtin/Phonetic]], [[usr/local/usr/share/dict/builtin/Alphabet]]

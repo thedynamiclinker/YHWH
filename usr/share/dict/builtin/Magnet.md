@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/science/Electricity]], [[usr/share/dict/atomic/Force]], [[usr/share/dict/builtin/Rotated]], [[usr/share/dict/atomic/Through]], [[usr/share/dict/science/Spacetime]]

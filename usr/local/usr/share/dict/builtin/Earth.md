@@ -1,0 +1,1 @@
+Type: [[usr/local/usr/share/dict/builtin/Every]], [[usr/share/dict/atomic/Place]], [[usr/local/usr/share/dict/builtin/Below]], [[usr/share/dict/places/Sky]]

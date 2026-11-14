@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Black]], [[usr/share/dict/atomic/Magic]]

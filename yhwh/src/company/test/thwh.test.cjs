@@ -81,7 +81,7 @@ test("Existing corrected profiles and explicit overrides take precedence without
   assert.equal(dataDirectory({ THWH_DATA_DIR: directory, TWHW_DATA_DIR: custom }), directory);
 });
 
-test("THWH resumes the selected workspace layout, screen, content-addressed read markers and editor drafts", async t => {
+test("THWH resumes the selected review workspace, screen, content-addressed read markers and editor drafts", async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "thwh-shared-"));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createReview(root);

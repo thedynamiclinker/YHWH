@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/Red]], [[usr/share/dict/atomic/Water]], [[usr/share/dict/builtin/Inside]], [[usr/share/dict/atomic/You]]

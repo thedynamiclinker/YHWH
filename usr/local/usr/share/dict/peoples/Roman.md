@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/places/Rome]], [[usr/share/dict/atomic/Thing]]

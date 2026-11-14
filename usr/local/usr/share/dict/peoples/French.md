@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/places/Europe]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Eat]], [[usr/share/dict/nature/Cheese]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Act]], [[usr/local/usr/share/dict/peoples/Gay]]

@@ -1,2 +1,0 @@
-Type: [[Words]], [[Like]], [[usr/src/microcode/usr/share/dict/builtin/I|I]], [[Or]], [[You]], [[Or]], [[He]], [[Or]], [[She]], [[Or]], [[It]], [[Or]], [[We]], [[Or]], [[You]], [[Or]], [[They]]
-Type: [[Words]], [[Like]], [[Me]], [[Or]], [[You]], [[Or]], [[Him]], [[Or]], [[Her]], [[Or]], [[It]], [[Or]], [[Us]], [[Or]], [[You]], [[Or]], [[Them]]
