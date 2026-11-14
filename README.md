@@ -4,7 +4,7 @@ Run `make` to build and open the default app.
 Run `make help` for more info.
 
 ```sh
-yhwh todo   # not implemented yet. this should add whatever the user types to COVENANT.md
+yhwh todo
 yhwh begin
 yhwh review
 yhwh run
