@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/parts/Head]]

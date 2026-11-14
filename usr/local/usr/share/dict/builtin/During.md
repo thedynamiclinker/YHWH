@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/After]], [[usr/share/dict/atomic/Start]], [[usr/share/dict/atomic/Before]], [[usr/share/dict/atomic/Stop]]

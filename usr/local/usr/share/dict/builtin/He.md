@@ -1,1 +1,0 @@
-They: [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Man|Man]]

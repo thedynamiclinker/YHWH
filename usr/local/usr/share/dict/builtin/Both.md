@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/All]], [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Only]], [[usr/share/dict/atomic/Two]], [[usr/local/usr/share/dict/builtin/Things]]

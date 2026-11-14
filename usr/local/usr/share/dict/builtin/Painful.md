@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Feel]], [[usr/local/usr/share/dict/builtin/Bad]]

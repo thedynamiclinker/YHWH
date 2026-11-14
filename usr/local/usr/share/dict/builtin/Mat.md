@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/You]], [[usr/local/usr/share/dict/builtin/Wipe]], [[usr/share/dict/parts/Feet]], [[usr/share/dict/atomic/On]]

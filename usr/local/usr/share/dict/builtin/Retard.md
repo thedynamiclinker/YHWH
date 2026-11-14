@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Noun]], [[usr/share/dict/atomic/Form]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Retarded]]

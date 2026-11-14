@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Side]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/parts/Body]], [[usr/local/usr/share/dict/builtin/Where]], [[usr/share/dict/atomic/Most]], [[usr/local/usr/share/dict/builtin/People]], [[usr/share/dict/parts/Hand]], [[usr/share/dict/atomic/Less]], [[usr/share/dict/atomic/Strong]]

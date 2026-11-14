@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Like]], [[usr/local/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/More]], [[usr/share/dict/atomic/Than]], [[usr/share/dict/religion/jargon/Church]]

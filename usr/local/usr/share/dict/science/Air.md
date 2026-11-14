@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/builtin/Wind]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Move]]
-Type: [[usr/share/dict/atomic/Breath]], [[usr/share/dict/builtin/Outside]], [[usr/share/dict/parts/Body]]

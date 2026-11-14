@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/More|More]], [[usr/local/usr/share/dict/builtin/Serious]], [[usr/share/dict/atomic/Rule]]

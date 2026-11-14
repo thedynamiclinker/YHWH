@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Small]], [[usr/share/dict/atomic/Good]]

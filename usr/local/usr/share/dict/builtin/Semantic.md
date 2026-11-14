@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Thing]]

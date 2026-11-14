@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/From]], [[usr/share/dict/atomic/Two]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/One]]

@@ -1,2 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Invisible]], [[usr/share/dict/atomic/Force]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Move]], [[usr/share/dict/atomic/You]], [[usr/local/usr/share/dict/builtin/During]], [[usr/local/usr/share/dict/builtin/Storm]]
-Type: [[usr/local/usr/share/dict/builtin/Invisible]], [[usr/share/dict/atomic/Force]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/local/usr/share/dict/builtin/Leaf]], [[usr/share/dict/atomic/Move]]

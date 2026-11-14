@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/Thing]]

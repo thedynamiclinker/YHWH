@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Try]], [[usr/share/dict/atomic/In]], [[usr/local/usr/share/dict/builtin/Past]]

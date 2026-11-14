@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/True]], [[usr/share/dict/atomic/Or]], [[usr/share/dict/atomic/Big]], [[usr/share/dict/atomic/Amount]]

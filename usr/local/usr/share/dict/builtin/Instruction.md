@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Say]], [[usr/share/dict/atomic/What]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Do]]
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Say]], [[usr/share/dict/atomic/How]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Thing]]

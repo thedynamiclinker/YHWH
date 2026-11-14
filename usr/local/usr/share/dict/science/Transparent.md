@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/science/Air]]
-Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Glass]]

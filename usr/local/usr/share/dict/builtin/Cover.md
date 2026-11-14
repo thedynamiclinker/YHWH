@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/atomic/Thing]]
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/atomic/Thing]]

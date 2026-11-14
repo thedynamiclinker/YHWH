@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/parts/Mind]], [[usr/share/dict/builtin/Without]], [[usr/share/dict/parts/Body]]

@@ -234,7 +234,7 @@ async function add(ctx,names) {
   if(changes.length)try{samePaths(ctx,task.after,current,changes);}catch{throw new Error('Task files changed since execution; inspect and rerun explicitly before acceptance.');}
   for(const other of tasks.filter(t=>t.id!==task.id&&['accepted','documented','committing'].includes(t.status)))if(changes.some(p=>other.changes?.includes(p)))throw new Error('Another accepted task owns overlapping files. Commit it first.');
   const bytes=await fs.readFile(task.executed);if(hash(bytes)!==task.scriptHash)throw new Error('Executed snapshot checksum mismatch.');
-  if(!task.archive){task.archive=`doc/imperative/${stamp()}-${slug(task.name)}-${task.id.slice(0,6)}-${task.attempt}`;await save(ctx,task);}
+  if(!task.archive){task.archive=`var/imperative/${stamp()}-${slug(task.name)}-${task.id.slice(0,6)}-${task.attempt}`;await save(ctx,task);}
   const archive=await safe(ctx.root,task.archive);await fs.mkdir(path.dirname(archive),{recursive:true});
   if(await exists(archive)){if(!(await fs.readFile(archive)).equals(bytes))throw new Error('Archive collision; history was preserved.');}
   else await fs.writeFile(archive,bytes,{flag:'wx',mode:0o755});
@@ -274,7 +274,7 @@ async function commit(ctx,names) {
   }
   task.documents=[];
   for(const doc of task.documentation.documents) {
-    if(!doc.path?.startsWith('doc/declarative/')||!doc.path.endsWith('.md')||typeof doc.content!=='string')throw new Error('Declarative documentation must be Markdown under doc/declarative/.');
+    if(!doc.path?.startsWith('var/declarative/')||!doc.path.endsWith('.md')||typeof doc.content!=='string')throw new Error('Declarative documentation must be Markdown under var/declarative/.');
     const target=await safe(ctx.root,doc.path);
     const docChanged=changed(ctx,task.acceptedTree,current).includes(doc.path);
     if(docChanged&&(!await exists(target)||await fs.readFile(target,'utf8')!==doc.content))throw new Error('Declarative document has later human changes: '+doc.path);

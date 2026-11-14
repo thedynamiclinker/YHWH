@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/people/Bureaucrat]], [[usr/share/dict/religion/jargon/Church]]

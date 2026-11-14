@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Action]], [[usr/share/dict/atomic/List]], [[usr/share/dict/atomic/For]], [[usr/local/usr/share/dict/builtin/Computer]]

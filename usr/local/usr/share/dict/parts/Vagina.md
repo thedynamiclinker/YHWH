@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Girl]], [[usr/share/dict/builtin/Pants]], [[usr/share/dict/builtin/Parts]]

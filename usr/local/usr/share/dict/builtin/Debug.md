@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Find]], [[usr/share/dict/atomic/Cause]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Problem]]

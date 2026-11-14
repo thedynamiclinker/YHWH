@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Night]], [[usr/share/dict/atomic/Ball]], [[usr/share/dict/atomic/In]], [[usr/share/dict/places/Sky]]

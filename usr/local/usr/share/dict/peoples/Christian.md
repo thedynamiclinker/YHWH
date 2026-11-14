@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/religion/founders/Jesus]], [[usr/share/dict/atomic/Thing]]

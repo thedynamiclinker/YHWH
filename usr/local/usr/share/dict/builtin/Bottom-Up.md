@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Power]]

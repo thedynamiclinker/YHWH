@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Multiple]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/With]], [[usr/local/usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Shared]], [[usr/share/dict/atomic/Thing]]

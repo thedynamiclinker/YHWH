@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/First]], [[usr/share/dict/atomic/Stop]], [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Walk]], [[usr/share/dict/atomic/Out]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/places/Africa]]

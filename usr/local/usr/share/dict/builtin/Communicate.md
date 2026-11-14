@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Try]], [[usr/local/usr/share/dict/builtin/Explain]], [[usr/share/dict/atomic/Thing]]

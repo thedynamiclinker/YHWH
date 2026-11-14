@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Teach]], [[usr/local/usr/share/dict/builtin/Process]]

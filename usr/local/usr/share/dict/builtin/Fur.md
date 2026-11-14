@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Animal]], [[usr/share/dict/parts/Hair]]

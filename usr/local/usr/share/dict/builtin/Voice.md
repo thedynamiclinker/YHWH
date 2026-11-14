@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/parts/Mouth]], [[usr/share/dict/parts/Sound]], [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Talk]]

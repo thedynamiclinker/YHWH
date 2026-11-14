@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Can]], [[usr/local/usr/share/dict/builtin/Compose]]

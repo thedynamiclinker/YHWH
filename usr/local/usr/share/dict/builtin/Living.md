@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Life]]

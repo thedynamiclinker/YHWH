@@ -1,2 +1,0 @@
-Def: [[usr/share/dict/atomic/Fat]], [[usr/share/dict/atomic/Guy]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/parts/Smile]]
-Def: [[usr/share/dict/builtin/Thin]], [[usr/share/dict/atomic/Guy]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/parts/Smile]]

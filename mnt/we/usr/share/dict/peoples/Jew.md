@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/First]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/builtin/People]]

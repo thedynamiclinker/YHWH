@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/builtin/Drew]]

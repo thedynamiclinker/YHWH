@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Open]], [[usr/share/dict/atomic/Because]], [[usr/local/usr/share/dict/builtin/Something]], [[usr/local/usr/share/dict/builtin/Cover]], [[usr/share/dict/atomic/Open]], [[usr/share/dict/atomic/Place]]

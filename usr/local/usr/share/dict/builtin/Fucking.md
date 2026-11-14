@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Fuck]], [[usr/share/dict/atomic/Now]]

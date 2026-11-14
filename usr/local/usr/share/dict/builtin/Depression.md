@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Fancy]], [[usr/local/usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Sad]]

@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Same]], [[usr/local/usr/share/dict/builtin/Idea]]

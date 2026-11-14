@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Add]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Tiny]], [[usr/share/dict/atomic/Thing]]

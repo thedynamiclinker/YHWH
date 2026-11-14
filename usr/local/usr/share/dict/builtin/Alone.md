@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Just]], [[usr/share/dict/atomic/One]]

@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Hard]], [[usr/local/usr/share/dict/nature/Milk]]

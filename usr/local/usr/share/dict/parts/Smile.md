@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/local/usr/share/dict/parts/Face]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Happy]]

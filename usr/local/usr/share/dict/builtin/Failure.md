@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Done]], [[usr/local/usr/share/dict/builtin/But]], [[usr/local/usr/share/dict/builtin/Goal]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Done]]

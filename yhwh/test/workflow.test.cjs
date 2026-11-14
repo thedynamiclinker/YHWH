@@ -8,7 +8,7 @@ async function fixture(t){
  const git=(...args)=>{const r=spawnSync('git',args,{cwd:root,env,encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r.stdout;};
  git('init','-q');await fs.writeFile(path.join(root,'.gitignore'),'fail\n');await fs.writeFile(path.join(root,'COVENANT.md'),'## Todo\n\n- [ ] [[kanban/improve|Improve the result]]\n');await fs.mkdir(path.join(root,'kanban'));await fs.writeFile(path.join(root,'kanban/improve.md'),'Make the result useful.');await fs.writeFile(path.join(root,'result.txt'),'before\n');git('add','.');git('commit','-qm','Initial');
  await fs.writeFile(path.join(bin,'agent'),`#!/usr/bin/env node
-let input='';process.stdin.on('data',d=>input+=d);process.stdin.on('end',()=>{const r=JSON.parse(input);if(r.phase==='begin')console.log(JSON.stringify({title:'Improve result',intent:'A useful result',implementation:'Inspect and improve result.txt.',questions:[{id:'tone',prompt:'Which tone?',choices:['Plain','Warm'],required:true}],blockers:[],assumptions:[]}));if(r.phase==='questions')console.log(JSON.stringify({questions:r.draft.questions}));if(r.phase==='review')console.log(JSON.stringify({prompt:'Make result.txt useful. Use a '+r.answers.tone+' tone. '+ 'Preserve the exact original English instruction while wrapping its companion commit message at seventy-two columns. '.repeat(2),questions:[],blockers:[]}));if(r.phase==='commit')console.log(JSON.stringify({summary:'Make the result useful',documents:[{path:'doc/declarative/result.md',content:'# Result\\n\\nThe result is useful.\\n'}],unnecessary:false}));});\n`,{mode:0o755});
+let input='';process.stdin.on('data',d=>input+=d);process.stdin.on('end',()=>{const r=JSON.parse(input);if(r.phase==='begin')console.log(JSON.stringify({title:'Improve result',intent:'A useful result',implementation:'Inspect and improve result.txt.',questions:[{id:'tone',prompt:'Which tone?',choices:['Plain','Warm'],required:true}],blockers:[],assumptions:[]}));if(r.phase==='questions')console.log(JSON.stringify({questions:r.draft.questions}));if(r.phase==='review')console.log(JSON.stringify({prompt:'Make result.txt useful. Use a '+r.answers.tone+' tone. '+ 'Preserve the exact original English instruction while wrapping its companion commit message at seventy-two columns. '.repeat(2),questions:[],blockers:[]}));if(r.phase==='commit')console.log(JSON.stringify({summary:'Make the result useful',documents:[{path:'var/declarative/result.md',content:'# Result\\n\\nThe result is useful.\\n'}],unnecessary:false}));});\n`,{mode:0o755});
  await fs.writeFile(path.join(bin,'lordhavemercy'),'#!/usr/bin/env bash\ncat > /dev/null\nif [[ -e fail ]]; then printf "failed\\n"; exit 9; fi\nprintf "useful\\n" > result.txt\n',{mode:0o755});
  const run=(...args)=>spawnSync(process.execPath,[cli,...args],{cwd:root,env,encoding:'utf8'});
  const ok=(...args)=>{const r=run(...args);assert.equal(r.status,0,r.stderr+'\n'+r.stdout);return r.stdout.trim();};
@@ -21,14 +21,14 @@ test('begin/review/direct execution/run/add/commit preserve exact instructions a
  let direct=spawnSync(path.join(f.root,'run',task),[],{cwd:f.root,env:f.env});assert.equal(direct.status,0);
  assert.equal(f.ok('add','--list'),'');assert.ok(await fs.stat(path.join(f.root,'run',task)));assert.equal(f.git('rev-list','--count','HEAD').trim(),'1');
  await fs.writeFile(path.join(f.root,'result.txt'),'before\n');f.ok('run',task);assert.notEqual(f.run('run',task).status,0);assert.equal(f.git('rev-list','--count','HEAD').trim(),'1');
- f.ok('add',task);f.ok('add',task);const archives=await fs.readdir(path.join(f.root,'doc/imperative'));assert.equal(archives.length,1);assert.deepEqual(await fs.readFile(path.join(f.root,'doc/imperative',archives[0])),script);
+ f.ok('add',task);f.ok('add',task);const archives=await fs.readdir(path.join(f.root,'var/imperative'));assert.equal(archives.length,1);assert.deepEqual(await fs.readFile(path.join(f.root,'var/imperative',archives[0])),script);
  f.ok('commit',task);const head=f.git('rev-parse','HEAD');f.ok('commit',task);assert.equal(f.git('rev-parse','HEAD'),head);assert.equal(f.git('status','--porcelain'),'');
  const message=f.git('show','-s','--format=%B');assert.match(message,/^Make the result useful\n\nMake result.txt useful/);assert.doesNotMatch(message,/lordhavemercy|^EOF$/m);assert.ok(message.trim().split('\n').every(l=>l.length<=72));
 });
 test('failed tasks remain available, retries are explicit, and later script edits do not alter history',async t=>{
  const f=await fixture(t),task=await prepared(f);await fs.writeFile(path.join(f.root,'fail'),'yes');assert.equal(f.run('run',task).status,9);assert.equal(f.ok('add','--list'),'');await fs.unlink(path.join(f.root,'fail'));
  f.ok('run','--retry',task);const exact=await fs.readFile(path.join(f.root,'run',task));await fs.appendFile(path.join(f.root,'run',task),'# future revision\n');f.ok('add',task);
- const [archive]=await fs.readdir(path.join(f.root,'doc/imperative'));assert.deepEqual(await fs.readFile(path.join(f.root,'doc/imperative',archive)),exact);assert.match(await fs.readFile(path.join(f.root,'run',task),'utf8'),/future revision/);
+ const [archive]=await fs.readdir(path.join(f.root,'var/imperative'));assert.deepEqual(await fs.readFile(path.join(f.root,'var/imperative',archive)),exact);assert.match(await fs.readFile(path.join(f.root,'run',task),'utf8'),/future revision/);
 });
 test('questions resume, ambiguous basenames and traversal fail, and unrelated staged work is preserved',async t=>{
  const f=await fixture(t);f.ok('begin','Improve the result');const draft=f.ok('review','--list').split('\n').find(n=>n.startsWith('improve-result'));assert.notEqual(f.run('review',draft).status,0);
@@ -44,9 +44,9 @@ test('external commands are discovered only through --help and retain exit statu
 });
 test('archive and commit failures resume without re-execution or duplicate history',async t=>{
  const f=await fixture(t),task=await prepared(f);f.ok('run',task);
- await fs.mkdir(path.join(f.root,'doc'));await fs.writeFile(path.join(f.root,'doc/imperative'),'blocked');assert.notEqual(f.run('add',task).status,0);assert.ok(await fs.stat(path.join(f.root,'run',task)));await fs.unlink(path.join(f.root,'doc/imperative'));f.ok('add',task);
+ await fs.mkdir(path.join(f.root,'var'));await fs.writeFile(path.join(f.root,'var/imperative'),'blocked');assert.notEqual(f.run('add',task).status,0);assert.ok(await fs.stat(path.join(f.root,'run',task)));await fs.unlink(path.join(f.root,'var/imperative'));f.ok('add',task);
  const hook=path.join(f.root,'.git/hooks/pre-commit');await fs.writeFile(hook,'#!/bin/sh\nexit 1\n',{mode:0o755});assert.notEqual(f.run('commit',task).status,0);assert.equal(f.git('rev-list','--count','HEAD').trim(),'1');await fs.unlink(hook);
- f.ok('commit',task);assert.equal((await fs.readdir(path.join(f.root,'doc/imperative'))).length,1);assert.equal(f.git('rev-list','--count','HEAD').trim(),'2');assert.equal(f.git('status','--porcelain'),'');
+ f.ok('commit',task);assert.equal((await fs.readdir(path.join(f.root,'var/imperative'))).length,1);assert.equal(f.git('rev-list','--count','HEAD').trim(),'2');assert.equal(f.git('status','--porcelain'),'');
 });
 test('dependency ordering is sequential, traversal through symlinks is refused, and direct attestations are explicit',async t=>{
  const f=await fixture(t);await fs.mkdir(path.join(f.root,'run'));
@@ -58,7 +58,7 @@ test('dependency ordering is sequential, traversal through symlinks is refused, 
 });
 test('later edits to accepted files and unrelated declarative documents are never overwritten',async t=>{
  const f=await fixture(t),task=await prepared(f);f.ok('run',task);f.ok('add',task);await fs.writeFile(path.join(f.root,'result.txt'),'later human edit');assert.notEqual(f.run('commit',task).status,0);assert.equal(await fs.readFile(path.join(f.root,'result.txt'),'utf8'),'later human edit');await fs.writeFile(path.join(f.root,'result.txt'),'useful\n');
- await fs.mkdir(path.join(f.root,'doc/declarative'),{recursive:true});await fs.writeFile(path.join(f.root,'doc/declarative/result.md'),'human documentation');assert.notEqual(f.run('commit',task).status,0);assert.equal(await fs.readFile(path.join(f.root,'doc/declarative/result.md'),'utf8'),'human documentation');
+ await fs.mkdir(path.join(f.root,'var/declarative'),{recursive:true});await fs.writeFile(path.join(f.root,'var/declarative/result.md'),'human documentation');assert.notEqual(f.run('commit',task).status,0);assert.equal(await fs.readFile(path.join(f.root,'var/declarative/result.md'),'utf8'),'human documentation');
 });
 test('no-argument workflow commands offer working keyboard TUIs',async t=>{
  const f=await fixture(t);

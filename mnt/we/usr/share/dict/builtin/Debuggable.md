@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/atomic/Can]], [[usr/share/man/usr/share/dict/builtin/Debug]]

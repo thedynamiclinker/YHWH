@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Answer]], [[usr/share/dict/atomic/Thing]]

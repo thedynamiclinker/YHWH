@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/It]], [[usr/share/dict/atomic/Is]]

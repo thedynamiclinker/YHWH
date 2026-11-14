@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Predict]], [[usr/share/dict/atomic/Thing]]

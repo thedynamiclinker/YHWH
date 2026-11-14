@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/Between]], [[usr/local/usr/share/dict/builtin/Inside]], [[usr/share/dict/atomic/And]], [[usr/local/usr/share/dict/builtin/Outside]]

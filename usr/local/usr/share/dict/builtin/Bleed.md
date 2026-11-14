@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/parts/Blood]], [[usr/share/dict/atomic/Come]], [[usr/share/dict/atomic/Out]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/You]]

@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Argue]], [[usr/share/dict/atomic/About]], [[usr/share/dict/builtin/Law]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Lawyer]]

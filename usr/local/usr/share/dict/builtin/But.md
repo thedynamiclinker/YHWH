@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/With]], [[usr/local/usr/share/dict/builtin/Surprise]]

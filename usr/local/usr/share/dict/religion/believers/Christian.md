@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Join]], [[usr/share/dict/religion/founders/Jesus]], [[usr/share/dict/builtin/Tribe]]

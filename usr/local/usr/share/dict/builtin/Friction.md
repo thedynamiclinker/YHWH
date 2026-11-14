@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/When]], [[usr/share/dict/atomic/One]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/Rub]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/atomic/Thing]]

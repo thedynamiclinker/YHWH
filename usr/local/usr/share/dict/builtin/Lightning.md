@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Bright]], [[usr/share/dict/atomic/Light]], [[usr/share/dict/atomic/In]], [[usr/share/dict/places/Sky]], [[usr/local/usr/share/dict/builtin/During]], [[usr/local/usr/share/dict/builtin/Storm]]

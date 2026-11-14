@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Multiple]], [[usr/local/usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/Thing]]

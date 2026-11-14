@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Fancy]], [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/For]], [[usr/share/dict/religion/gods/YHWH]]

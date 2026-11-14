@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Get]], [[usr/share/dict/atomic/In]], [[usr/local/usr/share/dict/builtin/Past]]

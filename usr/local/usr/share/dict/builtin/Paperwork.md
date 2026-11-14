@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/religion/jargon/Demonic]], [[usr/share/dict/people/Bureaucrat]], [[usr/share/dict/religion/jargon/Curse]]
-Type: [[usr/local/usr/share/dict/builtin/Work]], [[usr/share/dict/atomic/On]], [[usr/local/usr/share/dict/builtin/Paper]], [[usr/share/dict/atomic/That]], [[usr/local/usr/share/dict/builtin/Accomplish]], [[usr/share/dict/atomic/No]], [[usr/share/dict/atomic/Thing]]

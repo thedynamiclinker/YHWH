@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Slippery]], [[usr/share/dict/atomic/Liquid]]

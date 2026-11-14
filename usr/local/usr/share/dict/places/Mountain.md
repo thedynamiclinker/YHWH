@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Rock]], [[usr/share/dict/atomic/As]], [[usr/share/dict/atomic/Big]], [[usr/share/dict/atomic/As]], [[usr/share/dict/builtin/Town]]

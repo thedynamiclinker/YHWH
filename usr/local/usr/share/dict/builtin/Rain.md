@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Water]], [[usr/share/dict/atomic/From]], [[usr/share/dict/places/Sky]]

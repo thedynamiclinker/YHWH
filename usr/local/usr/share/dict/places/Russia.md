@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Cold]], [[usr/share/dict/atomic/Place]], [[usr/share/dict/builtin/North]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/places/China]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/East]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/places/Europe]]

@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/Your]], [[usr/share/dict/religion/gods/Gods]], [[usr/share/dict/atomic/Are]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Real]]

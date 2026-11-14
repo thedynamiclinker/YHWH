@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/Near]], [[usr/local/usr/share/dict/builtin/Together]]
-Type: [[usr/local/usr/share/dict/builtin/Nice]], [[usr/local/usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/local/usr/share/dict/builtin/Idiot]]

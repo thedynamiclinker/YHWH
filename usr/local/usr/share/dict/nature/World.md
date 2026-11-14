@@ -1,2 +1,0 @@
-Type: [[usr/share/dict/builtin/Like]], [[usr/share/dict/builtin/Earth]], [[usr/share/dict/builtin/But]], [[usr/share/dict/builtin/Bigger]]
-Type: [[usr/share/dict/builtin/Like]], [[usr/local/etc/universe]], [[usr/share/dict/builtin/But]], [[usr/share/dict/builtin/Smaller]]

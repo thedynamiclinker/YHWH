@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/How]], [[usr/share/dict/atomic/Big]]

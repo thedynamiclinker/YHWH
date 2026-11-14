@@ -100,6 +100,6 @@ source, configuration and documentation remain visible and versioned. See
 which local reference copies are intentionally outside Git.
 
 Workflow commands operate on the caller's Git worktree, independently of the
-installation location. See [the workflow guide](../doc/README.md) in the vault.
+installation location. See [the workflow guide](../var/README.md) in the vault.
 The package's `etc/workflow/*-help.txt` and agent templates document the same
 protocol when this directory is copied away from the vault.

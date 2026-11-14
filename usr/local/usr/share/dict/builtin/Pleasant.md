@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Feel]], [[usr/share/dict/atomic/Good]]

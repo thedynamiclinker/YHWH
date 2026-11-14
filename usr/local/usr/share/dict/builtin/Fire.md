@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Hot]], [[usr/local/usr/share/dict/builtin/Orange]], [[usr/share/dict/science/Air]], [[usr/share/dict/atomic/That]], [[usr/local/usr/share/dict/builtin/Sometimes]], [[usr/local/usr/share/dict/builtin/Happen]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Wood]]

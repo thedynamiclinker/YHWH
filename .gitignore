@@ -1,85 +1,12 @@
-# Dependencies and disposable build output, at any prefix depth.
-node_modules/
-build/
-dist/
-__pycache__/
-*.py[cod]
-.venv/
-.pytest_cache/
-.mypy_cache/
-.cache/
-coverage/
-*.tsbuildinfo
-
-# Native compiler and JVM output; Unix documentation such as *.o.md stays tracked.
-*.o
-*.obj
-*.a
-*.so
-*.so.[0-9]*
-*.dylib
-*.dll
-*.exe
-*.class
-*.jar
-*.pdb
 *.log
-*.tgz
-*.asar
-*.asar.unpacked/
-*.AppImage
-*.dmg
-*.deb
-*.rpm
-
-# Mutable application state; tmp/ and run/ at the vault root are shared tasks.
-/yhwh/var/
+__pycache__/
+node_modules/
+/yhwh/var/tmp/
+/yhwh/var/lib/
 /.lord-agents.lock/
-/.review/
+.obsidian/workspace.json
 
-# Installed Obsidian code and per-device state. Keep shared settings and snippets.
-.obsidian/plugins/
-.obsidian/workspace*.json
-.obsidian/graph.json
-.obsidian/cache/
-.trash/
-
-# Local instruction link and one-off task launcher.
-/AGENTS.md
-/TODO
-
-# Large reference copies remain local / in Obsidian Sync, outside Git.
-/include/spread-sheet-music.mp4
-/yhwh/src/company/reference/we-the-nameless/**/include/
-/yhwh/src/company/reference/we-the-nameless/img/
-
-# Typesetting output; manuscript source and intentional PDFs/images remain allowed.
-texmf-var/
-*.aux
-*.bbl
-*.blg
-*.bcf
-*.run.xml
-*.dvi
-*.xdv
-*.fdb_latexmk
-*.fls
-*.synctex.gz
-*.toc
-*.out
-
-# Local credentials and history exports.
-.env
-.env.*
-!.env.example
-!.env.sample
+# Shell-history exports can contain credentials.
 .bash_history
 .zsh_history
 history_[0-9]*.txt
-
-# Editor and OS debris.
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db

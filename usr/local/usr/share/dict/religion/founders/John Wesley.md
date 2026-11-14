@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/atomic/Guy]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Turn]], [[usr/share/dict/atomic/Religion]], [[usr/share/dict/atomic/Into]], [[usr/share/dict/builtin/Process]]

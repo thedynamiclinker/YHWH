@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Many]], [[usr/local/usr/share/dict/builtin/Thought]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Same]], [[usr/share/dict/atomic/Type]]

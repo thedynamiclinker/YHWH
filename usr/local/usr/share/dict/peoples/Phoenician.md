@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/First]], [[usr/share/dict/builtin/Alphabet]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Really]]

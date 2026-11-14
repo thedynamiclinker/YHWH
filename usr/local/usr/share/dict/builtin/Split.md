@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/From]], [[usr/local/usr/share/dict/builtin/Together]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Not]], [[usr/local/usr/share/dict/builtin/Together]]

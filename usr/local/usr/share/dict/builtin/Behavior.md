@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Way]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Act]]

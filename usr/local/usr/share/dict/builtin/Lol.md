@@ -1,3 +1,0 @@
-Type: [[usr/share/dict/atomic/Response]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Funny]], [[usr/share/dict/atomic/Thing]]
-Type: [[usr/share/dict/atomic/Response]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Funny]], [[usr/share/dict/atomic/Thing]]
-Type: [[usr/local/usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/local/usr/share/dict/builtin/Laugh]], [[usr/share/dict/atomic/Out]], [[usr/local/usr/share/dict/builtin/Loud]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Old]], [[usr/local/usr/share/dict/builtin/Times]], [[usr/local/usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/local/usr/share/dict/builtin/Anymore]]

@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Long]], [[usr/share/dict/builtin/Parts]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Walk]], [[usr/share/dict/atomic/On]]

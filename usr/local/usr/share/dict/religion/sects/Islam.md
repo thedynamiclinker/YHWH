@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Religion]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/peoples/Arab]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Also]], [[usr/share/dict/places/Europe]], [[usr/share/dict/atomic/Now]]

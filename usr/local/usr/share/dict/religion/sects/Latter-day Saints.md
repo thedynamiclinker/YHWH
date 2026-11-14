@@ -1,1 +1,0 @@
-Def: [[usr/share/dict/atomic/Fancy]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/For]], [[usr/share/dict/religion/believers/Mormon]]

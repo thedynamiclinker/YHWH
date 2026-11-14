@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/parts/Blood]]

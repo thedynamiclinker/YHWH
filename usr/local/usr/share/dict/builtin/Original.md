@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/First]], [[usr/share/dict/atomic/Version]]

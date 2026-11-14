@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Mom]], [[usr/share/dict/atomic/Or]], [[usr/share/dict/atomic/Dad]]

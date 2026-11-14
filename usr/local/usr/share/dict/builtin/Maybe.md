@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/May]], [[usr/share/dict/atomic/Be]]

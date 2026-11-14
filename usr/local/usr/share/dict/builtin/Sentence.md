@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/List]]

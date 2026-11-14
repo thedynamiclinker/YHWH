@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/religion/gods/God]], [[usr/local/usr/share/dict/religion/jargon/Damn]]

@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Mom]], [[usr/share/dict/atomic/New]], [[usr/share/dict/nature/Babies]], [[usr/share/dict/atomic/Eat]], [[usr/share/dict/atomic/From]]

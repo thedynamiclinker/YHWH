@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Get]], [[usr/local/usr/share/dict/builtin/Dead]]

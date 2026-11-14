@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/parts/Sound]], [[usr/share/dict/atomic/Thing]]

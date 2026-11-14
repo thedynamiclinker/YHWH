@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Round]], [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Top]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/parts/Body]]

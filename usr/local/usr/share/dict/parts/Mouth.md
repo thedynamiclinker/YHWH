@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Hole]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Eat]], [[usr/share/dict/atomic/With]]

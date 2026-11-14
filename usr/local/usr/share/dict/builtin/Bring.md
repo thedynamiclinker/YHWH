@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Move]], [[usr/share/dict/atomic/Toward]]

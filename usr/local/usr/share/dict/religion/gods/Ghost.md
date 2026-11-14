@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/builtin/Invisible]], [[usr/share/dict/religion/jargon/Undead]], [[usr/share/dict/atomic/Person]]

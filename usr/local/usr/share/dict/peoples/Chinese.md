@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/places/China]], [[usr/share/dict/atomic/Thing]]

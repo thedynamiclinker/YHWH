@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/builtin/Dead]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Living]], [[usr/share/dict/parts/Body]], [[usr/share/dict/atomic/And]], [[usr/share/dict/parts/Mind]]

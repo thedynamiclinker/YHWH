@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Sister]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/builtin/Parent]]

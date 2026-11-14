@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Girl]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Love]], [[usr/share/dict/atomic/So]], [[usr/local/usr/share/dict/builtin/Much]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Do]], [[usr/local/usr/share/dict/builtin/Paperwork]]

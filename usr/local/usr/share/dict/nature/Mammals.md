@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/local/usr/share/dict/nature/Mammal]]

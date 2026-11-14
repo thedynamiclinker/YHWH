@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Liquid]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Eat]]

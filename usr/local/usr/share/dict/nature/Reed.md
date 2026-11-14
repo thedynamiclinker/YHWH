@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Type]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Grass]]

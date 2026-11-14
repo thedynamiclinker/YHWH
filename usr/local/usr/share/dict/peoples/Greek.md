@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/places/Greece]], [[usr/share/dict/atomic/Thing]]

@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Old]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/That]], [[usr/share/dict/builtin/Invent]], [[usr/share/dict/science/Philosophy]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Buttsex]]

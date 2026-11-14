@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Front]]

@@ -1,0 +1,1 @@
+Type: [[usr/share/dict/builtin/South]], [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/Land]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Old]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/Time]]

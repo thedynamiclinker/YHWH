@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Size]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Up]], [[usr/share/dict/atomic/Down]], [[usr/local/usr/share/dict/builtin/Direction]]

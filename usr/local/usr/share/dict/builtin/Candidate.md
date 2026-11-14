@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Possible]], [[usr/share/dict/atomic/Answer]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Question]]

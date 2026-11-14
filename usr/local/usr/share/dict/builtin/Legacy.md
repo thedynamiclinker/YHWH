@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Old]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Hard]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Change]]

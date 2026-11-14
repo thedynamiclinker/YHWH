@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/builtin/Sand]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Camel]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Hat]]

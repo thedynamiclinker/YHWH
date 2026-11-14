@@ -1,1 +1,0 @@
-Type: [[usr/share/dict/atomic/Go]], [[usr/share/dict/builtin/Inside]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Look]], [[usr/share/dict/atomic/Down]]

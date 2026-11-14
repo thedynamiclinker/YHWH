@@ -1,3 +1,0 @@
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Thin]], [[usr/share/dict/builtin/Sticks]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Top]], [[usr/share/dict/atomic/Of]], [[usr/local/usr/share/dict/parts/Head]]
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Thin]], [[usr/share/dict/builtin/Sticks]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/places/Places]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Your]], [[usr/local/usr/share/dict/parts/Body]]
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Thin]], [[usr/share/dict/builtin/Sticks]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/places/Places]], [[usr/share/dict/atomic/On]], [[usr/share/dict/nature/Mammals]]

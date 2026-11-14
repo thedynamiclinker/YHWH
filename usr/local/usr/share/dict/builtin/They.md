@@ -1,1 +1,0 @@
-Type: [[usr/local/usr/share/dict/builtin/Multiple]], [[usr/local/usr/share/dict/builtin/He]], [[usr/share/dict/atomic/Or]], [[usr/local/usr/share/dict/builtin/She]], [[usr/share/dict/atomic/Or]], [[usr/share/dict/atomic/It]]
