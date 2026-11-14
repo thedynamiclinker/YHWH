@@ -520,7 +520,14 @@ $('#file-list').onclick = event => {
     const rows = [...$('#file-list').querySelectorAll('[data-path]')], first = rows.findIndex(item => tab.selected.has(item.dataset.path)), last = rows.indexOf(row);
     tab.selected = new Set(rows.slice(Math.min(first, last), Math.max(first, last) + 1).map(item => item.dataset.path));
   } else tab.selected = new Set([row.dataset.path]);
-  renderFiles(); $('#file-list').focus();
+  // Keep the clicked rows alive so the browser can recognize a double-click.
+  for (const item of $('#file-list').querySelectorAll('[data-path]')) {
+    const selected = tab.selected.has(item.dataset.path);
+    item.classList.toggle('selected', selected);
+    item.setAttribute('aria-selected', String(selected));
+  }
+  $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
+  $('#file-list').focus();
 };
 $('#file-list').ondblclick = event => {
   const row = event.target.closest('[data-path]'); if (!row) return;
