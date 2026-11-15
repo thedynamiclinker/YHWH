@@ -2,10 +2,8 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 const { promisify, TextDecoder } = require('node:util');
-const { languages } = require('@codemirror/language-data');
-const { LanguageDescription } = require('@codemirror/language');
 const exec = promisify(execFile);
-const mimeLanguages = { 'text/markdown': 'markdown', 'text/x-markdown': 'markdown', 'application/json': 'json', 'text/html': 'html', 'text/x-python': 'python', 'application/x-shellscript': 'shell', 'text/x-shellscript': 'shell', 'text/x-tex': 'latex', 'application/xml': 'xml', 'image/svg+xml': 'xml' };
+const { fileType } = require('./file-type.cjs');
 
 async function list(directory, hidden = false) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -23,21 +21,7 @@ async function detect(filename, buffer, config = {}) {
   for (const [command, args] of [['xdg-mime', ['query', 'filetype', filename]], ['file', ['--brief', '--mime-type', '--', filename]]]) {
     try { mime = (await exec(command, args, { timeout: 2000, maxBuffer: 8192 })).stdout.trim(); if (mime) break; } catch {}
   }
-  const name = path.basename(filename), extension = path.extname(filename).slice(1).toLowerCase();
-  let language = mimeLanguages[mime] || LanguageDescription.matchFilename(languages, name)?.name.toLowerCase() || (name === 'rc' || extension === 'conf' ? 'shell' : 'plain');
-  if (language === 'plain') {
-    const shebang = buffer.subarray(0, 200).toString().split('\n')[0];
-    if (/^#!.*\b(python[\d.]*|node|bash|sh|zsh|fish|ruby|perl)\b/.test(shebang)) {
-      const interpreter = shebang.match(/\b(python[\d.]*|node|bash|sh|zsh|fish|ruby|perl)\b/)[1];
-      language = interpreter.startsWith('python') ? 'python' : interpreter === 'node' ? 'javascript' : ['bash', 'sh', 'zsh', 'fish'].includes(interpreter) ? 'shell' : interpreter;
-    }
-  }
-  let rules = [];
-  try { rules = JSON.parse(config.file_types || '[]'); } catch {}
-  for (const rule of rules) {
-    try { if ((rule.extension && rule.extension.replace(/^\./, '') === extension) || (rule.filename && new RegExp(rule.filename).test(name))) language = rule.language; } catch {}
-  }
-  return { mime: mime || 'application/octet-stream', language };
+  return fileType(filename, buffer, config, mime);
 }
 
 async function read(filename, config) {

@@ -1,0 +1,9 @@
+{
+  "appId": "com.thedynamiclinker.yhwh",
+  "appName": "YHWH",
+  "webDir": "var/tmp/yhwh/mobile/ui",
+  "backgroundColor": "#1b1b20",
+  "ios": { "path": "src/yhwh-mobile/ios", "contentInset": "never", "preferredContentMode": "mobile" },
+  "android": { "path": "src/yhwh-mobile/android", "backgroundColor": "#1b1b20" },
+  "plugins": { "Keyboard": { "resize": "native", "resizeOnFullScreen": true } }
+}

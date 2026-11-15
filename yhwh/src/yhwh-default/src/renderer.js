@@ -870,6 +870,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
   // A small public surface for plugins and interactive inspection. No Node in
   // the renderer; disk operations still cross the explicit preload boundary.
   window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile };
+  window.dispatchEvent(new Event('yhwh:ready'));
   if (boot.interface === 'three') {
     try { const { install } = await import(boot.effectsURL); window.YHWH.three = install(window.YHWH); }
     catch (error) { console.error(error); notice('Visual effects could not load. All tools are still available.'); }
