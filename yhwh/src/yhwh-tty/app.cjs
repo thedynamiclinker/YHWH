@@ -220,8 +220,8 @@ class Interface {
   }
   async switchTab(index) { this.workspace.index = (index + this.workspace.tabs.length) % this.workspace.tabs.length; this.parentTarget = null; this.list.select(0); this.watch(); await this.previewSelection(); this.schedule(); }
   async closeTab() {
-    if (!await this.guard()) return;
     if (this.workspace.tabs.length === 1) return this.quit();
+    if (!await this.guard()) return;
     this.shells.closeTab(this.tab.id); this.workspace.tabs.splice(this.workspace.index, 1); await this.switchTab(Math.max(0, this.workspace.index - 1));
   }
   async quit(signal = false) {

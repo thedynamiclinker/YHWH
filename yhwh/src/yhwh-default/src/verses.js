@@ -67,7 +67,9 @@ export function createVerseUI({ call, modal, notice }) {
   async function browse(reference = 'Genesis 1:1') {
     const dialog = modal(ui('browser'), `<p role="status">${escape(ui('loading'))}</p>`);
     const loading = dialog.querySelector('[role=status]');
-    const [books, initial] = await Promise.all([library(), get(reference)]);
+    let books, initial;
+    try { [books, initial] = await Promise.all([library(), get(reference)]); }
+    catch (error) { if (loading.isConnected) loading.textContent = error.message; return; }
     if (!dialog.open || !loading.isConnected) return;
     const body = dialog.querySelector('.dialog-body');
     body.innerHTML = `<div class="verse-browser"><form class="verse-jump"><label for="verse-reference">${escape(ui('jump'))}</label><div><input id="verse-reference" name="reference" placeholder="Genesis 18:1" value="${escape(initial[0].reference)}" required><button class="primary">${escape(ui('go'))}</button></div></form>

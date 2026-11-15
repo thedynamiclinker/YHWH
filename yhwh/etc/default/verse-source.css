@@ -15,36 +15,4 @@
 @font-face { font-family: "WTN Ugaritic"; src: url("fonts/noto-sans-ugaritic-regular.ttf"); }
 
 
-.source-j, .source-je, .source-jp, .source-jpp, .source-jm { color: #008700 !important; }
-.source-e, .source-ep, .source-epp, .yellow { color: #b98c00 !important; }
-.source-e, .source-ep, .source-epp { font-weight: 700; }
-.source-p, .source-pr, .source-pp { color: #0046aa !important; font-weight: 700; }
-.source-r, .source-diff { color: #0046aa !important; background-color: #e0e8f5 !important; }
-.source-pr { background-color: #e0e8f5 !important; }
-.source-rje { color: #006400 !important; background-color: #e1f5e1 !important; }
-.source-dtra, .source-dtrh, .source-dtn { color: #806100 !important; }
-.source-dtrb { color: #995e00 !important; }
-.source-bookofrecords, .source-records { color: #6e6e6e !important; }
-.source-other, .source-x { color: #505050 !important; }
-.source-red { color: #aa0000 !important; background: #f5e0e0 !important; }
-.source-reblacktor { color: inherit; background: rgba(128, 128, 128, .18); }
-.source-proto, .source-protoa, .source-protof { color: #878787 !important; }
-.hebrew { font-family: "WTN Hebrew David", serif; }
-.hebrew.source-j, .source-j.hebrew { font-family: "WTN Paleo J", serif; font-weight: 400; }
-.hebrew.source-e, .source-e.hebrew { font-family: "WTN Paleo E", serif; }
-.hebrew.source-je, .source-je.hebrew { font-family: "WTN Paleo E", serif; font-weight: 400; }
-.hebrew.source-jp, .hebrew.source-jpp, .source-jp.hebrew, .source-jpp.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }
-.hebrew.source-p, .source-p.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }
-.hebrew.source-r, .source-r.hebrew { font-family: "WTN Hebrew Ezra", serif; }
-.hebrew.source-rje, .source-rje.hebrew { font-family: "WTN Paleo RJE", serif; }
-.hebrew.source-records, .source-records.hebrew,
-.hebrew.source-bookofrecords, .source-bookofrecords.hebrew { font-family: "WTN Paleo Mono", monospace; font-weight: 400; }
-.hebrew.source-proto, .source-proto.hebrew { font-family: "WTN Paleo Tel Zayit", serif; font-weight: 400; }
-.hebrew.source-other, .source-other.hebrew { font-family: "WTN Paleo Moabite", serif; font-weight: 400; }
-/* Source-profile weight is language-specific in master.tex. */
-.english.source-jp, .english.source-jpp, .english.source-je,
-.english.source-e, .english.source-ep, .english.source-epp,
-.english.source-p, .english.source-pp, .english.source-pr { font-weight: 700; }
-.hebrew.source-jp, .hebrew.source-jpp, .hebrew.source-je,
-.hebrew.source-e, .hebrew.source-ep, .hebrew.source-epp,
-.hebrew.source-p, .hebrew.source-pr { font-weight: 400; }
+.verse-block .source-j, .verse-block .source-je, .verse-block .source-jp, .verse-block .source-jpp, .verse-block .source-jm { color: #008700 !important; }.verse-block .source-e, .verse-block .source-ep, .verse-block .source-epp, .verse-block .yellow { color: #b98c00 !important; }.verse-block .source-e, .verse-block .source-ep, .verse-block .source-epp { font-weight: 700; }.verse-block .source-p, .verse-block .source-pr, .verse-block .source-pp { color: #0046aa !important; font-weight: 700; }.verse-block .source-r, .verse-block .source-diff { color: #0046aa !important; background-color: #e0e8f5 !important; }.verse-block .source-pr { background-color: #e0e8f5 !important; }.verse-block .source-rje { color: #006400 !important; background-color: #e1f5e1 !important; }.verse-block .source-dtra, .verse-block .source-dtrh, .verse-block .source-dtn { color: #806100 !important; }.verse-block .source-dtrb { color: #995e00 !important; }.verse-block .source-bookofrecords, .verse-block .source-records { color: #6e6e6e !important; }.verse-block .source-other, .verse-block .source-x { color: #505050 !important; }.verse-block .source-red { color: #aa0000 !important; background: #f5e0e0 !important; }.verse-block .source-reblacktor { color: inherit; background: rgba(128, 128, 128, .18); }.verse-block .source-proto, .verse-block .source-protoa, .verse-block .source-protof { color: #878787 !important; }.verse-block .hebrew { font-family: "WTN Hebrew David", serif; }.verse-block .hebrew.source-j, .verse-block .source-j.hebrew { font-family: "WTN Paleo J", serif; font-weight: 400; }.verse-block .hebrew.source-e, .verse-block .source-e.hebrew { font-family: "WTN Paleo E", serif; }.verse-block .hebrew.source-je, .verse-block .source-je.hebrew { font-family: "WTN Paleo E", serif; font-weight: 400; }.verse-block .hebrew.source-jp, .verse-block .hebrew.source-jpp, .verse-block .source-jp.hebrew, .verse-block .source-jpp.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }.verse-block .hebrew.source-p, .verse-block .source-p.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }.verse-block .hebrew.source-r, .verse-block .source-r.hebrew { font-family: "WTN Hebrew Ezra", serif; }.verse-block .hebrew.source-rje, .verse-block .source-rje.hebrew { font-family: "WTN Paleo RJE", serif; }.verse-block .hebrew.source-records, .verse-block .source-records.hebrew, .verse-block .hebrew.source-bookofrecords, .verse-block .source-bookofrecords.hebrew { font-family: "WTN Paleo Mono", monospace; font-weight: 400; }.verse-block .hebrew.source-proto, .verse-block .source-proto.hebrew { font-family: "WTN Paleo Tel Zayit", serif; font-weight: 400; }.verse-block .hebrew.source-other, .verse-block .source-other.hebrew { font-family: "WTN Paleo Moabite", serif; font-weight: 400; }.verse-block .english.source-jp, .verse-block .english.source-jpp, .verse-block .english.source-je, .verse-block .english.source-e, .verse-block .english.source-ep, .verse-block .english.source-epp, .verse-block .english.source-p, .verse-block .english.source-pp, .verse-block .english.source-pr { font-weight: 700; }.verse-block .hebrew.source-jp, .verse-block .hebrew.source-jpp, .verse-block .hebrew.source-je, .verse-block .hebrew.source-e, .verse-block .hebrew.source-ep, .verse-block .hebrew.source-epp, .verse-block .hebrew.source-p, .verse-block .hebrew.source-pr { font-weight: 400; }.verse-block .paleo { font-family: "WTN Paleo J", serif; }.verse-block .annotation-a { color: #000 !important; }.verse-block .annotation-b { color: #820000 !important; }.verse-block .alternate-reading { display: inline; font-size: .78em; white-space: nowrap; }.verse-block .alternate-reading > span { display: inline; }.verse-block .red { color: #820000 !important; }.verse-block .blue { color: #0046aa !important; }.verse-block .green { color: #008700 !important; }.verse-block .gray { color: #6e6e6e !important; }.verse-block .highlight-a { background-color: #e0e0e0 !important; }.verse-block .highlight-b { background-color: #f0e0e0 !important; }.verse-block .highlight-c { background-color: #e0e9f5 !important; }.verse-block .footnote-voice { color: inherit; }.verse-block .source-ra { color: #000 !important; background-color: #e0e0e0 !important; }.verse-block .source-rb { color: #aa0000 !important; background-color: #f5e0e0 !important; }.verse-block .source-rc { color: #0046aa !important; background-color: #e0e8f5 !important; }.verse-block .hebrew.source-ra, .verse-block .hebrew.source-rb, .verse-block .hebrew.source-rc { font-family: "WTN Hebrew Ezra", serif; }

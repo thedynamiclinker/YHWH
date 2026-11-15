@@ -99,7 +99,8 @@ function activate(id) {
   emit('focus', active());
 }
 function tabTitles() {
-  $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(tab.file?.name || basename(tab.cwd)), tab.id, escape(tab.file?.name || basename(tab.cwd)))).join('');
+  const label = tab => ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
+  $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(label(tab)), tab.id, escape(label(tab)))).join('');
 }
 function renderFiles() {
   const tab = active(); if (!tab) return;

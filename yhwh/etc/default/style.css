@@ -311,3 +311,5 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
   .mail-preview { display: none; }
   .mail-message { padding: 20px 16px; }
 }
+
+#center-panels > [data-panel='yhwh-chat'] { width: auto; max-width: none; }

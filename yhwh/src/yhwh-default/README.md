@@ -139,7 +139,7 @@ Each module is loaded from a local source blob; bundle dependencies into that mo
 
 ## Personality, help, and Offerings
 
-The original Paleo-Hebrew font and purple/charcoal presentation remain. The title bar's YHWH-ness slider sets 100 for YHWH, 1–99 for Nietzsche, and 0 for monochrome Dawkins. **In the margins**, below the document, shows a random book verse in YHWH mode, Nietzsche Family Circus in Nietzsche mode, and is hidden in Dawkins mode. The refresh button chooses another verse or pairing; the minus/plus button collapses the box and remembers your choice. Circus fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
+The original Paleo-Hebrew font and purple/charcoal presentation remain. The title bar's YHWH-ness slider sets 100 for YHWH, 1–99 for Nietzsche, and 0 for monochrome Dawkins. **In the margins** starts hidden in YHWH mode. Its left-ribbon widget opens a focused reading surface showing a random Genesis verse, Nietzsche Family Circus in Nietzsche mode, and is hidden in Dawkins mode. The refresh button chooses another verse or pairing; the minus/plus button collapses the box and remembers your choice. Circus fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
 
 Character writing is based on sampled passages of the user's *We The Nameless*, especially Genesis 3 and 18 and Exodus 3: embodied curiosity, interruptions, bargaining, grand promises, and occasional regret. Routine controls keep their ordinary names.
 
@@ -149,9 +149,9 @@ Edited character text preserves line breaks and blank lines, including on the we
 
 ## Book verses and citations
 
-Use **Browse verses** in the tool ribbon or random verse box, or **Browse We The Nameless · chapter and verse** in Commands. Choose a book, chapter and verse, type a reference such as `Genesis 18:1`, or use Previous/Next across chapter boundaries. All 50 Genesis chapters are available, along with the other imported books. Combined and split labels retain their manuscript form: `Genesis 2:7` displays the 6–7 block; `Genesis 49:24` displays 24a and 24b. Numbering follows the source book.
+Use **In the margins** in the tool ribbon, then **Browse** in the verse box, or **Browse We The Nameless · chapter and verse** in Commands. Choose a book, chapter and verse, type a reference such as `Genesis 18:1`, or use Previous/Next across chapter boundaries. All 50 Genesis chapters are available. Other imported books remain locked for future progression. Combined and split labels retain their manuscript form: `Genesis 2:7` displays the 6–7 block; `Genesis 49:24` displays 24a and 24b. Numbering follows the source book.
 
-Cards follow `master.tex`'s horizontal `\Verse` layout: reference between rules, English left, original text right, commentary below. Each card has its own Commentary disclosure and an inline editor. Edits save in the app profile's `verse-commentary.json` and survive relaunch and import refreshes. Empty commentary can be added, edited commentary can be cleared, and **Restore book commentary** removes the local edit. Inbox letters and the optional walk use these same cards beneath their literary adaptations.
+Bundled display markup and fonts come from the book’s ebook renderer (`bin/import-verse-style.py`), preserving source colors and historical scripts, including green Paleo-Hebrew J. Cards follow `master.tex`'s horizontal `\Verse` layout: reference between rules, English left, original text right, commentary below. Each card has its own Commentary disclosure and an inline editor. Edits save in the app profile's `verse-commentary.json` and survive relaunch and import refreshes. Empty commentary can be added, edited commentary can be cleared, and **Restore book commentary** removes the local edit. Inbox letters and the optional walk use these same cards beneath their literary adaptations.
 
 The bundled `yhwh/etc/verses/we-the-nameless.json` contains 10,196 blocks from 340 matching `.tex` files. Each record includes readable text, the four exact raw TeX fields, book/chapter/label, stable identity, source file/line, and combined/split numeric lookup information. A source manifest records file hashes and counts, including files with no verses. Alternate `14-raw.tex` and apocryphal blocks are retained; ordinary browsing and random selections use the main chapter files. Display text transcribes TeX formatting, lists and footnotes into plain text; raw TeX preserves the manuscript's full formatting and content.
 
@@ -219,3 +219,5 @@ paleo-letter icons live in root `usr/share/`. Installation writes resolved
 entries, icons, and launch scripts under `XDG_DATA_HOME` (default
 `~/.local/share`) without relying on an interactive shell’s PATH. Modified
 launcher files are preserved on update/removal.
+
+Inbox uses a newest-first message list. Click a letter to read it, then return with **← Inbox**. Opening the list leaves unread letters unread. Inbox and conversation occupy the central reading area, alongside file-manager and terminal navigation; **Focus document** returns to the preserved editor buffer.

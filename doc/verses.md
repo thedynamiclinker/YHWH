@@ -8,3 +8,8 @@
 - The random verse box becomes Nietzsche Family Circus in Nietzsche mode and disappears in Dawkins mode. Fetch errors stay within the box; mode changes must discard stale asynchronous results.
 - Nietzsche mode shows the Circus widget alongside the document without requiring the margins view. The margins view can still show it on its own.
 - Editable character copy and commentary are escaped plain text. Render their line breaks and blank lines faithfully, without interpreting markup or applying plain-text whitespace rules to Markdown documents.
+
+- Genesis is the only currently available book in the desktop verse browser, citations and random selection. Retain the full import for future unlocks; do not expose unfinished books through a typed reference. No unlock progression is implemented yet.
+- Preserve the ebook's source profiles in both English and original text, including mixed-source spans, Hebrew direction and historical font encoding. Generate bundled display data with `yhwh/bin/import-verse-style.py`; normal builds must work without the manuscript checkout.
+- In YHWH mode, margins start hidden and open as the tab's reading focus from the left ribbon. Documents, margins, Inbox and conversation share the reading area; switching focus preserves document buffers and file/terminal navigation.
+- Inbox opens a message list, newest first, with sender, subject, preview and arrival date. Open one message at a time and mark only that message read. Preserve occasional work-triggered delivery, editable character copy, source citations and persistent read state.

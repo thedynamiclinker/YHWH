@@ -82,3 +82,22 @@ test('commentary saves atomically, persists per verse, accepts empty text, resto
   assert.equal((await store.get(verses[1].id))[0].commentary, 'New commentary.');
   assert.equal(await fs.readFile(filename, 'utf8'), original);
 });
+
+
+test('Genesis random selection stays within the available book', async () => {
+  const store = createVerseStore();
+  const verses = await Promise.all(Array.from({ length: 100 }, () => store.random('Genesis')));
+  assert.ok(verses.every(verse => verse.book === 'Genesis' && !verse.variant));
+  await assert.rejects(store.random('Unavailable'), /No verses/);
+});
+
+test('Genesis display retains mixed source spans and historical bidi encoding', async () => {
+  const display = require('../../../etc/verses/genesis-display.json');
+  const store = createVerseStore();
+  const j = (await store.get('Genesis 18:1'))[0];
+  assert.match(display[j.id].original, /source-j hebrew/);
+  assert.match(display[j.id].english, /source-j english/);
+  assert.match(display[j.id].original, /dir="rtl"/);
+  assert.ok(Object.values(display).some(verse => /<bdo[^>]*dir="rtl"/.test(verse.original)));
+  assert.ok(Object.values(display).some(verse => /source-j/.test(verse.original) && /source-p/.test(verse.original)));
+});

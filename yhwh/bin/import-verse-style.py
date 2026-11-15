@@ -5,6 +5,7 @@ Plain text and original TeX remain in the verse library; this is display data.
 """
 import importlib.util
 import json
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -25,6 +26,19 @@ for font in book.FONT_FILES:
     shutil.copyfile(font, root / 'etc/default/fonts' / font.name)
 # Keep the app layout; import only the book's typefaces and source profiles.
 profiles = css[css.index('.source-j,'):css.index('.smallcaps')]
+# Retain inline variants used inside Genesis without importing ebook page layout.
+classes = {'paleo', 'source-ra', 'source-rb', 'source-rc', 'highlight-a',
+           'highlight-b', 'highlight-c', 'annotation-a', 'annotation-b',
+           'alternate-reading', 'footnote-voice', 'red', 'blue', 'green', 'gray'}
+for selectors, declarations in re.findall(r'([^{}]+)\{([^{}]*)\}', css):
+    selectors = re.sub(r'/\*.*?\*/', '', selectors, flags=re.S).strip()
+    if not selectors.startswith('@') and classes.intersection(re.findall(r'\.([\w-]+)', selectors)):
+        profiles += '\n' + selectors + ' {' + declarations + '}'
+# Scope semantic styles to verse cards so application chrome keeps its theme.
+profiles = re.sub(r'([^{}]+)\{([^{}]*)\}',
+                  lambda match: ', '.join('.verse-block ' + selector.strip()
+                                           for selector in re.sub(r'/\*.*?\*/', '', match[1], flags=re.S).split(','))
+                  + ' {' + match[2] + '}', profiles)
 (root / 'etc/default/verse-source.css').write_text(
     '/* Imported from We The Nameless/ebook/epub.css. Regenerate with bin/import-verse-style.py. */\n'
     + font_rules.replace('../fonts/', 'fonts/') + '\n' + profiles)

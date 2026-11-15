@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+# On The Lamb
+
+Go take everything in '../We The Nameless/we/Documentation/' and all the images it depends on in the 'We The Nameless' vault and COPY it (don't move it) into mnt/yhwh/boot/kernel/Documentation/ and then make mnt/yhwh/media just have one link in it that says 'On The Lamb' and links the user to Documentation/FOLLOWME.md
+
+Then make sure all that stuff shows up when we chroot into mnt/yhwh using the interface
+EOF

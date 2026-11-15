@@ -6,4 +6,6 @@ Add a ranger-like tui version of the entire interface that can run in a terminal
 'make tty' should build and open it.
 
 the interface should call itself 'el shaddai' and have a definition of 'shaddai' (editable) saying "Nobody knows. Maybe mountains or ttys."
+
+NOTE: Whatever you're doing to try to test the thing is hanging the terminal where this is running. Gonna run this in regular codex.
 EOF
