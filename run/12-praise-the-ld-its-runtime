@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Look in the ../$vaults/include/ dirs for ld.png or ld.logo or even better for ../We The Nameless/ld.css and add that logo in aesthetically pleasing locations to various places throughout the interface where it makes sense to do so. Also make that the app icon for the .desktop files when we 'make develop' or 'make install' the app, and use a dark bg one for 'make develop' and a light bg one for 'make install's .desktop files. Go!
+EOF

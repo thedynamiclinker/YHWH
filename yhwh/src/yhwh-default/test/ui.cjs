@@ -161,6 +161,50 @@ process.stdin.on('end', () => {
     await page.evaluate(() => window.YHWH.run('parent'));
     assert.equal(await page.locator('#location').inputValue(), '/');
     await run('close-tab');
+    await run('higher-help');
+    await page.locator('[data-command="be-yhwh"]').click();
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/yhwh'));
+    await page.waitForFunction(() => document.querySelector('#location').value === '/');
+    await page.locator('#file-list .file-row[data-path$="/media"]').dblclick();
+    await page.waitForFunction(() => document.querySelector('#location').value === '/media');
+    assert.deepEqual(await page.evaluate(() => window.YHWH.active().entries.map(entry => entry.name)), ['On The Lamb']);
+    await page.locator('#file-list [data-path]').filter({ hasText: 'On The Lamb' }).dblclick();
+    const documentation = path.resolve(root, '../../../mnt/yhwh/boot/kernel/Documentation');
+    await page.waitForFunction(filename => window.YHWH.active().file?.path === filename, path.join(documentation, 'FOLLOWME.md'));
+    assert.equal(await page.evaluate(() => window.YHWH.active().file.language), 'markdown');
+    assert.equal(await page.locator('#location').inputValue(), '/boot/kernel/Documentation');
+    const loadedImages = count => page.waitForFunction(count => {
+      const images = [...document.querySelectorAll('.reading-view:not([hidden]) img')];
+      return images.length === count && images.every(image => image.complete && image.naturalWidth > 0);
+    }, count);
+    for (const next of ['advanced', 'advanced/religion', 'advanced/religion/for', 'advanced/religion/for/beginners']) {
+      await run('reading-view');
+      await loadedImages(1);
+      await page.locator('.reading-view:visible a').filter({ hasText: /^FOLLOWME$/ }).click();
+      await page.waitForFunction(filename => window.YHWH.active().file?.path === filename, path.join(documentation, next, 'FOLLOWME.md'));
+      assert.equal(await page.evaluate(() => window.YHWH.active().worldRoot?.endsWith('/mnt/yhwh')), true);
+    }
+    // The imported videos remain online; the local documentation test needs no network.
+    await page.route('https://fukkot.com/**', route => route.abort());
+    await page.evaluate(() => {
+      window.blockedMedia = [];
+      document.addEventListener('securitypolicyviolation', event => {
+        if (event.effectiveDirective === 'media-src') window.blockedMedia.push(event.blockedURI);
+      });
+    });
+    await run('reading-view');
+    await page.locator('.reading-view:visible a').filter({ hasText: 'LꞀ' }).click();
+    await page.waitForFunction(() => window.YHWH.active().file?.name === 'On the Lamb.md');
+    await run('reading-view');
+    await loadedImages(7);
+    assert.equal(await page.locator('.reading-view:visible video[controls]').count(), 9);
+    assert.deepEqual(await page.evaluate(() => window.blockedMedia), []);
+    assert.equal(await page.locator('.reading-view:visible h2').count(), 9);
+    assert.equal(await page.evaluate(() => window.YHWH.active().dirty), false);
+    await page.screenshot({ path: path.join(artifacts, '12-on-the-lamb.png') });
+    await run('close-tab');
+    console.log('✓ God world → media shortcut → complete documentation trail; all local images loaded');
     await run('sinai');
     assert.equal(await page.locator('#dialog li').count(), 10);
     assert.equal(await page.locator('#dialog li a').getAttribute('href'), 'https://www.amazon.com/dp/B0HNQ23QKT');

@@ -185,7 +185,8 @@ async function launch() {
       return await require('./chat.cjs').chat({ directory: await worlds.physical(focus), energy, messages });
     } finally { conversations.delete(id); }
   });
-  handle('file:read', async filename => { filename = await sourcePath(filename); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
+  // Resolve shortcuts before choosing a language, preview base, or link directory.
+  handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
   handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(absolute); return { path: absolute, directory: stat.isDirectory() }; });
   handle('file:save', async (filename, ...args) => files.save(await destination(filename), ...args));
   handle('file:create', async (filename, directory) => files.create(await destination(filename), directory));
