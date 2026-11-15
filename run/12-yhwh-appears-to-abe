@@ -2,13 +2,41 @@
 
 lordhavemercy -f --verbose << "EOF"
 yhwh:
-    1. the interface should always call the user Abe.
-    2. if they correct him and say their name is something else, he should either quickly forget it or say that's no good we'll need to change that
-    3. we need a .desktop file or something that I can use to add this as an app to my linux desktop so that it opens when I click the icon.
+    1. The interface should always call the user Abe.
+            - If they correct him and say their name is something else,
+                he should either quickly forget it
+                or say that's no good we'll need to change that
+                and then call them some similar name like calling
+                (say) George Carlin something like Charlie, Charleen,
+                or assuming he's from Ur home, Ur of the Charleens.
+    2. The interface should always be promising to spread the user's seed around everywhere.
+            - It should occasionally email the user in the inbox and just be like
+                "I'm giving this land to your seed Abe."
+                "And look around the interface. See how good it is? That's how your seed is gonna be Abe."
+                "If you stick with me, I'm gonna accomplish great things Abe. And you're gonna be part of 'em."
+                "Forever and ever a hundred years YHWH and Abe b-- Abe just you and me."
+                "I am El Shaddai. Can I borrow some money."
+            - The interface's text should occasionally just have an out of place textbox or submenu where he does YHWH things like that.
+            - e.g., Nested somewhere deep in the interface:
+                "About Us > Our Team"
+                    J, R, YHWH.
+                "About Us > Roadmap"
+                    Here at LD, we believe that <red smallcaps>We're giving this land to your seed! Cuz you're our #1 guy Abe. (long rant)"
+            - See the YHWH and Abe apocryphon in ~/obsidian/We The Nameless/01-genesis/ for examples of the kind of unhinged to be.
+    3. We need a Donation button somewhere called "Seed funding" that just asks the user for money. It doesn't offer equity. It just needs money.
+        Have that George Carlin quote from you are all diseased, it's somewhere here in the repo.
+    4. We need a .desktop file or something that I can use to add this as an app to my linux desktop so that it opens when I click the icon.
        it's ok if that icon just launches the current in-development version of the app though, we can have frozen / shipped versions later.
        Add a make target that'll install that to ~/.local/share/applications or whatever when we run 'make install' or 'make develop'.
        Actually have 'make install' and 'make develop' install two different .desktop files with visually distinguishable icons. Use
        the circular yhwh profile pics with the paleo letters in include/ as a starting point for designing the icons. Put the results
        in the repo root's usr/share/{applications,icons} or wherever linux desktops usually keep desktop files and icons and so on.
+    5. Clicking links in the interface shouldn't try to edit them, it should open them. Use the obsidian hotkey for ctrl+r to toggle reading mode
+       vs source mode vs hybrid (default) mode.
+    6. Delete 'Pick a file. Make a thing. If you need to leave this directory, the door works.' and replace it with 'Hey Abe, can I stay with you for a bit?'
+    7. Delete 'Files, a shell, and somewhere to think' and replace it with 'Toward a pro-human AI apocalypse.'
+    8. Replace 'A little room for creation' with 'Guess who's back'
+    9. There are two Help! menus. Keep the one that's part of the interface, kill the one above it, and move the kept one somewhere else, in unassuming grey letters,
+       and make the text say "Need Some Help?"
 Do all that.
 EOF
