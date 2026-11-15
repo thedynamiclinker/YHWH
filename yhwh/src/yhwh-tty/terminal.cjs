@@ -6,7 +6,7 @@ const { EventEmitter } = require('node:events');
 class Shells extends EventEmitter {
   constructor(env = {}) {
     super(); this.sessions = new Map();
-    this.host = fork(path.resolve(__dirname, '../../bin/default/terminal-host.cjs'), [], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'], env: { ...process.env, ...env } });
+    this.host = fork(require('../../lib/paths.cjs').root + '/bin/default/terminal-host.cjs', [], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'], env: { ...process.env, ...env } });
     this.host.stderr.on('data', data => this.emit('failure', String(data)));
     this.host.on('error', error => this.emit('failure', error.message));
     this.host.on('exit', code => { if (!this.closed) this.emit('failure', `Shell host exited (${code}).`); });

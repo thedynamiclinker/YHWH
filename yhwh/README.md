@@ -1,7 +1,8 @@
 # YHWH application
 
 `make` here or at the vault root builds and opens the default app without
-installing. `make build` builds all three interfaces. `make help` lists targets.
+installing. `make tty` builds and opens **el shaddai**, the terminal interface.
+`make build` builds all four interfaces. `make help` lists targets.
 
 ```text
 bin/                 executable entry points and internal support programs
@@ -10,6 +11,7 @@ lib/                 shared file operations, Electron runtime, workflow and mode
 src/yhwh-default/    desktop files, editor and shell
 src/yhwh-three/      spatial desktop interface
 src/yhwh-obsidian/   Obsidian plugin
+src/yhwh-tty/        el shaddai: ranger columns, editor and shells
 src/company/         preserved company and paired-review rehearsal interface
 var/tmp/yhwh/        disposable builds, packages and test screenshots
 ```
@@ -48,6 +50,8 @@ yhwh                       # Unix help and discovered commands
 yhwh open default          # also: yhwh open
 yhwh open three
 yhwh open obsidian          # opens Obsidian's registered URI handler
+yhwh open tty [PATH]        # el shaddai, in your terminal
+yhwh tty [PATH]             # also: el-shaddai [PATH]
 yhwh-default [PATH]
 yhwh-three [PATH]
 yhwh-obsidian install VAULT # install plugin; enable it in Obsidian

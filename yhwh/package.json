@@ -10,7 +10,9 @@
     "yhwh": "bin/yhwh",
     "yhwh-default": "bin/yhwh-default",
     "yhwh-three": "bin/yhwh-three",
-    "yhwh-obsidian": "bin/yhwh-obsidian"
+    "yhwh-obsidian": "bin/yhwh-obsidian",
+    "yhwh-tty": "bin/yhwh-tty",
+    "el-shaddai": "bin/el-shaddai"
   },
   "files": [
     "bin",
@@ -21,6 +23,7 @@
     "README.md",
     "test",
     "var/tmp/yhwh/default/ui",
+    "var/tmp/yhwh/tty",
     "var/tmp/yhwh/three/renderer*",
     "var/tmp/yhwh/three/*.ttf",
     "var/tmp/yhwh/obsidian/main.js",
@@ -65,6 +68,8 @@
     "typescript": "^7.0.2"
   },
   "bundleDependencies": [
+    "blessed",
+    "@xterm/headless",
     "@codemirror/lang-html",
     "@codemirror/lang-javascript",
     "@codemirror/lang-json",

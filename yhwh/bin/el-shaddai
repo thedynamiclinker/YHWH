@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+require('./tty/start.cjs').main().catch(error => { console.error(`el shaddai: ${error.message}`); process.exitCode = 1; });

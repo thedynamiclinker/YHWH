@@ -3,7 +3,8 @@ yhwh — files, a shell, and executable English
 Usage: yhwh <command> [arguments]
        yhwh --help | --version
 
-  open [default|three|obsidian] [PATH]  Open an interface (default: default)
+  open [default|three|obsidian|tty] [PATH]  Open an interface (default: default)
+  tty [PATH]       Open el shaddai, the ranger-like terminal interface
   begin [TODO]     Generate a draft and implementation questions in tmp/
   review [DRAFT]   Answer questions and create an approved script in run/
   run [TASK ...]   Execute scripts; record results for human inspection

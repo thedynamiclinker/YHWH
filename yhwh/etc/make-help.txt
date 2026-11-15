@@ -1,7 +1,10 @@
 YHWH: make builds and opens the default interface without installing.
 
-make build           Build all three interfaces
+make build           Build all four interfaces
 make run             Open the built default interface
+make tty             Build and open el shaddai in a terminal (OPEN=PATH)
+make tty-build       Build the terminal interface
+make tty-check       Build and test the real terminal interface
 make three           Build and open the spatial interface (OPEN=PATH)
 make obsidian        Show plugin installation/publication commands
 make obsidian-install VAULT=PATH   Install plugin assets into an existing vault
