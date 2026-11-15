@@ -145,7 +145,7 @@ Character writing is based on sampled passages of the user's *We The Nameless*, 
 
 Character copy lives in **`yhwh/etc/default/words.json`**. The small pencil beside each passage edits that configuration file directly; the footer text is itself an edit button. These are source edits, not user-local text overrides. A read-only installed copy reports a write error; use a writable development checkout to edit installed default text. The upgrades advertisement is editable and preserves the requested wording. No subscription, dating service, sync service, or pre-order checkout is implied by it.
 
-Help → About Us opens `thedynamiclinker.com`. About YHWH links to *Genesis* by The Nameless at the supplied Amazon URL. Offerings has two deliberately unfinished integrations:
+The command palette’s About Us link opens `thedynamiclinker.com`. About YHWH links to *Genesis* by The Nameless at the supplied Amazon URL. Offerings has two deliberately unfinished integrations:
 
 - **Burnt Offering:** an in-app setup guide with Stripe signup, account/bank activation, and Payment Link links. It follows [Stripe's Payment Links guide](https://docs.stripe.com/payment-links/create) and [account activation guide](https://docs.stripe.com/get-started/account/activate). After testing and activation, set `stripe_payment_link='https://buy.stripe.com/…'` in rc to expose the external payment button. No secret key is stored in the app. The app does not verify purchases or grant upgrades.
 - **Piece Offering:** a native file picker prepares a draft addressed to `yhwh@thedynamiclinker.com` in the user's email app. The user must attach the chosen file and send it. A mailto cannot attach a local file portably. This stub never uploads a file or sends mail. A real upload endpoint can replace this one operation later.
@@ -164,3 +164,11 @@ make check                # Both
 ```
 
 The UI checks cover Markdown editing/renaming, pane toggles, app tabs, shell sync, CLI routing, JSON/HTML formatting, detection and overrides, plugins and movement, personality, source-copy editing, offering stubs, persisted settings, and compact layout. Screenshots go to `yhwh/var/tmp/yhwh/default/screenshots/`. Tests restore edited source copy and never send email or collect payments.
+
+## Help! and the mounted file views
+
+The single Help! menu/button opens Man and God, with confirmation before opening a new file-view tab rooted at the checkout’s `mnt/root` or `mnt/yhwh`. `mnt/we` overlays both roots at the same relative paths; shared entries take precedence on collisions, and directories merge. Files stay in their source trees, so reopening reads current content. Parent navigation stops at the selected view root. This is an app file view, not an OS chroot; terminals keep the user’s permissions. Return to ordinary files exits the view.
+
+Help! also exposes fan mail, an email composer for `root@thedynamiclinker.com`, and the Sinai and Horeb book lists. Preparing email opens a draft in the configured desktop mail app; sending remains in that app. The book lists are parsed on each opening from their original Markdown files, including the Genesis link; unlinked titles are marked coming soon.
+
+Edit character copy and new feature labels in `yhwh/etc/default/words.json`, using the existing pencil controls or Help!’s Edit this interface text button. Layout templates and command labels are in `text-renderer.json`; native menu copy is in `text-main.json`. Fan-mail excerpts, attributions, and source links live in `fan-mail.json` and have an in-app edit button. Both book lists have edit buttons that open their original Markdown sources. Preserve this separation when extending these features.

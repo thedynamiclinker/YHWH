@@ -43,7 +43,9 @@ function promptText(title, label, initial = '') {
     const input = dialog.querySelector('input'); input.focus(); input.select();
   });
 }
-function choose(title, message, options) {
+async function choose(title, message, options) {
+  const previous = $('#dialog');
+  if (previous.open) await new Promise(resolve => { previous.addEventListener('close', resolve, { once: true }); previous.close(); });
   return new Promise(resolve => {
     const dialog = modal(title, ui("template", escape(message), options.map((option, index) => `<button data-choice="${index}" class="${index === 0 ? 'primary' : ''}">${escape(option)}</button>`).join('')));
     let result = -1;
@@ -99,10 +101,10 @@ function tabTitles() {
 function renderFiles() {
   const tab = active(); if (!tab) return;
   const filter = $('#file-filter').value.toLocaleLowerCase();
-  const rows = [{ name: '..', path: parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
+  const rows = [{ name: '..', path: tab.cwd === tab.worldRoot ? tab.cwd : parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
   $('#file-list').innerHTML = rows.map(entry => ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.broken ? '!' : entry.directory ? '▱' : '≡', escape(entry.name), entry.parent ? '' : entry.directory ? 'Directory' : humanSize(entry.size), entry.modified ? new Date(entry.modified).toLocaleString() : '')).join('');
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
-  $('#location').value = tab.cwd;
+  $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.cwd;
   $('#shell-state').textContent = tab.terminalExited ? ui("shell-exited") : ui("-files");
 }
@@ -235,7 +237,7 @@ async function renameTo(filename, name) {
   }
   await refresh(); update();
 }
-function selectedPaths() { return [...active().selected].filter(filename => filename !== parent(active().cwd)); }
+function selectedPaths() { return [...active().selected].filter(filename => filename !== parent(active().cwd) && filename !== active().worldRoot); }
 async function pasteFiles() {
   if (!clipboardFiles) return;
   for (const filename of clipboardFiles.paths) await call(clipboardFiles.cut ? 'file:move' : 'file:copy', filename, join(active().cwd, basename(filename)));
@@ -370,6 +372,36 @@ async function setEnergy(value) {
   await call('settings:save', { theme: value === 0 ? 'dawkins' : value < 100 ? 'nietzsche' : 'yhwh', energy: String(value) });
   temporaryEnergy = undefined; await refresh();
 }
+function higherHelp() {
+  modal(words.helpTitle, word('helpTitle', 'h3') + ui('higher-help', ...['man', 'god', 'fanTitle', 'mailTitle', 'booksSinai', 'booksHoreb', 'returnFiles'].map(key => escape(words[key])), escape(ui('help')), escape(ui('commands'))) + `<button data-command="edit-help-copy">${escape(ui('edit-feature-copy'))}</button>`);
+}
+async function enterWorld(name) {
+  const choice = await choose(words.helpTitle, words[name + 'Message'], [words[name + 'Confirm'], ui('cancel')]);
+  if (choice !== 0) return;
+  const tab = await newTab();
+  try {
+    Object.assign(tab, await call('world:enter', tab.id, name));
+    tab.history = [tab.cwd]; tab.historyIndex = 0; tab.showFiles = true; update();
+  } catch (error) { await closeTab(tab.id); throw error; }
+}
+async function fanMail() {
+  const quotes = await call('world:quotes');
+  modal(words.fanTitle, word('fanTitle', 'h3') + word('fanIntro') + quotes.map(item => `<blockquote><p>“${escape(item.quote)}”</p><footer>${escape(item.author)} · <a href="${escape(item.url)}">${escape(item.work)}</a></footer></blockquote>`).join('') + `<button data-command="edit-fan-mail">${escape(ui('edit-feature-copy'))}</button>`);
+}
+function sendMail() {
+  modal(words.mailTitle, word('mailTitle', 'h3') + word('mailIntro') + ui('mail-form', escape(words.mailSubject), escape(words.mailBody), escape(words.mailPrepare)), dialog => {
+    dialog.querySelector('form').onsubmit = async event => {
+      event.preventDefault();
+      const data = new FormData(event.target);
+      try { await call('external', `mailto:root@thedynamiclinker.com?subject=${encodeURIComponent(data.get('subject'))}&body=${encodeURIComponent(data.get('body'))}`); }
+      catch (error) { notice(error.message); }
+    };
+  });
+}
+async function bookList(name) {
+  const library = await call('world:books', name);
+  modal(words[name === 'sinai' ? 'booksSinai' : 'booksHoreb'], `<ol>${library.items.map(item => `<li>${item.url ? `<a href="${escape(item.url)}">${escape(item.title)}</a>` : `${escape(item.title)} <small>${escape(words.booksUnavailable)}</small>`}</li>`).join('')}</ol><button data-command="edit-${name}">${escape(ui('edit-feature-copy'))}</button>`);
+}
 function help() {
   modal(ui("help"), ui("each-tab-is-a-directory-a-shell-and-an-optional-", [...commands.values()].filter(item => item.keys).map(item => `<div><span>${escape(item.name)}</span><kbd>${escape(item.keys)}</kbd></div>`).join('')));
 }
@@ -421,6 +453,17 @@ async function reloadPlugins(config) {
 }
 
 const definitions = [
+  ['higher-help', ui('higher-power'), '', higherHelp],
+  ['be-root', ui('man'), '', () => enterWorld('root')],
+  ['be-yhwh', ui('god'), '', () => enterWorld('yhwh')],
+  ['fan-mail', ui('fan-mail'), '', fanMail],
+  ['edit-fan-mail', ui('edit-feature-copy'), '', async () => { $('#dialog').close(); await openFile(join(boot.root, '../../etc/default/fan-mail.json'), await newTab()); }],
+  ['send-mail', ui('send-mail'), '', sendMail],
+  ['sinai', ui('sinai'), '', () => bookList('sinai')],
+  ['horeb', ui('horeb'), '', () => bookList('horeb')],
+  ...['sinai', 'horeb'].map(name => [`edit-${name}`, ui('edit-feature-copy'), '', async () => { const library = await call('world:books', name); $('#dialog').close(); await openFile(library.filename, await newTab()); }]),
+  ['edit-help-copy', ui('edit-feature-copy'), '', () => { $('#dialog').close(); return newTab().then(tab => openFile(join(boot.root, '../../etc/default/words.json'), tab)); }],
+  ['leave-world', ui('return-files'), '', async () => { Object.assign(active(), await call('world:leave', active().id)); active().history = [active().cwd]; active().historyIndex = 0; $('#dialog').close(); update(); }],
   ['new-tab', ui("new-tab"), ui("ctrl-t"), () => newTab()],
   ['close-tab', ui("close-tab"), ui("ctrl-w"), () => closeTab()],
   ['next-tab', ui("next-tab"), ui("ctrl-tab-ctrl-pagedown"), () => activate(tabs[(tabs.indexOf(active()) + 1) % tabs.length].id)],
@@ -572,7 +615,7 @@ $('#file-list').onkeydown = event => {
   } else return;
   event.preventDefault(); if (action) Promise.resolve().then(action).catch(error => notice(error.message));
 };
-$('#location-form').onsubmit = event => { event.preventDefault(); let directory = $('#location').value; if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1); navigate(directory).catch(error => notice(error.message)); };
+$('#location-form').onsubmit = event => { event.preventDefault(); let directory = $('#location').value; if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1); if (active().worldRoot && directory.startsWith('/')) directory = active().worldRoot + directory; navigate(directory).catch(error => notice(error.message)); };
 $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };
@@ -612,7 +655,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
 }
 
 (async () => {
-  boot = await call('bootstrap'); words = boot.words;
+  boot = await call('bootstrap'); words = boot.words; $('#higher-help').textContent = words.helpButton;
   try { await openRequest(boot.initial); } catch (error) { notice(error.message); if (!tabs.length) await newTab(boot.home); }
   for (const opening of boot.pending) await openRequest(opening);
   for (const [id, messages] of pendingTerminal) { if (tabs.some(tab => tab.id === id)) for (const message of messages) terminalMessage(message); }

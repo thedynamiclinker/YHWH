@@ -38,6 +38,27 @@ const root = path.resolve(__dirname, '..');
   }
   try {
     await launch();
+    await run('higher-help');
+    assert.equal(await page.locator('#dialog h2').textContent(), 'Help from a higher power');
+    await page.locator('[data-command="be-root"]').click();
+    await page.locator('[data-choice="0"]').click();
+    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/root'));
+    await page.waitForFunction(() => document.querySelector('#location').value === '/');
+    await page.evaluate(() => window.YHWH.run('parent'));
+    assert.equal(await page.locator('#location').inputValue(), '/');
+    await run('close-tab');
+    await run('sinai');
+    assert.equal(await page.locator('#dialog li').count(), 10);
+    assert.equal(await page.locator('#dialog li a').getAttribute('href'), 'https://www.amazon.com/dp/B0HNQ23QKT');
+    await run('horeb');
+    assert.equal(await page.locator('#dialog li').count(), 10);
+    await run('fan-mail');
+    assert.equal(await page.locator('#dialog blockquote').count(), 2);
+    await run('send-mail');
+    assert.equal(await page.locator('#mail-form input[name="subject"]').count(), 1);
+    await page.locator('#dialog [data-close]').click();
+    console.log('✓ higher-power views, root navigation, both book lists, attributed fan mail, email composer');
+
     assert.equal(await page.locator('#files').isVisible(), true); assert.equal(await page.locator('#terminal-panel').isVisible(), false);
     assert.equal(await page.locator('.welcome h1').textContent().then(text => text.includes('Where are you?')), true);
     assert.equal(await page.locator('.file-row').filter({ hasText: '.hidden' }).count(), 0);

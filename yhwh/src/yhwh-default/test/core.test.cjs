@@ -122,3 +122,21 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
   assert.equal(messages.some(message => message.data?.includes('finished')), true);
   assert.equal(messages.some(message => message.type === 'error'), false);
  });
+
+ test('world views merge shared directories and read both live book sources', async () => {
+  const worlds = require('../app/worlds.cjs');
+  for (const name of ['root', 'yhwh']) {
+    const worldRoot = await worlds.enter(name), focus = { worldRoot, cwd: worldRoot };
+    assert.equal(worlds.directory(focus, '..'), worldRoot);
+    focus.cwd = path.join(worldRoot, 'usr');
+    const rows = await worlds.list(focus, false);
+    assert.ok(rows.some(row => row.name === 'share' && row.directory));
+    assert.equal(await worlds.physical(focus, path.join(focus.cwd, 'share')), path.resolve(root, '../../../mnt/we/usr/share'));
+  }
+  for (const name of ['sinai', 'horeb']) {
+    const { items } = await worlds.books(name);
+    assert.equal(items.length, 10);
+    assert.equal(items[0].url, 'https://www.amazon.com/dp/B0HNQ23QKT');
+    assert.equal(items[9].title, 'Dudetheyreontome');
+  }
+ });

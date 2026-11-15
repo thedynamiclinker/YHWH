@@ -10,6 +10,7 @@ const files = require('../../../lib/files.cjs');
 const { resolveConfig, configLocations, userDirectory, saveSettings } = require('./config.cjs');
 
 const root = path.join(__dirname, '..');
+const worlds = require('./worlds.cjs');
 const profile = process.env.YHWH_DATA_DIR || path.join(userDirectory(), 'state');
 app.setPath(ui("userdata"), profile);
 app.setName(ui("yhwh"));
@@ -73,11 +74,11 @@ async function configFor(target) {
   return config;
 }
 
-function watchDirectory(focus) {
+async function watchDirectory(focus) {
   focus.watcher?.close();
   clearTimeout(focus.watchTimer);
   try {
-    focus.watcher = watch(focus.cwd, () => {
+    focus.watcher = watch(await worlds.physical(focus), () => {
       clearTimeout(focus.watchTimer);
       focus.watchTimer = setTimeout(() => send('directory-changed', { id: focus.id }), 150);
     });
@@ -88,14 +89,25 @@ function watchDirectory(focus) {
 async function navigate(id, directory, fromShell = false) {
   const focus = focuses.get(id);
   if (!focus) throw new Error(ui("that-tab-has-closed-"));
-  directory = path.resolve(focus.cwd, directory);
-  const stat = await fs.stat(directory);
+  directory = worlds.directory(focus, directory);
+  const stat = await fs.stat(await worlds.physical(focus, directory));
   if (!stat.isDirectory()) throw new Error(ui("choose-a-directory-"));
   focus.cwd = directory;
-  watchDirectory(focus);
-  if (!fromShell) host.send({ type: 'cd', id, cwd: directory });
+  await watchDirectory(focus);
+  if (!fromShell) host.send({ type: 'cd', id, cwd: await worlds.physical(focus, directory) });
   const config = await configFor(directory);
-  return { cwd: directory, entries: await files.list(directory, config.values.show_hidden === 'true'), config };
+  return { worldRoot: focus.worldRoot || null, cwd: directory, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config };
+}
+
+async function sourcePath(filename) {
+  const focus = [...focuses.values()].find(item => item.worldRoot && (filename === item.worldRoot || filename.startsWith(item.worldRoot + path.sep)));
+  return focus ? worlds.physical(focus, filename) : filename;
+}
+
+async function destination(filename) {
+  const focus = [...focuses.values()].find(item => item.worldRoot && (filename === item.worldRoot || filename.startsWith(item.worldRoot + path.sep)));
+  if (!focus) return filename;
+  return path.join(await worlds.physical(focus, path.dirname(filename)), path.basename(filename));
 }
 
 async function launch() {
@@ -129,17 +141,29 @@ async function launch() {
     } catch (error) { focuses.delete(id); throw error; }
   });
   handle('focus:close', id => { const focus = focuses.get(id); focus?.watcher?.close(); clearTimeout(focus?.watchTimer); focuses.delete(id); host.send({ type: 'close', id }); });
+  handle('world:enter', async (id, name) => {
+    const focus = focuses.get(id);
+    const directory = await worlds.enter(name);
+    focus.worldRoot = directory;
+    return navigate(id, directory);
+  });
+  handle('world:leave', async id => {
+    const focus = focuses.get(id); focus.worldRoot = null;
+    return navigate(id, os.homedir());
+  });
+  handle('world:books', name => worlds.books(name));
+  handle('world:quotes', () => fs.readFile(require('../../../lib/paths.cjs').etc('default', 'fan-mail.json'), 'utf8').then(JSON.parse));
   handle('navigate', navigate);
-  handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await files.list(focus.cwd, config.values.show_hidden === 'true'), config }; });
-  handle('file:read', async filename => { const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
+  handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });
+  handle('file:read', async filename => { filename = await sourcePath(filename); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
   handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(absolute); return { path: absolute, directory: stat.isDirectory() }; });
-  handle('file:save', files.save);
-  handle('file:create', files.create);
-  handle('file:move', files.move);
-  handle('file:copy', async (source, destination) => { await fs.cp(source, destination, { recursive: true, errorOnExist: true, force: false }); return destination; });
-  handle('file:trash', filename => shell.trashItem(filename));
-  handle('file:external', filename => shell.openPath(filename));
-  handle('file:reveal', filename => shell.showItemInFolder(filename));
+  handle('file:save', async (filename, ...args) => files.save(await destination(filename), ...args));
+  handle('file:create', async (filename, directory) => files.create(await destination(filename), directory));
+  handle('file:move', async (source, target) => files.move(await sourcePath(source), await destination(target)));
+  handle('file:copy', async (source, target) => { target = await destination(target); await fs.cp(await sourcePath(source), target, { recursive: true, errorOnExist: true, force: false }); return target; });
+  handle('file:trash', filename => sourcePath(filename).then(value => shell.trashItem(value)));
+  handle('file:external', filename => sourcePath(filename).then(value => shell.openPath(value)));
+  handle('file:reveal', filename => sourcePath(filename).then(value => shell.showItemInFolder(value)));
   handle('clipboard:path', filename => clipboard.writeText(filename));
   handle('choose', async (kind, directory) => {
     const result = await dialog.showOpenDialog(window, { defaultPath: directory, properties: kind === 'directory' ? [ui("opendirectory")] : [ui("openfile")] });
@@ -188,30 +212,12 @@ async function launch() {
   for (const [channel, type] of [['terminal:write', 'write'], ['terminal:resize', 'resize']]) {
     ipcMain.on(channel, (event, message) => { if (event.senderFrame.url === entry && focuses.has(message.id)) host.send({ ...message, type }); });
   }
-  const template = [
-    { label: ui("file"), submenu: [
-      { label: ui("new-tab"), click: () => command('new-tab') }, { label: ui("new-file"), click: () => command('new-file') },
-      { label: ui("open-file-"), click: () => command('open-file') }, { label: ui("open-directory-"), click: () => command('open-directory') },
-      { label: ui("save"), click: () => command('save') }, { type: 'separator' }, { label: ui("close-tab"), click: () => command('close-tab') }, { role: 'quit' },
-    ] },
-    { role: ui("editmenu") },
-    { label: ui("view"), submenu: [
-      ...[[ui("toggle-file-manager"), 'toggle-files'], [ui("expand-file-manager"), 'expand-files'], [ui("toggle-terminal"), 'toggle-terminal'], [ui("expand-terminal"), 'expand-terminal'], [ui("focus-editor"), 'focus-editor'], [ui("command-palette"), 'palette'], [ui("settings"), 'settings']].map(([label, id]) => ({ label, click: () => command(id) })),
-      { type: 'separator' }, { role: 'reload' }, { role: ui("toggledevtools") }, { role: 'togglefullscreen' },
-    ] },
-    { label: ui("offerings"), submenu: [{ label: ui("burnt-offering"), click: () => command('burnt') }, { label: ui("piece-offering"), click: () => command('piece') }] },
-    { label: ui("help"), submenu: [
-      { label: ui("keyboard-shortcuts"), click: () => command('help') },
-      { label: ui("about-us"), click: () => shell.openExternal('https://thedynamiclinker.com') },
-      { label: ui("about-yhwh"), click: () => command('about') },
-    ] },
-  ];
-  if (process.platform === 'darwin') template.unshift({ role: ui("appmenu") });
+  const template = [{ label: ui('higher-help'), click: () => command('higher-help') }];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
   window = new BrowserWindow({
     ...require('../../../etc/default/window.json'),
         
-    title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', 'icon.png'), autoHideMenuBar: true,
+    title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', 'icon.png'), autoHideMenuBar: false,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
