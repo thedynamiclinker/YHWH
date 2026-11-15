@@ -256,7 +256,9 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 .verse-compact .verse-heading button { font-size: .9375rem; }
 .verse-compact .verse-english { font-size: .9375rem; line-height: 1.65; }
 .verse-compact .verse-original { font-size: 1.125rem; line-height: 1.8; }
-.margin-box { flex-shrink: 0; min-height: 0; max-height: 30vh; display: flex; flex-direction: column; border-top: 1px solid var(--line); padding: 0 24px; background: var(--panel); }
+.document { min-height: 0; }
+#documents { min-height: 90px; }
+.margin-box { flex-shrink: 1; min-height: 36px; max-height: 30vh; display: flex; flex-direction: column; border-top: 1px solid var(--line); padding: 0 24px; background: var(--panel); }
 .margin-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; color: var(--muted); font-size: .75rem; }
 .margin-header > span { letter-spacing: .08em; text-transform: uppercase; }
 .margin-header button { font-size: .75rem; padding: 3px 6px; }

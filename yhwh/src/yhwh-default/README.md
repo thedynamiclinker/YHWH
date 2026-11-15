@@ -139,11 +139,36 @@ Each module is loaded from a local source blob; bundle dependencies into that mo
 
 ## Personality, help, and Offerings
 
-The original Paleo-Hebrew font and purple/charcoal presentation remain. YHWH-ness 100 is YHWH, 1–99 is Nietzsche, 0 is monochrome Dawkins. The mode button exposes Nietzsche Family Circus; it fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
+The original Paleo-Hebrew font and purple/charcoal presentation remain. The title bar's YHWH-ness slider sets 100 for YHWH, 1–99 for Nietzsche, and 0 for monochrome Dawkins. **In the margins**, below the document, shows a random book verse in YHWH mode, Nietzsche Family Circus in Nietzsche mode, and is hidden in Dawkins mode. The refresh button chooses another verse or pairing; the minus/plus button collapses the box and remembers your choice. Circus fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
 
 Character writing is based on sampled passages of the user's *We The Nameless*, especially Genesis 3 and 18 and Exodus 3: embodied curiosity, interruptions, bargaining, grand promises, and occasional regret. Routine controls keep their ordinary names.
 
 Character copy lives in **`yhwh/etc/default/words.json`**. The small pencil beside each passage edits that configuration file directly; the footer text is itself an edit button. These are source edits, not user-local text overrides. A read-only installed copy reports a write error; use a writable development checkout to edit installed default text. The upgrades advertisement is editable and preserves the requested wording. No subscription, dating service, sync service, or pre-order checkout is implied by it.
+
+Edited character text preserves line breaks and blank lines, including on the welcome screen and in dialogs. Text remains plain text; Markdown documents retain their own rendering rules.
+
+## Book verses and citations
+
+Use **Browse verses** in the tool ribbon or random verse box, or **Browse We The Nameless · chapter and verse** in Commands. Choose a book, chapter and verse, type a reference such as `Genesis 18:1`, or use Previous/Next across chapter boundaries. All 50 Genesis chapters are available, along with the other imported books. Combined and split labels retain their manuscript form: `Genesis 2:7` displays the 6–7 block; `Genesis 49:24` displays 24a and 24b. Numbering follows the source book.
+
+Cards follow `master.tex`'s horizontal `\Verse` layout: reference between rules, English left, original text right, commentary below. Each card has its own Commentary disclosure and an inline editor. Edits save in the app profile's `verse-commentary.json` and survive relaunch and import refreshes. Empty commentary can be added, edited commentary can be cleared, and **Restore book commentary** removes the local edit. Inbox letters and the optional walk use these same cards beneath their literary adaptations.
+
+The bundled `yhwh/etc/verses/we-the-nameless.json` contains 10,196 blocks from 340 matching `.tex` files. Each record includes readable text, the four exact raw TeX fields, book/chapter/label, stable identity, source file/line, and combined/split numeric lookup information. A source manifest records file hashes and counts, including files with no verses. Alternate `14-raw.tex` and apocryphal blocks are retained; ordinary browsing and random selections use the main chapter files. Display text transcribes TeX formatting, lists and footnotes into plain text; raw TeX preserves the manuscript's full formatting and content.
+
+To refresh the import from the vault root:
+
+```sh
+node yhwh/bin/import-verses.cjs
+# Optional explicit source and output paths:
+node yhwh/bin/import-verses.cjs '/path/to/We The Nameless' /path/to/verses.json
+```
+
+Normal builds and installed copies use the bundled JSON without access to the book checkout. Layout and control copy live in `yhwh/etc/default/text-verses.json`. Plugins can embed the same component or open its browser:
+
+```js
+element.append(await app.createCitation('Genesis 18:1', { commentary: false, compact: true }));
+await app.showVerse('Genesis 28:16–17');
+```
 
 The command palette’s About Us link opens `thedynamiclinker.com`. About YHWH links to *Genesis* by The Nameless at the supplied Amazon URL. Offerings has two deliberately unfinished integrations:
 

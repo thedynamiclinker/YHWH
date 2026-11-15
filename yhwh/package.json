@@ -44,15 +44,17 @@
     "@inquirer/prompts": "^8.8.0",
     "@lezer/highlight": "^1.2.5",
     "@xterm/addon-fit": "^0.10.0",
+    "@xterm/headless": "^6.0.0",
     "@xterm/xterm": "^5.5.0",
+    "blessed": "^0.1.81",
     "codemirror": "^6.0.2",
     "dompurify": "^3.3.0",
+    "electron": "^45.2.3",
     "lucide": "^0.468.0",
     "marked": "^17.0.1",
     "node-pty": "^1.1.0",
     "prettier": "^3.6.2",
-    "three": "^0.185.0",
-    "electron": "^45.2.3"
+    "three": "^0.185.0"
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",

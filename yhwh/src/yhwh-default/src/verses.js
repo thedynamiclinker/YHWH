@@ -6,6 +6,7 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': 
 export function createVerseUI({ call, modal, notice }) {
   const updaters = new WeakMap();
   let catalog, theme, randomVerse, circusPair, generation = 0;
+  let collapsed = localStorage.getItem('yhwh:margin:collapsed') === 'true';
   const library = () => catalog ||= call('verse:catalog');
 
   function block(initial, { commentary = false, compact = false } = {}) {
@@ -119,10 +120,14 @@ export function createVerseUI({ call, modal, notice }) {
     if (box.hidden) return;
     const current = ++generation, mode = theme;
     const title = mode === 'nietzsche' ? ui('circus') : ui('margin');
-    box.innerHTML = `<header class="margin-header"><span>${escape(title)}</span><div>${mode === 'yhwh' ? `<button type="button" data-browse-verses>${escape(ui('browse'))}</button>` : ''}<button type="button" data-another-margin aria-label="${escape(ui(mode === 'yhwh' ? 'another-verse' : 'another-pair'))}">↻</button></div></header><div class="margin-content" aria-live="polite"><p role="status">${escape(ui('loading'))}</p></div>`;
+    box.innerHTML = `<header class="margin-header"><span>${escape(title)}</span><div>${mode === 'yhwh' ? `<button type="button" data-browse-verses>${escape(ui('browse'))}</button>` : ''}<button type="button" data-another-margin aria-label="${escape(ui(mode === 'yhwh' ? 'another-verse' : 'another-pair'))}">↻</button><button type="button" data-collapse-margin aria-label="${escape(ui('toggle-margin'))}" aria-expanded="${!collapsed}">${collapsed ? '＋' : '−'}</button></div></header><div class="margin-content" aria-live="polite" ${collapsed ? 'hidden' : ''}><p role="status">${escape(ui('loading'))}</p></div>`;
     box.querySelector('[data-browse-verses]')?.addEventListener('click', () => browse(randomVerse?.id).catch(error => notice(error.message)));
     box.querySelector('[data-another-margin]').onclick = () => margin(true);
     const content = box.querySelector('.margin-content');
+    box.querySelector('[data-collapse-margin]').onclick = event => {
+      collapsed = !collapsed; localStorage.setItem('yhwh:margin:collapsed', String(collapsed));
+      content.hidden = collapsed; event.currentTarget.setAttribute('aria-expanded', String(!collapsed)); event.currentTarget.textContent = collapsed ? '＋' : '−';
+    };
     try {
       if (mode === 'yhwh') {
         const selected = !refresh && randomVerse ? randomVerse : await call('verse:random');
