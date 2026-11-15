@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+def yhwhRoot = rootProject.projectDir.toPath().resolve('../../..').normalize().toFile()
+tasks.register('prepareYhwhWeb', Exec) {
+    workingDir yhwhRoot
+    commandLine(System.getenv('YHWH_NODE') ?: 'node', 'bin/mobile/prepare.cjs', 'android')
+}
+tasks.named('preBuild').configure { dependsOn 'prepareYhwhWeb' }
+
 android {
     namespace = "com.thedynamiclinker.yhwh"
     compileSdk = rootProject.ext.compileSdkVersion

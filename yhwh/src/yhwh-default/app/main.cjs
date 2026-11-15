@@ -248,7 +248,7 @@ async function launch() {
     ...require('../../../etc/default/window.json'),
         
     title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', development ? 'icon-development.png' : 'icon.png'), autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { preload: require('../../../lib/paths.cjs').output('default/ui/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());

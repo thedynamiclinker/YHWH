@@ -10,3 +10,6 @@
   trail and images must remain usable from the God world view.
 - Preserve the existing online video URLs; allow media from `https://fukkot.com`
   in the desktop preview. Video playback still needs a network connection.
+- In reading and hybrid previews, videos start at 400px wide, bounded by the
+  available space, and expand to the reading width while focused. Video controls
+  must remain interactive without switching the hybrid block into source.

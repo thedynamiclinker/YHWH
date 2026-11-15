@@ -103,6 +103,9 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .markdown-rendered table { border-collapse: collapse; width: 100%; }
 .markdown-rendered :is(td,th) { border: 1px solid var(--line); padding: 6px 12px; }
 .markdown-rendered img { max-width: 100%; }
+.markdown-rendered video { display: block; width: 400px; max-width: 100%; height: auto; }
+.markdown-rendered video:focus-within { width: 100%; }
+.markdown-rendered video:fullscreen { width: 100%; height: 100%; object-fit: contain; }
 .live-block { padding: 0 28px; cursor: text; }
 .live-block > :first-child { margin-top: 4px; }
 .live-block > :last-child { margin-bottom: 4px; }

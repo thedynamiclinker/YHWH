@@ -128,6 +128,9 @@ export function installMobile(app, storage) {
   for (const id of ['toggle-terminal', 'expand-terminal', 'focus-terminal', 'toggle-navigation']) {
     command(id, `${app.commands.get(id)?.name || id} (desktop)`, () => app.notice('Local Unix shells are available on desktop.'));
   }
+  for (const id of ['edit-fan-mail', 'edit-sinai', 'edit-horeb', 'edit-help-copy']) {
+    command(id, 'Edit application source copy (desktop)', () => app.notice('Edit the application source in the desktop checkout, then rebuild the apps.'));
+  }
   command('mobile-share', 'Export or share file', () => app.active().file ? window.yhwh.call('file:external', app.active().file.path) : app.notice('Open and save a file first.'));
   command('mobile-import', 'Import files from device', () => {
     const input = document.createElement('input'); input.type = 'file'; input.multiple = true;
@@ -158,17 +161,19 @@ export function installMobile(app, storage) {
 
   // Recover unsaved work after the OS evicts the WebView. Saving remains
   // explicit and recovery never overwrites the document on disk.
+  let drafts;
+  try { drafts = JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]'); } catch { drafts = []; }
+  const pendingDrafts = new Map(drafts.map(draft => [draft.path, draft]));
   let draftTimer;
   const persistDraft = () => {
     clearTimeout(draftTimer);
-    const drafts = app.tabs.filter(tab => tab.dirty && tab.editor).map(tab => ({ path: tab.file.path, text: tab.editor.state.doc.toString(), modified: tab.file.modified }));
-    try { localStorage.setItem('yhwh:mobile:drafts', JSON.stringify(drafts)); } catch { app.notice('Recovery storage is full. Save your changes.'); }
+    const current = new Map(pendingDrafts);
+    for (const tab of app.tabs.filter(tab => tab.dirty && tab.editor)) current.set(tab.file.path, { path: tab.file.path, text: tab.editor.state.doc.toString(), modified: tab.file.modified });
+    try { localStorage.setItem('yhwh:mobile:drafts', JSON.stringify([...current.values()])); } catch { app.notice('Recovery storage is full. Save your changes.'); }
   };
   app.on('change', () => { clearTimeout(draftTimer); draftTimer = setTimeout(persistDraft, 250); });
-  app.on('save', persistDraft);
+  for (const event of ['save', 'open', 'close']) app.on(event, persistDraft);
   document.addEventListener('visibilitychange', () => { if (document.hidden) persistDraft(); });
-  let drafts;
-  try { drafts = JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]'); } catch { drafts = []; }
   if (drafts.length) {
     const dialog = sheet('Recover unsaved edits'), content = dialog.querySelector('.mobile-sheet-content');
     content.innerHTML = '<p>YHWH found unsaved edits from a previous session. Recovery opens an editor buffer for review.</p>';
@@ -180,6 +185,7 @@ export function installMobile(app, storage) {
           if (!await storage.stat(draft.path)) { app.notice('The original file is missing. Recreate it before recovering this draft.'); return; }
           if (!await app.openFile(draft.path, tab) || !tab.editor) return;
           tab.file.modified = draft.modified;
+          pendingDrafts.delete(draft.path);
           tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: draft.text } }); tab.editor.focus();
         } catch (error) { app.notice(error.message); }
       }; content.append(button);

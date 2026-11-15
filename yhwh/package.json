@@ -20,6 +20,8 @@
     "etc",
     "src",
     "Makefile",
+    "capacitor.config.json",
+    "AGENTS.md",
     "README.md",
     "test",
     "var/tmp/yhwh/default/ui",
@@ -32,7 +34,12 @@
   "scripts": {
     "build": "node bin/build.cjs",
     "test": "node --test test/*.test.cjs",
-    "check": "make check"
+    "check": "make check",
+    "mobile:build": "node bin/build.cjs mobile",
+    "mobile:sync": "npm run mobile:build && cap sync",
+    "mobile:check": "make mobile-check",
+    "android": "npm run mobile:sync && cap open android",
+    "ios": "npm run mobile:sync && cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
@@ -45,6 +52,7 @@
     "@capacitor/ios": "^8.6.2",
     "@capacitor/keyboard": "^8.0.6",
     "@capacitor/share": "^8.0.3",
+    "@codemirror/commands": "^6.11.1",
     "@codemirror/lang-html": "^6.4.0",
     "@codemirror/lang-javascript": "^6.2.0",
     "@codemirror/lang-json": "^6.0.0",

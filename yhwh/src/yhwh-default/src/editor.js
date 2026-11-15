@@ -17,9 +17,10 @@ marked.use({ extensions: [{
 export function renderMarkdown(text, filename) {
   const template = document.createElement('template');
   template.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: ['style', 'input', 'form'], FORBID_ATTR: ['style'] });
+  for (const video of template.content.querySelectorAll('video')) video.tabIndex = 0;
   if (filename) {
     const normalized = filename.replace(/\\/g, '/');
-    const base = `file://${normalized.startsWith('/') ? '' : '/'}${encodeURI(normalized).replace(/#/g, '%23').replace(/\?/g, '%3F')}`;
+    const base = window.yhwh?.fileURL?.(normalized) || `file://${normalized.startsWith('/') ? '' : '/'}${encodeURI(normalized).replace(/#/g, '%23').replace(/\?/g, '%3F')}`;
     for (const image of template.content.querySelectorAll('img[src]')) {
       const source = image.getAttribute('src');
       if (!/^[a-z][\w+.-]*:/i.test(source)) image.src = new URL(source, base).href;
@@ -41,6 +42,10 @@ class MarkdownBlock extends WidgetType {
     element.className = 'markdown-rendered live-block';
     element.innerHTML = renderMarkdown(this.text, view.dom.closest('.document-content')?.dataset.filename);
     element.addEventListener('mousedown', event => {
+      if (event.target.closest('video')) {
+        event.stopPropagation();
+        return;
+      }
       if (event.target.closest('a')) {
         // Keep the widget alive until click opens the link. Moving the editor
         // selection here would replace it with source before click arrives.
@@ -54,7 +59,7 @@ class MarkdownBlock extends WidgetType {
     });
     return element;
   }
-  ignoreEvent(event) { return !!event.target.closest?.('a'); }
+  ignoreEvent(event) { return !!event.target.closest?.('a, video'); }
 }
 
 function preview(state) {

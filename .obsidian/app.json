@@ -33,5 +33,7 @@
     "yhwh/node_modules",
     ".git",
     ".lord-agents.lock"
-  ]
+  ],
+  "showLineNumber": false,
+  "autoPairMarkdown": false
 }

@@ -113,7 +113,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       await unused(destination); await storage.copy(source, destination); changed(); return destination;
     },
     async 'file:trash'(filename) {
-      const source = normalize(filename); if (source === HOME) throw new Error('Cannot trash the workspace.');
+      const source = normalize(filename); if (source === HOME || source === `${HOME}/.Trash`) throw new Error('Cannot trash the workspace or its Trash folder.');
       const target = `${HOME}/.Trash`; if (!await storage.stat(target)) await storage.mkdir(target);
       await storage.move(source, `${target}/${crypto.randomUUID()}-${source.split('/').at(-1)}`); changed();
     },
@@ -143,6 +143,8 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
   };
   const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save']);
   return {
+    // Parity tests require an explicit decision for every shared operation.
+    supports: channel => Object.hasOwn(handlers, channel) || Object.hasOwn(unavailable, channel),
     async call(channel, ...args) {
       if (unavailable[channel]) throw new Error(unavailable[channel]);
       const fn = handlers[channel]; if (!Object.hasOwn(handlers, channel)) throw new Error(`The operation “${channel}” needs mobile support.`);

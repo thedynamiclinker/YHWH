@@ -2,7 +2,8 @@
 
 `make` here or at the vault root builds and opens the default app without
 installing. `make tty` builds and opens **el shaddai**, the terminal interface.
-`make build` builds all four interfaces. `make help` lists targets.
+`make build` builds all interfaces, including the shared Android/iOS UI.
+`make help` lists targets.
 
 ```text
 bin/                 executable entry points and internal support programs
@@ -12,9 +13,19 @@ src/yhwh-default/    desktop files, editor and shell
 src/yhwh-three/      spatial desktop interface
 src/yhwh-obsidian/   Obsidian plugin
 src/yhwh-tty/        el shaddai: ranger columns, editor and shells
+src/yhwh-mobile/     Android and iOS native shells using the shared editor/UI
 src/company/         preserved company and paired-review rehearsal interface
 var/tmp/yhwh/        disposable builds, packages and test screenshots
 ```
+
+Android and iOS use the same renderer, editor, commands, themes and verse model
+as the desktop app, with an Obsidian-inspired touch layout. `make mobile-sync`
+builds and copies the latest shared UI into both native projects. `make android`
+opens Android Studio; `make ios` opens Xcode on macOS. See the
+[mobile guide](src/yhwh-mobile/README.md) for device builds, platform differences
+and the requirement to carry new features across all app versions wherever
+possible and practical. Shared source changes reach newly built releases;
+installed devices still need an app update.
 
 One root npm lockfile owns dependencies. Node >=22.12, npm, Make, Bash, Git,
 `fold`, Python 3 and `file` are required. Native node-pty builds may need a C++
@@ -24,8 +35,10 @@ runtime helpers obtain native Electron and Xvfb through nixpkgs; explicit
 requires an installed Obsidian application and an enabled YHWH plugin.
 
 `make check` runs core and isolated workflow tests, plugin type checks and
-publication tests against a fake GitHub command, and real headless Electron
-workflows. It never invokes the prefix installer or uninstaller. Run
+publication tests against a fake GitHub command, mobile Chromium workflows,
+and real headless Electron workflows. Mobile checks use system Chrome/Chromium
+or Playwright's Chromium (`YHWH_CHROMIUM` overrides the executable).
+It never invokes the prefix installer or uninstaller. Run
 `node test/prefix-check.cjs` separately to exercise both installations and guarded
 uninstall in a disposable HOME. Agent tests
 use a deterministic local fixture; they never run real development tasks.

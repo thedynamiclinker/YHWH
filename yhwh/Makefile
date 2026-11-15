@@ -33,12 +33,14 @@ uninstall:
 check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test
+	$(NODE) src/yhwh-mobile/test/ui.cjs
 	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-three/test/ui.cjs
 test: verify-deps
 	$(NODE) --test test/*.test.cjs
 	$(NODE) --test src/yhwh-default/test/*.test.cjs
 	$(NODE) --test src/yhwh-three/test/*.test.cjs
 	$(NODE) --test src/yhwh-tty/test/*.test.cjs
+	$(NODE) --test src/yhwh-mobile/test/*.test.cjs
 	npm --prefix src/yhwh-obsidian run check
 	npm --prefix src/yhwh-obsidian test
 	$(MAKE) company-check
@@ -77,3 +79,19 @@ nix-shell:
 .PHONY: verify-deps
 verify-deps:
 	@$(NODE) -e 'try { require.resolve("esbuild"); require.resolve("@inquirer/prompts"); } catch { console.error("Dependencies missing. Run make deps first."); process.exit(1); }'
+
+.PHONY: mobile-build mobile-sync mobile-check android android-apk ios
+mobile-build: deps
+	$(NODE) bin/build.cjs mobile
+mobile-sync: mobile-build
+	./node_modules/.bin/cap sync
+mobile-check: mobile-build
+	$(NODE) --test src/yhwh-mobile/test/*.test.cjs
+	$(NODE) src/yhwh-mobile/test/ui.cjs
+android: mobile-sync
+	./node_modules/.bin/cap open android
+android-apk: mobile-sync
+	cd src/yhwh-mobile/android && ./gradlew assembleDebug
+	cp src/yhwh-mobile/android/app/build/outputs/apk/debug/app-debug.apk var/tmp/yhwh/mobile/yhwh-debug.apk
+ios: mobile-sync
+	./node_modules/.bin/cap open ios

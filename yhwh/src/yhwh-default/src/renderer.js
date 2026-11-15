@@ -57,10 +57,14 @@ async function choose(title, message, options) {
 }
 async function editWords(key) {
   const dialog = modal(ui("edit-yhwh-text"), ui("saving-updates-yhwh-etc-default-words-json-in-th", escape(key), escape(words[key])));
+  if (boot.interface === 'mobile') {
+    dialog.querySelector('p').textContent = 'Save this wording on this device.';
+    dialog.querySelector('.primary').textContent = 'Save on this device';
+  }
   dialog.querySelector('[data-cancel]').onclick = () => dialog.close();
   dialog.querySelector('form').onsubmit = async event => {
     event.preventDefault();
-    try { words = await call('words:save', { [key]: dialog.querySelector('textarea').value }); dialog.close(); for (const tab of tabs) if (!tab.file) welcome(tab); pluginKey = ''; update(); notice(ui("saved-to-yhwh-etc-default-words-json-")); }
+    try { words = await call('words:save', { [key]: dialog.querySelector('textarea').value }); dialog.close(); for (const tab of tabs) if (!tab.file) welcome(tab); pluginKey = ''; update(); notice(boot.interface === 'mobile' ? 'Saved on this device.' : ui("saved-to-yhwh-etc-default-words-json-")); }
     catch (error) { notice(error.message); }
   };
 }
@@ -240,7 +244,13 @@ async function openFile(filename, tab = active()) {
       emit('change', { path: file.path, content });
     }, (line, column) => { if (tab.id === activeId) $('#cursor-position').textContent = ui("ln-col", line, column); });
   } else if (file.kind === 'image') tab.document.innerHTML = ui("template-4", file.data, escape(file.name));
-  else tab.document.innerHTML = ui("-this-format-opens-in-your-desktop-s-default-app", escape(file.name), escape(file.mime), humanSize(file.size));
+  else {
+    tab.document.innerHTML = ui("-this-format-opens-in-your-desktop-s-default-app", escape(file.name), escape(file.mime), humanSize(file.size));
+    if (boot.interface === 'mobile') {
+      tab.document.querySelector('.binary-view p:last-of-type').textContent = 'Open or share this file in another app.';
+      tab.document.querySelector('[data-command="open-external"]').textContent = 'Open or share';
+    }
+  }
   tab.expanded = '';
   tab.document.dataset.language = file.language; tab.document.dataset.mode = file.mode;
   if (tab.id === activeId) { update(); tab.editor?.focus(); }
@@ -264,6 +274,7 @@ async function closeTab(id = activeId) {
   const index = tabs.indexOf(tab); tabs.splice(index, 1);
   if (!tabs.length) await newTab(tab.cwd);
   else activate(tabs[Math.min(index, tabs.length - 1)].id);
+  emit('close', { id });
 }
 async function newFile(directory = false) {
   const tab = active(), name = await promptText(directory ? ui("new-directory") : ui("new-file"), ui("name-including-any-extension"));
@@ -300,7 +311,7 @@ async function pasteFiles() {
 }
 async function trashFiles(paths = selectedPaths()) {
   if (!paths.length) return;
-  if (await choose(ui("move-to-trash"), ui("move-item-s-to-the-desktop-trash-", paths.length), [ui("move-to-trash"), ui("cancel")]) !== 0) return;
+  if (await choose(ui("move-to-trash"), boot.interface === 'mobile' ? `Move ${paths.length} item(s) to the workspace’s hidden .Trash folder?` : ui("move-item-s-to-the-desktop-trash-", paths.length), [ui("move-to-trash"), ui("cancel")]) !== 0) return;
   for (const filename of paths) await call('file:trash', filename);
   active().selected.clear(); await refresh();
 }
@@ -316,6 +327,14 @@ function settings() {
     <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
+  if (boot.interface === 'mobile') {
+    dialog.querySelector('[name="terminal_font_size"]').closest('label').hidden = true;
+    dialog.querySelector('[data-section="files"] p.muted').textContent = 'Tap a file to open it. Swipe from the left edge to open Files.';
+    dialog.querySelector('[data-section="advanced"] p.muted').textContent = 'Settings are saved on this device. Image and CSS paths refer to your YHWH workspace.';
+    dialog.querySelector('[data-edit-config]').hidden = true;
+    dialog.querySelector('[name="plugins"]').closest('label').hidden = true;
+    dialog.querySelector('[data-section="advanced"] > small').textContent = 'Bundled plugins are included automatically.';
+  }
   for (const button of dialog.querySelectorAll('[data-category]')) button.onclick = () => {
     for (const section of dialog.querySelectorAll('[data-section]')) section.hidden = section.dataset.section !== button.dataset.category;
     for (const item of dialog.querySelectorAll('[data-category]')) item.setAttribute('aria-pressed', String(item === button));

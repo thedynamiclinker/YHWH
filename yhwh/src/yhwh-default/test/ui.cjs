@@ -201,6 +201,21 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('.reading-view:visible video[controls]').count(), 9);
     assert.deepEqual(await page.evaluate(() => window.blockedMedia), []);
     assert.equal(await page.locator('.reading-view:visible h2').count(), 9);
+    async function checkVideoSize(selector) {
+      const video = page.locator(selector).first();
+      assert.equal(await video.evaluate(el => el.getBoundingClientRect().width), 400);
+      await video.click({ position: { x: 40, y: 30 } });
+      assert.equal(await video.evaluate(el => el === document.activeElement), true);
+      assert.ok(await video.evaluate(el => el.getBoundingClientRect().width > 400));
+      await video.evaluate(el => el.blur());
+      assert.equal(await video.evaluate(el => el.getBoundingClientRect().width), 400);
+    }
+    await checkVideoSize('.reading-view:visible video');
+    await page.keyboard.press('Control+r');
+    await page.keyboard.press('Control+r');
+    await checkVideoSize('.editor-host:visible video');
+    assert.equal(await page.evaluate(() => window.YHWH.active().file.mode), 'live');
+    await run('reading-view');
     assert.equal(await page.evaluate(() => window.YHWH.active().dirty), false);
     await page.screenshot({ path: path.join(artifacts, '12-on-the-lamb.png') });
     await run('close-tab');

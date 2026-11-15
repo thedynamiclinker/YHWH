@@ -9,11 +9,12 @@ import { createVerseLibrary } from '../../../lib/verse-library.cjs';
 import defaults from '../../../etc/default/defaults.json';
 import words from '../../../etc/default/words.json';
 import { createStorage } from './storage.mjs';
-import { createMobileBridge } from './bridge.mjs';
+import { createMobileBridge, HOME, normalize } from './bridge.mjs';
 import { installMobile, pickPath } from './mobile.js';
 import './mobile.css';
 
 const storage = createStorage();
+await storage.init();
 const verses = createVerseLibrary({
   loadData: async () => { const response = await fetch('./verses.json'); if (!response.ok) throw new Error('The bundled verse library could not load.'); return response.json(); },
   loadEdits: () => storage.loadState('commentaries', {}),
@@ -37,6 +38,10 @@ window.yhwh = createMobileBridge({
   },
   choose: (...args) => pickPath(storage, ...args),
 });
+if (Capacitor.isNativePlatform()) {
+  const rootURI = await storage.uri(HOME);
+  window.yhwh.fileURL = path => Capacitor.convertFileSrc(rootURI + normalize(path).slice(HOME.length).split('/').map(encodeURIComponent).join('/'));
+}
 document.body.classList.add('is-mobile');
 window.addEventListener('yhwh:ready', () => {
   const app = window.YHWH;

@@ -1,6 +1,12 @@
 YHWH: make builds and opens the default interface without installing.
 
-make build           Build all four interfaces
+make build           Build all interfaces, including the shared Android/iOS UI
+make mobile-build    Build the Android/iOS UI from the shared core
+make mobile-sync     Build and copy the latest UI/plugins into both native apps
+make mobile-check    Mobile storage/model tests and phone/tablet browser workflows
+make android         Sync and open the Android project in Android Studio
+make android-apk     Sync and assemble a debug APK (requires JDK 21 and SDK 36)
+make ios             Sync and open the iOS project in Xcode (requires macOS)
 make run             Open the built default interface
 make tty             Build and open el shaddai in a terminal (OPEN=PATH)
 make tty-build       Build the terminal interface

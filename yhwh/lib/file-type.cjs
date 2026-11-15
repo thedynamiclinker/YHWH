@@ -2,7 +2,7 @@ const { languages } = require('@codemirror/language-data');
 const { LanguageDescription } = require('@codemirror/language');
 const mimeLanguages = { 'text/markdown': 'markdown', 'text/x-markdown': 'markdown', 'application/json': 'json', 'text/html': 'html', 'text/x-python': 'python', 'application/x-shellscript': 'shell', 'text/x-shellscript': 'shell', 'text/x-tex': 'latex', 'application/xml': 'xml', 'image/svg+xml': 'xml' };
 function fileType(filename, prefix, config = {}, mime = '') {
-  const name = filename.split(/[/\\]/).at(-1), extension = name.includes('.') ? name.split('.').at(-1).toLowerCase() : '';
+  const name = filename.split(/[/\\]/).at(-1), extension = name.lastIndexOf('.') > 0 ? name.split('.').at(-1).toLowerCase() : '';
   let language = mimeLanguages[mime] || LanguageDescription.matchFilename(languages, name)?.name.toLowerCase() || (name === 'rc' || extension === 'conf' ? 'shell' : 'plain');
   if (language === 'plain') {
     const shebang = new TextDecoder().decode(prefix.subarray(0, 200)).split('\n')[0];
