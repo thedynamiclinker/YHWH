@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Make an android and iOS version of the YHWH app modelled after the android and iOS obsidian apps. Do it in a way where the android and iOS versions will automatically get new features when we add them to the core app here, to the extent that's possible. To the extent that it's not possible, just document in the yhwh/ source dir that all new features should be added to all versions of the app to the extent that that's possible and practical.
+EOF

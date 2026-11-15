@@ -1,0 +1,10 @@
+/* One vector, colored by its surroundings in every interface and theme. */
+.ld-mark {
+  display: inline-block;
+  height: var(--ld-size, 28px);
+  width: calc(var(--ld-size, 28px) * .78125);
+  flex-shrink: 0;
+  vertical-align: middle;
+  background: currentColor;
+  mask: url('./ld.svg') center / contain no-repeat;
+}

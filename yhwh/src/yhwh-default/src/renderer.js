@@ -204,13 +204,18 @@ async function refresh(tab = active()) {
   }));
   if (tab.id === activeId) { renderFiles(); applyConfig(tab.config); }
 }
-async function navigate(directory, tab = active(), history = true) {
+async function navigate(directory, tab = active(), history = true, focusFiles = false) {
   const state = await call('navigate', tab.id, directory);
   Object.assign(tab, state); tab.selected.clear();
+  if (focusFiles && tab.entries.length) tab.selected.add(tab.entries[0].path);
   if (history && tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
-  if (tab.id === activeId) { $('#file-filter').value = ''; update(); }
+  if (tab.id === activeId) {
+    $('#file-filter').value = ''; update();
+    if (focusFiles) { $('#file-list').focus(); $('#file-list').scrollTop = 0; }
+  }
   emit('navigate', { id: tab.id, cwd: tab.cwd });
 }
+const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
 async function mayReplace(tab) {
   if (!tab.dirty) return true;
   const choice = await choose(ui("unsaved-changes"), ui("save-changes-to-", tab.file.name), [ui("save"), ui("discard"), ui("cancel")]);
@@ -420,7 +425,7 @@ function about() {
   modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody')));
 }
 function aboutUs() {
-  modal('About Us', `<div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
+  modal('About Us', `<div class="publisher-signature"><span class="ld-mark" aria-hidden="true"></span><strong>The Dynamic Linker</strong></div><div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
 }
 function ourTeam() {
   modal('About Us › Our Team', `${word('teamBody')}<button data-command="about-us">← About Us</button>`);
@@ -550,7 +555,7 @@ const definitions = [
   ['new-file', ui("new-file"), ui("ctrl-n"), () => newFile()],
   ['new-directory', ui("new-directory"), '', () => newFile(true)],
   ['open-file', ui("open-file-"), ui("ctrl-o"), async () => { const filename = await call('choose', 'file', active().cwd); if (filename) await openFile(filename); }],
-  ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigate(directory); }],
+  ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigateFiles(directory); }],
   ['save', ui("save-file"), ui("ctrl-s"), () => save()],
   ['save-as', ui("save-as-"), ui("ctrl-shift-s"), async () => {
     const tab = active(); if (!tab.editor) return;
@@ -566,10 +571,10 @@ const definitions = [
   ['focus-editor', ui("focus-editor"), ui("ctrl-1"), () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
   ['focus-files', ui("focus-file-manager"), ui("ctrl-2"), () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
   ['focus-terminal', ui("focus-terminal"), ui("ctrl-3"), () => { active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); active().terminal.focus(); }); }],
-  ['parent', ui("parent-directory"), ui("alt-up"), () => navigate(parent(active().cwd))],
-  ['home', ui("home-directory"), '', () => navigate(boot.home)],
-  ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigate(tab.history[tab.historyIndex], tab, false); } }],
-  ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigate(tab.history[tab.historyIndex], tab, false); } }],
+  ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
+  ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
+  ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
+  ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal.clear(); active().terminal.focus(); bridge.terminal('write', { id: active().id, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
   ['refresh', ui("refresh-directory-and-configuration"), ui("f5"), () => refresh()],
   ['toggle-hidden', ui("toggle-hidden-files"), ui("ctrl-h-in-files-"), async () => { const tab = active(); await call('settings:save', { show_hidden: tab.config.values.show_hidden === 'true' ? 'false' : 'true' }, tab.cwd); await refresh(); }],
@@ -722,7 +727,9 @@ function terminalMessage(message) {
 bridge.on('terminal', terminalMessage);
 bridge.on('navigation', state => {
   const tab = tabs.find(item => item.id === state.id); if (!tab) return;
-  Object.assign(tab, state); tab.selected.clear();
+  const changedDirectory = tab.cwd !== state.cwd;
+  Object.assign(tab, state);
+  if (changedDirectory) tab.selected.clear();
   if (tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
   if (tab.id === activeId) update(); emit('navigate', { id: tab.id, cwd: tab.cwd });
 });
@@ -778,7 +785,7 @@ $('#file-list').onclick = event => {
 };
 $('#file-list').ondblclick = event => {
   const row = event.target.closest('[data-path]'); if (!row) return;
-  (row.dataset.directory === 'true' ? navigate(row.dataset.path) : openFile(row.dataset.path)).catch(error => notice(error.message));
+  (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path)).catch(error => notice(error.message));
 };
 $('#file-list').onauxclick = event => {
   if (event.button !== 1) return;
@@ -800,8 +807,8 @@ $('#file-list').onkeydown = event => {
     tab.selected = new Set([rows[next]?.dataset.path]); renderFiles(); $('#file-list').querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
   } else if (event.key === 'ArrowRight' && rows[current]?.dataset.directory === 'true' && rows[current].dataset.parent !== 'true') action = () => toggleFolder(rows[current], true);
   else if (event.key === 'ArrowLeft' && rows[current]?.getAttribute('aria-expanded') === 'true') action = () => toggleFolder(rows[current], false);
-  else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigate(parent(tab.cwd));
-  else if (event.key === ui("enter") || event.key === ui("arrowright")) { const row = rows[current]; if (row) action = () => row.dataset.directory === 'true' ? navigate(row.dataset.path) : openFile(row.dataset.path); }
+  else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigateFiles(parent(tab.cwd));
+  else if (event.key === ui("enter") || event.key === ui("arrowright")) { const row = rows[current]; if (row) action = () => row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path); }
   else if (event.key === ui("f2")) action = () => renameFile(selectedPaths()[0]);
   else if (event.key === ui("delete")) action = () => trashFiles();
   else if (control && event.key.toLowerCase() === 'a') { tab.selected = new Set(tab.entries.map(entry => entry.path)); renderFiles(); }
@@ -814,7 +821,7 @@ $('#file-list').onkeydown = event => {
   } else return;
   event.preventDefault(); if (action) Promise.resolve().then(action).catch(error => notice(error.message));
 };
-$('#location-form').onsubmit = event => { event.preventDefault(); let directory = $('#location').value; if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1); if (active().worldRoot && directory.startsWith('/')) directory = active().worldRoot + directory; navigate(directory).catch(error => notice(error.message)); };
+$('#location-form').onsubmit = event => { event.preventDefault(); let directory = $('#location').value; if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1); if (active().worldRoot && directory.startsWith('/')) directory = active().worldRoot + directory; navigateFiles(directory).catch(error => notice(error.message)); };
 $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };

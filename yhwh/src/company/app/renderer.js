@@ -82,7 +82,7 @@ function render() {
   const waiting = c.proposals.filter((p) => !isClosed(p)).length;
   const reviewing = page === "review" && codeReview.view;
   $("#app").innerHTML = `<div class="shell">
-    <aside class="rail"><button class="app-mark" data-action="home" aria-label="Home">${icon("sun")}</button>
+    <aside class="rail"><button class="app-mark" data-action="home" aria-label="Home"><span class="ld-mark" aria-hidden="true"></span></button>
       <div class="rail-tools">${smallButton("search", "search", "Find a proposal (Ctrl+K)")}${smallButton("room", "layers", "Try a change")}${smallButton("board", "board", "Tasks")}${smallButton("master", "book", "Accepted changes")}</div>
       <div class="rail-bottom">${smallButton("facts", "spark", "Did you know?")}${smallButton("settings", "settings", "Settings")}<span class="user-avatar" title="You, the human">Y</span></div></aside>
     <aside class="sidebar"><div class="brand"><bdi class="wordmark" dir="ltr">${dawkins() ? "YHWH" : "𐤉𐤄𐤅𐤄"}</bdi><span>${dawkins() ? "PRACTICE REVIEW" : "LET THERE BE LESS BULLSHIT"}</span></div>

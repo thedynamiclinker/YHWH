@@ -28,6 +28,7 @@ small, .muted { color: var(--muted); }
 kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); border: 1px solid var(--line); border-radius: 4px; color: var(--muted); white-space: nowrap; }
 .titlebar { height: 52px; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 15px; background: var(--rail); border-bottom: 1px solid var(--line); user-select: none; }
 .brand { display: flex; align-items: center; gap: 13px; padding: 0; font-size: .8125rem; letter-spacing: .18em; color: var(--muted); }
+.brand .ld-mark { --ld-size: 26px; color: var(--text); opacity: .85; }
 .paleo { font-family: Phoenician, serif; font-size: 30px; letter-spacing: 4px; color: var(--gold); direction: rtl; display: inline-block; }
 .window-title { flex: 1; font-size: .875rem; color: var(--faint); padding-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .personality { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: .875rem; }
@@ -108,7 +109,14 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .image-view, .binary-view { height: 100%; overflow: auto; text-align: center; padding: 40px; }
 .image-view img { max-width: 100%; max-height: 90%; object-fit: contain; }
 .welcome { max-width: 620px; margin: auto; padding: 55px 35px 30px; overflow: auto; height: 100%; }
-.welcome .paleo { font-size: 52px; opacity: .8; margin: 10px 0 5px; }
+.logo-signature { display: flex; align-items: center; gap: 24px; }
+.logo-signature .ld-mark { --ld-size: 56px; color: var(--text); opacity: .85; }
+.logo-signature .paleo { font-size: 36px; opacity: .8; }
+.welcome .logo-signature { margin: 10px 0 5px; }
+.about-signature { padding: 6px 0 20px; }
+.publisher-signature { display: flex; align-items: center; gap: 18px; padding: 4px 0 24px; }
+.publisher-signature .ld-mark { --ld-size: 42px; }
+.publisher-signature strong { font-size: 18px; font-weight: 550; }
 .eyebrow { color: var(--purple); font-size: .8125rem; letter-spacing: .16em; text-transform: uppercase; margin-top: 22px; }
 .welcome h1 { font-weight: 550; font-size: 32px; letter-spacing: -.8px; margin: 8px 0 12px; }
 .welcome p { color: var(--muted); max-width: 450px; line-height: 1.85; }
@@ -170,7 +178,7 @@ body[data-theme='nietzsche'] { --purple: #c9b192; --purple-bg: #3e342c; --gold: 
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-thumb { background: #ffffff15; border-radius: 8px; }
 @media (max-width: 1000px) { .window-title { display: none; } .brand { flex: 1; } .navigation-area { width: 220px; } .welcome { padding-top: 30px; } .right-panels { max-width: 220px; } }
-@media (max-height: 700px) { .welcome { padding-top: 20px; } .welcome .paleo { font-size: 34px; } .welcome-actions { margin: 15px 0; } .welcome-bottom { margin-top: 5px; } }
+@media (max-height: 700px) { .welcome { padding-top: 20px; } .welcome .logo-signature .ld-mark { --ld-size: 40px; } .welcome .paleo { font-size: 30px; } .welcome-actions { margin: 15px 0; } .welcome-bottom { margin-top: 5px; } }
 
 /* Quiet shell; larger type and controls that explain themselves. */
 .setting-row { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:16px 0; border-bottom:1px solid var(--line); }

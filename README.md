@@ -8,8 +8,8 @@ Settings or through `Ctrl+P` → **Edit shaddai definition**.
 See [the terminal guide](yhwh/src/yhwh-tty/README.md) for keys and commands.
 
 `make develop` adds **YHWH (Development)** to your Linux app menu, linked to this
-checkout, with a violet icon and terminal badge. `make install` adds **YHWH** with
-a gold icon, using the standalone package in `~/world/mnt/sinai`. Both open this
+checkout, with the LD logo on a dark background. `make install` adds **YHWH** with
+the logo on a light background, using the standalone package in `~/world/mnt/sinai`. Both open this
 workspace and can coexist. Re-run the relevant target to update it.
 
 Desktop entry templates and icons live in `usr/share/`. Installation resolves

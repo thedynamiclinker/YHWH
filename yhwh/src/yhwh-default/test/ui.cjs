@@ -239,6 +239,7 @@ process.stdin.on('end', () => {
     assert.equal(await page.evaluate(() => window.YHWH.active().cwd), directory);
     await nestedRow.dblclick();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, nested);
+    await page.waitForFunction(() => document.activeElement === document.querySelector('#file-list') && document.querySelector('#file-list .selected .file-name')?.textContent === 'child.txt');
     await run('toggle-terminal');
     await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);
     await page.keyboard.type("printf 'CLICK:%s\\n' \"$PWD\""); await page.keyboard.press('Enter');

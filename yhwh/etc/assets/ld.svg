@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 64">
+  <title>The Dynamic Linker</title>
+  <!-- Geometry from LD/include/ld.png, with the white page margin removed. -->
+  <path fill="#2f383e" d="M0 0h8v56h27v8H0zM15 1h35v63h-8V9H15z"/>
+</svg>

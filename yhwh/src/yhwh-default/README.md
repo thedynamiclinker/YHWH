@@ -211,11 +211,12 @@ promised returns, and includes the collected Carlin excerpt. It only opens a
 payment page when `stripe_payment_link` is configured; otherwise it says checkout
 is not connected. About YHWH → About Us contains Our Team and Roadmap.
 
-From the repo root, `make develop` installs a violet **YHWH (Development)**
+From the repo root, `make develop` installs a **YHWH (Development)**
 launcher for the live checkout. `make install` installs the standalone package
-and a gold **YHWH** launcher. Both use the workspace where Make was invoked;
-development uses its own app profile. Source `.desktop` templates and circular
-paleo-letter icons live in root `usr/share/`. Installation writes resolved
+and a **YHWH** launcher. Both use the LD logo: light on dark for development,
+dark on light for the installed app. Both use the workspace where Make was invoked;
+development uses its own app profile. Source `.desktop` templates and scalable
+LD icons live in root `usr/share/`. Installation writes resolved
 entries, icons, and launch scripts under `XDG_DATA_HOME` (default
 `~/.local/share`) without relying on an interactive shell’s PATH. Modified
 launcher files are preserved on update/removal.
