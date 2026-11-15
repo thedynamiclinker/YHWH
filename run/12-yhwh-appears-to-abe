@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+yhwh:
+    1. the interface should always call the user Abe.
+    2. if they correct him and say their name is something else, he should either quickly forget it or say that's no good we'll need to change that
+    3. we need a .desktop file or something that I can use to add this as an app to my linux desktop so that it opens when I click the icon.
+       it's ok if that icon just launches the current in-development version of the app though, we can have frozen / shipped versions later.
+       Add a make target that'll install that to ~/.local/share/applications or whatever when we run 'make install' or 'make develop'.
+       Actually have 'make install' and 'make develop' install two different .desktop files with visually distinguishable icons. Use
+       the circular yhwh profile pics with the paleo letters in include/ as a starting point for designing the icons. Put the results
+       in the repo root's usr/share/{applications,icons} or wherever linux desktops usually keep desktop files and icons and so on.
+Do all that.
+EOF

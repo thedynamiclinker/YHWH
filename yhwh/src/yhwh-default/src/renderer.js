@@ -66,16 +66,16 @@ async function editWords(key) {
 async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, selected: new Set(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', terminalExited: false };
+  const tab = { id, ...state, file: null, selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', terminalExited: false };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
-  tab.terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 12, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
+  tab.terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
   tab.fit = new FitAddon(); tab.terminal.loadAddon(tab.fit); tab.terminal.open(tab.terminalElement);
   tab.terminal.onData(data => bridge.terminal('write', { id, data }));
   tab.terminal.attachCustomKeyEventHandler(event => {
-    if ((event.ctrlKey || event.metaKey) && ['b', 'e', 'd', 't', 'w', 'p', ','].includes(event.key.toLowerCase())) return false;
+    if ((event.ctrlKey || event.metaKey) && ['b', 'e', 'd', 't', 'w', 'p', ',', 'l'].includes(event.key.toLowerCase())) return false;
     if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'c') { navigator.clipboard.writeText(tab.terminal.getSelection()).catch(() => {}); return false; }
     return true;
   });
@@ -102,11 +102,36 @@ function renderFiles() {
   const tab = active(); if (!tab) return;
   const filter = $('#file-filter').value.toLocaleLowerCase();
   const rows = [{ name: '..', path: tab.cwd === tab.worldRoot ? tab.cwd : parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
-  $('#file-list').innerHTML = rows.map(entry => ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.broken ? '!' : entry.directory ? '▱' : '≡', escape(entry.name), entry.parent ? '' : entry.directory ? 'Directory' : humanSize(entry.size), entry.modified ? new Date(entry.modified).toLocaleString() : '')).join('');
+  $('#file-list').innerHTML = rows.map(entry => fileRow(tab, entry)).join('');
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.cwd;
   $('#shell-state').textContent = tab.terminalExited ? ui("shell-exited") : ui("-files");
+}
+function fileRow(tab, entry, depth = 0) {
+  const folder = tab.folders.get(entry.path);
+  const expanded = !!folder?.open;
+  const row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
+  return row.replace('role="option"', `style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
+}
+async function toggleFolder(row, expand) {
+  const tab = active(), path = row.dataset.path;
+  if (row.dataset.directory !== 'true' || row.dataset.parent === 'true') return;
+  let folder = tab.folders.get(path);
+  const open = expand ?? !folder?.open;
+  if (open) {
+    const entries = await call('directory:list', tab.id, path);
+    if (active() !== tab || !row.isConnected) return;
+    folder = { open: true, entries }; tab.folders.set(path, folder);
+  } else if (folder) folder.open = false;
+  if (row.nextElementSibling?.dataset.children === path) row.nextElementSibling.remove();
+  row.setAttribute('aria-expanded', String(open));
+  row.querySelector('.file-icon').textContent = open ? '▾' : '▸';
+  if (open) {
+    const group = document.createElement('div'); group.className = 'folder-children'; group.dataset.children = path;
+    group.innerHTML = folder.entries.map(entry => fileRow(tab, entry, Number(row.dataset.depth) + 1)).join('') || '<small class="empty-folder">Empty directory</small>';
+    row.after(group);
+  }
 }
 function update() {
   const tab = active(); if (!tab) return;
@@ -115,6 +140,7 @@ function update() {
   const terminalPanel = $('#terminal-panel');
   const terminalWasHidden = terminalPanel.hidden;
   terminalPanel.hidden = !tab.showTerminal && tab.expanded !== 'terminal';
+  if (terminalWasHidden && !terminalPanel.hidden) { progressWalk('shell'); receive('inspect'); }
   if (terminalWasHidden && !terminalPanel.hidden) requestAnimationFrame(() => {
     if (active() !== tab || terminalPanel.hidden || $('#dialog').open) return;
     fitTerminal();
@@ -134,7 +160,8 @@ function update() {
 let temporaryEnergy;
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
-  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 16}px`, '--sidebar-width': `${Number(values.sidebar_width) || 258}px`, '--terminal-height': `${Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${Number(values.sidebar_width) || 258}px`, '--terminal-height': `${Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  for (const tab of tabs) tab.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
   const energy = temporaryEnergy ?? (values.theme === 'dawkins' ? 0 : values.theme === 'nietzsche' ? 50 : Number(values.energy ?? 100));
   document.body.dataset.theme = energy === 0 ? 'dawkins' : energy < 100 ? 'nietzsche' : 'yhwh';
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
@@ -154,6 +181,9 @@ async function refresh(tab = active()) {
   if (!tab) return;
   const state = await call('list', tab.id);
   Object.assign(tab, state);
+  await Promise.all([...tab.folders].filter(([, folder]) => folder.open).map(async ([path, folder]) => {
+    try { folder.entries = await call('directory:list', tab.id, path); } catch { tab.folders.delete(path); }
+  }));
   if (tab.id === activeId) { renderFiles(); applyConfig(tab.config); }
 }
 async function navigate(directory, tab = active(), history = true) {
@@ -201,6 +231,7 @@ async function save(tab = active(), force = false) {
   Object.assign(tab.file, state, { content }); tab.dirty = tab.editor.state.doc.toString() !== text;
   if (tab.id === activeId) update();
   emit('save', tab.file);
+  if (presence.steps.length >= 2) receive('offering');
 }
 async function closeTab(id = activeId) {
   const tab = tabs.find(item => item.id === id);
@@ -253,20 +284,33 @@ async function trashFiles(paths = selectedPaths()) {
 
 function settings() {
   const tab = active(), values = tab.config.values;
-  const descriptions = { theme: ui("theme-yhwh-nietzsche-dawkins"), energy: ui("yhwh-ness-0-to-100"), font_size: ui("editor-font-size"), show_hidden: ui("show-hidden-files-true-or-false"), bg: ui("background-image-path"), stylesheet: ui("theme-css-path-obsidian-theme-css-can-be-used-"), plugins: ui("plugin-directories-json-array"), editor_font: ui("editor-font-family"), sidebar_width: ui("file-manager-width"), terminal_height: ui("terminal-height"), layout: ui("panel-positions-json-object"), live_preview: ui("markdown-live-preview-true-or-false") };
-  const keys = String(values.settings_fields || '').split(',').map(key => key.trim()).filter(key => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key));
-  const dialog = modal(ui("settings"), ui("apply-to-everywhere-user-configuration-and-its-c", keys.map(key => `<label class="field"><span>${escape(descriptions[key] || key)}</span><input name="${key}" value="${escape(values[key] || '')}" autocomplete="off"></label>`).join(''), escape(tab.cwd), escape(tab.cwd), escape(tab.config.userDirectory), tab.config.warnings.length ? `<p class="warning">${escape(tab.config.warnings.join('\n'))}</p>` : ''));
+  const row = (label, description, control) => `<label class="setting-row"><span><strong>${label}</strong><small>${description}</small></span>${control}</label>`;
+  const number = (key, min, max) => `<input type="number" name="${key}" min="${min}" max="${max}" value="${escape(values[key])}">`;
+  const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
+  const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
+    <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}</section>
+    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Live preview', 'Format Markdown as you write.', toggle('live_preview'))}<p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
+    <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p></section>
+    <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
+    <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
+  for (const button of dialog.querySelectorAll('[data-category]')) button.onclick = () => {
+    for (const section of dialog.querySelectorAll('[data-section]')) section.hidden = section.dataset.section !== button.dataset.category;
+    for (const item of dialog.querySelectorAll('[data-category]')) item.setAttribute('aria-pressed', String(item === button));
+  };
   dialog.querySelector('[data-edit-config]').onclick = async () => { dialog.close(); const filename = await call('config:open'); await openFile(filename); };
   dialog.querySelector('[data-reload-config]').onclick = async () => { pluginKey = ''; await call('config:reload'); await refresh(); dialog.close(); notice(ui("configuration-reloaded-")); };
   dialog.querySelector('form').onsubmit = async event => {
     event.preventDefault();
     try {
       const data = Object.fromEntries(new FormData(event.target)), scope = data._scope; delete data._scope;
+      for (const key of ['show_hidden', 'live_preview', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
+      data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
       if (data.layout) JSON.parse(data.layout);
       if (data.energy && !(Number(data.energy) >= 0 && Number(data.energy) <= 100)) throw new Error(ui("yhwh-ness-must-be-between-0-and-100-"));
+      for (const [key, min, max] of [['ui_font_size',14,24], ['font_size',12,36], ['terminal_font_size',12,28]]) if (!Number.isFinite(Number(data[key])) || Number(data[key]) < min || Number(data[key]) > max) throw new Error(`${key} must be between ${min} and ${max}.`);
       temporaryEnergy = undefined;
-      await call('settings:save', data, scope); await refresh(); dialog.close();
+      await call('settings:save', data, scope); presence.enabled = data.narrative === 'true'; savePresence(); await refresh(); dialog.close();
     } catch (error) { notice(error.message); }
   };
 }
@@ -373,7 +417,7 @@ async function setEnergy(value) {
   temporaryEnergy = undefined; await refresh();
 }
 function higherHelp() {
-  modal(words.helpTitle, word('helpTitle', 'h3') + ui('higher-help', ...['man', 'god', 'fanTitle', 'mailTitle', 'booksSinai', 'booksHoreb', 'returnFiles'].map(key => escape(words[key])), escape(ui('help')), escape(ui('commands'))) + `<button data-command="edit-help-copy">${escape(ui('edit-feature-copy'))}</button>`);
+  modal(words.helpTitle, `<div class="higher-choices"><button data-command="be-yhwh">${escape(words.god)}</button><button data-command="be-root">${escape(words.man)}</button></div>`);
 }
 async function enterWorld(name) {
   const choice = await choose(words.helpTitle, words[name + 'Message'], [words[name + 'Confirm'], ui('cancel')]);
@@ -381,7 +425,7 @@ async function enterWorld(name) {
   const tab = await newTab();
   try {
     Object.assign(tab, await call('world:enter', tab.id, name));
-    tab.history = [tab.cwd]; tab.historyIndex = 0; tab.showFiles = true; update();
+    tab.history = [tab.cwd]; tab.historyIndex = 0; tab.showFiles = true; update(); progressWalk('world');
   } catch (error) { await closeTab(tab.id); throw error; }
 }
 async function fanMail() {
@@ -491,7 +535,7 @@ const definitions = [
   ['home', ui("home-directory"), '', () => navigate(boot.home)],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigate(tab.history[tab.historyIndex], tab, false); } }],
   ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigate(tab.history[tab.historyIndex], tab, false); } }],
-  ['location', ui("edit-location"), ui("ctrl-l"), () => { active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
+  ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal.clear(); active().terminal.focus(); bridge.terminal('write', { id: active().id, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
   ['refresh', ui("refresh-directory-and-configuration"), ui("f5"), () => refresh()],
   ['toggle-hidden', ui("toggle-hidden-files"), ui("ctrl-h-in-files-"), async () => { const tab = active(); await call('settings:save', { show_hidden: tab.config.values.show_hidden === 'true' ? 'false' : 'true' }, tab.cwd); await refresh(); }],
   ['view-mode', ui("toggle-source-pretty-view"), ui("ctrl-shift-e"), viewMode],
@@ -514,6 +558,94 @@ const definitions = [
   ['quit', ui("quit"), ui("ctrl-q"), async () => { for (const tab of tabs) if (!await mayReplace(tab)) return; await call('window:close'); }],
 ];
 for (const [id, name, keys, fn] of definitions) addCommand({ id, name, keys, run: fn });
+
+const presenceKey = 'yhwh:presence:v1';
+function readPresence() {
+  try { return JSON.parse(localStorage.getItem(presenceKey)) || {}; } catch { return {}; }
+}
+let presence = { letters: [], steps: [], enabled: false, ...readPresence() };
+const letters = [
+  { id: 'house', title: 'A small housing question', text: 'Nice directory. Can I stay here? Just somewhere for my name to dwell. I travel light. Comparatively.', verse: 'Deuteronomy 12:11', note: 'A chosen place for the name to dwell. The directory is my addition.' },
+  { id: 'bread', title: 'You saved something', text: 'Good. It exists now. Bring bread if we’re doing another one. Apparently I have feet, a heart, and catering requirements.', verse: 'Genesis 18:4–8', note: 'Abraham offers water, rest, bread, and a meal to his visitors.' },
+  { id: 'offering', title: 'About the rent', text: 'Abe. Sorry. Still learning names. Any chance of an offering? I need a house. You need a working app. This could be a beautiful arrangement.', verse: 'Exodus 25:2,8', note: 'Voluntary contributions and a sanctuary to dwell among the people.', command: 'offerings', action: 'About offerings' },
+  { id: 'inspect', title: 'I came down to look', text: 'You opened a shell. Good. I like to inspect things myself. Omniscience has a terrible bug report format.', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
+];
+function savePresence() { localStorage.setItem(presenceKey, JSON.stringify(presence)); updateInboxBadge(); }
+function updateInboxBadge() {
+  const count = presence.letters.filter(letter => !letter.read).length;
+  $('#inbox-count').textContent = count ? ` · ${count}` : '';
+}
+function receive(id) {
+  if (!active() || active().config.values.inbox === 'false' || document.body.dataset.theme === 'dawkins' || presence.letters.some(letter => letter.id === id)) return;
+  if (document.body.dataset.theme === 'nietzsche' && id !== 'inspect') return;
+  // At most one letter every five minutes. Work never opens a dialogue.
+  if (presence.lastLetter && Date.now() - presence.lastLetter < 300000) return;
+  presence.letters.push({ id, read: false, at: Date.now() }); presence.lastLetter = Date.now(); savePresence();
+}
+function inbox() {
+  const available = presence.letters.map(letter => letters.find(item => item.id === letter.id)).filter(Boolean);
+  modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3><p>${escape(letter.text)}</p><small><a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(letter.verse)}&version=KJV">${escape(letter.verse)}</a> · ${escape(letter.note)} Literary adaptation.</small>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle.</p>'}</div>`);
+  presence.letters.forEach(letter => { letter.read = true; }); savePresence();
+}
+const walk = [
+  { id: 'open', title: 'Go. I’ll show you.', text: 'Open any file. This is your filesystem. No vault. No initiation fee. I have other plans for the fee.', verse: 'Genesis 12:1', command: 'open-file', action: 'Choose a file' },
+  { id: 'save', title: 'Make something that stays.', text: 'Edit a file and save it. Grand promises are easy. Persistent state is the covenant.', verse: 'Genesis 15:18', command: 'focus-editor', action: 'Back to the file' },
+  { id: 'shell', title: 'Come down and look.', text: 'Open the terminal. Your shell is already here, in this directory. You can look under everything.', verse: 'Genesis 18:21', command: 'focus-terminal', action: 'Open terminal' },
+  { id: 'world', title: 'There was a book before the app.', text: 'Under God and Man are other directories. Other voices. We The Nameless. Sudocode. You can leave whenever you like. I’m still asking about the house.', verse: 'Genesis 28:16–17', command: 'higher-help', action: 'Open the door' },
+];
+function narrative() {
+  presence.enabled = true; savePresence();
+  const step = walk.find(item => !presence.steps.includes(item.id));
+  modal('Take a walk', step ? `<span class="eyebrow">${presence.steps.length + 1} / ${walk.length}</span><h3>${escape(step.title)}</h3><p>${escape(step.text)}</p><small>${escape(step.verse)} · Literary adaptation</small><div class="dialog-actions"><button data-command="pause-walk">Pause the walk</button><button class="primary" data-command="${step.command}">${step.action}</button></div><p class="muted">Progress follows what you do. Return here whenever you want.</p>` : '<h3>You found a door, not the bottom.</h3><p>The walk is complete. The rest is yours to explore.</p><button data-command="palette">Keep digging →</button>');
+  for (const button of $('#dialog').querySelectorAll('[data-command]')) button.addEventListener('click', () => $('#dialog').close());
+}
+function progressWalk(id) {
+  if (!(presence.enabled || active()?.config.values.narrative === 'true')) return;
+  if (walk.find(item => !presence.steps.includes(item.id))?.id === id) { presence.steps.push(id); savePresence(); }
+}
+let chatPanel;
+function showChat() {
+  if (chatPanel) { chatPanel.element.hidden = !chatPanel.element.hidden; if (!chatPanel.element.hidden) renderChat(); return; }
+  chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'right', render(element) {
+    element.innerHTML = '<div class="conversation-log" role="log" aria-live="polite" aria-label="Conversation with YHWH"></div><form id="yhwh-chat-form"><textarea aria-label="Message YHWH" placeholder="Where are you?" rows="3" required maxlength="30000"></textarea><div class="chat-controls"><small>Codex · conversation · read only</small><button class="primary">Send</button></div><p class="chat-error" role="alert" hidden></p></form><button type="button" data-command="chat">Close conversation</button>';
+    const form = element.querySelector('form');
+    form.querySelector('textarea').oninput = event => localStorage.setItem(chatStorageKey() + ':draft', event.target.value);
+    form.onsubmit = async event => {
+      event.preventDefault(); const tab = active(), key = chatStorageKey(), message = form.querySelector('textarea').value.trim();
+      if (!message || chatPending.has(key)) return;
+      const messages = readChat(key), conversation = [...messages, { role: 'user', content: message }].slice(-79);
+      chatPending.add(key); chatErrors.delete(key); renderChat();
+      try {
+        const answer = await call('chat', tab.id, conversation);
+        localStorage.setItem(key, JSON.stringify([...conversation, { role: 'assistant', content: answer }].slice(-80)));
+        localStorage.removeItem(key + ':draft');
+      } catch (error) { chatErrors.set(key, error.message); }
+      finally { chatPending.delete(key); renderChat(); }
+    };
+  }});
+  renderChat();
+}
+const chatPending = new Set(), chatErrors = new Map();
+function chatStorageKey() { return 'yhwh:chat:v1:' + active().cwd; }
+function readChat(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function renderChat() {
+  if (!chatPanel || !active()) return;
+  const key = chatStorageKey(), element = chatPanel.element, log = element.querySelector('.conversation-log');
+  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? 'You' : document.body.dataset.theme === 'yhwh' ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${document.body.dataset.theme === 'yhwh' ? 'Ah. Here. Show me what you’re making. I’ll come down and look.' : 'Ask about this directory or your work.'}</p>`;
+  if (chatPending.has(key)) log.insertAdjacentHTML('beforeend', '<p role="status">Waiting for Codex…</p>');
+  const form = element.querySelector('form'); form.querySelector('textarea').value = localStorage.getItem(key + ':draft') || '';
+  form.querySelector('button').disabled = chatPending.has(key); form.querySelector('textarea').disabled = chatPending.has(key);
+  const error = form.querySelector('.chat-error'); error.hidden = !chatErrors.has(key); error.textContent = chatErrors.get(key) || '';
+  log.scrollTop = log.scrollHeight;
+}
+addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
+addCommand({ id: 'inbox', name: 'Inbox · letters from YHWH', run: inbox });
+addCommand({ id: 'narrative', name: 'Take a walk · optional narrative', run: narrative });
+addCommand({ id: 'pause-walk', name: 'Pause the walk', run: async () => { presence.enabled = false; savePresence(); await call('settings:save', { narrative: 'false' }); await refresh(); } });
+listeners.set('open', [() => { progressWalk('open'); receive('house'); }]);
+listeners.set('save', [() => { progressWalk('save'); receive('bread'); }]);
+listeners.set('navigate', [() => { renderChat(); if (active().worldRoot) progressWalk('world'); }]);
+listeners.set('focus', [() => { renderChat(); updateInboxBadge(); }]);
 
 const pendingTerminal = new Map();
 function terminalMessage(message) {
@@ -578,6 +710,7 @@ $('#file-list').onclick = event => {
   }
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
   $('#file-list').focus();
+  if (event.detail === 1 && !event.ctrlKey && !event.metaKey && !event.shiftKey) toggleFolder(row).catch(error => notice(error.message));
 };
 $('#file-list').ondblclick = event => {
   const row = event.target.closest('[data-path]'); if (!row) return;
@@ -601,7 +734,9 @@ $('#file-list').onkeydown = event => {
   if (event.key === ui("arrowdown") || event.key === ui("arrowup") || event.key === ui("home") || event.key === ui("end")) {
     const next = event.key === ui("home") ? 0 : event.key === ui("end") ? rows.length - 1 : Math.max(0, Math.min(rows.length - 1, current + (event.key === ui("arrowdown") ? 1 : -1)));
     tab.selected = new Set([rows[next]?.dataset.path]); renderFiles(); $('#file-list').querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
-  } else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigate(parent(tab.cwd));
+  } else if (event.key === 'ArrowRight' && rows[current]?.dataset.directory === 'true' && rows[current].dataset.parent !== 'true') action = () => toggleFolder(rows[current], true);
+  else if (event.key === 'ArrowLeft' && rows[current]?.getAttribute('aria-expanded') === 'true') action = () => toggleFolder(rows[current], false);
+  else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigate(parent(tab.cwd));
   else if (event.key === ui("enter") || event.key === ui("arrowright")) { const row = rows[current]; if (row) action = () => row.dataset.directory === 'true' ? navigate(row.dataset.path) : openFile(row.dataset.path); }
   else if (event.key === ui("f2")) action = () => renameFile(selectedPaths()[0]);
   else if (event.key === ui("delete")) action = () => trashFiles();
@@ -624,6 +759,7 @@ $('#energy').onchange = event => setEnergy(Number(event.target.value)).catch(err
 
 document.addEventListener('keydown', event => {
   const control = event.ctrlKey || event.metaKey, key = event.key.toLowerCase();
+  if (control && key === 'l' && !$('#terminal-panel').hidden) { event.preventDefault(); event.stopImmediatePropagation(); run('location'); return; }
   if ($('#dialog').open) { if (event.key === ui("escape")) return; if (!(control && key === 'q')) return; }
   let id;
   if (control && event.shiftKey) id = ({ b: 'expand-terminal', d: 'toggle-navigation', e: 'view-mode', o: 'open-directory', p: 'palette', s: 'save-as', tab: 'previous-tab' })[key];

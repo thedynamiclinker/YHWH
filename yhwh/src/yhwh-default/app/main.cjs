@@ -155,6 +155,23 @@ async function launch() {
   handle('world:quotes', () => fs.readFile(require('../../../lib/paths.cjs').etc('default', 'fan-mail.json'), 'utf8').then(JSON.parse));
   handle('navigate', navigate);
   handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });
+  handle('directory:list', async (id, directory) => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    const cwd = worlds.directory(focus, directory);
+    const config = await configFor(cwd);
+    return worlds.list({ ...focus, cwd }, config.values.show_hidden === 'true');
+  });
+  const conversations = new Set();
+  handle('chat', async (id, messages) => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    if (conversations.has(id)) throw new Error('Already waiting for a reply.');
+    conversations.add(id);
+    try {
+      const config = await configFor(focus.cwd);
+      const energy = config.values.theme === 'dawkins' ? 0 : config.values.theme === 'nietzsche' ? 50 : Number(config.values.energy ?? 100);
+      return await require('./chat.cjs').chat({ directory: await worlds.physical(focus), energy, messages });
+    } finally { conversations.delete(id); }
+  });
   handle('file:read', async filename => { filename = await sourcePath(filename); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
   handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(absolute); return { path: absolute, directory: stat.isDirectory() }; });
   handle('file:save', async (filename, ...args) => files.save(await destination(filename), ...args));
