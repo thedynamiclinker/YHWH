@@ -15,6 +15,7 @@ const three = process.env.YHWH_INTERFACE === 'three';
 const configOptions = three ? { variant: 'three' } : {};
 const development = process.env.YHWH_DESKTOP_FLAVOR === 'development';
 const profile = (three ? process.env.YHWH_THREE_DATA_DIR : process.env.YHWH_DATA_DIR) || path.join(userDirectory(), three ? 'state-three' : development ? 'state-development' : 'state');
+const verses = require('../../../lib/verses.cjs').createVerseStore({ stateDirectory: profile });
 app.setPath(ui("userdata"), profile);
 app.setName(ui("yhwh"));
 if (process.platform === 'linux') {
@@ -160,6 +161,11 @@ async function launch() {
   });
   handle('world:books', name => worlds.books(name));
   handle('world:quotes', () => fs.readFile(require('../../../lib/paths.cjs').etc('default', 'fan-mail.json'), 'utf8').then(JSON.parse));
+  handle('verse:catalog', () => verses.catalog());
+  handle('verse:chapter', (book, chapter) => verses.chapter(book, chapter));
+  handle('verse:get', reference => verses.get(reference));
+  handle('verse:random', () => verses.random());
+  handle('verse:commentary', (id, text) => verses.saveCommentary(id, text));
   handle('navigate', navigate);
   handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });
   handle('directory:list', async (id, directory) => {

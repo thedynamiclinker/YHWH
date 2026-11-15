@@ -1,9 +1,10 @@
 import { EditorView, WidgetType, Decoration } from '@codemirror/view';
 import { EditorState, StateField, Compartment } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
-import { LanguageDescription } from '@codemirror/language';
+import { LanguageDescription, HighlightStyle, defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { markdown } from '@codemirror/lang-markdown';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { tags } from '@lezer/highlight';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -27,6 +28,10 @@ export function renderMarkdown(text, filename) {
   return template.innerHTML;
 }
 const language = new Compartment(), live = new Compartment();
+const markdownHeadings = HighlightStyle.define([
+  { tag: tags.heading2, class: 'cm-header-2' },
+  { tag: tags.heading3, class: 'cm-header-3' },
+], { scope: markdownLanguage });
 
 class MarkdownBlock extends WidgetType {
   constructor(text, from) { super(); this.text = text; this.from = from; }
@@ -104,7 +109,10 @@ export async function setLanguage(view, name, pretty) {
   const description = LanguageDescription.matchLanguageName(languages, name, true);
   const support = name === 'markdown' ? markdown({ codeLanguages: languages }) : description ? await description.load() : [];
   if (!view.dom.isConnected) return;
-  view.dispatch({ effects: [language.reconfigure(support), live.reconfigure(name === 'markdown' && pretty ? [livePreview] : [])] });
+  // A custom highlighter replaces basicSetup's fallback; retain its existing
+  // styles for inline Markdown and fenced code alongside the heading classes.
+  const highlighting = name === 'markdown' ? [syntaxHighlighting(defaultHighlightStyle), syntaxHighlighting(markdownHeadings)] : [];
+  view.dispatch({ effects: [language.reconfigure([support, highlighting]), live.reconfigure(name === 'markdown' && pretty ? [livePreview] : [])] });
 }
 
 export async function formatText(text, name) {

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Keep the interface theme how it is, but add text highlighting of markdown h2s and h3s so that they're the same or similar color to how they are in the obsidian everforest theme with .obsidian/snippets/*.css applied, I think it's in ld.css
+EOF

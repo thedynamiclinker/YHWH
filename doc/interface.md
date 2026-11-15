@@ -6,3 +6,4 @@
 - Single click selects and unfolds folders without changing the directory or shell. Double click/Enter enters them. Arrow keys unfold/collapse; modifier clicks select.
 - Ctrl+L clears/focuses a visible terminal from every surface; only a hidden terminal permits location focus.
 - Use clear tool labels and restrained Unix-style marks, not decorative platform symbols. Keep the first screen quiet.
+- Preserve the interface theme while coloring Markdown H2 text blue (#6d9eeb) and H3 text pale yellow (#ffe599), matching `.obsidian/snippets/ld.css`, in hybrid, reading, and source modes.

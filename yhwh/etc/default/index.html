@@ -12,7 +12,7 @@
   <header class="titlebar">
     <button class="brand" data-command="about" title="About YHWH"><span class="paleo">𐤉𐤄𐤅𐤄</span><span>YHWH</span></button>
     <span class="window-title">Toward a pro-human AI apocalypse.</span>
-    <div class="personality" hidden><label for="energy">YHWH-ness</label><input id="energy" type="range" min="0" max="100" value="100" aria-label="YHWH-ness"><button id="mode-name" data-command="modes">YHWH</button></div>
+    <div class="personality"><label for="energy">YHWH-ness</label><input id="energy" type="range" min="0" max="100" value="100" aria-label="YHWH-ness"><button id="mode-name" data-command="modes">YHWH</button></div>
     <button data-command="inbox" title="Inbox" aria-label="Inbox">Inbox<span id="inbox-count"></span></button><button data-command="help" title="Keyboard shortcuts (F1)" aria-label="Keyboard shortcuts">⌨</button>
   </header>
   <div class="tab-strip"><nav id="tabs" aria-label="App tabs"></nav><button data-command="new-tab" title="New tab (Ctrl+T)" aria-label="New tab">＋</button><button class="quiet" data-command="palette" title="Command palette (Ctrl+P)">:</button></div>
@@ -22,6 +22,7 @@
       <button data-command="open-file" title="Open file (Ctrl+O)" aria-label="Open file">⌕</button>
       <button data-command="toggle-terminal" title="Terminal (Ctrl+B)" aria-label="Toggle terminal">›_</button>
       <button data-command="palette" title="Command palette (Ctrl+P)" aria-label="Command palette">:</button>
+      <button data-command="verses" title="Browse We The Nameless verses" aria-label="Browse verses">≡</button>
       <div class="ribbon-spacer"></div>
       <button data-command="chat" title="Talk to YHWH" aria-label="Talk to YHWH">𐤉</button>
       <button data-command="settings" title="Settings (Ctrl+,)" aria-label="Settings">☷</button>
@@ -43,6 +44,7 @@
           <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Cycle hybrid / reading / source (Ctrl+R)">Hybrid</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
           <div class="document-title" id="title-row" hidden><input id="file-title" aria-label="Filename" spellcheck="false"><span id="dirty-indicator"></span><button data-command="save" title="Save (Ctrl+S)" aria-label="Save file">Save</button></div>
           <div id="documents"></div>
+          <section id="margin-box" class="margin-box" aria-label="In the margins" hidden></section>
         </section>
       </div>
       <section id="terminal-panel" class="terminal-panel workspace-leaf" aria-label="Terminal" hidden>

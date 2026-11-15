@@ -5,11 +5,13 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { createEditor, setLanguage, formatText, renderMarkdown, languageNames } from './editor.js';
+import { createVerseUI } from './verses.js';
 
 const bridge = window.yhwh;
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const call = (channel, ...args) => bridge.call(channel, ...args);
+const verseUI = createVerseUI({ call, modal, notice });
 const tabs = [], commands = new Map(), listeners = new Map();
 let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], pluginKey = '', pluginGeneration = 0;
 const active = () => tabs.find(tab => tab.id === activeId);
@@ -22,7 +24,7 @@ function notice(message) { $('#toast').textContent = message; $('#toast').classL
 function run(name) { const item = commands.get(name); if (item) return Promise.resolve().then(item.run).catch(error => notice(error.message)); }
 function addCommand(item) { commands.set(item.id, item); return () => commands.delete(item.id); }
 function editButton(key) { return ui("-", key, key); }
-function word(key, tag = 'p') { return `<${tag}>${escape(words[key])} ${editButton(key)}</${tag}>`; }
+function word(key, tag = 'p') { return `<${tag}><span class="character-copy">${escape(words[key])}</span> ${editButton(key)}</${tag}>`; }
 
 function modal(title, content, setup) {
   const dialog = $('#dialog');
@@ -164,6 +166,7 @@ function applyConfig(config) {
   for (const tab of tabs) tab.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
   const energy = temporaryEnergy ?? (values.theme === 'dawkins' ? 0 : values.theme === 'nietzsche' ? 50 : Number(values.energy ?? 100));
   document.body.dataset.theme = energy === 0 ? 'dawkins' : energy < 100 ? 'nietzsche' : 'yhwh';
+  verseUI.setTheme(document.body.dataset.theme);
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
   $('#energy').value = energy;
   $('#mode-name').textContent = energy === 0 ? ui("dawkins") : energy < 100 ? ui("nietzsche") : ui("yhwh");
@@ -413,7 +416,7 @@ function roadmap() {
 }
 function seedFunding() {
   const payment = active().config.values.stripe_payment_link;
-  modal(words.seedTitle, `${word('seedBody')}<blockquote>${escape(words.seedQuote)}</blockquote><small>${escape(words.seedAttribution)} ${editButton('seedQuote')} ${editButton('seedAttribution')}</small><div class="dialog-actions">${payment ? '<button class="primary" data-command="pay">Give YHWH money ↗</button>' : '<p class="muted">Donation checkout is not connected yet, Abe.</p>'}</div>`);
+  modal(words.seedTitle, `${word('seedBody')}<blockquote class="character-copy">${escape(words.seedQuote)}</blockquote><small><span class="character-copy">${escape(words.seedAttribution)}</span> ${editButton('seedQuote')} ${editButton('seedAttribution')}</small><div class="dialog-actions">${payment ? '<button class="primary" data-command="pay">Give YHWH money ↗</button>' : '<p class="muted">Donation checkout is not connected yet, Abe.</p>'}</div>`);
 }
 function upgrades() { modal(ui("coming-soon"), ui("support-development", word('upgrades'), word('comingSoon'))); }
 async function circus() {
@@ -486,6 +489,7 @@ function addPanel({ id, title, area = 'right', render }) {
 function draggable(header, id) { header.draggable = true; header.ondragstart = event => event.dataTransfer.setData('application/x-yhwh-panel', id); }
 function pluginAPI() {
   return { words, notice, editWords, addCommand, addPanel, movePanel, openFile, navigate, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
+    createCitation: verseUI.createCitation, showVerse: verseUI.browse,
     on(name, callback) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(callback); return () => listeners.get(name).delete(callback); },
     injectCSS(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); return () => style.remove(); },
     files: { read: filename => call('file:read', filename), save: (filename, content, modified) => call('file:save', filename, content, modified) },
@@ -605,7 +609,8 @@ function receive(id) {
 }
 function inbox() {
   const available = presence.letters.map(letter => letters.find(item => item.id === letter.id)).filter(Boolean);
-  modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3>${word(letter.textKey)}<small><a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(letter.verse)}&version=KJV">${escape(letter.verse)}</a> · ${escape(letter.note)} Literary adaptation.</small>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
+  const dialog = modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3>${word(letter.textKey)}<small>${escape(letter.note)} Literary adaptation.</small><div data-citation="${escape(letter.verse)}"></div>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
+  verseUI.hydrate(dialog);
   presence.letters.forEach(letter => { letter.read = true; }); savePresence();
 }
 const walk = [
@@ -617,7 +622,8 @@ const walk = [
 function narrative() {
   presence.enabled = true; savePresence();
   const step = walk.find(item => !presence.steps.includes(item.id));
-  modal('Take a walk', step ? `<span class="eyebrow">${presence.steps.length + 1} / ${walk.length}</span><h3>${escape(step.title)}</h3><p>${escape(step.text)}</p><small>${escape(step.verse)} · Literary adaptation</small><div class="dialog-actions"><button data-command="pause-walk">Pause the walk</button><button class="primary" data-command="${step.command}">${step.action}</button></div><p class="muted">Progress follows what you do. Return here whenever you want.</p>` : '<h3>You found a door, not the bottom.</h3><p>The walk is complete. The rest is yours to explore.</p><button data-command="palette">Keep digging →</button>');
+  const dialog = modal('Take a walk', step ? `<span class="eyebrow">${presence.steps.length + 1} / ${walk.length}</span><h3>${escape(step.title)}</h3><p>${escape(step.text)}</p><small>Literary adaptation</small><div data-citation="${escape(step.verse)}"></div><div class="dialog-actions"><button data-command="pause-walk">Pause the walk</button><button class="primary" data-command="${step.command}">${step.action}</button></div><p class="muted">Progress follows what you do. Return here whenever you want.</p>` : '<h3>You found a door, not the bottom.</h3><p>The walk is complete. The rest is yours to explore.</p><button data-command="palette">Keep digging →</button>');
+  verseUI.hydrate(dialog);
   for (const button of $('#dialog').querySelectorAll('[data-command]')) button.addEventListener('click', () => $('#dialog').close());
 }
 function progressWalk(id) {
@@ -660,6 +666,7 @@ function renderChat() {
   log.scrollTop = log.scrollHeight;
 }
 addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
+addCommand({ id: 'verses', name: 'Browse We The Nameless · chapter and verse', run: () => verseUI.browse() });
 addCommand({ id: 'inbox', name: 'Inbox · letters from YHWH', run: inbox });
 addCommand({ id: 'narrative', name: 'Take a walk · optional narrative', run: narrative });
 addCommand({ id: 'pause-walk', name: 'Pause the walk', run: async () => { presence.enabled = false; savePresence(); await call('settings:save', { narrative: 'false' }); await refresh(); } });
