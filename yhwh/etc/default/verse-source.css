@@ -1,0 +1,50 @@
+/* Imported from We The Nameless/ebook/epub.css. Regenerate with bin/import-verse-style.py. */
+@font-face { font-family: "WTN Hebrew David"; src: url("fonts/hebrew-david.ttf"); }
+@font-face { font-family: "WTN Hebrew David"; src: url("fonts/hebrew-david-bold.ttf"); font-weight: 700; }
+@font-face { font-family: "WTN Hebrew Ezra"; src: url("fonts/hebrew-ezra.ttf"); }
+@font-face { font-family: "WTN Paleo J"; src: url("fonts/babel-paleo-hebrew-phoenician.ttf"); }
+@font-face { font-family: "WTN Paleo E"; src: url("fonts/paleo-hebrew.ttf"); }
+@font-face { font-family: "WTN Paleo Tel Zayit"; src: url("fonts/08-bc10c-paleo-hebrew-tel-zayit.ttf"); }
+@font-face { font-family: "WTN Paleo Moabite"; src: url("fonts/paleo-hebrew-moabite.ttf"); }
+@font-face { font-family: "WTN Paleo RJE"; src: url("fonts/paleo-hebrew-siloam.ttf"); }
+@font-face { font-family: "WTN Paleo Mono"; src: url("fonts/paleo-hebrew-mono.ttf"); }
+@font-face { font-family: "WTN Egyptian"; src: url("fonts/egyptian-hieroglyphs-regular-noto-sans.ttf"); }
+@font-face { font-family: "WTN Arabic"; src: url("fonts/arabic-amiri-regular.ttf"); }
+@font-face { font-family: "WTN Syriac"; src: url("fonts/noto-sans-syriac.ttf"); }
+@font-face { font-family: "WTN Cuneiform"; src: url("fonts/noto-sans-cuneiform-regular.ttf"); }
+@font-face { font-family: "WTN Ugaritic"; src: url("fonts/noto-sans-ugaritic-regular.ttf"); }
+
+
+.source-j, .source-je, .source-jp, .source-jpp, .source-jm { color: #008700 !important; }
+.source-e, .source-ep, .source-epp, .yellow { color: #b98c00 !important; }
+.source-e, .source-ep, .source-epp { font-weight: 700; }
+.source-p, .source-pr, .source-pp { color: #0046aa !important; font-weight: 700; }
+.source-r, .source-diff { color: #0046aa !important; background-color: #e0e8f5 !important; }
+.source-pr { background-color: #e0e8f5 !important; }
+.source-rje { color: #006400 !important; background-color: #e1f5e1 !important; }
+.source-dtra, .source-dtrh, .source-dtn { color: #806100 !important; }
+.source-dtrb { color: #995e00 !important; }
+.source-bookofrecords, .source-records { color: #6e6e6e !important; }
+.source-other, .source-x { color: #505050 !important; }
+.source-red { color: #aa0000 !important; background: #f5e0e0 !important; }
+.source-reblacktor { color: inherit; background: rgba(128, 128, 128, .18); }
+.source-proto, .source-protoa, .source-protof { color: #878787 !important; }
+.hebrew { font-family: "WTN Hebrew David", serif; }
+.hebrew.source-j, .source-j.hebrew { font-family: "WTN Paleo J", serif; font-weight: 400; }
+.hebrew.source-e, .source-e.hebrew { font-family: "WTN Paleo E", serif; }
+.hebrew.source-je, .source-je.hebrew { font-family: "WTN Paleo E", serif; font-weight: 400; }
+.hebrew.source-jp, .hebrew.source-jpp, .source-jp.hebrew, .source-jpp.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }
+.hebrew.source-p, .source-p.hebrew { font-family: "WTN Hebrew Ezra", serif; font-weight: 400; }
+.hebrew.source-r, .source-r.hebrew { font-family: "WTN Hebrew Ezra", serif; }
+.hebrew.source-rje, .source-rje.hebrew { font-family: "WTN Paleo RJE", serif; }
+.hebrew.source-records, .source-records.hebrew,
+.hebrew.source-bookofrecords, .source-bookofrecords.hebrew { font-family: "WTN Paleo Mono", monospace; font-weight: 400; }
+.hebrew.source-proto, .source-proto.hebrew { font-family: "WTN Paleo Tel Zayit", serif; font-weight: 400; }
+.hebrew.source-other, .source-other.hebrew { font-family: "WTN Paleo Moabite", serif; font-weight: 400; }
+/* Source-profile weight is language-specific in master.tex. */
+.english.source-jp, .english.source-jpp, .english.source-je,
+.english.source-e, .english.source-ep, .english.source-epp,
+.english.source-p, .english.source-pp, .english.source-pr { font-weight: 700; }
+.hebrew.source-jp, .hebrew.source-jpp, .hebrew.source-je,
+.hebrew.source-e, .hebrew.source-ep, .hebrew.source-epp,
+.hebrew.source-p, .hebrew.source-pr { font-weight: 400; }
