@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Add a ranger-like tui version of the entire interface that can run in a terminal using fancy terminal tech like codex uses.
+
+'make tty' should build and open it.
+
+the interface should call itself 'el shaddai' and have a definition of 'shaddai' (editable) saying "Nobody knows. Maybe mountains or ttys."
+EOF
