@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+1. Collect all the verses from ~/obsidian/We The Nameless/[01][0-9]-*/*.tex (with or without commentary) into a machine readable form like json and put them somewhere that the app can use them.
+
+We want to be able to use them as 'citations' of sorts that we just put below something unhinged that our YHWH character is doing in the interface somewhere, so we need them to be displayed in a beautiful compact way, with the ability to show/hide the commentary on a case by case basis, and to edit commentary if it's already there. The app should have the ability to navigate to any chapter and verse in genesis and display the verse block in the interface. Also add a little box somewhere in the interface that gives a random verse displayed like its displayed in the book due to the horizontal layout of the \Verse{} macro defined in ~/obsidian/We The Nameless/master.tex. Then when the configurable YHWH-ness bar is added back to the interface, the Nietzsche family circus box replaces the YHWH random verse box in Nietzsche mode.
+
+2. When we edit text in the edit boxes, newlines should display in the interface.
+
+i.e.,
+
+Ah! There you are.
+
+Hey Abe, can I stay with you for a bit?
+
+is displaying as
+
+Ah! There you are. Hey Abe, can I stay with you for a bit?
+
+Fix that.
+
+EOF

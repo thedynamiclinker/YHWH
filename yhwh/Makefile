@@ -20,8 +20,10 @@ run:
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default
 develop install: build
 	$(NODE) bin/prefix.cjs $@ $(if $(PREFIX),"$(PREFIX)",)
+	$(NODE) bin/desktop.cjs $@ "$(if $(PREFIX),$(PREFIX),$(HOME)/world$(if $(filter install,$@),/mnt/sinai,))" "$(WORKSPACE)"
 uninstall:
 	$(NODE) bin/prefix.cjs uninstall $(if $(PREFIX),"$(PREFIX)",)
+	$(NODE) bin/desktop.cjs uninstall
 check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test

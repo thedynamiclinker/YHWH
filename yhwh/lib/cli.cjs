@@ -56,8 +56,8 @@ async function main(args=process.argv.slice(2)) {
   }
   if(command==='_complete'){console.log((await require('./workflow.cjs').complete(rest[0])).join('\n'));return 0;}
   if(command==='open') {
-    let name='default';if(['default','three','obsidian'].includes(rest[0]))name=rest.shift();
-    return execute(path.join(paths.root,'bin','yhwh-'+name),rest);
+    let name=process.env.YHWH_INTERFACE==='three'?'three':'default';if(['default','three','obsidian'].includes(rest[0]))name=rest.shift();
+    return execute(path.join(paths.root,'bin','yhwh-'+name),rest,{env:{...process.env,YHWH_INTERFACE:name}});
   }
   if(workflows.includes(command))return require('./workflow.cjs').main(command,rest);
   if(files.includes(command)){await require('../bin/default/cli.cjs').main([command,...rest]);return process.exitCode||0;}

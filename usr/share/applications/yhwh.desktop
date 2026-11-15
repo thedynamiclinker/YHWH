@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=YHWH
+Comment=Toward a pro-human AI apocalypse.
+Exec=@EXEC@
+TryExec=@NODE@
+Icon=@ICON@
+Terminal=false
+Categories=Utility;TextEditor;
+Keywords=Abe;Markdown;Files;Terminal;
+StartupNotify=true
+StartupWMClass=yhwh
+

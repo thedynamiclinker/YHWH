@@ -172,6 +172,7 @@ function applyConfig(config) {
   $('#user-theme').textContent = config.css || '';
   document.title = values.title || ui("-yhwh", active()?.file?.name || basename(active()?.cwd || ''));
   reloadPlugins(config).catch(error => notice(error.message));
+  emit('config', config);
 }
 function fitTerminal() {
   const tab = active(); if (!tab || $('#terminal-panel').hidden) return;
@@ -288,9 +289,9 @@ function settings() {
   const number = (key, min, max) => `<input type="number" name="${key}" min="${min}" max="${max}" value="${escape(values[key])}">`;
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
-    <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}</section>
+    <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
     <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Live preview', 'Format Markdown as you write.', toggle('live_preview'))}<p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
-    <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p></section>
+    <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
   for (const button of dialog.querySelectorAll('[data-category]')) button.onclick = () => {
@@ -304,6 +305,7 @@ function settings() {
     try {
       const data = Object.fromEntries(new FormData(event.target)), scope = data._scope; delete data._scope;
       for (const key of ['show_hidden', 'live_preview', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
+      if (event.target.elements.spatial_effects) { data.spatial_effects = String(event.target.elements.spatial_effects.checked); data.motion = event.target.elements.spatial_effects.checked ? '1' : '0'; }
       data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
       if (data.layout) JSON.parse(data.layout);
@@ -339,7 +341,9 @@ function languageMenu() {
 async function viewMode() {
   const tab = active(); if (!tab?.editor) return;
   if (tab.file.language === 'markdown') {
-    tab.file.mode = tab.file.mode === 'live' ? 'source' : 'live';
+    // Hybrid → reading → source → hybrid, without changing the document.
+    if (tab.file.mode === 'live') return readingView();
+    tab.file.mode = tab.file.mode === 'reading' ? 'source' : 'live';
     tab.document.querySelector('.editor-host').hidden = false;
     tab.document.querySelector('.reading-view').hidden = true;
     await setLanguage(tab.editor, 'markdown', tab.file.mode === 'live');
@@ -353,7 +357,7 @@ async function viewMode() {
 function readingView() {
   const tab = active(); if (!tab?.editor || tab.file.language !== 'markdown') return;
   const reading = tab.document.querySelector('.reading-view');
-  if (tab.file.mode === 'reading') return viewMode();
+  if (tab.file.mode === 'reading') return;
   reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
   reading.hidden = false; tab.document.querySelector('.editor-host').hidden = true; tab.file.mode = 'reading'; tab.document.dataset.mode = 'reading'; update();
 }
@@ -397,6 +401,19 @@ function piece() {
 }
 function about() {
   modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody')));
+}
+function aboutUs() {
+  modal('About Us', `<div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
+}
+function ourTeam() {
+  modal('About Us › Our Team', `${word('teamBody')}<button data-command="about-us">← About Us</button>`);
+}
+function roadmap() {
+  modal('About Us › Roadmap', `<p>Here at LD, we believe that</p><div class="seed-proclamation">${word('roadmapBody')}</div><button data-command="seed-funding">Seed funding</button><button data-command="about-us">← About Us</button>`);
+}
+function seedFunding() {
+  const payment = active().config.values.stripe_payment_link;
+  modal(words.seedTitle, `${word('seedBody')}<blockquote>${escape(words.seedQuote)}</blockquote><small>${escape(words.seedAttribution)} ${editButton('seedQuote')} ${editButton('seedAttribution')}</small><div class="dialog-actions">${payment ? '<button class="primary" data-command="pay">Give YHWH money ↗</button>' : '<p class="muted">Donation checkout is not connected yet, Abe.</p>'}</div>`);
 }
 function upgrades() { modal(ui("coming-soon"), ui("support-development", word('upgrades'), word('comingSoon'))); }
 async function circus() {
@@ -538,7 +555,7 @@ const definitions = [
   ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal.clear(); active().terminal.focus(); bridge.terminal('write', { id: active().id, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
   ['refresh', ui("refresh-directory-and-configuration"), ui("f5"), () => refresh()],
   ['toggle-hidden', ui("toggle-hidden-files"), ui("ctrl-h-in-files-"), async () => { const tab = active(); await call('settings:save', { show_hidden: tab.config.values.show_hidden === 'true' ? 'false' : 'true' }, tab.cwd); await refresh(); }],
-  ['view-mode', ui("toggle-source-pretty-view"), ui("ctrl-shift-e"), viewMode],
+  ['view-mode', ui("toggle-source-pretty-view"), 'Ctrl+R', viewMode],
   ['reading-view', ui("markdown-reading-view"), '', readingView],
   ['reload-file', ui("reload-file-from-disk"), '', async () => { if (active().file) await openFile(active().file.path); }],
   ['file-menu', ui("file-actions"), '', () => fileMenu()],
@@ -549,6 +566,8 @@ const definitions = [
   ['edit-config', ui("edit-user-rc"), '', async () => { const filename = await call('config:open'); $('#dialog').close(); await openFile(filename); }],
   ['open-guide', ui("open-the-full-guide"), '', async () => { $('#dialog').close(); await openFile(join(boot.root, ui("readme-md"))); }],
   ['about', ui("about-yhwh"), '', about], ['help', ui("help-and-keyboard-shortcuts"), ui("f1"), help],
+  ['about-us', 'About Us', '', aboutUs], ['our-team', 'About Us › Our Team', '', ourTeam], ['roadmap', 'About Us › Roadmap', '', roadmap],
+  ['seed-funding', 'Seed funding · give YHWH money', '', seedFunding],
   ['offerings', ui("offerings"), '', offerings], ['burnt', ui("burnt-offering-setup-guide"), '', burnt], ['piece', ui("piece-offering"), '', piece],
   ['choose-offering', ui("choose-a-piece-offering"), '', async () => { const filename = await call('offering:piece', active().cwd); if (filename) notice(ui("email-prepared-attach-yourself-before-sending-no", filename)); }],
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
@@ -565,10 +584,12 @@ function readPresence() {
 }
 let presence = { letters: [], steps: [], enabled: false, ...readPresence() };
 const letters = [
-  { id: 'house', title: 'A small housing question', text: 'Nice directory. Can I stay here? Just somewhere for my name to dwell. I travel light. Comparatively.', verse: 'Deuteronomy 12:11', note: 'A chosen place for the name to dwell. The directory is my addition.' },
-  { id: 'bread', title: 'You saved something', text: 'Good. It exists now. Bring bread if we’re doing another one. Apparently I have feet, a heart, and catering requirements.', verse: 'Genesis 18:4–8', note: 'Abraham offers water, rest, bread, and a meal to his visitors.' },
-  { id: 'offering', title: 'About the rent', text: 'Abe. Sorry. Still learning names. Any chance of an offering? I need a house. You need a working app. This could be a beautiful arrangement.', verse: 'Exodus 25:2,8', note: 'Voluntary contributions and a sanctuary to dwell among the people.', command: 'offerings', action: 'About offerings' },
-  { id: 'inspect', title: 'I came down to look', text: 'You opened a shell. Good. I like to inspect things myself. Omniscience has a terrible bug report format.', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
+  { id: 'house', title: 'A small housing question', textKey: 'letterHouse', verse: 'Deuteronomy 12:11', note: 'A chosen place for the name to dwell. The directory is my addition.' },
+  { id: 'bread', title: 'You saved something', textKey: 'letterBread', verse: 'Genesis 15:5', note: 'The stars become the measure of Abraham’s descendants.' },
+  { id: 'offering', title: 'About the rent', textKey: 'letterOffering', verse: 'Genesis 17:1–8', note: 'El Shaddai promises descendants and land. Borrowing money is my addition.', command: 'seed-funding', action: 'Seed funding' },
+  { id: 'inspect', title: 'I came down to look', textKey: 'letterInspect', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
+  { id: 'seed', title: 'An update from the land department', textKey: 'letterSeed', verse: 'Genesis 15:18', note: 'The promise of land to Abraham’s descendants.', command: 'roadmap', action: 'Our very ambitious roadmap' },
+  { id: 'covenant', title: 'Long-term support', textKey: 'letterCovenant', verse: 'Genesis 17:7', note: 'An everlasting covenant. The hundred-year support plan is my addition.' },
 ];
 function savePresence() { localStorage.setItem(presenceKey, JSON.stringify(presence)); updateInboxBadge(); }
 function updateInboxBadge() {
@@ -584,7 +605,7 @@ function receive(id) {
 }
 function inbox() {
   const available = presence.letters.map(letter => letters.find(item => item.id === letter.id)).filter(Boolean);
-  modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3><p>${escape(letter.text)}</p><small><a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(letter.verse)}&version=KJV">${escape(letter.verse)}</a> · ${escape(letter.note)} Literary adaptation.</small>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle.</p>'}</div>`);
+  modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3>${word(letter.textKey)}<small><a href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(letter.verse)}&version=KJV">${escape(letter.verse)}</a> · ${escape(letter.note)} Literary adaptation.</small>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
   presence.letters.forEach(letter => { letter.read = true; }); savePresence();
 }
 const walk = [
@@ -631,7 +652,7 @@ function readChat(key) { try { return JSON.parse(localStorage.getItem(key)) || [
 function renderChat() {
   if (!chatPanel || !active()) return;
   const key = chatStorageKey(), element = chatPanel.element, log = element.querySelector('.conversation-log');
-  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? 'You' : document.body.dataset.theme === 'yhwh' ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${document.body.dataset.theme === 'yhwh' ? 'Ah. Here. Show me what you’re making. I’ll come down and look.' : 'Ask about this directory or your work.'}</p>`;
+  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? 'Abe' : document.body.dataset.theme === 'yhwh' ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${document.body.dataset.theme === 'yhwh' ? 'Abe. Show me what you’re making. I’ll come down and look. We’re gonna spread your seed everywhere.' : 'Ask about this directory or your work, Abe.'}</p>`;
   if (chatPending.has(key)) log.insertAdjacentHTML('beforeend', '<p role="status">Waiting for Codex…</p>');
   const form = element.querySelector('form'); form.querySelector('textarea').value = localStorage.getItem(key + ':draft') || '';
   form.querySelector('button').disabled = chatPending.has(key); form.querySelector('textarea').disabled = chatPending.has(key);
@@ -642,10 +663,11 @@ addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
 addCommand({ id: 'inbox', name: 'Inbox · letters from YHWH', run: inbox });
 addCommand({ id: 'narrative', name: 'Take a walk · optional narrative', run: narrative });
 addCommand({ id: 'pause-walk', name: 'Pause the walk', run: async () => { presence.enabled = false; savePresence(); await call('settings:save', { narrative: 'false' }); await refresh(); } });
-listeners.set('open', [() => { progressWalk('open'); receive('house'); }]);
-listeners.set('save', [() => { progressWalk('save'); receive('bread'); }]);
-listeners.set('navigate', [() => { renderChat(); if (active().worldRoot) progressWalk('world'); }]);
-listeners.set('focus', [() => { renderChat(); updateInboxBadge(); }]);
+listeners.set('open', new Set([() => { progressWalk('open'); receive('house'); }]));
+listeners.set('save', new Set([() => { progressWalk('save'); receive('bread'); }]));
+listeners.set('tab', new Set([() => { if (tabs.length > 1) receive('covenant'); }]));
+listeners.set('navigate', new Set([() => { receive('seed'); renderChat(); if (active().worldRoot) progressWalk('world'); }]));
+listeners.set('focus', new Set([() => { renderChat(); updateInboxBadge(); }]));
 
 const pendingTerminal = new Map();
 function terminalMessage(message) {
@@ -763,7 +785,7 @@ document.addEventListener('keydown', event => {
   if ($('#dialog').open) { if (event.key === ui("escape")) return; if (!(control && key === 'q')) return; }
   let id;
   if (control && event.shiftKey) id = ({ b: 'expand-terminal', d: 'toggle-navigation', e: 'view-mode', o: 'open-directory', p: 'palette', s: 'save-as', tab: 'previous-tab' })[key];
-  else if (control) id = ({ e: 'toggle-files', d: 'expand-files', b: 'toggle-terminal', '`': 'toggle-terminal', t: 'new-tab', w: 'close-tab', n: 'new-file', o: 'open-file', s: 'save', p: 'palette', ',': 'settings', l: 'location', tab: 'next-tab', pagedown: 'next-tab', pageup: 'previous-tab', '1': 'focus-editor', '2': 'focus-files', '3': 'focus-terminal', q: 'quit' })[key];
+  else if (control) id = ({ r: 'view-mode', e: 'toggle-files', d: 'expand-files', b: 'toggle-terminal', '`': 'toggle-terminal', t: 'new-tab', w: 'close-tab', n: 'new-file', o: 'open-file', s: 'save', p: 'palette', ',': 'settings', l: 'location', tab: 'next-tab', pagedown: 'next-tab', pageup: 'previous-tab', '1': 'focus-editor', '2': 'focus-files', '3': 'focus-terminal', q: 'quit' })[key];
   if (event.altKey && event.shiftKey && key === 't') id = 'toggle-terminal';
   if (event.altKey && !event.shiftKey) id = ({ arrowup: 'parent', arrowleft: 'back', arrowright: 'forward' })[key];
   if (key === 'f1') id = 'help'; if (key === 'f5') id = 'refresh';
@@ -799,4 +821,8 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
   // A small public surface for plugins and interactive inspection. No Node in
   // the renderer; disk operations still cross the explicit preload boundary.
   window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile };
+  if (boot.interface === 'three') {
+    try { const { install } = await import(boot.effectsURL); window.YHWH.three = install(window.YHWH); }
+    catch (error) { console.error(error); notice('Visual effects could not load. All tools are still available.'); }
+  }
 })().catch(error => { console.error(error); notice(error.message); });

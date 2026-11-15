@@ -11,9 +11,16 @@ const { resolveConfig, configLocations, userDirectory, saveSettings } = require(
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
-const profile = process.env.YHWH_DATA_DIR || path.join(userDirectory(), 'state');
+const three = process.env.YHWH_INTERFACE === 'three';
+const configOptions = three ? { variant: 'three' } : {};
+const development = process.env.YHWH_DESKTOP_FLAVOR === 'development';
+const profile = (three ? process.env.YHWH_THREE_DATA_DIR : process.env.YHWH_DATA_DIR) || path.join(userDirectory(), three ? 'state-three' : development ? 'state-development' : 'state');
 app.setPath(ui("userdata"), profile);
 app.setName(ui("yhwh"));
+if (process.platform === 'linux') {
+  app.setDesktopName(development ? 'yhwh-development.desktop' : 'yhwh.desktop');
+  app.commandLine.appendSwitch('class', development ? 'yhwh-development' : 'yhwh');
+}
 const entry = pathToFileURL(require('../../../lib/paths.cjs').etc('default', 'index.html')).href;
 let window, host, loaded = false, quitting = false;
 const focuses = new Map();
@@ -24,7 +31,7 @@ function command(name) { send('command', name); }
 function flag(argv, name) { const inline = argv.find(arg => arg.startsWith(`${name}=`)); if (inline) return inline.slice(name.length + 1); const index = argv.indexOf(name); return index < 0 ? null : argv[index + 1]; }
 function request(argv, cwd = process.cwd()) {
   const filename = flag(argv, '--open');
-  return { path: path.resolve(cwd, filename || flag(argv, '--cwd') || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme') };
+  return { path: path.resolve(cwd, filename || flag(argv, '--cwd') || (three && (flag(argv, '--root') || process.env.YHWH_THREE_OPEN)) || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme') };
 }
 
 const locked = app.requestSingleInstanceLock();
@@ -48,14 +55,14 @@ function handle(name, callback) {
 
 async function configFor(target) {
   const previous = configCache.get(target);
-  const locations = await configLocations(path.resolve(target));
+  const locations = await configLocations(path.resolve(target), configOptions);
   async function stamp(values = {}) {
-    const tracked = [...locations.map(location => path.join(location.directory, 'rc')), ...[values.stylesheet, values.bg].filter(Boolean)];
+    const tracked = [...locations.flatMap(location => (three ? ['rc', 'rc.three'] : ['rc']).map(name => path.join(location.directory, name))), ...[values.stylesheet, values.bg].filter(Boolean)];
     return (await Promise.all(tracked.map(async filename => { try { const stat = await fs.stat(filename); return `${filename}:${stat.mtimeMs}:${stat.size}:${stat.mode}`; } catch { return filename; } }))).join('|');
   }
   const signature = await stamp(previous?.config.values);
   if (previous?.signature === signature) return previous.config;
-  const config = await resolveConfig(target);
+  const config = await resolveConfig(target, configOptions);
   if (config.values.stylesheet) {
     try {
       const filename = config.values.stylesheet.startsWith('file:') ? require('node:url').fileURLToPath(config.values.stylesheet) : config.values.stylesheet;
@@ -128,7 +135,7 @@ async function launch() {
   });
   handle('bootstrap', async () => {
     loaded = true;
-    return { root, initial: request(process.argv), pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
+    return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial: request(process.argv), pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
   handle('focus:new', async (id, directory) => {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
@@ -136,7 +143,7 @@ async function launch() {
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
-      host.send({ type: 'start', id, cwd: focus.cwd, env: { PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${process.env.PATH}` } });
+      host.send({ type: 'start', id, cwd: focus.cwd, env: { YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${process.env.PATH}` } });
       return result;
     } catch (error) { focuses.delete(id); throw error; }
   });
@@ -187,9 +194,9 @@ async function launch() {
     return result.canceled ? null : result.filePaths[0];
   });
   handle('choose:save', async (directory, name) => { const result = await dialog.showSaveDialog(window, { defaultPath: path.join(directory, name) }); return result.canceled ? null : result.filePath; });
-  handle('settings:save', async (values, scope) => { await saveSettings(values, scope); configCache.clear(); });
+  handle('settings:save', async (values, scope) => { await saveSettings(values, scope, configOptions); configCache.clear(); });
   handle('config:reload', () => configCache.clear());
-  handle('config:open', async () => { await fs.mkdir(userDirectory(), { recursive: true }); const filename = path.join(userDirectory(), 'rc'); await fs.appendFile(filename, '', { mode: 0o600 }); return filename; });
+  handle('config:open', async () => { await fs.mkdir(userDirectory(), { recursive: true }); const filename = path.join(userDirectory(), three ? 'rc.three' : 'rc'); await fs.appendFile(filename, '', { mode: 0o600 }); return filename; });
   handle('words:save', async words => {
     const filename = require('../../../lib/paths.cjs').etc('default', 'words.json');
     const original = JSON.parse(await fs.readFile(filename, 'utf8'));
@@ -229,12 +236,11 @@ async function launch() {
   for (const [channel, type] of [['terminal:write', 'write'], ['terminal:resize', 'resize']]) {
     ipcMain.on(channel, (event, message) => { if (event.senderFrame.url === entry && focuses.has(message.id)) host.send({ ...message, type }); });
   }
-  const template = [{ label: ui('higher-help'), click: () => command('higher-help') }];
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  Menu.setApplicationMenu(null);
   window = new BrowserWindow({
     ...require('../../../etc/default/window.json'),
         
-    title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', 'icon.png'), autoHideMenuBar: false,
+    title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', development ? 'icon-development.png' : 'icon.png'), autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));

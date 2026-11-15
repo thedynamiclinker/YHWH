@@ -68,29 +68,31 @@ async function resolveConfig(target, options = {}) {
   let environment = { ...process.env, ...options.env };
   const locations = await configLocations(target, options);
   for (const { directory, base } of locations) {
-    const filename = path.join(directory, 'rc');
-    try {
-      if (!await readableRc(filename)) continue;
-      files.push(filename);
-      const entries = sections(await fs.readFile(filename, 'utf8'));
-      const code = 'set -e\n' + entries.map(entry => `__yhwh_scope="${entry.scope}"\nprintf '%s\\0' "$__yhwh_scope" >&3`).join('\n');
-      const expanded = (await shell(code, { cwd: base, env: environment })).split('\0');
-      const matching = entries.map((entry, i) => ({ ...entry, scope: path.resolve(base, expanded[i]) }))
-        .filter(entry => within(target, entry.scope)).sort((a, b) => a.scope.length - b.scope.length || a.line - b.line);
-      if (!matching.length) continue;
-      const output = await shell(`set -ae\n${matching.flatMap(entry => entry.lines).join('\n')}\nenv -0 >&3`, { cwd: base, env: environment });
-      const next = Object.fromEntries(output.split('\0').filter(Boolean).map(item => { const i = item.indexOf('='); return [item.slice(0, i), item.slice(i + 1)]; }));
-      const assigned = new Set(matching.flatMap(entry => entry.lines).map(line => line.match(/^\s*(?:export\s+)?([a-zA-Z_][a-zA-Z0-9_]*)=/)?.[1]).filter(Boolean));
-      // Keep shell variables available for later files. Only changed variables
-      // become settings, so the host's PATH, HOME, etc. remain ordinary env vars.
-      for (const [key, value] of Object.entries(next).sort(([a], [b]) => Number(a.startsWith('yhwh_')) - Number(b.startsWith('yhwh_')))) {
-        if ((value !== environment[key] || assigned.has(key)) && !key.startsWith('__yhwh_') && !['PWD', 'OLDPWD', 'SHLVL', '_', 'YHWH_EXPAND', 'SHELLOPTS'].includes(key)) {
-          const setting = key.replace(/^yhwh_/, '');
-          values[setting] = value; origins[setting] = base;
+    for (const name of options.variant === 'three' ? ['rc', 'rc.three'] : ['rc']) {
+      const filename = path.join(directory, name);
+      try {
+        if (!await readableRc(filename)) continue;
+        files.push(filename);
+        const entries = sections(await fs.readFile(filename, 'utf8'));
+        const code = 'set -e\n' + entries.map(entry => `__yhwh_scope="${entry.scope}"\nprintf '%s\\0' "$__yhwh_scope" >&3`).join('\n');
+        const expanded = (await shell(code, { cwd: base, env: environment })).split('\0');
+        const matching = entries.map((entry, i) => ({ ...entry, scope: path.resolve(base, expanded[i]) }))
+          .filter(entry => within(target, entry.scope)).sort((a, b) => a.scope.length - b.scope.length || a.line - b.line);
+        if (!matching.length) continue;
+        const output = await shell(`set -ae\n${matching.flatMap(entry => entry.lines).join('\n')}\nenv -0 >&3`, { cwd: base, env: environment });
+        const next = Object.fromEntries(output.split('\0').filter(Boolean).map(item => { const i = item.indexOf('='); return [item.slice(0, i), item.slice(i + 1)]; }));
+        const assigned = new Set(matching.flatMap(entry => entry.lines).map(line => line.match(/^\s*(?:export\s+)?([a-zA-Z_][a-zA-Z0-9_]*)=/)?.[1]).filter(Boolean));
+        // Keep shell variables available for later files. Only changed variables
+        // become settings, so the host's PATH, HOME, etc. remain ordinary env vars.
+        for (const [key, value] of Object.entries(next).sort(([a], [b]) => Number(a.startsWith('yhwh_')) - Number(b.startsWith('yhwh_')))) {
+          if ((value !== environment[key] || assigned.has(key)) && !key.startsWith('__yhwh_') && !['PWD', 'OLDPWD', 'SHLVL', '_', 'YHWH_EXPAND', 'SHELLOPTS'].includes(key)) {
+            const setting = key.replace(/^yhwh_/, '');
+            values[setting] = value; origins[setting] = base;
+          }
         }
-      }
-      environment = next;
-    } catch (error) { warnings.push(`${filename}: ${error.message}`); }
+        environment = next;
+      } catch (error) { warnings.push(`${filename}: ${error.message}`); }
+    }
   }
   for (const [key, value] of Object.entries(process.env)) {
     if (key.startsWith('yhwh_')) { values[key.slice(5)] = value; origins[key.slice(5)] = process.cwd(); }
@@ -103,7 +105,7 @@ async function resolveConfig(target, options = {}) {
 
 const { quote } = require('../../../lib/shell.cjs');
 
-async function saveSettings(values, scope = path.parse(os.homedir()).root) {
+async function saveSettings(values, scope = path.parse(os.homedir()).root, options = {}) {
   const directory = userDirectory();
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   const lines = Object.entries(values).map(([key, value]) => {
@@ -114,7 +116,7 @@ async function saveSettings(values, scope = path.parse(os.homedir()).root) {
   if (/[\r\n]/.test(scope)) throw new Error('Use the rc editor for a scope containing a newline.');
   const literalScope = scope.replace(/[\\"$`]/g, char => `\\${char}`);
   // Appending an ordinary section preserves hand-written shell and comments.
-  await fs.appendFile(path.join(directory, 'rc'), `\n# Saved from YHWH settings\n${literalScope}\n${lines.join('\n')}\n`, { mode: 0o600 });
+  await fs.appendFile(path.join(directory, options.variant === 'three' ? 'rc.three' : 'rc'), `\n# Saved from YHWH settings\n${literalScope}\n${lines.join('\n')}\n`, { mode: 0o600 });
 }
 
 module.exports = { defaults, sections, resolveConfig, configLocations, userDirectory, saveSettings, quote, within };

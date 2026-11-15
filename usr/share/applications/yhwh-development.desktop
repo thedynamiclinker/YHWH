@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=YHWH (Development)
+Comment=The living checkout. Guess who's back, Abe.
+Exec=@EXEC@
+TryExec=@NODE@
+Icon=@ICON@
+Terminal=false
+Categories=Utility;TextEditor;
+Keywords=Abe;Markdown;Files;Terminal;Development;
+StartupNotify=true
+StartupWMClass=yhwh-development
+

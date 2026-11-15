@@ -6,22 +6,24 @@ const os = require('node:os');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const exec = promisify(execFile);
-const root = path.resolve(__dirname, '..');
+const variant = process.env.YHWH_TEST_INTERFACE === 'three' ? 'three' : 'default';
+const root = path.resolve(__dirname, variant === 'three' ? '../../yhwh-three' : '..');
 (async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'yhwh-desktop-test-'));
   const directory = path.join(temp, 'files'), nested = path.join(directory, 'nested');
-  const config = path.join(temp, 'config'), artifacts = require('../../../lib/paths.cjs').output('default', 'screenshots');
+  const config = path.join(temp, 'config'), artifacts = require('../../../lib/paths.cjs').output(variant, 'screenshots');
   await fs.mkdir(nested, { recursive: true }); await fs.mkdir(config); await fs.mkdir(artifacts, { recursive: true });
   await fs.writeFile(path.join(nested, 'child.txt'), 'inside a directory');
   await fs.writeFile(path.join(directory, 'notes.md'), '# A little room for creation\n\nA **real file**. A shell. A door that opens.\n\n## Things to make\n\n- Something useful\n- Something strange\n\n```javascript\nconsole.log("Let there be files");\n```\n');
   await fs.writeFile(path.join(directory, 'data.json'), '{"hello":"world","count":3,"big":9007199254740993,"same":1,"same":2}');
   await fs.writeFile(path.join(directory, 'page.html'), '<html><body><div>hi</div></body></html>');
   await fs.writeFile(path.join(directory, 'boop'), 'a plain file\n');
+  await fs.writeFile(path.join(directory, 'links.md'), '# Links\n\n[Open a note](notes.md)\n\n[Open the web](https://thedynamiclinker.com)\n\n[[notes|Wiki note]]\n\n[Read text](boop)\n');
   await fs.writeFile(path.join(directory, '.hidden'), 'hidden');
   await fs.writeFile(path.join(config, 'theme.css'), '.statusbar { border-top-color: rgb(90, 70, 120); }');
   await fs.writeFile(path.join(config, 'rc'), "/\n    stylesheet='theme.css'\n", { mode: 0o600 });
   const sourceWords = await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8');
-  const env = { ...process.env, YHWH_DATA_DIR: path.join(temp, 'profile'), YHWH_CONFIG_HOME: config, YHWH_SYSTEM_CONFIG: path.join(temp, 'system'), YHWH_NODE: process.execPath, YHWH_SHELL: '/bin/bash', YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' };
+  const env = { ...process.env, YHWH_INTERFACE: variant, YHWH_DATA_DIR: path.join(temp, 'profile'), YHWH_THREE_DATA_DIR: path.join(temp, 'profile-three'), YHWH_CONFIG_HOME: config, YHWH_SYSTEM_CONFIG: path.join(temp, 'system'), YHWH_NODE: process.execPath, YHWH_SHELL: '/bin/bash', YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' };
   const chatFixture = path.join(temp, 'codex-fixture');
   await fs.writeFile(chatFixture, `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -41,6 +43,7 @@ process.stdin.on('end', () => {
     app = await electron.launch({ executablePath: require('../../../lib/electron.cjs')(), args: [root, '--disable-gpu', '--cwd', directory], env, timeout: 60000 });
     page = await app.firstWindow(); page.on('pageerror', error => errors.push(error.message));
     await page.waitForFunction(() => window.YHWH?.active());
+    if (variant === 'three') await page.waitForFunction(() => !!window.YHWH.three);
   }
   const run = name => page.evaluate(name => window.YHWH.run(name), name);
   const open = filename => page.evaluate(filename => window.YHWH.openFile(filename), filename);
@@ -51,6 +54,39 @@ process.stdin.on('end', () => {
   }
   try {
     await launch();
+    assert.equal(await app.evaluate(({ Menu }) => Menu.getApplicationMenu()), null);
+    assert.equal(await page.locator('.titlebar #higher-help').count(), 0);
+    assert.equal(await page.locator('.statusbar #higher-help').textContent(), 'Need Some Help?');
+    assert.match(await page.locator('.window-title').innerText(), /Toward a pro-human AI apocalypse\./);
+    assert.match(await page.locator('.welcome').innerText(), /Guess who's back/i);
+    assert.ok((await page.locator('.welcome').textContent()).includes(JSON.parse(sourceWords).welcomeBody));
+    if (variant === 'three') {
+      assert.equal(await page.locator('#three-surface').getAttribute('aria-hidden'), 'true');
+      assert.equal(await page.locator('#three-surface').evaluate(el => getComputedStyle(el).pointerEvents), 'none');
+      assert.equal(await page.evaluate(() => window.YHWH.three.stats.backend), 'canvas2d');
+      await page.waitForTimeout(180);
+      await run('three-melt');
+      await page.waitForFunction(() => window.YHWH.three.stats.frames > 0);
+      await page.waitForTimeout(280);
+      await page.screenshot({ path: path.join(artifacts, '00-melting-surface.png') });
+      await page.waitForFunction(() => !window.YHWH.three.stats.running);
+      const frames = await page.evaluate(() => window.YHWH.three.stats.frames);
+      await page.waitForTimeout(220);
+      assert.equal(await page.evaluate(() => window.YHWH.three.stats.frames), frames);
+      const dimensions = await page.locator('#three-surface').evaluate(el => el.width * el.height);
+      assert.ok(dimensions < 903000);
+      await page.emulateMedia({ reducedMotion:'reduce' });
+      assert.equal(await page.evaluate(() => window.YHWH.three.enabled), false);
+      await run('three-melt');
+      assert.equal(await page.evaluate(() => window.YHWH.three.stats.frames), frames);
+      await page.emulateMedia({ reducedMotion:'no-preference' });
+      console.log('Effects diagnostics:', await page.evaluate(() => ({ ...window.YHWH.three.stats })));
+      await page.locator('#files > header > span').click();
+      await page.waitForTimeout(110);
+      await page.screenshot({ path: path.join(artifacts, '00-elastic-surface.png') });
+      await page.waitForFunction(() => !window.YHWH.three.stats.running);
+      console.log('✓ canvas effect burst, bounded pixels, zero idle paints, reduced motion and transparent hit testing');
+    }
     await run('higher-help');
     assert.equal(await page.locator('#dialog h2').textContent(), 'Help from a higher power');
     assert.equal(await page.locator('#dialog [data-command]').count(), 2);
@@ -75,7 +111,7 @@ process.stdin.on('end', () => {
     console.log('✓ higher-power views, root navigation, both book lists, attributed fan mail, email composer');
 
     assert.equal(await page.locator('#files').isVisible(), true); assert.equal(await page.locator('#terminal-panel').isVisible(), false);
-    assert.equal(await page.locator('.welcome h1').textContent().then(text => text.includes('Where are you?')), true);
+    assert.equal(await page.locator('.welcome h1').textContent().then(text => text.includes(JSON.parse(sourceWords).welcomeTitle)), true);
     assert.equal(await page.locator('.file-row').filter({ hasText: '.hidden' }).count(), 0);
     assert.equal(await page.locator('#user-theme').textContent().then(text => text.includes('90, 70, 120')), true);
     await page.screenshot({ path: path.join(artifacts, '01-welcome.png') });
@@ -138,8 +174,29 @@ process.stdin.on('end', () => {
     await page.keyboard.press('Control+d');
     await open(path.join(directory, 'notes.md'));
     assert.equal(await page.locator('.live-block h2').textContent(), 'Things to make');
-    await page.keyboard.press('Control+Shift+e'); assert.equal(await page.locator('.live-block').count(), 0);
-    await page.keyboard.press('Control+Shift+e'); await page.locator('.live-block h2').waitFor();
+    await page.keyboard.press('Control+r'); assert.equal(await page.locator('.reading-view:visible h2').textContent(), 'Things to make');
+    await page.keyboard.press('Control+r'); assert.equal(await page.locator('.live-block').count(), 0);
+    await page.keyboard.press('Control+r'); await page.locator('.live-block h2').waitFor();
+    const documentBeforeLinks = await page.evaluate(() => window.YHWH.active().editor.state.doc.toString());
+    await page.keyboard.press('Control+r'); await page.keyboard.press('Control+r'); await page.keyboard.press('Control+r');
+    assert.equal(await page.evaluate(() => window.YHWH.active().editor.state.doc.toString()), documentBeforeLinks);
+    await app.evaluate(({ shell }) => { globalThis.openedLinks = []; shell.openExternal = async url => { globalThis.openedLinks.push(url); }; });
+    await open(path.join(directory, 'links.md'));
+    const externalLink = page.locator('.live-block a').filter({ hasText: 'Open the web' });
+    await externalLink.click();
+    assert.deepEqual(await app.evaluate(() => globalThis.openedLinks), ['https://thedynamiclinker.com/']);
+    assert.equal(await page.evaluate(() => window.YHWH.active().file.mode), 'live');
+    assert.equal(await page.evaluate(() => window.YHWH.active().dirty), false);
+    await page.locator('.live-block a').filter({ hasText: 'Open a note' }).click();
+    await page.waitForFunction(() => window.YHWH.active().file.name === 'notes.md');
+    await open(path.join(directory, 'links.md'));
+    await page.locator('.live-block a').filter({ hasText: 'Wiki note' }).click();
+    await page.waitForFunction(() => window.YHWH.active().file.name === 'notes.md');
+    await open(path.join(directory, 'links.md')); await page.keyboard.press('Control+r');
+    await page.locator('.reading-view a').filter({ hasText: 'Read text' }).click();
+    await page.waitForFunction(() => window.YHWH.active().file.name === 'boop');
+    await open(path.join(directory, 'notes.md'));
+    console.log('✓ Ctrl+R cycles all three modes without buffer changes; web, local and wiki links open on click');
     await page.locator('.cm-content:visible').click(); await page.keyboard.press('Control+End'); await page.keyboard.insertText('\nSaved from the editor.\n');
     await page.keyboard.press('Control+s'); await page.waitForFunction(() => !window.YHWH.active().dirty);
     assert.match(await fs.readFile(path.join(directory, 'notes.md'), 'utf8'), /Saved from the editor/);
@@ -200,10 +257,23 @@ process.stdin.on('end', () => {
     await run('burnt'); assert.equal(await page.locator('[data-url="https://dashboard.stripe.com/register"]').count(), 1);
     await page.screenshot({ path: path.join(artifacts, '06-offerings.png') });
     await page.keyboard.press('Escape'); await run('piece'); assert.match(await page.locator('.dialog-body').textContent(), /No file is uploaded/); await page.keyboard.press('Escape');
+    await page.locator('.statusbar [data-command="seed-funding"]').click();
+    assert.match(await page.locator('#dialog').innerText(), /No equity, Abe/);
+    assert.match(await page.locator('#dialog').innerText(), /George Carlin · You Are All Diseased/);
+    assert.equal(await page.locator('#dialog [data-command="pay"]').count(), 0);
+    await run('about'); await page.locator('#dialog [data-command="about-us"]').click();
+    await page.locator('#dialog [data-command="our-team"]').click();
+    assert.match(await page.locator('#dialog').innerText(), /J, R, YHWH/);
+    await page.locator('#dialog [data-command="about-us"]').click();
+    await page.locator('#dialog [data-command="roadmap"]').click();
+    assert.match(await page.locator('.seed-proclamation').innerText(), /giving this land to your seed/);
+    await page.screenshot({ path: path.join(artifacts, '10-roadmap.png') });
+    await page.keyboard.press('Escape');
     console.log('✓ hello-world plugin command/panel; panel movement; all personality modes; text edits write source; offering stubs');
 
     await run('inbox');
-    assert.match(await page.locator('#dialog').innerText(), /Genesis 18:20–21/);
+    assert.match(await page.locator('#dialog').innerText(), /Abe/);
+    assert.match(await page.locator('#dialog').innerText(), /Literary adaptation/);
     await run('narrative');
     assert.equal(await page.locator('#dialog [data-command="open-file"]').count(), 1);
     await page.locator('#dialog [data-close]').click();
@@ -232,7 +302,7 @@ process.stdin.on('end', () => {
     await page.locator('[data-category=appearance]').click();
     await page.locator('#settings-form input[name=ui_font_size]').fill('18');
     await page.locator('#settings-form input[name=font_size]').fill('18'); await page.locator('#settings-form .primary').click(); await page.locator('#dialog').waitFor({ state: 'hidden' });
-    assert.match(await fs.readFile(path.join(config, 'rc'), 'utf8'), /font_size='18'/);
+    assert.match(await fs.readFile(path.join(config, variant === 'three' ? 'rc.three' : 'rc'), 'utf8'), /font_size='18'/);
     assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).fontSize), '18px');
     console.log('✓ folder tree, terminal-first Ctrl+L, quiet help, categorized settings, inbox, walk and persistent chat draft');
     const win = await app.browserWindow(page); await win.evaluate(win => win.setSize(900, 650));

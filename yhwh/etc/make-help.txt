@@ -8,14 +8,15 @@ make obsidian-install VAULT=PATH   Install plugin assets into an existing vault
 make check           Core, workflow, packaging and headless Electron UI tests
 make test            Core tests (no desktop, installation or uninstallation)
 make test-ui         Electron UI tests on the current display
-make develop         Editable symlinks into ~/world
-make install         Standalone npm package into ~/world/mnt/sinai
+make develop         Editable symlinks into ~/world + violet Development desktop app
+make install         Standalone package into ~/world/mnt/sinai + gold YHWH desktop app
 make uninstall       Remove verified, project-owned ~/world; refuse conflicts
 make package         Create an npm distribution tarball under var/tmp/yhwh
 make company         Open the preserved company/review rehearsal app
 make clean           Remove temporary build outputs
 
 Installation alone supports PREFIX=/disposable/prefix for testing.
+Desktop entries/icons install to $XDG_DATA_HOME (default ~/.local/share).
 Uninstall always verifies exactly $HOME/world. It never follows symlink targets.
 Node >=22.12, npm, Make, Bash, Git, fold, Python 3 and file are required.
 Native node-pty compilation may need a C++ toolchain. UI checks need Xvfb.

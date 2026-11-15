@@ -140,3 +140,16 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
     assert.equal(items[9].title, 'Dudetheyreontome');
   }
  });
+
+ test('Three inherits shared settings and applies rc.three at each scope without changing default', async t => {
+  const base = await fixture(t), user = path.join(base, 'config'), system = path.join(base, 'system'), target = path.join(base, 'work');
+  await fs.mkdir(target);
+  await rc(user, "/\n    font_size=19\n    motion=1\n");
+  await fs.writeFile(path.join(user, 'rc.three'), "/\n    motion=0\n    title='Three only'\n", { mode:0o600 });
+  await rc(path.join(target, '.yhwh'), ".\n    font_size=21\n");
+  const options = { system,user };
+  const ordinary = await resolveConfig(target, options), three = await resolveConfig(target, { ...options, variant:'three' });
+  assert.equal(ordinary.values.motion, '1'); assert.equal(three.values.motion, '0');
+  assert.equal(three.values.title, 'Three only'); assert.equal(ordinary.values.title, undefined);
+  assert.equal(three.values.font_size, '21');
+ });

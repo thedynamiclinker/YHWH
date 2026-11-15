@@ -10,6 +10,9 @@ test('every Genesis manuscript is available to the character, with Abraham and s
   assert.match(prompt, /SOURCE 12.tex/); assert.match(prompt, /SOURCE 23.tex/);
   assert.match(prompt, /SOURCE 50.tex/); assert.match(prompt, /SOURCE apocrypha.tex/);
   assert.match(prompt, /Do not change files/);
+  assert.match(prompt, /Always address the user as Abe, in every mode/);
+  assert.match(prompt, /George Carlin → Charlie or Charleen/);
+  assert.match(prompt, /occasionally promise to spread Abe's seed everywhere/);
   assert.match(await characterPrompt(0), /No deity performance/);
 });
 

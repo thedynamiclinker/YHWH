@@ -3,6 +3,7 @@ __pycache__/
 node_modules/
 /yhwh/var/tmp/
 /yhwh/var/lib/
+/yhwh/etc/desktop/
 /.lord-agents.lock/
 .obsidian/workspace.json
 

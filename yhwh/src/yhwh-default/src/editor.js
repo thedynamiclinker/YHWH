@@ -36,14 +36,20 @@ class MarkdownBlock extends WidgetType {
     element.className = 'markdown-rendered live-block';
     element.innerHTML = renderMarkdown(this.text, view.dom.closest('.document-content')?.dataset.filename);
     element.addEventListener('mousedown', event => {
-      if (event.target.closest('a')) return;
+      if (event.target.closest('a')) {
+        // Keep the widget alive until click opens the link. Moving the editor
+        // selection here would replace it with source before click arrives.
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       event.preventDefault();
       view.dispatch({ selection: { anchor: Math.min(this.from, view.state.doc.length) }, scrollIntoView: true });
       view.focus();
     });
     return element;
   }
-  ignoreEvent() { return false; }
+  ignoreEvent(event) { return !!event.target.closest?.('a'); }
 }
 
 function preview(state) {

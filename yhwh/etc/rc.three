@@ -1,15 +1,10 @@
-# This follows the shared rc in the same Bash process. Use Bash to decide
-# which values to change. Headers must name existing paths. Shell is indented.
+# Three uses the shared desktop. Put this in ~/.config/yhwh/rc.three.
+# It follows rc at each scope; use the same hierarchical shell syntax.
 /
-    # For example, preserve an explicit shared choice:
-    if [[ ${theme} == yhwh ]]; then
-        bloom=0.8
-    fi
+    # spatial_effects=false
     # motion=0
-    # particles=1800
-    # font_size=15
-    # accent='#d8bd85'
-    # filetypes='{"(^|/)boop$":"Markdown","\\.myjs$":"JavaScript"}'
-    # theme_css="$HOME/config/yhwh/my-theme.css"
-    # plugin="$HOME/config/yhwh/my-plugin.js"
-    # bg="$HOME/Pictures/wallpaper.png"
+    # spatial_strength=1.0
+    # ui_font_size=16
+    # terminal_font_size=15
+    # stylesheet="$HOME/config/yhwh/my-theme.css"
+    # plugins='["/path/to/plugin-directory"]'

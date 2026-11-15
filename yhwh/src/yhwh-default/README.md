@@ -1,6 +1,6 @@
 # YHWH
 
-Files, a shell, and somewhere to think. An Electron desktop editor with an ordinary filesystem, an Obsidian-shaped interface, and an opinionated deity in the margins.
+Toward a pro-human AI apocalypse. An Electron desktop editor with an ordinary filesystem, an Obsidian-shaped interface, and an opinionated deity in the margins.
 
 Build, install and launch commands are defined in [the application guide](../../README.md).
 
@@ -24,7 +24,7 @@ Each **app tab** owns one current directory, one persistent shell, and zero or o
 | New file / open file | Ctrl+N / Ctrl+O |
 | Choose a directory | Ctrl+Shift+O |
 | Save / Save as | Ctrl+S / Ctrl+Shift+S |
-| Source / Live Preview or pretty formatting | Ctrl+Shift+E |
+| Cycle hybrid / reading / source; format JSON/HTML | Ctrl+R (also Ctrl+Shift+E) |
 | Commands | Ctrl+P, Ctrl+Shift+P |
 | Settings / help | Ctrl+, / F1 |
 
@@ -38,7 +38,7 @@ The terminal is an xterm.js terminal connected to a real node-pty shell. It star
 
 ## Documents
 
-Text uses CodeMirror with syntax highlighting, undo, search, selection, and standard editing keys. Markdown defaults to **Live Preview**: blocks render until selected for editing. Source and reading views are available. Markdown links, local images, and `[[relative/note|label]]` links are supported; a wikilink can omit `.md`. JSON's pretty action validates and indents JSON; HTML uses Prettier. Formatting changes the buffer and is undoable. Save writes it to disk.
+Text uses CodeMirror with syntax highlighting, undo, search, selection, and standard editing keys. Markdown defaults to **Hybrid**: blocks render until selected for editing. Ctrl+R cycles Hybrid → Reading → Source → Hybrid while retaining unsaved edits. Clicking a rendered link opens it without moving the editor selection. Markdown links, local images, and `[[relative/note|label]]` links are supported; a wikilink can omit `.md`. JSON's pretty action validates and indents JSON; HTML uses Prettier. Formatting changes the buffer and is undoable. Save writes it to disk.
 
 Click the big filename heading to rename the real file, including its extension. It refuses an existing destination. Saves preserve symbolic links and Unix permissions and reject a file whose modification time changed since opening. Reload or explicitly choose Overwrite from the file menu after reviewing a conflict. Unsaved changes prompt before replacing a document, closing a tab, or quitting. Saving is explicit, with Ctrl+S; there is no background autosave.
 
@@ -165,10 +165,32 @@ make check                # Both
 
 The UI checks cover Markdown editing/renaming, pane toggles, app tabs, shell sync, CLI routing, JSON/HTML formatting, detection and overrides, plugins and movement, personality, source-copy editing, offering stubs, persisted settings, and compact layout. Screenshots go to `yhwh/var/tmp/yhwh/default/screenshots/`. Tests restore edited source copy and never send email or collect payments.
 
-## Help! and the mounted file views
+## Need Some Help? and the mounted file views
 
-The single Help! menu/button opens Man and God, with confirmation before opening a new file-view tab rooted at the checkout’s `mnt/root` or `mnt/yhwh`. `mnt/we` overlays both roots at the same relative paths; shared entries take precedence on collisions, and directories merge. Files stay in their source trees, so reopening reads current content. Parent navigation stops at the selected view root. This is an app file view, not an OS chroot; terminals keep the user’s permissions. Return to ordinary files exits the view.
+The single grey “Need Some Help?” button in the status bar opens Man and God, with confirmation before opening a new file-view tab rooted at the checkout’s `mnt/root` or `mnt/yhwh`. `mnt/we` overlays both roots at the same relative paths; shared entries take precedence on collisions, and directories merge. Files stay in their source trees, so reopening reads current content. Parent navigation stops at the selected view root. This is an app file view, not an OS chroot; terminals keep the user’s permissions. Return to ordinary files exits the view.
 
-Help! also exposes fan mail, an email composer for `root@thedynamiclinker.com`, and the Sinai and Horeb book lists. Preparing email opens a draft in the configured desktop mail app; sending remains in that app. The book lists are parsed on each opening from their original Markdown files, including the Genesis link; unlinked titles are marked coming soon.
+The command palette also exposes fan mail, an email composer for `root@thedynamiclinker.com`, and the Sinai and Horeb book lists. Preparing email opens a draft in the configured desktop mail app; sending remains in that app. The book lists are parsed on each opening from their original Markdown files, including the Genesis link; unlinked titles are marked coming soon.
 
-Edit character copy and new feature labels in `yhwh/etc/default/words.json`, using the existing pencil controls or Help!’s Edit this interface text button. Layout templates and command labels are in `text-renderer.json`; native menu copy is in `text-main.json`. Fan-mail excerpts, attributions, and source links live in `fan-mail.json` and have an in-app edit button. Both book lists have edit buttons that open their original Markdown sources. Preserve this separation when extending these features.
+Edit character copy and new feature labels in `yhwh/etc/default/words.json`, using the existing pencil controls or the command palette’s Edit feature copy command. Layout templates and command labels are in `text-renderer.json`; main-process copy is in `text-main.json`. Fan-mail excerpts, attributions, and source links live in `fan-mail.json` and have an in-app edit button. Both book lists have edit buttons that open their original Markdown sources. Preserve this separation when extending these features.
+
+## Abe, seed, and desktop launchers
+
+YHWH calls the user Abe, including in chat. Name corrections are part of his
+fictional forgetful naming bit. The inbox brings occasional seed promises during
+real work, respecting its switch, mode limits, and five-minute delivery interval.
+These letters stay inside the app. Character text, letters, the buried land
+registry, team, roadmap, and donation copy are editable in `words.json`.
+
+The status bar’s **Seed funding** button asks for a donation, without equity or
+promised returns, and includes the collected Carlin excerpt. It only opens a
+payment page when `stripe_payment_link` is configured; otherwise it says checkout
+is not connected. About YHWH → About Us contains Our Team and Roadmap.
+
+From the repo root, `make develop` installs a violet **YHWH (Development)**
+launcher for the live checkout. `make install` installs the standalone package
+and a gold **YHWH** launcher. Both use the workspace where Make was invoked;
+development uses its own app profile. Source `.desktop` templates and circular
+paleo-letter icons live in root `usr/share/`. Installation writes resolved
+entries, icons, and launch scripts under `XDG_DATA_HOME` (default
+`~/.local/share`) without relying on an interactive shell’s PATH. Modified
+launcher files are preserved on update/removal.

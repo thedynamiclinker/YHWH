@@ -5,7 +5,7 @@ const path = require('node:path');
 const sharedCLI = require('../../lib/cli.cjs');
 const root = path.join(__dirname, '../../src/yhwh-default');
 const builtin = ['open', 'create', 'read', 'append', 'prepend', 'list', 'search', 'move', 'rename', 'config', 'commands', 'completion', 'help'];
-const help = `YHWH — files, a shell, and somewhere to think.
+const help = `YHWH — Toward a pro-human AI apocalypse.
 
 Usage: yhwh-default [path] [--theme yhwh|nietzsche|dawkins]
        yhwh-default <command> [arguments]
@@ -50,7 +50,7 @@ async function start(args) {
     if (['--open', '--cwd', '--tab', '--theme'].includes(flags[i])) attached.push(`${flags[i]}=${flags[++i]}`);
     else attached.push(flags[i]);
   }
-  await execute(require('../../lib/electron.cjs')(), [root, ...attached], env);
+  await execute(require('../../lib/electron.cjs')(), [process.env.YHWH_INTERFACE === 'three' ? path.join(root, '../yhwh-three') : root, ...attached], env);
 }
 async function main(argv = process.argv.slice(2), bin = process.env.YHWH_BIN || path.join(root, 'bin')) {
   const [command, ...args] = argv;

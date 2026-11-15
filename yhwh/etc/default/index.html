@@ -10,8 +10,8 @@
 </head>
 <body class="theme-dark">
   <header class="titlebar">
-    <button id="higher-help" data-command="higher-help">Help!</button><button class="brand" data-command="about" title="About YHWH"><span class="paleo">𐤉𐤄𐤅𐤄</span><span>YHWH</span></button>
-    <span class="window-title">Files, a shell, and somewhere to think</span>
+    <button class="brand" data-command="about" title="About YHWH"><span class="paleo">𐤉𐤄𐤅𐤄</span><span>YHWH</span></button>
+    <span class="window-title">Toward a pro-human AI apocalypse.</span>
     <div class="personality" hidden><label for="energy">YHWH-ness</label><input id="energy" type="range" min="0" max="100" value="100" aria-label="YHWH-ness"><button id="mode-name" data-command="modes">YHWH</button></div>
     <button data-command="inbox" title="Inbox" aria-label="Inbox">Inbox<span id="inbox-count"></span></button><button data-command="help" title="Keyboard shortcuts (F1)" aria-label="Keyboard shortcuts">⌨</button>
   </header>
@@ -40,7 +40,7 @@
     <main class="focus-area workspace-split" id="focus-area">
       <div id="center-panels" class="center-panels">
         <section class="document workspace-leaf" id="document" aria-label="Document">
-          <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Toggle source / pretty view (Ctrl+Shift+E)">Live Preview</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
+          <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Cycle hybrid / reading / source (Ctrl+R)">Hybrid</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
           <div class="document-title" id="title-row" hidden><input id="file-title" aria-label="Filename" spellcheck="false"><span id="dirty-indicator"></span><button data-command="save" title="Save (Ctrl+S)" aria-label="Save file">Save</button></div>
           <div id="documents"></div>
         </section>
@@ -53,7 +53,7 @@
     </main>
     <aside id="right-panels" class="right-panels"></aside>
   </div>
-  <footer class="statusbar status-bar"><button id="divine-footnote" data-command="edit-footer"></button><span class="status-spacer"></span><button data-command="focus-editor" id="cursor-position">Ready</button><span id="file-encoding"></span><button id="language-button" data-command="language">Plain text</button></footer>
+  <footer class="statusbar status-bar"><button id="divine-footnote" data-command="edit-footer"></button><span class="status-spacer"></span><button class="quiet-support" data-command="seed-funding">Seed funding</button><button id="higher-help" data-command="higher-help">Need Some Help?</button><button data-command="focus-editor" id="cursor-position">Ready</button><span id="file-encoding"></span><button id="language-button" data-command="language">Plain text</button></footer>
   <dialog id="dialog"></dialog><div id="toast" role="status" aria-live="polite"></div>
   <style id="user-theme"></style>
   <script type="module" src="../../var/tmp/yhwh/default/ui/renderer.js"></script>

@@ -207,3 +207,10 @@ body[data-theme='nietzsche'] { --purple: #c9b192; --purple-bg: #3e342c; --gold: 
 
 .right-panels:has([data-panel=yhwh-chat]:not([hidden])) { max-width:360px; }
 .plugin-panel[data-panel=yhwh-chat] { flex:1; width:min(360px, 36vw); }
+
+#higher-help, .quiet-support { color: var(--muted); font-size: .75rem; font-weight: 400; white-space: nowrap; }
+.seed-proclamation { color: #ef7777; font-variant-caps: small-caps; }
+.seed-proclamation p { color: inherit; }
+.divine-aside { margin-top: 24px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; }
+.divine-aside summary { color: var(--muted); cursor: pointer; }
+body[data-theme='dawkins'] .divine-aside { display: none; }
