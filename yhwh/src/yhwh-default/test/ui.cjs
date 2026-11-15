@@ -53,9 +53,20 @@ const root = path.resolve(__dirname, '..');
     await nestedRow.dblclick();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, nested);
     await run('toggle-terminal');
-    await page.evaluate(() => window.YHWH.active().terminal.focus());
+    await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);
     await page.keyboard.type("printf 'CLICK:%s\\n' \"$PWD\""); await page.keyboard.press('Enter');
     await page.waitForFunction(directory => { const t = window.YHWH.active().terminal; for (let i = 0; i < t.buffer.active.length; i++) if (t.buffer.active.getLine(i)?.translateToString().includes(`CLICK:${directory}`)) return true; return false; }, nested);
+    await run('toggle-terminal');
+    await run('toggle-navigation'); // Hide the remaining file panel, then open both.
+    await page.keyboard.press('Control+Shift+d');
+    await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);
+    await page.keyboard.type("printf 'FOCUS:%s\\n' ready"); await page.keyboard.press('Enter');
+    await page.waitForFunction(() => {
+      const terminal = window.YHWH.active().terminal;
+      for (let i = 0; i < terminal.buffer.active.length; i++)
+        if (terminal.buffer.active.getLine(i)?.translateToString().trim() === 'FOCUS:ready') return true;
+      return false;
+    });
     await run('toggle-terminal');
     await page.locator('#file-list [data-parent="true"]').dblclick();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, directory);
@@ -90,7 +101,7 @@ const root = path.resolve(__dirname, '..');
     console.log('✓ Markdown Live Preview/source; edit/save; heading renames the real file; expansion preserves it');
 
     await page.keyboard.press('Control+b'); await page.locator('#terminal-panel').waitFor({ state: 'visible' });
-    await page.evaluate(() => window.YHWH.active().terminal.focus());
+    await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);
     await page.keyboard.type(`cd '${nested}'`); await page.keyboard.press('Enter');
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, nested);
     await page.keyboard.press('Alt+ArrowUp');

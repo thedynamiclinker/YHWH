@@ -110,7 +110,14 @@ function update() {
   const tab = active(); if (!tab) return;
   tabTitles(); renderFiles();
   $('#navigation-area').hidden = !tab.showFiles && tab.expanded !== 'files';
-  $('#terminal-panel').hidden = !tab.showTerminal && tab.expanded !== 'terminal';
+  const terminalPanel = $('#terminal-panel');
+  const terminalWasHidden = terminalPanel.hidden;
+  terminalPanel.hidden = !tab.showTerminal && tab.expanded !== 'terminal';
+  if (terminalWasHidden && !terminalPanel.hidden) requestAnimationFrame(() => {
+    if (active() !== tab || terminalPanel.hidden || $('#dialog').open) return;
+    fitTerminal();
+    tab.terminal.focus();
+  });
   $('#workspace').dataset.expanded = tab.expanded;
   $('#title-row').hidden = !tab.file;
   $('#file-title').value = tab.file?.name || '';
