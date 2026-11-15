@@ -280,3 +280,34 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
   .margin-box { padding-inline: 14px; }
   .verse-browser-footer small { display: none; }
 }
+/* Each tab has one reading surface; files and terminal remain navigation. */
+#margin-box { flex: 1; min-height: 0; max-height: none; padding: 16px 28px; }
+#margin-box .margin-content { padding-top: 36px; }
+#margin-box .verse-compact .verse-english { font-size: 1.1rem; }
+#margin-box .verse-compact .verse-original { font-size: 1.5rem; }
+#margin-box.margin-widget { flex: 0 1 auto; min-height: 36px; max-height: 40vh; padding: 0 24px; }
+#margin-box.margin-widget .margin-content { padding-top: 10px; }
+#inbox-view { flex: 1; min-width: 0; min-height: 0; overflow: auto; background: var(--panel); }
+.mail-list { padding: 12px 0; }
+.mail-row { width: 100%; display: grid; grid-template-columns: 100px minmax(0, 1fr) 65px; gap: 16px; text-align: left; padding: 16px 24px; border-radius: 0; border-bottom: 1px solid var(--line); font-weight: 400; }
+.mail-row.unread { background: #9481be10; }
+.mail-row.unread .mail-sender, .mail-row.unread .mail-subject { font-weight: 650; }
+.mail-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mail-preview { color: var(--muted); font-weight: 400; }
+.mail-row time, .mail-envelope { color: var(--muted); font-size: .8rem; }
+.mail-message { max-width: 850px; margin: 0 auto; padding: 28px 32px 80px; }
+.mail-message h1 { font-size: 1.5rem; font-weight: 500; margin-block: 30px 20px; }
+.mail-envelope { display: flex; gap: 12px; flex-wrap: wrap; }
+.mail-envelope time { margin-left: auto; }
+.mail-body { margin: 36px 0; font-size: 1.1rem; line-height: 1.8; }
+.mail-source { margin-top: 40px; color: var(--muted); font-size: .8rem; }
+.mail-source summary { cursor: pointer; }
+.mail-empty { padding: 40px; }
+.ribbon button[aria-pressed=true] { color: var(--purple); background: #9481be20; }
+[data-panel='yhwh-chat'] { flex: 1; min-width: 0; }
+@media (max-width: 650px) {
+  .mail-row { grid-template-columns: 65px minmax(0, 1fr); padding: 14px; gap: 10px; }
+  .mail-row time { display: none; }
+  .mail-preview { display: none; }
+  .mail-message { padding: 20px 16px; }
+}

@@ -63,7 +63,12 @@ process.stdin.on('end', () => {
     assert.match(await page.locator('.welcome').innerText(), /Guess who's back/i);
     assert.ok((await page.locator('.welcome').textContent()).includes(JSON.parse(sourceWords).welcomeBody));
     assert.equal(await page.locator('.personality').isVisible(), true);
+    assert.equal(await page.locator('#margin-box').isVisible(), false);
+    await run('margins');
     await page.locator('#margin-box .verse-block').waitFor();
+    assert.equal(await page.locator('#document').isVisible(), false);
+    assert.match(await page.locator('#margin-box .verse-heading').innerText(), /Genesis/);
+    await run('focus-document');
     const commentary = 'Ah! There you are.\n\nHey Abe, can I stay with you for a bit?\n<script>plain text</script>';
     await run('verses');
     await page.locator('.verse-browser').waitFor();
@@ -75,6 +80,9 @@ process.stdin.on('end', () => {
     const card = page.locator('.verse-selection .verse-block');
     assert.equal(await card.locator('.verse-commentary-text').isVisible(), false);
     assert.equal(await card.locator('.verse-original').getAttribute('dir'), 'rtl');
+    assert.equal(await page.locator('[name=book] option').count(), 1);
+    assert.match(await card.locator('.verse-original .source-j').first().evaluate(el => getComputedStyle(el).fontFamily), /WTN Paleo J/);
+    assert.equal(await card.locator('.verse-original .source-j').first().evaluate(el => getComputedStyle(el).color), 'rgb(0, 135, 0)');
     const englishBox = await card.locator('.verse-english').boundingBox(), originalBox = await card.locator('.verse-original').boundingBox();
     assert.ok(englishBox.x + englishBox.width < originalBox.x);
     await card.locator('summary').click();
@@ -300,6 +308,7 @@ process.stdin.on('end', () => {
     await page.evaluate(() => window.YHWH.movePanel('hello-world', 'center'));
     assert.equal(await page.locator('#center-panels > [data-panel=hello-world]').count(), 1);
     await run('hello-panel');
+    await run('margins');
     await run('modes'); await page.locator('[data-energy="0"]').click();
     await page.waitForFunction(() => document.body.dataset.theme === 'dawkins');
     assert.equal(await page.locator('#margin-box').isVisible(), false);
@@ -332,8 +341,15 @@ process.stdin.on('end', () => {
     console.log('✓ hello-world plugin command/panel; panel movement; all personality modes; text edits write source; offering stubs');
 
     await run('inbox');
-    assert.match(await page.locator('#dialog').innerText(), /Abe/);
-    assert.match(await page.locator('#dialog').innerText(), /Literary adaptation/);
+    assert.equal(await page.locator('#inbox-view .mail-message').count(), 0);
+    assert.equal(await page.locator('#document').isVisible(), false);
+    await page.screenshot({ path: path.join(artifacts, '12-inbox.png') });
+    await page.locator('.mail-row').first().click();
+    assert.match(await page.locator('#inbox-view').innerText(), /Abe/);
+    assert.match(await page.locator('#inbox-view').innerText(), /literary adaptation/);
+    await page.screenshot({ path: path.join(artifacts, '13-letter.png') });
+    await page.locator('[data-mail-back]').click();
+    assert.equal(await page.locator('.mail-row').first().evaluate(el => el.classList.contains('unread')), false);
     await run('narrative');
     assert.equal(await page.locator('#dialog [data-command="open-file"]').count(), 1);
     await page.locator('#dialog [data-close]').click();
@@ -369,6 +385,7 @@ process.stdin.on('end', () => {
     await page.screenshot({ path: path.join(artifacts, '07-compact.png') });
     const documentHeight = await page.locator('#documents').evaluate(element => ({ height: element.getBoundingClientRect().height, minimum: getComputedStyle(element).minHeight }));
     assert.ok(documentHeight.height >= 80, `Compact editor height: ${JSON.stringify(documentHeight)}`);
+    await run('margins');
     await page.locator('[data-collapse-margin]').click();
     assert.equal(await page.locator('.margin-content').isVisible(), false);
     await page.locator('[data-collapse-margin]').click();

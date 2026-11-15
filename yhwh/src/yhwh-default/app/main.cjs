@@ -164,7 +164,7 @@ async function launch() {
   handle('verse:catalog', () => verses.catalog());
   handle('verse:chapter', (book, chapter) => verses.chapter(book, chapter));
   handle('verse:get', reference => verses.get(reference));
-  handle('verse:random', () => verses.random());
+  handle('verse:random', () => verses.random('Genesis'));
   handle('verse:commentary', (id, text) => verses.saveCommentary(id, text));
   handle('navigate', navigate);
   handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });

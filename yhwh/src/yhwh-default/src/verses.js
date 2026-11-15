@@ -1,3 +1,6 @@
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+import display from '../../../etc/verses/genesis-display.json';
 import { text } from '../../../lib/text.cjs';
 import copy from '../../../etc/default/text-verses.json';
 const ui = text(copy);
@@ -5,9 +8,12 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': 
 
 export function createVerseUI({ call, modal, notice }) {
   const updaters = new WeakMap();
-  let catalog, theme, randomVerse, circusPair, generation = 0;
+  let catalog, theme, randomVerse, circusPair, generation = 0, visible = false;
   let collapsed = localStorage.getItem('yhwh:margin:collapsed') === 'true';
-  const library = () => catalog ||= call('verse:catalog');
+  const library = () => catalog ||= call('verse:catalog').then(books => books.filter(item => item.book === 'Genesis'));
+  const unlocked = verses => { if (verses.some(verse => verse.book !== 'Genesis')) throw new Error('Only Genesis is available. The other books are still locked.'); return verses; };
+  const get = reference => call('verse:get', reference).then(unlocked);
+  const styled = (verse, key) => display[verse.id]?.[key] ? DOMPurify.sanitize(marked.parseInline(display[verse.id][key])) : escape(verse[key]);
 
   function block(initial, { commentary = false, compact = false } = {}) {
     const element = document.createElement('article');
@@ -15,7 +21,7 @@ export function createVerseUI({ call, modal, notice }) {
     function render(verse, expanded = commentary) {
       element.dataset.verseId = verse.id;
       element.innerHTML = `<header class="verse-heading"><button type="button" data-open-verse title="${escape(ui('browse'))}">${escape(verse.reference)}</button></header>
-        <div class="verse-columns"><div class="verse-english" lang="en">${escape(verse.english)}</div><div class="verse-original" lang="he" dir="rtl">${escape(verse.original)}</div></div>
+        <div class="verse-columns"><div class="verse-english" lang="en">${styled(verse, 'english')}</div><div class="verse-original" lang="he" dir="rtl">${styled(verse, 'original')}</div></div>
         <details class="verse-commentary" ${expanded ? 'open' : ''}><summary>${escape(ui('commentary'))}${verse.commentaryEdited ? ` <small>· ${escape(ui('edited'))}</small>` : ''}</summary>
           <div class="verse-commentary-body"><p class="verse-commentary-text">${escape(verse.commentary || ui('no-commentary'))}</p><button type="button" data-edit-commentary>${escape(ui(verse.commentary ? 'edit-commentary' : 'add-commentary'))}</button>${verse.commentaryEdited ? `<button type="button" data-reset-commentary>${escape(ui('restore'))}</button>` : ''}</div></details>`;
       element.querySelector('[data-open-verse]').onclick = () => browse(verse.id).catch(error => notice(error.message));
@@ -47,7 +53,7 @@ export function createVerseUI({ call, modal, notice }) {
     for (const element of document.querySelectorAll('.verse-block')) if (element.dataset.verseId === verse.id) updaters.get(element)?.(verse);
   }
   async function createCitation(reference, options) {
-    const verses = await call('verse:get', reference);
+    const verses = await get(reference);
     const container = document.createElement('div'); container.className = 'verse-citation';
     for (const verse of verses) container.append(block(verse, options));
     return container;
@@ -61,7 +67,7 @@ export function createVerseUI({ call, modal, notice }) {
   async function browse(reference = 'Genesis 1:1') {
     const dialog = modal(ui('browser'), `<p role="status">${escape(ui('loading'))}</p>`);
     const loading = dialog.querySelector('[role=status]');
-    const [books, initial] = await Promise.all([library(), call('verse:get', reference)]);
+    const [books, initial] = await Promise.all([library(), get(reference)]);
     if (!dialog.open || !loading.isConnected) return;
     const body = dialog.querySelector('.dialog-body');
     body.innerHTML = `<div class="verse-browser"><form class="verse-jump"><label for="verse-reference">${escape(ui('jump'))}</label><div><input id="verse-reference" name="reference" placeholder="Genesis 18:1" value="${escape(initial[0].reference)}" required><button class="primary">${escape(ui('go'))}</button></div></form>
@@ -75,7 +81,7 @@ export function createVerseUI({ call, modal, notice }) {
     async function select(reference) {
       const current = ++request;
       try {
-        const verses = await call('verse:get', reference), first = verses[0];
+        const verses = await get(reference), first = verses[0];
         const options = await call('verse:chapter', first.book, first.chapter);
         if (current !== request || !browser.isConnected) return;
         book.value = first.book; chapters(); chapter.value = first.chapter; entries = options;
@@ -116,7 +122,7 @@ export function createVerseUI({ call, modal, notice }) {
   async function margin(refresh = false) {
     const box = document.querySelector('#margin-box');
     if (!box || !theme) return;
-    box.hidden = theme === 'dawkins';
+    box.hidden = !visible || theme === 'dawkins';
     if (box.hidden) return;
     const current = ++generation, mode = theme;
     const title = mode === 'nietzsche' ? ui('circus') : ui('margin');
@@ -130,7 +136,7 @@ export function createVerseUI({ call, modal, notice }) {
     };
     try {
       if (mode === 'yhwh') {
-        const selected = !refresh && randomVerse ? randomVerse : await call('verse:random');
+        const selected = !refresh && randomVerse ? randomVerse : await call('verse:random', 'Genesis');
         if (current !== generation) return;
         randomVerse = selected; content.replaceChildren(block(selected, { compact: true }));
       } else {
@@ -145,6 +151,7 @@ export function createVerseUI({ call, modal, notice }) {
     }
   }
   return { createCitation, hydrate, browse,
+    setVisible(value) { if (visible === value) return; visible = value; generation++; margin().catch(error => notice(error.message)); },
     setTheme(value) { if (theme === value) return; theme = value; generation++; margin().catch(error => notice(error.message)); },
   };
 }

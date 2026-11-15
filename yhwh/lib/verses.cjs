@@ -76,7 +76,7 @@ function createVerseStore({ filename = require('./paths.cjs').etc('verses/we-the
   return {
     async catalog() { const state = await load(); return [...state.books].map(([book, chapters]) => ({ book, chapters: [...chapters.keys()].sort((a, b) => +a - +b) })); },
     chapter, get, saveCommentary,
-    async random() { const state = await load(); return present(state, state.canonical[Math.floor(Math.random() * state.canonical.length)]); },
+    async random(book) { const state = await load(); const candidates = state.canonical.filter(verse => !book || verse.book === book); if (!candidates.length) throw new Error('No verses available.'); return present(state, candidates[Math.floor(Math.random() * candidates.length)]); },
   };
 }
 module.exports = { createVerseStore };

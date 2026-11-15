@@ -68,7 +68,7 @@ async function editWords(key) {
 async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', terminalExited: false };
+  const tab = { id, ...state, file: null, focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', terminalExited: false };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
@@ -95,6 +95,7 @@ function activate(id) {
   $('#file-filter').value = '';
   update();
   requestAnimationFrame(() => fitTerminal());
+  if (active().focusView === 'inbox') renderInbox();
   emit('focus', active());
 }
 function tabTitles() {
@@ -135,9 +136,18 @@ async function toggleFolder(row, expand) {
     row.after(group);
   }
 }
+function focusView(view) {
+  active().focusView = view; update();
+  if (view === 'inbox') renderInbox();
+}
 function update() {
   const tab = active(); if (!tab) return;
   tabTitles(); renderFiles();
+  const view = tab.focusView || 'document';
+  $('#document').hidden = view !== 'document';
+  $('#inbox-view').hidden = view !== 'inbox';
+  if (chatPanel) chatPanel.element.hidden = view !== 'chat';
+  for (const button of document.querySelectorAll('.ribbon [data-command]')) button.setAttribute('aria-pressed', String(button.dataset.command === ({ document: 'focus-document', margins: 'margins', inbox: 'inbox', chat: 'chat' })[view]));
   $('#navigation-area').hidden = !tab.showFiles && tab.expanded !== 'files';
   const terminalPanel = $('#terminal-panel');
   const terminalWasHidden = terminalPanel.hidden;
@@ -167,6 +177,9 @@ function applyConfig(config) {
   const energy = temporaryEnergy ?? (values.theme === 'dawkins' ? 0 : values.theme === 'nietzsche' ? 50 : Number(values.energy ?? 100));
   document.body.dataset.theme = energy === 0 ? 'dawkins' : energy < 100 ? 'nietzsche' : 'yhwh';
   verseUI.setTheme(document.body.dataset.theme);
+  const view = active()?.focusView || 'document';
+  $('#margin-box').classList.toggle('margin-widget', view === 'document');
+  verseUI.setVisible(view === 'margins' || (view === 'document' && document.body.dataset.theme === 'nietzsche'));
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
   $('#energy').value = energy;
   $('#mode-name').textContent = energy === 0 ? ui("dawkins") : energy < 100 ? ui("nietzsche") : ui("yhwh");
@@ -208,7 +221,7 @@ async function openFile(filename, tab = active()) {
   if (!await mayReplace(tab)) return false;
   const file = await call('file:read', filename);
   await navigate(parent(file.path), tab);
-  clearDocument(tab);
+  clearDocument(tab); tab.focusView = 'document';
   file.mode = file.language === 'markdown' && file.config.values.live_preview !== 'false' ? 'live' : 'source';
   tab.file = file; tab.config = file.config; tab.dirty = false;
   tab.selected = new Set([file.path]);
@@ -549,7 +562,7 @@ const definitions = [
   ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), () => { const tab = active(); tab.showTerminal = !tab.showTerminal; tab.expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); if (tab.showTerminal) tab.terminal.focus(); }); }],
   ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), () => { const tab = active(); tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; tab.showTerminal = true; update(); requestAnimationFrame(() => { fitTerminal(); tab.terminal.focus(); }); }],
   ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); tab.showFiles = show; tab.showTerminal = show; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
-  ['focus-editor', ui("focus-editor"), ui("ctrl-1"), () => { active().expanded = ''; update(); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
+  ['focus-editor', ui("focus-editor"), ui("ctrl-1"), () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
   ['focus-files', ui("focus-file-manager"), ui("ctrl-2"), () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
   ['focus-terminal', ui("focus-terminal"), ui("ctrl-3"), () => { active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); active().terminal.focus(); }); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigate(parent(active().cwd))],
@@ -588,7 +601,7 @@ function readPresence() {
 }
 let presence = { letters: [], steps: [], enabled: false, ...readPresence() };
 const letters = [
-  { id: 'house', title: 'A small housing question', textKey: 'letterHouse', verse: 'Deuteronomy 12:11', note: 'A chosen place for the name to dwell. The directory is my addition.' },
+  { id: 'house', title: 'A small housing question', textKey: 'letterHouse', verse: 'Genesis 18:3', note: 'A visitor asks Abraham to stay. The directory is my addition.' },
   { id: 'bread', title: 'You saved something', textKey: 'letterBread', verse: 'Genesis 15:5', note: 'The stars become the measure of Abraham’s descendants.' },
   { id: 'offering', title: 'About the rent', textKey: 'letterOffering', verse: 'Genesis 17:1–8', note: 'El Shaddai promises descendants and land. Borrowing money is my addition.', command: 'seed-funding', action: 'Seed funding' },
   { id: 'inspect', title: 'I came down to look', textKey: 'letterInspect', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
@@ -605,14 +618,33 @@ function receive(id) {
   if (document.body.dataset.theme === 'nietzsche' && id !== 'inspect') return;
   // At most one letter every five minutes. Work never opens a dialogue.
   if (presence.lastLetter && Date.now() - presence.lastLetter < 300000) return;
-  presence.letters.push({ id, read: false, at: Date.now() }); presence.lastLetter = Date.now(); savePresence();
+  presence.letters.push({ id, read: false, at: Date.now() }); presence.lastLetter = Date.now(); savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
-function inbox() {
-  const available = presence.letters.map(letter => letters.find(item => item.id === letter.id)).filter(Boolean);
-  const dialog = modal('Inbox', `<div class="letters">${available.length ? available.map(letter => `<article><h3>${escape(letter.title)}</h3>${word(letter.textKey)}<small>${escape(letter.note)} Literary adaptation.</small><div data-citation="${escape(letter.verse)}"></div>${letter.command ? `<p><button data-command="${letter.command}">${letter.action}</button></p>` : ''}</article>`).join('') : '<p class="muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
-  verseUI.hydrate(dialog);
-  presence.letters.forEach(letter => { letter.read = true; }); savePresence();
+function inbox() { focusView('inbox'); }
+function renderInbox() {
+  const host = $('#inbox-view'), tab = active();
+  const available = [...presence.letters].reverse().map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
+  const selected = available.find(item => item.letter.id === tab.mailId);
+  host.innerHTML = `<header class="pane-header"><span>Inbox <small>· ${available.filter(item => !item.state.read).length} unread</small></span><button data-command="focus-document" aria-label="Back to document">▱</button></header>`;
+  if (selected) {
+    const { letter, state } = selected;
+    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span>to Abe</span><time>${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${word(letter.textKey)}</div>${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(letter.note)}</p><div data-citation="${escape(letter.verse)}"></div></details></article>`);
+    host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
+    verseUI.hydrate(host);
+  } else {
+    const rows = available.map(({ letter, state }) => {
+      const preview = String(words[letter.textKey] || '').replace(/\s+/g, ' ').slice(0, 140);
+      return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH</span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time>${escape(new Date(state.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))}</time></button>`;
+    }).join('');
+    host.insertAdjacentHTML('beforeend', `<div class="mail-list" aria-label="Messages">${rows || '<p class="mail-empty muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
+    for (const row of host.querySelectorAll('[data-mail]')) row.onclick = () => {
+      tab.mailId = row.dataset.mail;
+      presence.letters.find(item => item.id === tab.mailId).read = true;
+      savePresence(); renderInbox();
+    };
+  }
 }
+
 const walk = [
   { id: 'open', title: 'Go. I’ll show you.', text: 'Open any file. This is your filesystem. No vault. No initiation fee. I have other plans for the fee.', verse: 'Genesis 12:1', command: 'open-file', action: 'Choose a file' },
   { id: 'save', title: 'Make something that stays.', text: 'Edit a file and save it. Grand promises are easy. Persistent state is the covenant.', verse: 'Genesis 15:18', command: 'focus-editor', action: 'Back to the file' },
@@ -632,8 +664,8 @@ function progressWalk(id) {
 }
 let chatPanel;
 function showChat() {
-  if (chatPanel) { chatPanel.element.hidden = !chatPanel.element.hidden; if (!chatPanel.element.hidden) renderChat(); return; }
-  chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'right', render(element) {
+  if (chatPanel) { focusView(active().focusView === 'chat' ? 'document' : 'chat'); renderChat(); return; }
+  chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'center', render(element) {
     element.innerHTML = '<div class="conversation-log" role="log" aria-live="polite" aria-label="Conversation with YHWH"></div><form id="yhwh-chat-form"><textarea aria-label="Message YHWH" placeholder="Where are you?" rows="3" required maxlength="30000"></textarea><div class="chat-controls"><small>Codex · conversation · read only</small><button class="primary">Send</button></div><p class="chat-error" role="alert" hidden></p></form><button type="button" data-command="chat">Close conversation</button>';
     const form = element.querySelector('form');
     form.querySelector('textarea').oninput = event => localStorage.setItem(chatStorageKey() + ':draft', event.target.value);
@@ -650,7 +682,7 @@ function showChat() {
       finally { chatPending.delete(key); renderChat(); }
     };
   }});
-  renderChat();
+  focusView('chat'); renderChat();
 }
 const chatPending = new Set(), chatErrors = new Map();
 function chatStorageKey() { return 'yhwh:chat:v1:' + active().cwd; }
@@ -665,6 +697,8 @@ function renderChat() {
   const error = form.querySelector('.chat-error'); error.hidden = !chatErrors.has(key); error.textContent = chatErrors.get(key) || '';
   log.scrollTop = log.scrollHeight;
 }
+addCommand({ id: 'focus-document', name: 'Focus document', run: () => focusView('document') });
+addCommand({ id: 'margins', name: 'In the margins · Genesis', run: () => focusView(active().focusView === 'margins' ? 'document' : 'margins') });
 addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
 addCommand({ id: 'verses', name: 'Browse We The Nameless · chapter and verse', run: () => verseUI.browse() });
 addCommand({ id: 'inbox', name: 'Inbox · letters from YHWH', run: inbox });

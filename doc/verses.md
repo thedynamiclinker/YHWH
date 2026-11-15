@@ -6,4 +6,5 @@
 - Reusable citations display a reference between horizontal rules, English on the left, the original RTL text on the right, and optional commentary underneath. Every instance controls its own commentary visibility.
 - Commentary edits belong to the application profile, keyed by stable source/verse identity. Save atomically, preserve blank edits, and allow restoring the imported original. Reimporting or rebuilding must not erase edits or rewrite the source book.
 - The random verse box becomes Nietzsche Family Circus in Nietzsche mode and disappears in Dawkins mode. Fetch errors stay within the box; mode changes must discard stale asynchronous results.
+- Nietzsche mode shows the Circus widget alongside the document without requiring the margins view. The margins view can still show it on its own.
 - Editable character copy and commentary are escaped plain text. Render their line breaks and blank lines faithfully, without interpreting markup or applying plain-text whitespace rules to Markdown documents.

@@ -6,6 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
   <title>YHWH</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="verse-source.css">
   <link rel="stylesheet" href="../../var/tmp/yhwh/default/ui/renderer.css">
 </head>
 <body class="theme-dark">
@@ -22,7 +23,9 @@
       <button data-command="open-file" title="Open file (Ctrl+O)" aria-label="Open file">⌕</button>
       <button data-command="toggle-terminal" title="Terminal (Ctrl+B)" aria-label="Toggle terminal">›_</button>
       <button data-command="palette" title="Command palette (Ctrl+P)" aria-label="Command palette">:</button>
-      <button data-command="verses" title="Browse We The Nameless verses" aria-label="Browse verses">≡</button>
+      <button data-command="margins" title="In the margins" aria-label="In the margins">≡</button>
+      <button data-command="inbox" title="Inbox" aria-label="Open Inbox">✉</button>
+      <button data-command="focus-document" title="Document" aria-label="Focus document">▱</button>
       <div class="ribbon-spacer"></div>
       <button data-command="chat" title="Talk to YHWH" aria-label="Talk to YHWH">𐤉</button>
       <button data-command="settings" title="Settings (Ctrl+,)" aria-label="Settings">☷</button>
@@ -44,8 +47,10 @@
           <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Cycle hybrid / reading / source (Ctrl+R)">Hybrid</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
           <div class="document-title" id="title-row" hidden><input id="file-title" aria-label="Filename" spellcheck="false"><span id="dirty-indicator"></span><button data-command="save" title="Save (Ctrl+S)" aria-label="Save file">Save</button></div>
           <div id="documents"></div>
-          <section id="margin-box" class="margin-box" aria-label="In the margins" hidden></section>
+
         </section>
+        <section id="margin-box" class="margin-box" aria-label="In the margins" hidden></section>
+        <section id="inbox-view" class="inbox-view" aria-label="Inbox" hidden></section>
       </div>
       <section id="terminal-panel" class="terminal-panel workspace-leaf" aria-label="Terminal" hidden>
         <div class="resize-handle terminal-resize" role="separator" aria-label="Resize terminal"></div>
