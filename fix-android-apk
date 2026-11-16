@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Fix 'make android-apk'.
+
+Once it's fixed, tell me how to test it on my android phone, assuming that phone is currently connected over adb.
+EOF
