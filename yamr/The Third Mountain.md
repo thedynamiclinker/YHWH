@@ -1,9 +1,18 @@
+
+> We enter a spiritual puberty where we snap to the fact that the great transcendent horror is loneliness, excluded encagement in the self. Once we’ve hit this age, we will now give or take anything, wear any mask, to fit, be part-of, not be Alone, we young.
+> -The inter-fucking-net somewhere I forget.
+
+> How odd I can have all this inside me and to you it’s just words.
+> -David Foster Wallace, The Pale King
+
+---
+
 Ok, naturally let's start with something everyone understands.
 
 ```
   	  Yue
   	   曰
-Yue          Sn
+Yue          ???
 月            日
 
     山   三
@@ -97,6 +106,8 @@ Ibid.
 ---
 
 ```
+# In the beginning
+
   	  Yue
   	   曰
 Yue          Sn
@@ -125,7 +136,7 @@ Let Φ be Physics. (The science, not physics.
 Let B be some Bears.
 - Todo: Explain Bearsplaining.
 
-Let The Silence.
+The Silence.
 
 Cognitive Mechanism.
 
@@ -138,6 +149,18 @@ Home Directory Developer. (`word`)
 By "user" here, I mean `user`.
 
 That is, the thing that you are when you need to type `sudo something` instead of just `something`.
+
+---
+
+```
+[*.py]
+indent_style = space
+indent_size = 4
+
+# Tab indentation (no size specified)
+[Makefile]
+indent_style = tab
+```
 
 ---
 
