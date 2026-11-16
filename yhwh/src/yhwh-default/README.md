@@ -213,12 +213,32 @@ is not connected. About YHWH → About Us contains Our Team and Roadmap.
 
 From the repo root, `make develop` installs a **YHWH (Development)**
 launcher for the live checkout. `make install` installs the standalone package
-and a **YHWH** launcher. Both use the LD logo: light on dark for development,
+and a **YHWH** launcher. Both use 曰: light on dark for development,
 dark on light for the installed app. Both use the workspace where Make was invoked;
 development uses its own app profile. Source `.desktop` templates and scalable
-LD icons live in root `usr/share/`. Installation writes resolved
+曰 icons live in root `usr/share/`. Installation writes resolved
 entries, icons, and launch scripts under `XDG_DATA_HOME` (default
 `~/.local/share`) without relying on an interactive shell’s PATH. Modified
 launcher files are preserved on update/removal.
 
 Inbox uses a newest-first message list. Click a letter to read it, then return with **← Inbox**. Opening the list leaves unread letters unread. Inbox and conversation occupy the central reading area, alongside file-manager and terminal navigation; **Focus document** returns to the preserved editor buffer.
+
+Between 22:00 and 06:00 on the device’s clock, actual use advances four letters
+about 曰: the linked explanation, “Get it?”, “LOOK AT IT!”, and the drunken
+“I’M YUE!” return. They share the five-minute delivery limit and inbox/mode
+controls, and keep their order across restarts. No letters arrive while the app
+is closed or hidden, and no external email is sent. Wording lives in `words.json`;
+the shared delivery model is `lib/presence.cjs`.
+
+An additional thirteen-letter startup pitch becomes eligible from 21:17 through
+06:12: seed decks, a celestial org chart, Milky Abe, frantic pivots, broken typing,
+then the morning after. It shares the existing activity and spacing rules;
+unfinished letters continue on later nights. Bodies remain editable in `words.json`.
+
+In **Inbox → ⚙ → Sender controls**, the collapsed sender section lets you block
+`yhwh@thedynamiclinker.com`. Existing letters remain. His three follow-ups arrive
+from `jewvacation@gmail.com`, `yhwvacation@gmail.com`, and `admin@yahoo.com`, with
+an imaginary Yahoo acquisition. Remaining night mail uses the alternate addresses.
+The block, sequence and read state survive restarts; **Settings → Presence →
+Inbox messages** still silences all senders. `lib/inbox.cjs` supplies this shared
+arc and routing for desktop, Three and mobile.

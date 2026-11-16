@@ -1,0 +1,94 @@
+const assert = require('node:assert/strict');
+const { primarySender, alternateSenders, letters } = require('../lib/inbox.cjs');
+const { nightLetters } = require('../lib/presence.cjs');
+const copy = require('../etc/default/words.json');
+
+module.exports = async function checkStartupInbox(page, screenshots) {
+  const start = new Date(2027, 0, 15, 21).getTime();
+  const readState = () => page.evaluate(() => JSON.parse(localStorage.getItem('yhwh:presence:v1')));
+  const run = name => page.evaluate(name => window.YHWH.run(name), name);
+  await page.clock.setFixedTime(new Date(start));
+  // Preserve a legacy letter without a sender; isolate the existing name arc.
+  await page.evaluate(({ start, ids }) => localStorage.setItem('yhwh:presence:v1', JSON.stringify({
+    letters: [{ id: 'house', read: true, at: start - 60000 }, ...ids.map(id => ({ id, read: true, at: start - 60000 }))],
+    steps: [], enabled: false, nightStartedAt: start,
+  })), { start, ids: nightLetters.map(letter => letter.id) });
+  await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
+  await run('inbox');
+  await page.locator('[data-mail="house"]').click();
+  assert.ok((await page.locator('.mail-envelope').innerText()).includes(primarySender));
+  await page.locator('[data-mail-back]').click();
+
+  const night = letters.filter(letter => letter.afterMinutes !== undefined);
+  for (const [index, letter] of night.entries()) {
+    const at = start + letter.afterMinutes * 60000;
+    await page.clock.setFixedTime(new Date(at));
+    await page.keyboard.press('Shift');
+    const received = (await readState()).letters.filter(item => item.id.startsWith('night-'));
+    assert.deepEqual(received.map(item => item.id), night.slice(0, index + 1).map(item => item.id));
+    await run('inbox'); await page.locator(`[data-mail="${letter.id}"]`).click();
+    assert.equal(await page.locator('.mail-body .character-copy').innerText(), copy[letter.textKey]);
+    assert.ok((await page.locator('.mail-envelope').innerText()).includes(primarySender));
+    assert.equal(await page.locator('.mail-envelope time').getAttribute('datetime'), new Date(at).toISOString());
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    if (letter.id === 'night-milk') await page.screenshot({ path: screenshots.night });
+    if (letter.id === 'night-keyboard') await page.screenshot({ path: screenshots.keyboard });
+    await page.locator('[data-mail-back]').click();
+  }
+
+  const blockedAt = new Date(2027, 0, 16, 12).getTime();
+  await page.clock.setFixedTime(new Date(blockedAt));
+  await page.locator('[data-mail-settings]').click();
+  assert.equal(await page.locator('[name=blocked_yhwh]').isVisible(), false);
+  await page.locator('.mail-sender-settings summary').click();
+  await page.locator('[name=blocked_yhwh]').check();
+  await page.locator('[data-mail-cancel]').click();
+  assert.ok(!(await readState()).blockedYhwh);
+  await page.locator('[data-mail-settings]').click();
+  await page.locator('.mail-sender-settings summary').click();
+  await page.locator('[name=blocked_yhwh]').check();
+  await page.screenshot({ path: screenshots.settings });
+  await page.locator('#mail-settings-form [type=submit]').click();
+  assert.equal((await readState()).blockedAt, blockedAt);
+
+  // Reload through the real renderer, rather than resetting the model.
+  await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
+  await run('inbox'); await page.locator('[data-mail-settings]').click();
+  await page.locator('.mail-sender-settings summary').click();
+  assert.equal(await page.locator('[name=blocked_yhwh]').isChecked(), true);
+  await page.locator('[data-mail-cancel]').click();
+  assert.ok((await readState()).letters.filter(item => item.id.startsWith('night-')).every(item => item.read));
+
+  // The master switch silences an alternate-address reply too.
+  await run('settings'); await page.locator('[data-category=presence]').click();
+  await page.locator('[name=inbox]').uncheck();
+  await page.locator('#settings-form [type=submit]').click();
+  await page.locator('#dialog').waitFor({ state: 'hidden' });
+  await page.clock.setFixedTime(new Date(blockedAt + 5 * 60000));
+  await page.keyboard.press('Shift');
+  assert.equal((await readState()).letters.filter(item => item.id.startsWith('blocked-')).length, 0);
+  await run('settings'); await page.locator('[data-category=presence]').click();
+  await page.locator('[name=inbox]').check();
+  await page.locator('#settings-form [type=submit]').click();
+  await page.locator('#dialog').waitFor({ state: 'hidden' });
+
+  const replies = letters.filter(letter => letter.afterBlockMinutes !== undefined);
+  for (const [index, letter] of replies.entries()) {
+    await page.clock.setFixedTime(new Date(blockedAt + letter.afterBlockMinutes * 60000));
+    await page.keyboard.press('Shift');
+    const received = (await readState()).letters.filter(item => item.id.startsWith('blocked-'));
+    assert.deepEqual(received.map(item => item.sender), alternateSenders.slice(0, index + 1));
+    await run('inbox'); await page.locator(`[data-mail="${letter.id}"]`).click();
+    assert.ok((await page.locator('.mail-envelope').innerText()).includes(alternateSenders[index]));
+    assert.equal(await page.locator('.mail-body .character-copy').innerText(), copy[letter.textKey]);
+    if (letter.id === 'blocked-yahoo') await page.screenshot({ path: screenshots.yahoo });
+    await page.locator('[data-mail-back]').click();
+  }
+  // A new ordinary work topic stays blocked even after the cooldown expires.
+  await page.clock.setFixedTime(new Date(blockedAt + 60 * 60000));
+  await run('new-tab');
+  assert.ok(!(await readState()).letters.some(item => item.id === 'covenant'));
+  await run('inbox');
+  assert.equal(await page.locator('[data-mail="house"]').count(), 1);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+};

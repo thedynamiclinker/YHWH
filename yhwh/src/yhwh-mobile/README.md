@@ -93,7 +93,7 @@ xcodebuild -project yhwh/src/yhwh-mobile/ios/App/App.xcodeproj \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
-The native launcher icons reuse the existing YHWH icon. The iOS project includes
+The native launcher icons use the same 曰 glyph as the desktop launcher. The iOS project includes
 the [Filesystem timestamp privacy declaration](https://capacitorjs.com/docs/apis/filesystem)
 and enables Files access to its Documents directory. Android's file provider
 shares only workspace files and cache files; no storage-wide permission is needed.
@@ -104,6 +104,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | --- | --- |
 | Editor, syntax, Markdown hybrid/reading/source, formatting, themes | Shared desktop renderer and editor |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
+| 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |
 | Files, folders, rename, copy, explicit save, conflicts | Native Filesystem adapter; UTF-8/newlines retained; same-timestamp content changes detected |
 | Trash | Moves into hidden workspace `.Trash`; enable hidden files to recover |

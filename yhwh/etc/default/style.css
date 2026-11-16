@@ -300,9 +300,12 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 #margin-box.margin-widget .margin-content { padding-top: 10px; }
 #inbox-view { flex: 1; min-width: 0; min-height: 0; overflow: auto; background: var(--panel); }
 .mail-list { padding: 12px 0; }
-.mail-row { width: 100%; display: grid; grid-template-columns: 100px minmax(0, 1fr) 65px; gap: 16px; text-align: left; padding: 16px 24px; border-radius: 0; border-bottom: 1px solid var(--line); font-weight: 400; }
+.mail-row { width: 100%; display: grid; grid-template-columns: minmax(90px, 170px) minmax(0, 1fr) 110px; gap: 16px; text-align: left; padding: 16px 24px; border-radius: 0; border-bottom: 1px solid var(--line); font-weight: 400; }
 .mail-row.unread { background: #9481be10; }
 .mail-row.unread .mail-sender, .mail-row.unread .mail-subject { font-weight: 650; }
+.mail-sender { min-width: 0; }
+.mail-sender small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: .7rem; font-weight: 400; margin-top: 4px; }
+.mail-address { overflow-wrap: anywhere; min-width: 0; }
 .mail-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mail-preview { color: var(--muted); font-weight: 400; }
 .mail-row time, .mail-envelope { color: var(--muted); font-size: .8rem; }
@@ -310,6 +313,10 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 .mail-message h1 { font-size: 1.5rem; font-weight: 500; margin-block: 30px 20px; }
 .mail-envelope { display: flex; gap: 12px; flex-wrap: wrap; }
 .mail-envelope time { margin-left: auto; }
+.mail-sender-settings summary { cursor: pointer; color: var(--muted); padding-block: 12px; }
+.mail-sender-settings .setting-row > span { min-width: 0; overflow-wrap: anywhere; }
+.mail-sender-settings + .dialog-actions { margin-top: 24px; }
+#inbox-view > .pane-header > span { flex: 1; }
 .mail-body { margin: 36px 0; font-size: 1.1rem; line-height: 1.8; }
 .mail-source { margin-top: 40px; color: var(--muted); font-size: .8rem; }
 .mail-source summary { cursor: pointer; }
@@ -318,7 +325,7 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 [data-panel='yhwh-chat'] { flex: 1; min-width: 0; }
 @media (max-width: 650px) {
   .mail-row { grid-template-columns: 65px minmax(0, 1fr); padding: 14px; gap: 10px; }
-  .mail-row time { display: none; }
+  .mail-row time { display: block; grid-column: 2; font-size: .7rem; }
   .mail-preview { display: none; }
   .mail-message { padding: 20px 16px; }
 }

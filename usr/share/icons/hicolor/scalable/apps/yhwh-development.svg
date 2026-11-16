@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="YHWH — development">
-  <title>YHWH — development</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="YHWH · 曰 — development">
+  <title>YHWH · 曰 — development</title>
   <rect x="16" y="16" width="480" height="480" rx="104" fill="#2f383e"/>
-  <path fill="#eeeeee" transform="translate(131 96) scale(5)" d="M0 0h8v56h27v8H0zM15 1h35v63h-8V9H15z"/>
+  <path fill="#eeeeee" fill-rule="evenodd" d="M112 148h288v216H112zM140 176v160h232V176zM140 242h198v28H140z"/>
 </svg>

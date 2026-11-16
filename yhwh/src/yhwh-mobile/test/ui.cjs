@@ -101,6 +101,10 @@ async function main() {
       await page.waitForFunction(() => window.YHWH?.active().editor?.state.doc.toString().includes('Unsaved recovery draft'));
       assert.equal(await page.evaluate(() => window.YHWH.active().dirty), true);
       assert.doesNotMatch(await page.evaluate(async () => (await window.yhwh.call('file:read', '/YHWH/notes.md')).content), /Unsaved recovery draft/);
+      // Save the recovered test buffer before the night-mail reload check.
+      await page.evaluate(() => window.YHWH.run('save'));
+      await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, `${device.name}-night-name.png`));
+      await require('../../../test/startup-inbox.cjs')(page, Object.fromEntries(['night', 'keyboard', 'settings', 'yahoo'].map(name => [name, path.join(artifacts, `${device.name}-startup-${name}.png`)])));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery.`);

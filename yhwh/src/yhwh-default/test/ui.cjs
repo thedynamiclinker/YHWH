@@ -474,6 +474,10 @@ process.stdin.on('end', () => {
     await page.locator('#dialog [data-close]').click();
     await run('chat');
     assert.match(await page.locator('.conversation-log').innerText(), /I came down/);
+    await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, '14-night-name.png'));
+    console.log('✓ ordered night letters, exact character copy, clickable source, spacing and persisted read state');
+    await require('../../../test/startup-inbox.cjs')(page, Object.fromEntries(['night', 'keyboard', 'settings', 'yahoo'].map(name => [name, path.join(artifacts, `15-startup-${name}.png`)])));
+    console.log('✓ overnight startup arc, legacy sender, hidden block setting, alternate senders, master mute and persistence');
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);

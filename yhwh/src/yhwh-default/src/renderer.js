@@ -6,6 +6,8 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { createEditor, setLanguage, formatText, renderMarkdown, languageNames } from './editor.js';
 import { createVerseUI } from './verses.js';
+import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
+import { primarySender, letters as startupLetters, startNight, nextStartupLetter, senderFor } from '../../../lib/inbox.cjs';
 
 const bridge = window.yhwh;
 const $ = selector => document.querySelector(selector);
@@ -632,6 +634,8 @@ const letters = [
   { id: 'inspect', title: 'I came down to look', textKey: 'letterInspect', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
   { id: 'seed', title: 'An update from the land department', textKey: 'letterSeed', verse: 'Genesis 15:18', note: 'The promise of land to Abraham’s descendants.', command: 'roadmap', action: 'Our very ambitious roadmap' },
   { id: 'covenant', title: 'Long-term support', textKey: 'letterCovenant', verse: 'Genesis 17:7', note: 'An everlasting covenant. The hundred-year support plan is my addition.' },
+  ...nightLetters,
+  ...startupLetters,
 ];
 function savePresence() { localStorage.setItem(presenceKey, JSON.stringify(presence)); updateInboxBadge(); }
 function updateInboxBadge() {
@@ -639,27 +643,49 @@ function updateInboxBadge() {
   $('#inbox-count').textContent = count ? ` · ${count}` : '';
 }
 function receive(id) {
-  if (!active() || active().config.values.inbox === 'false' || document.body.dataset.theme === 'dawkins' || presence.letters.some(letter => letter.id === id)) return;
-  if (document.body.dataset.theme === 'nietzsche' && id !== 'inspect') return;
-  // At most one letter every five minutes. Work never opens a dialogue.
-  if (presence.lastLetter && Date.now() - presence.lastLetter < 300000) return;
-  presence.letters.push({ id, read: false, at: Date.now() }); presence.lastLetter = Date.now(); savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
+  if (!active() || document.visibilityState !== 'visible') return;
+  const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme };
+  if (startNight(presence, options.now)) savePresence();
+  const startup = nextStartupLetter(presence, options);
+  // An address change follows a block; the name joke keeps its existing order.
+  const letter = startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id);
+  if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
+  const sender = senderFor(presence, letter);
+  if (!sender) return;
+  presence.letters.push({ id: letter.id, sender, read: false, at: options.now }); presence.lastLetter = options.now; savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
+// No background delivery or catch-up burst: each later letter needs actual use.
+document.addEventListener('click', () => receive());
+document.addEventListener('keydown', () => receive());
 function inbox() { focusView('inbox'); }
+function mailSettings() {
+  const dialog = modal('Mail settings', `<form id="mail-settings-form"><details class="mail-sender-settings"><summary>Sender controls</summary><label class="setting-row"><span>Block ${primarySender}<small>Applies to this exact address. Earlier letters stay in your inbox.</small></span><input type="checkbox" role="switch" name="blocked_yhwh" ${presence.blockedYhwh ? 'checked' : ''}></label></details><div class="dialog-actions"><button type="button" data-mail-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`);
+  dialog.querySelector('[data-mail-cancel]').onclick = () => dialog.close();
+  dialog.querySelector('form').onsubmit = event => {
+    event.preventDefault();
+    const blocked = event.target.elements.blocked_yhwh.checked;
+    if (blocked && !presence.blockedYhwh && !Number.isFinite(presence.blockedAt)) presence.blockedAt = Date.now();
+    presence.blockedYhwh = blocked;
+    savePresence(); dialog.close();
+  };
+}
 function renderInbox() {
   const host = $('#inbox-view'), tab = active();
-  const available = [...presence.letters].reverse().map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
+  const available = [...presence.letters].sort((a, b) => b.at - a.at).map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
   const selected = available.find(item => item.letter.id === tab.mailId);
-  host.innerHTML = `<header class="pane-header"><span>Inbox <small>· ${available.filter(item => !item.state.read).length} unread</small></span><button data-command="focus-document" aria-label="Back to document">▱</button></header>`;
+  host.innerHTML = `<header class="pane-header"><span>Inbox <small>· ${available.filter(item => !item.state.read).length} unread</small></span><button type="button" data-mail-settings aria-label="Mail settings" title="Mail settings">⚙</button><button data-command="focus-document" aria-label="Back to document">▱</button></header>`;
+  host.querySelector('[data-mail-settings]').onclick = mailSettings;
   if (selected) {
     const { letter, state } = selected;
-    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span>to Abe</span><time>${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${word(letter.textKey)}</div>${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(letter.note)}</p><div data-citation="${escape(letter.verse)}"></div></details></article>`);
+    const source = letter.source;
+    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span><span>to Abe</span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${word(letter.textKey)}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
     host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
     verseUI.hydrate(host);
   } else {
     const rows = available.map(({ letter, state }) => {
       const preview = String(words[letter.textKey] || '').replace(/\s+/g, ' ').slice(0, 140);
-      return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH</span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time>${escape(new Date(state.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))}</time></button>`;
+      const sender = state.sender || primarySender;
+      return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH<small title="${escape(sender)}">${escape(sender)}</small></span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time></button>`;
     }).join('');
     host.insertAdjacentHTML('beforeend', `<div class="mail-list" aria-label="Messages">${rows || '<p class="mail-empty muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
     for (const row of host.querySelectorAll('[data-mail]')) row.onclick = () => {
