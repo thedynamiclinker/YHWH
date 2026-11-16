@@ -6,6 +6,6 @@ const callChannels = [
   'file:move', 'file:copy', 'file:trash', 'file:external', 'file:reveal', 'clipboard:path', 'choose',
   'choose:save', 'settings:save', 'config:open', 'config:reload', 'words:save', 'plugins', 'circus',
   'external', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
-  'verse:random', 'verse:commentary',
+  'verse:random', 'verse:commentary', 'keys:run', 'keys:shell', 'keys:save',
 ];
 module.exports = { callChannels };

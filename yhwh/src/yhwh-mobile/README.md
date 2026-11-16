@@ -37,7 +37,7 @@ make mobile-build     # bundles the shared core into yhwh/var/tmp/yhwh/mobile/ui
 make mobile-check     # behavioral tests and phone/tablet browser workflows
 make mobile-sync      # rebuilds and cap syncs BOTH checked-in native projects
 make android          # sync, then open Android Studio
-make android-apk      # sync, then compile a debug APK with an existing SDK/JDK
+make android-apk      # sync and compile a debug APK; sets up the toolchain on NixOS
 make ios              # sync, then open Xcode on macOS
 ```
 
@@ -75,15 +75,44 @@ Select an Apple development team in Xcode for a physical device. Use Android
 Studio's signed bundle workflow or Xcode Archive for release distribution;
 keystores, provisioning and store accounts are supplied by the app owner.
 
-On NixOS, a development shell supplies Java, the Android SDK and a native aapt2
-without changing the system profile. From the vault root:
+On NixOS, `make android-apk` automatically runs Gradle in `shell.nix`, which
+supplies JDK 21, the Android SDK and a native aapt2 without changing the system
+profile. Java and the SDK do not need to be installed in the calling shell.
+For an interactive native development environment, from the vault root:
 
 ```sh
-nix-shell yhwh/src/yhwh-mobile/shell.nix --run 'make android-apk'
+nix-shell yhwh/src/yhwh-mobile/shell.nix
 ```
 
 The shell's SDK composition accepts the Android SDK license and downloads the
 needed packages into the Nix store. It excludes emulators and system images.
+
+### Test on a connected Android phone
+
+From the vault root, with the phone unlocked and USB debugging authorized:
+
+```sh
+make android-apk
+adb devices -l
+adb install -r yhwh/var/tmp/yhwh/mobile/yhwh-debug.apk
+adb shell am start -n com.thedynamiclinker.yhwh/.MainActivity
+```
+
+The phone should appear with status `device`. If more than one device is
+connected, add `-s SERIAL` after `adb` in the install and launch commands,
+using the phone's serial from `adb devices -l`. Omit the leading `yhwh/` in
+the APK path when running from the application directory. `install -r`
+updates an existing installation while retaining its data.
+
+Create a Markdown note, type with the software keyboard and explicitly save.
+Switch tabs, rotate the phone, then background and reopen the app. Close and
+relaunch it to confirm the saved note persists. Try importing and sharing a
+file through the system picker and share sheet. These use the phone's app-owned
+workspace; the desktop vault is not copied or synchronized to it.
+
+If the app crashes, capture the crash log with `adb logcat -b crash -d`.
+See the official [adb documentation](https://developer.android.com/tools/adb)
+for installation, device selection and activity launch commands.
 
 For a simulator build on a Mac:
 
@@ -151,3 +180,13 @@ signature verification, archive integrity, and exact equality between the APK's
 bundled UI and the shared build. The default and Three Electron UI suites and
 the repository's core test suite also passed. iOS native compilation and device
 testing have not been performed on this Linux host.
+
+## Prefix keyboard system
+
+Hardware keyboards use the shared desktop dispatcher, bundled file-derived defaults,
+tab switching/reordering/reopening and Ctrl+Alt+Shift+K capture/search dialog.
+Text, wildcard and regex search work on-device. Custom executable/JS files,
+shell pipelines, virtual shell namespace commands and editing desktop prefix
+files require desktop filesystem/process APIs and return explicit unavailable
+messages on Android and iOS. The last mobile tab remains a usable blank tab.
+These source changes require rebuilding and installing a new native app.

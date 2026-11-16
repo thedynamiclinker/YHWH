@@ -11,6 +11,8 @@ const send = message => { if (process.connected) process.send(message); };
 function start({ id, cwd, env = {} }) {
   const shell = process.env.YHWH_SHELL || process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/bash');
   const name = path.basename(shell), environment = { ...process.env, ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor', YHWH_TAB: id };
+  environment.YHWH_PREFIX_SHELL ||= path.join(__dirname, '../prefix-shell.cjs');
+  environment.YHWH_BUNDLED_COMPLETION ||= require('../../lib/paths.cjs').etc('completions', 'yhwh.bash');
   let args = [], temporary;
   if (/bash/.test(name)) args = ['--rcfile', require('../../lib/paths.cjs').etc('shell', 'bashrc'), '-i'];
   else if (/zsh/.test(name)) {

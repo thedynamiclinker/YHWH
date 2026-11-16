@@ -34,7 +34,7 @@ check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test
 	$(NODE) src/yhwh-mobile/test/ui.cjs
-	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-three/test/ui.cjs
+	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-default/test/keys-ui.cjs src/yhwh-three/test/ui.cjs
 test: verify-deps
 	$(NODE) --test test/*.test.cjs
 	$(NODE) --test src/yhwh-default/test/*.test.cjs
@@ -46,6 +46,7 @@ test: verify-deps
 	$(MAKE) company-check
 test-ui: build
 	$(NODE) src/yhwh-default/test/ui.cjs
+	$(NODE) src/yhwh-default/test/keys-ui.cjs
 	$(NODE) src/yhwh-three/test/ui.cjs
 three-build: deps
 	$(NODE) bin/build.cjs three
@@ -91,7 +92,12 @@ mobile-check: mobile-build
 android: mobile-sync
 	./node_modules/.bin/cap open android
 android-apk: mobile-sync
-	cd src/yhwh-mobile/android && ./gradlew assembleDebug
+	@# NixOS needs the SDK's native aapt2 as well as Java and the Android SDK.
+	@if [ -f /etc/NIXOS ]; then \
+		cd src/yhwh-mobile/android && nix-shell ../shell.nix --run './gradlew assembleDebug'; \
+	else \
+		cd src/yhwh-mobile/android && ./gradlew assembleDebug; \
+	fi
 	cp src/yhwh-mobile/android/app/build/outputs/apk/debug/app-debug.apk var/tmp/yhwh/mobile/yhwh-debug.apk
 ios: mobile-sync
 	./node_modules/.bin/cap open ios

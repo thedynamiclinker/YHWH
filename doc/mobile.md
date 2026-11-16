@@ -16,3 +16,9 @@ has the desktop filesystem, shell, agent executable or Bash configuration.
 
 Feature inheritance means rebuilding and distributing a new mobile release.
 It does not imply automatic application updates or file synchronization.
+
+`make android-apk` must build and sync the current shared UI before compiling
+and copying the debug APK to `yhwh/var/tmp/yhwh/mobile/yhwh-debug.apk`. On
+NixOS it must supply the repository's mobile Nix toolchain, including native
+aapt2, without requiring Java or the Android SDK in the caller's PATH. A failed
+native build must fail the target before copying an APK from an earlier build.

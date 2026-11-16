@@ -8,6 +8,7 @@ const { spawn } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const files = require('../../../lib/files.cjs');
 const { resolveConfig, configLocations, userDirectory, saveSettings } = require('./config.cjs');
+const keys = require('../../../lib/keys.cjs');
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
@@ -58,12 +59,13 @@ async function configFor(target) {
   const previous = configCache.get(target);
   const locations = await configLocations(path.resolve(target), configOptions);
   async function stamp(values = {}) {
-    const tracked = [...locations.flatMap(location => (three ? ['rc', 'rc.three'] : ['rc']).map(name => path.join(location.directory, name))), ...[values.stylesheet, values.bg].filter(Boolean)];
+    const tracked = [...locations.flatMap(location => (three ? ['etc/profile', 'rc', 'rc.three'] : ['etc/profile', 'rc']).map(name => path.join(location.directory, name))), ...locations.map(location => location.directory), ...[values.stylesheet, values.bg].filter(Boolean)];
     return (await Promise.all(tracked.map(async filename => { try { const stat = await fs.stat(filename); return `${filename}:${stat.mtimeMs}:${stat.size}:${stat.mode}`; } catch { return filename; } }))).join('|');
   }
   const signature = await stamp(previous?.config.values);
-  if (previous?.signature === signature) return previous.config;
+  if (previous?.signature === signature) { previous.config.keys = await keys.load(previous.config); return previous.config; }
   const config = await resolveConfig(target, configOptions);
+  config.keys = await keys.load(config);
   if (config.values.stylesheet) {
     try {
       const filename = config.values.stylesheet.startsWith('file:') ? require('node:url').fileURLToPath(config.values.stylesheet) : config.values.stylesheet;
@@ -120,6 +122,9 @@ async function destination(filename) {
 
 async function launch() {
   await fs.mkdir(profile, { recursive: true });
+  await fs.mkdir(userDirectory(), { recursive: true });
+  const initialConfig = await resolveConfig(request(process.argv).path, configOptions);
+  await keys.seed(userDirectory(), initialConfig.values.keys_directory);
   host = spawn(process.env.YHWH_NODE || 'node', [path.join(__dirname, '../../../bin/default/terminal-host.cjs')], {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: undefined }, stdio: ['ignore', 'pipe', 'pipe', 'ipc'], windowsHide: true,
   });
@@ -144,7 +149,7 @@ async function launch() {
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
-      host.send({ type: 'start', id, cwd: focus.cwd, env: { YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${process.env.PATH}` } });
+      host.send({ type: 'start', id, cwd: focus.cwd, env: { ...result.config.environment, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${result.config.environment.PATH || process.env.PATH}` } });
       return result;
     } catch (error) { focuses.delete(id); throw error; }
   });
@@ -203,6 +208,26 @@ async function launch() {
   handle('choose:save', async (directory, name) => { const result = await dialog.showSaveDialog(window, { defaultPath: path.join(directory, name) }); return result.canceled ? null : result.filePath; });
   handle('settings:save', async (values, scope) => { await saveSettings(values, scope, configOptions); configCache.clear(); });
   handle('config:reload', () => configCache.clear());
+  handle('keys:save', async (id, value, action, command, expected, when) => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    await keys.save(await configFor(focus.cwd), value, action, command, expected, when);
+  });
+  handle('keys:run', async (id, combo, context = '', help = false) => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    const config = await configFor(focus.cwd);
+    const binding = config.keys.bindings.find(item => item.combo === combo);
+    if (!binding) throw new Error('Key binding no longer exists. Reload keys.');
+    if (binding.kind !== 'exec') return binding;
+    return keys.program(binding.filename, help === true ? ['--help'] : [], { cwd: await worlds.physical(focus), env: { ...config.environment, PATH: `${path.join(root, '../../bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}`, YHWH_KEY: combo, YHWH_PREFIX: binding.prefix, YHWH_TAB: id }, input: String(context) });
+  });
+  handle('keys:shell', async (id, command, directory = '') => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    const config = await configFor(focus.cwd);
+    const view = keys.namespace(config.keys.bindings, `cd ${directory}`);
+    if (/^cd(?:\s|$)/.test(command.trim())) { const next = keys.namespace(config.keys.bindings, command, directory); return { directory: next.directory, stdout: keys.listing(next.bindings), code: 0 }; }
+    if (['ls', 'pwd'].includes(command.trim())) return { directory, stdout: command.trim() === 'pwd' ? `/${directory}\n` : keys.listing(view.bindings), code: 0 };
+    return keys.program(process.env.YHWH_BASH || 'bash', ['--noprofile', '--norc', '-c', command], { cwd: await worlds.physical(focus), env: { ...config.environment, YHWH_KEYS_NAMESPACE: directory, YHWH_PREFIX: config.userDirectory }, input: keys.listing(view.bindings) });
+  });
   handle('config:open', async () => { await fs.mkdir(userDirectory(), { recursive: true }); const filename = path.join(userDirectory(), three ? 'rc.three' : 'rc'); await fs.appendFile(filename, '', { mode: 0o600 }); return filename; });
   handle('words:save', async words => {
     const filename = require('../../../lib/paths.cjs').etc('default', 'words.json');

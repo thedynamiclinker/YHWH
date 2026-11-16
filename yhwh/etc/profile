@@ -1,0 +1,5 @@
+# YHWH prefixes contain ordinary shell configuration and files.
+# Copy settings to ~/.config/yhwh/etc/profile, or an ancestor .yhwh/etc/profile.
+# export yhwh_keys_directory=etc/keys
+# export yhwh_bashrc_file=etc/bashrc
+# export yhwh_completions_directory=lib/bash/completions

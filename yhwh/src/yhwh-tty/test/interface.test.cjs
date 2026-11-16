@@ -7,6 +7,22 @@ const { PassThrough } = require('node:stream');
 const { Document, Workspace } = require('../model.cjs');
 const { Interface, pasteInput } = require('../app.cjs');
 
+test('expanded shell retains file columns and sends one consistent terminal size', () => {
+  const sizes = [];
+  const app = { screen: { width: 120, height: 40 }, tab: { id: 'one', showFiles: true, showTerminal: true, expanded: 'terminal' }, parent: {}, list: {}, preview: {}, terminal: {}, shells: { resize: (...args) => sizes.push(args) } };
+  Interface.prototype.layout.call(app);
+  assert.equal(app.parent.hidden, false); assert.equal(app.list.hidden, false);
+  assert.equal(app.list.height, 36); assert.equal(app.terminal.top, 2);
+  assert.ok(app.terminal.left > 0); assert.equal(sizes.length, 1);
+});
+
+test('Ctrl+E reaches a focused shell without toggling files', async () => {
+  const writes = [];
+  const app = { tab: { id: 'one', showFiles: true, config: { keys: { bindings: [] } } }, focus: 'terminal', shells: { sessions: new Map(), write: (...args) => writes.push(args) } };
+  await Interface.prototype.key.call(app, '', { full: 'C-e', name: 'e', sequence: '\x05' });
+  assert.deepEqual(writes, [['one', '\x05']]); assert.equal(app.tab.showFiles, true);
+});
+
 test('closing the final tab delegates its unsaved decision to quit once', async () => {
   let decisions = 0;
   const app = {

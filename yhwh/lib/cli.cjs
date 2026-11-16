@@ -49,7 +49,8 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','keys',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='keys')return require('./keys-cli.cjs').main(rest);
   if(command==='completion') {
     const shell=rest[0]||'bash';if(!['bash','zsh'].includes(shell))throw new Error('Use completion bash|zsh.');
     process.stdout.write(fs.readFileSync(paths.etc('completions','yhwh.'+shell),'utf8'));return 0;

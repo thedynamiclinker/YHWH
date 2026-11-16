@@ -10,12 +10,12 @@ Each **app tab** owns one current directory, one persistent shell, and zero or o
 
 | Operation | Default shortcuts |
 | --- | --- |
-| Show/hide files | Ctrl+E |
+| Show/hide files | Ctrl+Shift+E |
 | Expand/restore files in the focus area | Ctrl+D |
-| Show/hide terminal | Ctrl+B, Ctrl+backtick, Alt+Shift+T |
+| Show/hide terminal | Ctrl+B, Ctrl+backtick, Ctrl+Alt+Shift+T |
 | Expand/restore terminal | Ctrl+Shift+B |
 | Show/hide files and terminal together | Ctrl+Shift+D |
-| Focus editor / files / terminal | Ctrl+1 / Ctrl+2 / Ctrl+3 |
+| Focus editor / files / terminal | Ctrl+Alt+1 / Ctrl+Alt+2 / Ctrl+Alt+3 |
 | New / close app tab | Ctrl+T / Ctrl+W |
 | Next / previous tab | Ctrl+Tab / Ctrl+Shift+Tab; Ctrl+PageDown / PageUp |
 | Parent directory | Alt+Up; Left or Backspace in the file list |
@@ -24,11 +24,13 @@ Each **app tab** owns one current directory, one persistent shell, and zero or o
 | New file / open file | Ctrl+N / Ctrl+O |
 | Choose a directory | Ctrl+Shift+O |
 | Save / Save as | Ctrl+S / Ctrl+Shift+S |
-| Cycle hybrid / reading / source; format JSON/HTML | Ctrl+R (also Ctrl+Shift+E) |
+| Cycle hybrid / reading / source; format JSON/HTML | Ctrl+R |
 | Commands | Ctrl+P, Ctrl+Shift+P |
 | Settings / help | Ctrl+, / F1 |
 
-On macOS the primary Ctrl shortcuts also accept Command. Every app command is also available in the command palette; common operations have buttons and native menu entries. Hold Alt to expose the native menu on Linux/Windows. Escape restores an expanded pane.
+Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed tab; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
+
+Ctrl+Alt+Shift+K opens key capture and advanced text, wildcard, regex and shell searches. Bindings are ordinary files under `~/.config/yhwh/etc/keys` and ancestor `.yhwh` prefixes. [Keyboard system and prefix configuration](../../../doc/keys.md) describes editing, executable bindings and reloads. `yhwh keys list` prints the same effective list for Unix tools. The defaults use literal Ctrl bindings; separate `meta` bindings can configure Command on macOS.
 
 The file manager supports double-click/Enter to open, arrow keys, type-to-select, filtering, Ctrl/Shift selection, Ctrl+A, copy/cut/paste, new directories, F2 rename, and desktop Trash. Its `..` row and up button always work. Expanded mode shows sizes and modification dates. Drag the divider to resize it. Ctrl+H toggles hidden files while the file manager has focus; the text editor retains its own search/replace shortcuts.
 

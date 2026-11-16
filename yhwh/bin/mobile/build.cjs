@@ -5,7 +5,8 @@ const { root, output } = require('../../lib/paths.cjs');
 async function build() {
   const directory = output('mobile/ui');
   await fs.mkdir(directory, { recursive: true });
-  const result = await esbuild.build({ absWorkingDir: root, entryPoints: { mobile: 'src/yhwh-mobile/src/entry.js' }, bundle: true, splitting: true,
+  const keys = await require('../../lib/keys.cjs').scan(path.join(root, 'etc/keys'));
+  const result = await esbuild.build({ absWorkingDir: root, define: { YHWH_BUILTIN_KEYS: JSON.stringify(keys.map(({ filename, source, ...binding }) => binding)) }, entryPoints: { mobile: 'src/yhwh-mobile/src/entry.js' }, bundle: true, splitting: true,
     format: 'esm', outdir: directory, sourcemap: true, target: ['chrome110', 'safari16'], metafile: true });
   let html = await fs.readFile(path.join(root, 'etc/default/index.html'), 'utf8');
   html = html.replace('width=device-width, initial-scale=1', 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content')

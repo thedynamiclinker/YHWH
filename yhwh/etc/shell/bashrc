@@ -1,6 +1,11 @@
 # Preserve the user's normal interactive shell, then add one prompt hook.
 [[ "$YHWH_NO_SHELL_RC" != 1 && -f ~/.bashrc ]] && source ~/.bashrc
+[[ -f "$YHWH_BUNDLED_COMPLETION" ]] && source "$YHWH_BUNDLED_COMPLETION"
 __yhwh_prompt() {
+    if [[ "$__yhwh_prefix_cwd" != "$PWD" && -f "$YHWH_PREFIX_SHELL" ]]; then
+        __yhwh_prefix_cwd="$PWD"
+        eval "$("${YHWH_NODE:-node}" "$YHWH_PREFIX_SHELL")"
+    fi
     local __yhwh_cwd="${PWD//%/%25}"
     __yhwh_cwd="${__yhwh_cwd// /%20}"
     __yhwh_cwd="${__yhwh_cwd//#/%23}"

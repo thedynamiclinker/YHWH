@@ -5,7 +5,7 @@ make mobile-build    Build the Android/iOS UI from the shared core
 make mobile-sync     Build and copy the latest UI/plugins into both native apps
 make mobile-check    Mobile storage/model tests and phone/tablet browser workflows
 make android         Sync and open the Android project in Android Studio
-make android-apk     Sync and assemble a debug APK (requires JDK 21 and SDK 36)
+make android-apk     Sync and assemble a debug APK (automatic NixOS toolchain)
 make ios             Sync and open the iOS project in Xcode (requires macOS)
 make run             Open the built default interface
 make tty             Build and open el shaddai in a terminal (OPEN=PATH)
@@ -30,5 +30,6 @@ Uninstall always verifies exactly $HOME/world. It never follows symlink targets.
 Node >=22.12, npm, Make, Bash, Git, fold, Python 3 and file are required.
 Native node-pty compilation may need a C++ toolchain. UI checks need Xvfb.
 On NixOS use YHWH_ELECTRON=/native/electron or make nix-shell.
+Android APK builds use the mobile Nix shell on NixOS; elsewhere supply JDK 21/SDK 36.
 Workflow generation additionally needs lordhavemercy and its authenticated agent,
 or a YHWH_AGENT executable implementing etc/workflow's JSON protocol.

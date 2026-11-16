@@ -46,7 +46,7 @@ function pasteInput(source, onPaste) {
 
 class Interface {
   constructor(workspace, { socket, onClose = () => {} } = {}) {
-    this.workspace = workspace; this.onClose = onClose; this.focus = 'files'; this.clipboard = null; this.sequence = 0;
+    this.workspace = workspace; this.onClose = onClose; this.focus = 'files'; this.clipboard = null; this.sequence = 0; this.closedTabs = [];
     this.input = pasteInput(process.stdin, text => this.paste(text));
     this.screen = blessed.screen({ input: this.input, output: process.stdout, smartCSR: true, fullUnicode: true, dockBorders: true, title: workspace.words.name, terminal: process.env.TERM || 'xterm-256color' });
     this.screen.program.write('\x1b[?2004h');
@@ -125,7 +125,7 @@ class Interface {
   layout() {
     const width = this.screen.width, height = this.screen.height, tab = this.tab;
     const area = Math.max(3, height - 4), termHeight = tab.showTerminal ? (tab.expanded === 'terminal' ? area : Math.max(5, Math.floor(area * .36))) : 0;
-    const bodyHeight = Math.max(0, area - termHeight), showFiles = tab.showFiles && tab.expanded !== 'terminal';
+    const bodyHeight = Math.max(0, area - termHeight), showFiles = tab.showFiles;
     const parentWidth = showFiles && width >= 100 ? Math.floor(width * .18) : 0;
     const filesWidth = showFiles ? (tab.expanded === 'files' ? width - parentWidth : width < 65 ? (this.focus === 'files' ? width : 0) : Math.floor(width * .30)) : 0;
     this.parent.hidden = !parentWidth || !bodyHeight; this.list.hidden = !filesWidth || !bodyHeight;
@@ -134,7 +134,14 @@ class Interface {
     Object.assign(this.preview, { left: parentWidth + filesWidth, width: Math.max(1, width - parentWidth - filesWidth), height: bodyHeight });
     this.preview.hidden = tab.expanded === 'files' || !bodyHeight || (width < 65 && this.focus === 'files' && showFiles);
     this.terminal.hidden = !termHeight; Object.assign(this.terminal, { top: 2 + bodyHeight, left: 0, width, height: termHeight });
-    if (termHeight) this.shells.resize(tab.id, width - 2, termHeight - 2);
+    if (tab.expanded === 'terminal' && showFiles) {
+      // Vertical expansion keeps the file columns alongside the shell.
+      this.parent.hidden = !parentWidth; this.list.hidden = !filesWidth;
+      Object.assign(this.parent, { height: area }); Object.assign(this.list, { height: area });
+      const left = parentWidth + filesWidth;
+      Object.assign(this.terminal, { left, width: Math.max(1, width - left), top: 2, height: area });
+      this.shells.resize(tab.id, Math.max(2, width - left - 2), area - 2);
+    } else if (termHeight) this.shells.resize(tab.id, width - 2, termHeight - 2);
   }
   render() {
     if (this.closed || !this.tab) return;
@@ -222,7 +229,19 @@ class Interface {
   async closeTab() {
     if (this.workspace.tabs.length === 1) return this.quit();
     if (!await this.guard()) return;
+    this.closedTabs.push({ cwd: this.tab.cwd, file: this.tab.document?.file.path, index: this.workspace.index });
     this.shells.closeTab(this.tab.id); this.workspace.tabs.splice(this.workspace.index, 1); await this.switchTab(Math.max(0, this.workspace.index - 1));
+  }
+  async reopenTab() {
+    const state = this.closedTabs.pop(); if (!state) return;
+    const tab = await this.workspace.newTab(state.cwd);
+    if (state.file) await this.workspace.open(state.file, tab);
+    this.workspace.tabs.splice(this.workspace.tabs.indexOf(tab), 1); this.workspace.tabs.splice(state.index, 0, tab);
+    await this.switchTab(state.index);
+  }
+  async moveTab(delta) {
+    const from = this.workspace.index, to = Math.max(0, Math.min(this.workspace.tabs.length - 1, from + delta));
+    this.workspace.tabs.splice(to, 0, this.workspace.tabs.splice(from, 1)[0]); await this.switchTab(to);
   }
   async quit(signal = false) {
     if (this.closed || this.quitting) return;
@@ -251,15 +270,55 @@ class Interface {
     if (this.closed) return;
     if (this.dialog) { this.dialog.key(ch, key); return; }
     const full = key.full || key.name, tab = this.tab;
+    if (!this.inKeyModule) {
+      const parts = full.split('-'), name = parts.pop();
+      const combo = [...(parts.includes('C') ? ['ctrl'] : []), ...(parts.includes('M') ? ['alt'] : []), ...(parts.includes('S') ? ['shift'] : []), name].join('/');
+      const binding = tab.config.keys?.bindings.find(item => item.combo === combo && (!item.when || item.when === this.focus));
+      // Native terminal shortcuts remain the default vocabulary here. Explicit
+      // user/project overrides share the same filesystem and executable protocol.
+      const keySystem = require('../../lib/keys.cjs');
+      if (combo === 'ctrl/alt/shift/k' && binding?.filename.startsWith(keySystem.defaults + path.sep)) return this.commands.find(item => item[0] === 'hotkeys')[2]();
+      if (binding && !binding.filename.startsWith(keySystem.defaults + path.sep)) {
+        if (binding.kind === 'disabled') return this.focus === 'terminal' ? this.shells.write(tab.id, key.sequence || ch || '') : undefined;
+        if (binding.kind === 'exec') {
+          const result = await keySystem.program(binding.filename, [], { cwd: await worlds.physical(tab), env: { ...tab.config.environment, YHWH_KEY: combo, YHWH_TAB: tab.id, YHWH_PREFIX: binding.prefix }, input: `cwd\t${tab.cwd}\nfile\t${tab.document?.file.path || ''}\n${this.selectedPaths().map(path => `selected\t${path}\n`).join('')}` });
+          if (result.stdout || result.stderr || result.code) await this.text(combo, result.stdout + result.stderr + (result.code ? `\nExit ${result.code}` : '')); return;
+        }
+        if (binding.kind === 'js') {
+          this.inKeyModule = true;
+          try {
+            const module = await import(`data:text/javascript;base64,${Buffer.from(binding.source).toString('base64')}`);
+            await module.default({ notice: message => this.notice(message), active: () => this.tab, refresh: () => this.workspace.refresh(), run: async id => {
+              if (/^tab-[1-9]$/.test(id)) { const index = Number(id.at(-1)) - 1; if (index === 8 || index < this.workspace.tabs.length) return this.switchTab(index === 8 ? this.workspace.tabs.length - 1 : index); return; }
+              if (id === 'palette') return this.palette();
+              if (id === 'location') return this.key('', { full: 'C-l' });
+              if (id === 'toggle-hidden') return this.workspace.settings({ show_hidden: String(tab.config.values.show_hidden !== 'true') });
+              const aliases = { 'open-file': 'open', 'files-rename': 'rename', 'files-trash': 'trash', 'previous-tab': 'previous-tab' };
+              const command = this.commands.find(item => item[0] === (aliases[id] || id));
+              if (!command) throw new Error(`The terminal interface has no ${id} command. Use its palette or a terminal-specific module.`);
+              return command[2]();
+            } }); return;
+          } finally { this.inKeyModule = false; }
+        }
+        throw new Error('This host imports .js; make shell/Python files executable with a shebang.');
+      }
+    }
     if (full === 'C-q' || full === 'f10') return this.quit();
     if (full === 'C-p') return this.palette();
     if (full === 'f1') return this.help();
     if (full === 'C-b') { tab.showTerminal = !tab.showTerminal; this.setFocus(tab.showTerminal ? 'terminal' : 'files'); return; }
-    if (full === 'C-e') { tab.showFiles = !tab.showFiles; this.setFocus(tab.showFiles ? 'files' : 'editor'); return; }
+    if (full === 'C-S-e') { tab.showFiles = !tab.showFiles; this.setFocus(tab.showFiles ? 'files' : 'editor'); return; }
+    if (full === 'C-S-b') { tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; this.setFocus('terminal'); return; }
     if (full === 'C-t') { await this.workspace.newTab(); this.watch(); this.setFocus('files'); return; }
     if (full === 'C-w') return this.closeTab();
+    if (full === 'C-S-t') return this.reopenTab();
+    if (full === 'C-S-pageup') return this.moveTab(-1);
+    if (full === 'C-S-pagedown') return this.moveTab(1);
     if (full === 'M-right' || full === 'C-pagedown') return this.switchTab(this.workspace.index + 1);
     if (full === 'M-left' || full === 'C-pageup') return this.switchTab(this.workspace.index - 1);
+    if (full === 'C-tab') return this.switchTab(this.workspace.index + 1);
+    if (full === 'C-S-tab') return this.switchTab(this.workspace.index - 1);
+    if (/^C-[1-9]$/.test(full)) { const index = Number(full.at(-1)) - 1; if (index === 8 || index < this.workspace.tabs.length) return this.switchTab(index === 8 ? this.workspace.tabs.length - 1 : index); return; }
     if (/^M-[1-9]$/.test(full)) return this.switchTab(Number(full.at(-1)) - 1);
     if (full === 'C-l' && tab.showTerminal) { this.setFocus('terminal'); this.shells.write(tab.id, '\x0c'); return; }
     if (full === 'tab' && this.focus !== 'editor' && this.focus !== 'terminal' || full === 'S-tab') {
@@ -483,7 +542,7 @@ class Interface {
     await this.text('Take a walk', steps.map(([id, label]) => `${state.steps.includes(id) ? '[x]' : '[ ]'} ${label}`).join('\n') + '\n\nProgress follows real actions. Pause from the command palette.');
   }
   async help() {
-    await this.text('el shaddai · keyboard', `shaddai: ${this.workspace.words.shaddai}\n\nFiles: h/j/k/l or arrows; Enter open; / filter; . hidden\nSpace select; y copy; x cut; p paste; a file; A directory\nF2 rename; D Trash (asks first); g/G first/last\n\nCtrl+P commands; : command; Ctrl+O open; Ctrl+N new\nCtrl+S save; Ctrl+F find; Ctrl+Z undo; Ctrl+Y redo\nCtrl+R hybrid / reading / source; Escape files\nCtrl+B shell; Shift+Tab cycle focus; Tab indents in editor\nCtrl+T new tab; Ctrl+W close; Alt+Left/Right switch tabs\nCtrl+L clears visible shell, otherwise edits location\nShell: normal keys including Ctrl+C/D; Shift+PageUp scrollback\nCtrl+Q or F10 quit; q quits from files; F1 help\n\n:cd PATH · :open PATH · :mkdir PATH · :set name=value\n:! COMMAND · Ctrl+P exposes settings, chat, verses, worlds,\ninbox, copy, offerings and the executable English workflow.\n\nYour terminal controls its own font and colors. Browser DOM\nplugins and spatial effects stay in the desktop interface.`);
+    await this.text('el shaddai · keyboard', `shaddai: ${this.workspace.words.shaddai}\n\nFiles: h/j/k/l or arrows; Enter open; / filter; . hidden\nSpace select; y copy; x cut; p paste; a file; A directory\nF2 rename; D Trash (asks first); g/G first/last\n\nCtrl+P commands; : command; Ctrl+O open; Ctrl+N new\nCtrl+S save; Ctrl+F find; Ctrl+Z undo; Ctrl+Y redo\nCtrl+R hybrid / reading / source; Escape files\nCtrl+B shell; Shift+Tab cycle focus; Tab indents in editor\nCtrl+T new tab; Ctrl+W close; Ctrl+PageUp/PageDown switch tabs\nCtrl+1–8 / Ctrl+9 select tab; Ctrl+Shift+T reopen (terminal permitting)\nCtrl+L clears visible shell, otherwise edits location\nShell: normal keys including Ctrl+C/D; Shift+PageUp scrollback\nCtrl+Q or F10 quit; q quits from files; F1 help\n\n:cd PATH · :open PATH · :mkdir PATH · :set name=value\n:! COMMAND · Ctrl+P exposes settings, chat, verses, worlds,\ninbox, copy, offerings and the executable English workflow.\n\nYour terminal controls its own font and colors. Browser DOM\nplugins and spatial effects stay in the desktop interface.`);
   }
   commandList() {
     const command = (id, title, run) => [id, title, run];
@@ -499,8 +558,17 @@ class Interface {
       command('parent','Parent directory', () => this.navigate(path.dirname(this.tab.cwd))), command('home','Home directory', () => this.navigate(os.homedir())),
       command('back','Back in directory history', () => this.workspace.goBack(-1)), command('forward','Forward in directory history', () => this.workspace.goBack(1)),
       command('refresh','Refresh files and configuration', () => this.workspace.refresh()),
+      command('hotkeys','List effective prefix keyboard bindings', () => this.text('Keyboard bindings', require('../../lib/keys.cjs').listing(this.tab.config.keys.bindings) + '\nUse yhwh keys list | grep ctrl, or edit a source and Refresh.\nSome terminal emulators cannot distinguish Ctrl+Shift combinations.')),
+      command('toggle-files','Toggle file columns', () => { this.tab.showFiles = !this.tab.showFiles; this.setFocus(this.tab.showFiles ? 'files' : 'editor'); }),
+      command('toggle-terminal','Toggle shell', () => { this.tab.showTerminal = !this.tab.showTerminal; this.setFocus(this.tab.showTerminal ? 'terminal' : 'files'); }),
       command('new-tab','New app tab', async () => { await this.workspace.newTab(); this.watch(); this.setFocus('files'); await this.workspace.work('covenant','tab'); }),
       command('close-tab','Close app tab', () => this.closeTab()), command('next-tab','Next tab', () => this.switchTab(this.workspace.index + 1)),
+      command('previous-tab','Previous tab', () => this.switchTab(this.workspace.index - 1)),
+      command('reopen-tab','Reopen closed tab', () => this.reopenTab()),
+      command('move-tab-left','Move tab left', () => this.moveTab(-1)), command('move-tab-right','Move tab right', () => this.moveTab(1)),
+      command('files-select-all','Select all files', () => { this.tab.selected = new Set(this.tab.entries.map(entry => entry.path)); this.schedule(); }),
+      command('files-copy','Copy files', () => { this.clipboard = { paths: this.selectedPaths(), cut: false }; }),
+      command('files-cut','Cut files', () => { this.clipboard = { paths: this.selectedPaths(), cut: true }; }), command('files-paste','Paste files', () => this.pasteFiles()),
       command('focus-files','Focus files', () => this.setFocus('files')), command('focus-editor','Focus editor', () => this.setFocus('editor')),
       command('focus-terminal','Focus shell', async () => { this.setFocus('terminal'); await this.workspace.work('inspect','shell'); }),
       command('expand-files','Expand / restore files', () => { this.tab.expanded = this.tab.expanded === 'files' ? '' : 'files'; this.setFocus('files'); }),

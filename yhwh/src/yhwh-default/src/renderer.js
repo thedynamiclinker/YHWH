@@ -6,6 +6,8 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { createEditor, setLanguage, formatText, renderMarkdown, languageNames } from './editor.js';
 import { createVerseUI } from './verses.js';
+import { match as matchKey } from '../../../lib/key-names.cjs';
+import { showHotkeys } from './hotkeys.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, senderFor } from '../../../lib/inbox.cjs';
 
@@ -17,6 +19,31 @@ const verseUI = createVerseUI({ call, modal, notice });
 const tabs = [], commands = new Map(), listeners = new Map();
 let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], pluginKey = '', pluginGeneration = 0;
 const active = () => tabs.find(tab => tab.id === activeId);
+const closedTabs = [];
+const keyModules = new Map();
+function bindingFor(event) {
+  const target = event.target;
+  const context = $('#file-list').contains(target) ? 'files' : $('#terminals').contains(target) ? 'terminal' : target.closest('.cm-editor') ? 'editor' : '';
+  return matchKey(active()?.config.keys?.bindings || [], event, context);
+}
+async function executeBinding(binding) {
+  if (binding.kind === 'disabled') return;
+  const tab = active();
+  if (boot.interface === 'mobile' && binding.kind === 'js') return run(binding.command);
+  const context = `cwd\t${tab.cwd}\nfile\t${tab.file?.path || ''}\n${[...tab.selected].map(path => `selected\t${path}\n`).join('')}`;
+  const result = binding.kind === 'js' ? binding : await call('keys:run', tab.id, binding.combo, context);
+  if (result.kind === 'js') {
+    if (!keyModules.has(result.source)) {
+      if (keyModules.size >= 256) keyModules.clear();
+      const url = URL.createObjectURL(new Blob([result.source], { type: 'text/javascript' }));
+      keyModules.set(result.source, import(url).finally(() => URL.revokeObjectURL(url)));
+    }
+    const module = await keyModules.get(result.source);
+    if (typeof module.default !== 'function') throw new Error('Key module needs export default api => …');
+    await module.default({ ...pluginAPI(), run, refresh, active, newTab, openFile });
+  } else if (result.kind === 'unsupported') throw new Error('This host imports .js modules. Make shell/Python files executable and include a shebang.');
+  else if (result.stdout || result.stderr || result.code) modal(`Key command · ${binding.combo}`, `<pre class="key-output">${escape(result.stdout || '')}${escape(result.stderr || '')}${result.code ? `\nExit ${result.code}` : ''}</pre>`);
+}
 const basename = filename => filename.replace(/[/\\]+$/, '').split(/[/\\]/).at(-1) || filename;
 const join = (directory, name) => /^(?:[/\\]|[A-Z]:[/\\])/i.test(name) ? name : `${directory.replace(/[/\\]$/, '')}/${name}`;
 const parent = filename => { const value = filename.replace(/[/\\][^/\\]+[/\\]?$/, '') || (boot.platform === 'win32' ? filename.slice(0, 3) : '/'); return /^[A-Z]:$/i.test(value) ? `${value}/` : value; };
@@ -83,9 +110,8 @@ async function newTab(directory = active()?.cwd || boot.home) {
   tab.fit = new FitAddon(); tab.terminal.loadAddon(tab.fit); tab.terminal.open(tab.terminalElement);
   tab.terminal.onData(data => bridge.terminal('write', { id, data }));
   tab.terminal.attachCustomKeyEventHandler(event => {
-    if ((event.ctrlKey || event.metaKey) && ['b', 'e', 'd', 't', 'w', 'p', ',', 'l'].includes(event.key.toLowerCase())) return false;
-    if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'c') { navigator.clipboard.writeText(tab.terminal.getSelection()).catch(() => {}); return false; }
-    return true;
+    const binding = bindingFor(event);
+    return !binding || binding.kind === 'disabled';
   });
   tabs.push(tab); welcome(tab); activate(id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
@@ -103,10 +129,12 @@ function activate(id) {
   requestAnimationFrame(() => fitTerminal());
   if (active().focusView === 'inbox') renderInbox();
   emit('focus', active());
+  requestAnimationFrame(() => { if ($('#dialog').open) return; if (active()?.lastFocus === 'terminal' && !$('#terminal-panel').hidden) active().terminal.focus(); else if (active()?.lastFocus === 'files' && !$('#navigation-area').hidden) $('#file-list').focus(); else active()?.editor?.focus(); });
 }
 function tabTitles() {
   const label = tab => ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
   $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(label(tab)), tab.id, escape(label(tab)))).join('');
+  for (const element of $('#tabs').querySelectorAll('[data-tab]')) element.draggable = true;
 }
 function renderFiles() {
   const tab = active(); if (!tab) return;
@@ -271,12 +299,27 @@ async function save(tab = active(), force = false) {
 async function closeTab(id = activeId) {
   const tab = tabs.find(item => item.id === id);
   if (!tab || !await mayReplace(tab)) return;
+  if (tabs.length === 1 && boot.interface !== 'mobile') { await call('window:close'); return; }
+  closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index: tabs.indexOf(tab) });
+  if (closedTabs.length > 30) closedTabs.shift();
   await call('focus:close', id);
   tab.editor?.destroy(); tab.terminal.dispose(); tab.document.remove(); tab.terminalElement.remove();
   const index = tabs.indexOf(tab); tabs.splice(index, 1);
   if (!tabs.length) await newTab(tab.cwd);
-  else activate(tabs[Math.min(index, tabs.length - 1)].id);
+  else if (activeId === id) activate(tabs[Math.min(index, tabs.length - 1)].id);
+  else update();
   emit('close', { id });
+}
+async function reopenTab() {
+  const state = closedTabs.pop(); if (!state) return;
+  const tab = await newTab(state.cwd);
+  if (state.file) await openFile(state.file, tab);
+  Object.assign(tab, { focusView: state.focusView, showFiles: state.showFiles, showTerminal: state.showTerminal });
+  tabs.splice(tabs.indexOf(tab), 1); tabs.splice(Math.min(state.index, tabs.length), 0, tab); update();
+}
+function moveTab(delta) {
+  const index = tabs.indexOf(active()), next = Math.max(0, Math.min(tabs.length - 1, index + delta));
+  tabs.splice(next, 0, tabs.splice(index, 1)[0]); tabTitles();
 }
 async function newFile(directory = false) {
   const tab = active(), name = await promptText(directory ? ui("new-directory") : ui("new-file"), ui("name-including-any-extension"));
@@ -507,7 +550,8 @@ async function bookList(name) {
   modal(words[name === 'sinai' ? 'booksSinai' : 'booksHoreb'], `<ol>${library.items.map(item => `<li>${item.url ? `<a href="${escape(item.url)}">${escape(item.title)}</a>` : `${escape(item.title)} <small>${escape(words.booksUnavailable)}</small>`}</li>`).join('')}</ol><button data-command="edit-${name}">${escape(ui('edit-feature-copy'))}</button>`);
 }
 function help() {
-  modal(ui("help"), ui("each-tab-is-a-directory-a-shell-and-an-optional-", [...commands.values()].filter(item => item.keys).map(item => `<div><span>${escape(item.name)}</span><kbd>${escape(item.keys)}</kbd></div>`).join('')));
+  const keys = active()?.config.keys?.bindings || [];
+  modal(ui("help"), `<button data-command="hotkeys">Inspect or change keyboard bindings</button>` + ui("each-tab-is-a-directory-a-shell-and-an-optional-", keys.filter(item => item.kind !== 'disabled').map(item => `<div><span>${escape(commands.get(item.command)?.name || item.command || item.kind)}</span><kbd>${escape(item.combo.replaceAll('/', '+'))}</kbd></div>`).join('')));
 }
 
 const panels = new Map();
@@ -569,8 +613,22 @@ const definitions = [
   ...['sinai', 'horeb'].map(name => [`edit-${name}`, ui('edit-feature-copy'), '', async () => { const library = await call('world:books', name); $('#dialog').close(); await openFile(library.filename, await newTab()); }]),
   ['edit-help-copy', ui('edit-feature-copy'), '', () => { $('#dialog').close(); return newTab().then(tab => openFile(join(boot.root, '../../etc/default/words.json'), tab)); }],
   ['leave-world', ui('return-files'), '', async () => { Object.assign(active(), await call('world:leave', active().id)); active().history = [active().cwd]; active().historyIndex = 0; $('#dialog').close(); update(); }],
+  ['files-select-all', 'Select all files', '', () => { active().selected = new Set(active().entries.map(entry => entry.path)); renderFiles(); }],
+  ['files-copy', 'Copy files', '', () => { clipboardFiles = { paths: selectedPaths(), cut: false }; }],
+  ['files-cut', 'Cut files', '', () => { clipboardFiles = { paths: selectedPaths(), cut: true }; }],
+  ['files-paste', 'Paste files', '', pasteFiles],
+  ['files-rename', 'Rename selected file', '', () => renameFile(selectedPaths()[0])],
+  ['files-trash', 'Trash selected files', '', () => trashFiles()],
   ['new-tab', ui("new-tab"), ui("ctrl-t"), () => newTab()],
   ['close-tab', ui("close-tab"), ui("ctrl-w"), () => closeTab()],
+  ['reopen-tab', 'Reopen closed tab', 'Ctrl+Shift+T', reopenTab],
+  ['move-tab-left', 'Move tab left', 'Ctrl+Shift+PageUp', () => moveTab(-1)],
+  ['move-tab-right', 'Move tab right', 'Ctrl+Shift+PageDown', () => moveTab(1)],
+  ...Array.from({ length: 9 }, (_, index) => [`tab-${index + 1}`, index === 8 ? 'Last tab' : `Tab ${index + 1}`, `Ctrl+${index + 1}`, () => { const tab = tabs[index === 8 ? tabs.length - 1 : index]; if (tab) activate(tab.id); }]),
+  ['hotkeys', 'Keyboard bindings', 'Ctrl+Alt+Shift+K', () => showHotkeys({ modal, active, call, refresh, commands, escape, notice, openFile, newTab, mobile: boot.interface === 'mobile' })],
+  ['reload-keys', 'Reload configuration and keys', '', async () => { await call('config:reload'); await refresh(); notice('Configuration and keys reloaded.'); }],
+  ['terminal-copy', 'Copy terminal selection', 'Ctrl+Shift+C', () => navigator.clipboard.writeText(active().terminal.getSelection())],
+  ['terminal-paste', 'Paste into terminal', 'Ctrl+Shift+V', async () => bridge.terminal('write', { id: active().id, data: await navigator.clipboard.readText() })],
   ['next-tab', ui("next-tab"), ui("ctrl-tab-ctrl-pagedown"), () => activate(tabs[(tabs.indexOf(active()) + 1) % tabs.length].id)],
   ['previous-tab', ui("previous-tab"), ui("ctrl-shift-tab-ctrl-pageup"), () => activate(tabs[(tabs.indexOf(active()) + tabs.length - 1) % tabs.length].id)],
   ['new-file', ui("new-file"), ui("ctrl-n"), () => newFile()],
@@ -584,14 +642,14 @@ const definitions = [
     const content = tab.editor.state.doc.toString();
     await call('file:save', filename, content, null, true); tab.dirty = false; await openFile(filename, tab);
   }],
-  ['toggle-files', ui("toggle-file-manager"), ui("ctrl-e"), () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
+  ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['expand-files', ui("expand-file-manager"), ui("ctrl-d"), () => { const tab = active(); tab.expanded = tab.expanded === 'files' ? '' : 'files'; tab.showFiles = true; update(); $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), () => { const tab = active(); tab.showTerminal = !tab.showTerminal; tab.expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); if (tab.showTerminal) tab.terminal.focus(); }); }],
   ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), () => { const tab = active(); tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; tab.showTerminal = true; update(); requestAnimationFrame(() => { fitTerminal(); tab.terminal.focus(); }); }],
   ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); tab.showFiles = show; tab.showTerminal = show; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
-  ['focus-editor', ui("focus-editor"), ui("ctrl-1"), () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
-  ['focus-files', ui("focus-file-manager"), ui("ctrl-2"), () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
-  ['focus-terminal', ui("focus-terminal"), ui("ctrl-3"), () => { active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); active().terminal.focus(); }); }],
+  ['focus-editor', ui("focus-editor"), "Ctrl+Alt+1", () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
+  ['focus-files', ui("focus-file-manager"), "Ctrl+Alt+2", () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
+  ['focus-terminal', ui("focus-terminal"), "Ctrl+Alt+3", () => { active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); active().terminal.focus(); }); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
@@ -810,6 +868,21 @@ document.addEventListener('click', event => {
   const close = event.target.closest('[data-close-tab]'); if (close) { closeTab(close.dataset.closeTab).catch(error => notice(error.message)); return; }
   const tab = event.target.closest('#tabs [data-tab]'); if (tab) activate(tab.dataset.tab);
 });
+$('#tabs').addEventListener('auxclick', event => {
+  const tab = event.target.closest('[data-tab]');
+  if (event.button === 1 && tab) { event.preventDefault(); closeTab(tab.dataset.tab).catch(error => notice(error.message)); }
+});
+$('#tabs').addEventListener('dragstart', event => {
+  const tab = event.target.closest('[data-tab]'); if (!tab) return;
+  event.dataTransfer.setData('application/x-yhwh-tab', tab.dataset.tab);
+});
+$('#tabs').addEventListener('dragover', event => { if (event.dataTransfer.types.includes('application/x-yhwh-tab')) event.preventDefault(); });
+$('#tabs').addEventListener('drop', event => {
+  const target = event.target.closest('[data-tab]'), id = event.dataTransfer.getData('application/x-yhwh-tab');
+  if (!target || !id) return; event.preventDefault();
+  const from = tabs.findIndex(tab => tab.id === id), to = tabs.findIndex(tab => tab.id === target.dataset.tab);
+  if (from >= 0 && to >= 0) { tabs.splice(to, 0, tabs.splice(from, 1)[0]); tabTitles(); }
+});
 $('#file-list').onclick = event => {
   const row = event.target.closest('[data-path]'); if (!row) return;
   const tab = active();
@@ -854,11 +927,6 @@ $('#file-list').onkeydown = event => {
   else if (event.key === 'ArrowLeft' && rows[current]?.getAttribute('aria-expanded') === 'true') action = () => toggleFolder(rows[current], false);
   else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigateFiles(parent(tab.cwd));
   else if (event.key === ui("enter") || event.key === ui("arrowright")) { const row = rows[current]; if (row) action = () => row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path); }
-  else if (event.key === ui("f2")) action = () => renameFile(selectedPaths()[0]);
-  else if (event.key === ui("delete")) action = () => trashFiles();
-  else if (control && event.key.toLowerCase() === 'a') { tab.selected = new Set(tab.entries.map(entry => entry.path)); renderFiles(); }
-  else if (control && ['c', 'x'].includes(event.key.toLowerCase())) clipboardFiles = { paths: selectedPaths(), cut: event.key.toLowerCase() === 'x' };
-  else if (control && event.key.toLowerCase() === 'v') action = pasteFiles;
   else if (!control && !event.altKey && event.key.length === 1) {
     typeAhead += event.key.toLowerCase(); clearTimeout(typeTimer); typeTimer = setTimeout(() => typeAhead = '', 700);
     const row = rows.find(row => row.querySelector('.file-name').textContent.toLowerCase().startsWith(typeAhead));
@@ -873,19 +941,21 @@ $('#file-title').onblur = async event => { const tab = active(); if (!tab.file |
 $('#energy').oninput = event => { temporaryEnergy = Number(event.target.value); applyConfig(active().config); };
 $('#energy').onchange = event => setEnergy(Number(event.target.value)).catch(error => notice(error.message));
 
+document.addEventListener('focusin', event => {
+  if (!active()) return;
+  if ($('#terminals').contains(event.target)) active().lastFocus = 'terminal';
+  else if ($('#files').contains(event.target)) active().lastFocus = 'files';
+  else if (event.target.closest('.cm-editor')) active().lastFocus = 'editor';
+});
 document.addEventListener('keydown', event => {
-  const control = event.ctrlKey || event.metaKey, key = event.key.toLowerCase();
-  if (control && key === 'l' && !$('#terminal-panel').hidden) { event.preventDefault(); event.stopImmediatePropagation(); run('location'); return; }
-  if ($('#dialog').open) { if (event.key === ui("escape")) return; if (!(control && key === 'q')) return; }
-  let id;
-  if (control && event.shiftKey) id = ({ b: 'expand-terminal', d: 'toggle-navigation', e: 'view-mode', o: 'open-directory', p: 'palette', s: 'save-as', tab: 'previous-tab' })[key];
-  else if (control) id = ({ r: 'view-mode', e: 'toggle-files', d: 'expand-files', b: 'toggle-terminal', '`': 'toggle-terminal', t: 'new-tab', w: 'close-tab', n: 'new-file', o: 'open-file', s: 'save', p: 'palette', ',': 'settings', l: 'location', tab: 'next-tab', pagedown: 'next-tab', pageup: 'previous-tab', '1': 'focus-editor', '2': 'focus-files', '3': 'focus-terminal', q: 'quit' })[key];
-  if (event.altKey && event.shiftKey && key === 't') id = 'toggle-terminal';
-  if (event.altKey && !event.shiftKey) id = ({ arrowup: 'parent', arrowleft: 'back', arrowright: 'forward' })[key];
-  if (key === 'f1') id = 'help'; if (key === 'f5') id = 'refresh';
-  if (control && key === 'h' && $('#files').contains(event.target)) id = 'toggle-hidden';
-  if (id) { event.preventDefault(); event.stopPropagation(); run(id); }
-  if (event.key === ui("escape") && active()?.expanded && !$('#dialog').open) { active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }
+  if ($('#dialog').open) return;
+  const binding = bindingFor(event);
+  if (binding && binding.kind !== 'disabled') {
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (!event.repeat) executeBinding(binding).catch(error => notice(error.message));
+    return;
+  }
+  if (event.key === 'Escape' && active()?.expanded) { active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }
 }, true);
 
 function resizer(selector, property, position, minimum, maximum) {

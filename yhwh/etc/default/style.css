@@ -147,7 +147,7 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 #workspace[data-expanded='files'] .file-row { padding: 8px 18px; }
 #workspace[data-expanded='files'] .file-row .file-size { display: block; width: 80px; }
 #workspace[data-expanded='files'] .file-row .file-date { display: block; width: 160px; }
-#workspace[data-expanded='terminal'] .navigation-area, #workspace[data-expanded='terminal'] #center-panels { display: none; }
+#workspace[data-expanded='terminal'] #center-panels { display: none; }
 #workspace[data-expanded='terminal'] .terminal-panel { height: 100%; flex: 1; }
 .statusbar { height: 26px; min-height: 26px; display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--line); color: var(--faint); padding: 0 12px; font-size: .8125rem; background: var(--sidebar); }
 .statusbar button { font-size: .8125rem; padding: 2px 4px; }
@@ -155,6 +155,17 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 #language-button { min-width: 75px; text-align: right; color: var(--muted); }
 #dialog { color: var(--text); background: var(--panel); border: 1px solid #48434f; border-radius: 12px; width: min(650px, 92vw); padding: 0; max-height: 85vh; box-shadow: 0 20px 100px #0008; }
 #dialog::backdrop { background: #0008; backdrop-filter: blur(3px); }
+#dialog:has(.hotkeys) { width: min(900px, 96vw); }
+.key-modes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.key-modes [aria-pressed=true] { border-color: var(--purple); color: var(--purple); }
+.key-row { display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--line); padding: 12px 0; }
+.key-row > span { flex: 1; min-width: 0; }
+.key-row small, .key-row code { display: block; color: var(--muted); font-size: .8rem; overflow-wrap: anywhere; }
+.key-row kbd { min-width: 110px; overflow-wrap: anywhere; }
+.key-output { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 38vh; overflow: auto; }
+.hotkeys details { margin-top: 18px; }
+.hotkeys details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media(max-width:600px) { .key-row { flex-wrap: wrap; gap: 8px; } .key-row kbd { min-width: 90px; } }
 .dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 17px 24px; border-bottom: 1px solid var(--line); }
 .dialog-header h2 { margin: 0; font-weight: 550; font-size: 17px; }
 .dialog-body { padding: 20px 24px 25px; overflow: auto; max-height: 68vh; }

@@ -86,6 +86,7 @@ class Workspace extends EventEmitter {
   }
   async refresh(tab = this.active) {
     tab.config = await config.resolveConfig(tab.cwd);
+    tab.config.keys = await require('../../lib/keys.cjs').load(tab.config);
     tab.entries = await worlds.list(tab, tab.config.values.show_hidden === 'true');
     this.emit('change', tab);
   }

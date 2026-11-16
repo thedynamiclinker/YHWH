@@ -289,8 +289,8 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('#document').isVisible(), true);
     console.log('✓ single-click selects; double-click navigates files and shell or opens the focus document');
 
-    await page.keyboard.press('Control+e'); assert.equal(await page.locator('#files').isVisible(), false);
-    await page.keyboard.press('Control+e'); assert.equal(await page.locator('#files').isVisible(), true);
+    await page.keyboard.press('Control+Shift+e'); await page.locator('#files').waitFor({ state: 'hidden' });
+    await page.keyboard.press('Control+Shift+e'); await page.locator('#files').waitFor({ state: 'visible' });
     await page.keyboard.press('Control+d'); await page.waitForFunction(() => document.querySelector('#workspace').dataset.expanded === 'files');
     assert.equal(await page.locator('#document').isVisible(), false);
     await page.screenshot({ path: path.join(artifacts, '02-file-manager.png') });
@@ -339,10 +339,10 @@ process.stdin.on('end', () => {
     await page.evaluate(() => window.YHWH.active().terminal.focus());
     await page.keyboard.type("printf 'SYNC:%s\\n' \"$PWD\""); await page.keyboard.press('Enter');
     await page.waitForFunction(directory => { const t = window.YHWH.active().terminal; for (let i = 0; i < t.buffer.active.length; i++) if (t.buffer.active.getLine(i)?.translateToString().includes(`SYNC:${directory}`)) return true; return false; }, directory);
-    await page.keyboard.press('Control+Shift+b'); assert.equal(await page.locator('#document').isVisible(), false);
+    await page.keyboard.press('Control+Shift+b'); await page.waitForFunction(() => window.YHWH.active().expanded === 'terminal'); assert.equal(await page.locator('#document').isVisible(), false); assert.equal(await page.locator('#files').isVisible(), true);
     await page.keyboard.press('Control+Shift+b');
-    await page.keyboard.press('Control+t'); assert.equal(await page.locator('#tabs [role=tab]').count(), 2);
-    await page.keyboard.press('Control+Shift+Tab'); assert.equal(await page.locator('#file-title').inputValue(), 'renamed.md');
+    await page.keyboard.press('Control+t'); await page.waitForFunction(() => window.YHWH.tabs.length === 2);
+    await page.keyboard.press('Control+Shift+Tab'); await page.waitForFunction(() => window.YHWH.active().file?.name === 'renamed.md');
     const tab = await page.evaluate(() => window.YHWH.active().id);
     const second = exec(process.execPath, [path.join(root, '../../bin/default/cli.cjs'), 'open', path.join(directory, 'boop')], { env: { ...env, YHWH_TAB: tab, YHWH_ELECTRON: require('../../../lib/electron.cjs')() } });
     await page.waitForFunction(() => window.YHWH.active().file?.name === 'boop'); await second;

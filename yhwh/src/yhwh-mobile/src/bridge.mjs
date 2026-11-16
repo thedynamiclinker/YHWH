@@ -2,6 +2,9 @@ import { fileType } from '../../../lib/file-type.cjs';
 
 export const HOME = '/YHWH';
 export const unavailable = {
+  'keys:run': 'Custom executable and JavaScript key files require the desktop host. Bundled commands work here.',
+  'keys:shell': 'Shell pipelines and modifier-directory commands require desktop process APIs. Text, wildcard and regex search work here.',
+  'keys:save': 'Editing prefix key files requires the desktop filesystem. Bundled keyboard bindings work here.',
   chat: 'Talking to YHWH requires the desktop Codex service. A mobile service is not configured.',
   'world:enter': 'The desktop world filesystem is not bundled on mobile.',
   'world:leave': 'The desktop world filesystem is not bundled on mobile.',
@@ -43,7 +46,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
   async function config(path) {
     const values = { ...defaults, file_manager: 'false', terminal: 'false' };
     for (const scope of Object.keys(settings).filter(scope => scope === '/' || inside(path, scope)).sort((a,b) => a.length - b.length)) Object.assign(values, settings[scope]);
-    const result = { values, origins: {}, files: [], warnings: [], userDirectory: HOME };
+    const result = { values, origins: {}, files: [], warnings: [], userDirectory: HOME, keys: { bindings: typeof YHWH_BUILTIN_KEYS === 'undefined' ? [] : YHWH_BUILTIN_KEYS, directories: [], warnings: [] } };
     if (values.stylesheet) result.css = new TextDecoder().decode(await storage.read(normalize(values.stylesheet, HOME)));
     if (values.bg) { const path = normalize(values.bg, HOME); result.background = `data:${mime(path)};base64,${base64(await storage.read(path))}`; }
     return result;

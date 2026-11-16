@@ -23,7 +23,7 @@ class Shells extends EventEmitter {
     const term = new Terminal({ cols: 80, rows: 12, scrollback: 5000, allowProposedApi: true });
     // Reply to terminal queries through the same PTY, never through the outer tty.
     term.onData(data => this.write(tab.id, data));
-    this.sessions.set(tab.id, { term, exited: false, scroll: 0 }); this.send('start', tab.id, { cwd: tab.cwd, env });
+    this.sessions.set(tab.id, { term, exited: false, scroll: 0 }); this.send('start', tab.id, { cwd: tab.cwd, env: { ...tab.config?.environment, ...env } });
   }
   write(id, data) { const session = this.sessions.get(id); if (session && !session.exited) { session.scroll = 0; this.send('write', id, { data }); } }
   resize(id, cols, rows) {

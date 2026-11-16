@@ -64,15 +64,22 @@ async function configLocations(target, { system = process.env.YHWH_SYSTEM_CONFIG
 
 async function resolveConfig(target, options = {}) {
   target = path.resolve(target);
-  const values = { ...defaults }, origins = {}, files = [], warnings = [];
+  const values = { ...defaults, keys_directory: 'etc/keys', bashrc_file: 'etc/bashrc', completions_directory: 'lib/bash/completions' }, origins = {}, files = [], warnings = [];
   let environment = { ...process.env, ...options.env };
   const locations = await configLocations(target, options);
   for (const { directory, base } of locations) {
-    for (const name of options.variant === 'three' ? ['rc', 'rc.three'] : ['rc']) {
+    for (const name of options.variant === 'three' ? ['etc/profile', 'rc', 'rc.three'] : ['etc/profile', 'rc']) {
       const filename = path.join(directory, name);
       try {
         if (!await readableRc(filename)) continue;
         files.push(filename);
+        if (name === 'etc/profile') {
+          const output = await shell(`set -ae\n. ${quote(filename)}\nenv -0 >&3`, { cwd: base, env: { ...environment, YHWH_PREFIX: directory } });
+          const next = Object.fromEntries(output.split('\0').filter(Boolean).map(item => { const i = item.indexOf('='); return [item.slice(0, i), item.slice(i + 1)]; }));
+          for (const [key, value] of Object.entries(next)) if (value !== environment[key] && !['PWD', 'OLDPWD', 'SHLVL', '_', 'YHWH_PREFIX'].includes(key)) { const setting = key.replace(/^yhwh_/, ''); values[setting] = value; origins[setting] = directory; }
+          environment = next;
+          continue;
+        }
         const entries = sections(await fs.readFile(filename, 'utf8'));
         const code = 'set -e\n' + entries.map(entry => `__yhwh_scope="${entry.scope}"\nprintf '%s\\0' "$__yhwh_scope" >&3`).join('\n');
         const expanded = (await shell(code, { cwd: base, env: environment })).split('\0');
@@ -100,7 +107,12 @@ async function resolveConfig(target, options = {}) {
   for (const key of ['bg', 'stylesheet']) {
     if (values[key] && !/^(?:https?:|data:|file:)/.test(values[key])) values[key] = path.resolve(origins[key] || userDirectory(), values[key]);
   }
-  return { values, origins, files, warnings, userDirectory: options.user || userDirectory() };
+  const prefixes = [];
+  for (const { directory } of locations) if (await fs.stat(directory).then(stat => stat.isDirectory(), () => false)) prefixes.push(directory);
+  const result = { values, origins, files, warnings, prefixes, userDirectory: options.user || userDirectory() };
+  // Process environments stay on the owning side of IPC, never in renderer config.
+  Object.defineProperty(result, 'environment', { value: environment });
+  return result;
 }
 
 const { quote } = require('../../../lib/shell.cjs');

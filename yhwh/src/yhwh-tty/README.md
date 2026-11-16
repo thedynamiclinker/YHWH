@@ -25,7 +25,7 @@ to files. Ctrl+P exposes all commands and F1 lists shortcuts.
 | Open / save / new document | Ctrl+O, Ctrl+S, Ctrl+N |
 | Find / undo / redo | Ctrl+F, Ctrl+Z, Ctrl+Y |
 | Cycle Markdown hybrid / reading / source | Ctrl+R |
-| Toggle shell / files | Ctrl+B, Ctrl+E |
+| Toggle shell / files | Ctrl+B, Ctrl+Shift+E (terminal permitting) |
 | New / close / switch tabs | Ctrl+T, Ctrl+W, Alt+Left/Right |
 | Clear visible shell / enter location | Ctrl+L |
 | Shell scrollback | Shift+PageUp/Down or mouse wheel |
@@ -61,3 +61,18 @@ plain terminal rendering; hybrid mode keeps editable source with heading colors.
 
 `make tty-check` exercises models, file safety, paste, terminal emulation and a
 real PTY UI session. State is isolated in the tests; no real Codex work runs.
+
+## Prefix key files
+
+The terminal reads the shared system/user/ancestor prefix hierarchy and applies
+user/project key files, executable symlinks and non-executable `.js` modules on
+refresh. Modules receive `run`, `notice`, `active` and `refresh`; `run` exposes
+commands supported by this interface. Browser DOM APIs and desktop-only commands
+are unavailable. The palette includes an effective binding list; `yhwh keys list`
+provides the same lines to external tools. Ctrl+E reaches the focused shell.
+Ctrl+Shift+E toggles files and vertical shell expansion retains the columns.
+Ctrl+1–8 and Ctrl+9 select tabs. Reopen and move use the desktop combinations
+when the outer terminal transmits distinct Ctrl+Shift key sequences. Some
+terminals cannot distinguish those combinations, including Ctrl+Tab; palette
+commands remain available. The desktop capture/search dialog belongs to the
+GUI; terminal pipelines use the normal shell and `yhwh keys`.
