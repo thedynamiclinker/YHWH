@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Weird]], [[usr/share/dict/peoples/Germanic]], [[usr/share/dict/builtin/Language]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Lots]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Fucking]], [[usr/share/dict/peoples/French]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/It]]
+Type: [[Weird]], [[Germanic]], [[Language]], [[With]], [[Lots]], [[Of]], [[Fucking]], [[French]], [[In]], [[It]]

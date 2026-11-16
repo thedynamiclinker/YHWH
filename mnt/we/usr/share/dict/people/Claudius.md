@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/peoples/Roman]], [[usr/share/dict/builtin/Retarded]], [[usr/share/dict/people/Emperor]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Uncle]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/people/Caligula]]
+Type: [[Roman]], [[Retarded]], [[Emperor]], [[And]], [[Uncle]], [[Of]], [[Caligula]]

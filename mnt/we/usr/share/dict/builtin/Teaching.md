@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Teach]], [[usr/share/dict/builtin/Process]]
+Type: [[Teach]], [[Process]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Predict]], [[usr/share/dict/atomic/Thing]]
+Type: [[Not]], [[Predict]], [[Thing]]

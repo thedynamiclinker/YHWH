@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/We]]
+Type: [[We]]

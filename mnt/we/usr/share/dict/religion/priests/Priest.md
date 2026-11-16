@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Talk]], [[usr/share/dict/atomic/About]], [[usr/share/dict/atomic/Religion]], [[usr/share/dict/atomic/As]], [[usr/share/man/usr/share/dict/atomic/A|A]], [[usr/share/dict/atomic/Job]]
+Type: [[Person]], [[Who]], [[Talk]], [[About]], [[Religion]], [[As]], [[atomic/A|A]], [[Job]]

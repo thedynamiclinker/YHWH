@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/King]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/King]]
+Type: [[King]], [[But]], [[Not]], [[King]]

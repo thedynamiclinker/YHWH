@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Thought]], [[usr/share/dict/builtin/Storage]]
+Type: [[Thought]], [[Storage]]

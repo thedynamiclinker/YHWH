@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Me]]
+Type: [[Me]]

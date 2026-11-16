@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Turn]], [[usr/share/dict/religion/founders/Jesus]], [[usr/share/dict/atomic/Religion]], [[usr/share/dict/atomic/Into]], [[usr/share/dict/builtin/Process]]
+Def: [[Person]], [[Who]], [[Turn]], [[Jesus]], [[Religion]], [[Into]], [[Process]]

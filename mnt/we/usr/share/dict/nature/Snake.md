@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Long]], [[usr/share/dict/builtin/Thin]], [[usr/share/dict/builtin/Scary]], [[usr/share/dict/atomic/Animal]]
+Type: [[Long]], [[Thin]], [[Scary]], [[Animal]]

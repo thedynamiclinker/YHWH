@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Small]], [[usr/share/dict/builtin/Fact]], [[usr/share/dict/atomic/That]], [[usr/share/dict/builtin/Point]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/Bigger]], [[usr/share/dict/builtin/Fact]]
+Type: [[Small]], [[Fact]], [[That]], [[Point]], [[To]], [[Bigger]], [[Fact]]

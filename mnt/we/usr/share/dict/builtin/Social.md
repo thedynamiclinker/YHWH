@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/About]], [[usr/share/dict/builtin/People]]
+Type: [[Thing]], [[About]], [[People]]

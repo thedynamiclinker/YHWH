@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Every]], [[usr/share/dict/atomic/Place]], [[usr/share/dict/builtin/Below]], [[usr/share/dict/places/Sky]]
+Type: [[Every]], [[Place]], [[Below]], [[Sky]]

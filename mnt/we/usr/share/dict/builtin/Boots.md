@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/dict/builtin/Boot|Boot]]
+Type: [[Multiple]], [[Boot|Boot]]

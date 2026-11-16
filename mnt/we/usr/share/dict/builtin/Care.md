@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/About]], [[usr/share/man/usr/share/dict/atomic/A|A]], [[usr/share/dict/atomic/Lot]]
-Type: [[usr/share/dict/builtin/Worry]], [[usr/share/dict/atomic/About]], [[usr/share/man/usr/share/dict/atomic/A|A]], [[usr/share/dict/atomic/Lot]]
+Type: [[Think]], [[About]], [[atomic/A|A]], [[Lot]]
+Type: [[Worry]], [[About]], [[atomic/A|A]], [[Lot]]

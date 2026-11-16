@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Cold]], [[usr/share/dict/atomic/White]], [[usr/share/dict/builtin/People]], [[usr/share/dict/builtin/West]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/places/Russia]]
+Type: [[Cold]], [[White]], [[People]], [[West]], [[Of]], [[Russia]]

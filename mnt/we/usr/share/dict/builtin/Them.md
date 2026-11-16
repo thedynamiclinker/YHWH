@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/For]], [[usr/share/dict/builtin/They]], [[usr/share/dict/builtin/When]], [[usr/share/dict/builtin/Verb]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Done]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/They]]
+Type: [[Name]], [[For]], [[They]], [[When]], [[Verb]], [[Is]], [[Done]], [[To]], [[They]]

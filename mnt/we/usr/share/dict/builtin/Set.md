@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Order]], [[usr/share/dict/atomic/List]]
+Type: [[Not]], [[Order]], [[List]]

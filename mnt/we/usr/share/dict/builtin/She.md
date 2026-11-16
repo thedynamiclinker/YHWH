@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Girl]]
+Type: [[That]], [[Girl]]

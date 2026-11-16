@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Sharp]], [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/parts/Face]]
+Type: [[Sharp]], [[Part]], [[On]], [[Front]], [[Of]], [[Face]]

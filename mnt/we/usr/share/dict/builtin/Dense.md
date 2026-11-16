@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/Near]], [[usr/share/dict/builtin/Together]]
-Type: [[usr/share/dict/builtin/Nice]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/builtin/Idiot]]
+Type: [[Many]], [[Thing]], [[Near]], [[Together]]
+Type: [[Nice]], [[Word]], [[Meaning]], [[Idiot]]

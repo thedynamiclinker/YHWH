@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Reusable]], [[usr/share/dict/atomic/If]], [[usr/share/dict/atomic/Then]], [[usr/share/dict/builtin/Sentence]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Situation]]
+Type: [[Reusable]], [[If]], [[Then]], [[Sentence]], [[For]], [[Many]], [[Situation]]

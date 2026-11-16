@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Night]], [[usr/share/dict/builtin/Bird]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Look]], [[usr/share/dict/builtin/Smart]]
+Type: [[Night]], [[Bird]], [[Who]], [[Look]], [[Smart]]

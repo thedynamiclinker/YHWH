@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Original]], [[usr/share/dict/peoples/Jew]], [[usr/share/dict/builtin/Book]]
+Type: [[Original]], [[Jew]], [[Book]]

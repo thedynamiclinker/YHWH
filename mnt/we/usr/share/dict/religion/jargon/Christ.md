@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Say]], [[usr/share/dict/atomic/After]], [[usr/share/dict/religion/founders/Jesus]]
-Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/religion/jargon/Anointed]], [[usr/share/dict/atomic/One]]
+Type: [[Word]], [[You]], [[Say]], [[After]], [[Jesus]]
+Type: [[Word]], [[Meaning]], [[Anointed]], [[One]]

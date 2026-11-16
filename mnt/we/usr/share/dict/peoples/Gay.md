@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Man]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/builtin/Buttsex]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Man]]
-Type: [[usr/share/dict/builtin/Woman]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/builtin/Buttsex]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Woman]]
+Type: [[Man]], [[Who]], [[Like]], [[Buttsex]], [[With]], [[Man]]
+Type: [[Woman]], [[Who]], [[Like]], [[Buttsex]], [[With]], [[Woman]]

@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Group|Group]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Thing]]
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Front]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Group|Group]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Person]]
+Type: [[Thing]], [[That]], [[Go]], [[In]], [[Front]], [[Of]], [[Group|Group]], [[Of]], [[Thing]]
+Type: [[Person]], [[That]], [[Go]], [[In]], [[Front]], [[Of]], [[Group|Group]], [[Of]], [[Person]]

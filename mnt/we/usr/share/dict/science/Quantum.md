@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Strange]], [[usr/share/dict/builtin/Law]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Small]], [[usr/share/dict/builtin/Things]]
-Type: [[usr/share/dict/atomic/Most]], [[usr/share/dict/atomic/Small]], [[usr/share/dict/atomic/Amount]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Stuff]]
+Type: [[Strange]], [[Law]], [[Of]], [[Small]], [[Things]]
+Type: [[Most]], [[Small]], [[Amount]], [[Of]], [[Stuff]]

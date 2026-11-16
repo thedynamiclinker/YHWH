@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Old]], [[usr/share/dict/places/Italy]], [[usr/share/dict/atomic/Thing]]
+Type: [[Old]], [[Italy]], [[Thing]]

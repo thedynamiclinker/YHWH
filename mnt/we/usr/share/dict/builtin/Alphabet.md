@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/builtin/System]]
+Type: [[Multiple]], [[Letter]], [[System]]

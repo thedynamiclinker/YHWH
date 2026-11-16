@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Bring]], [[usr/share/dict/builtin/Together]]
+Type: [[Bring]], [[Together]]

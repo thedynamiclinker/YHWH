@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Merge]], [[usr/share/dict/atomic/Thing]]
+Type: [[Merge]], [[Thing]]

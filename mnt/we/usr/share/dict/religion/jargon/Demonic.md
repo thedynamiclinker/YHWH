@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Most]], [[usr/share/dict/builtin/Bad]], [[usr/share/dict/atomic/Thing]]
+Type: [[Most]], [[Bad]], [[Thing]]

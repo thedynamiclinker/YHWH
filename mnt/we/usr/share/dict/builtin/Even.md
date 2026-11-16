@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Way]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Show]], [[usr/share/dict/builtin/Surprise]]
+Type: [[Way]], [[To]], [[Show]], [[Surprise]]

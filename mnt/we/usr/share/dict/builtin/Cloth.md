@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Stuff]], [[usr/share/dict/builtin/Clothes]], [[usr/share/dict/builtin/Made]], [[usr/share/dict/atomic/From]]
+Type: [[Stuff]], [[Clothes]], [[Made]], [[From]]

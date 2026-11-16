@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/nature/Sun]], [[usr/share/dict/builtin/Rise]]
+Type: [[Sun]], [[Rise]]

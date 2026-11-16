@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Cold]], [[usr/share/dict/atomic/White]], [[usr/share/dict/builtin/People]], [[usr/share/dict/builtin/North]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/places/China]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/East]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/places/Europe]]
+Type: [[Cold]], [[White]], [[People]], [[North]], [[Of]], [[China]], [[And]], [[East]], [[Of]], [[Europe]]

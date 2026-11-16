@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Brother]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Parent]]
+Type: [[Brother]], [[Of]], [[Parent]]

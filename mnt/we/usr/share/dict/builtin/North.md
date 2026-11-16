@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Direction]], [[usr/share/dict/atomic/Toward]], [[usr/share/dict/builtin/Magnet]], [[usr/share/dict/atomic/At]], [[usr/share/dict/atomic/Top]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Earth]]
+Type: [[Direction]], [[Toward]], [[Magnet]], [[At]], [[Top]], [[Of]], [[Earth]]

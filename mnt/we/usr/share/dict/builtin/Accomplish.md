@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Make]], [[usr/share/dict/builtin/Goal]], [[usr/share/dict/builtin/Success]]
+Type: [[Make]], [[Goal]], [[Success]]

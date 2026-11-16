@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Show]], [[usr/share/dict/builtin/Thought]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Words]]
+Type: [[Show]], [[Thought]], [[With]], [[Words]]

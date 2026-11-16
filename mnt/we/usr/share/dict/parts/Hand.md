@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/On]], [[usr/share/dict/atomic/End]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/parts/Arm]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Use]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Hold]], [[usr/share/dict/builtin/Things]]
+Type: [[Thing]], [[On]], [[End]], [[Of]], [[Arm]], [[You]], [[Use]], [[To]], [[Hold]], [[Things]]

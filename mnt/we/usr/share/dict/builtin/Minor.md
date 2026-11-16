@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Important]]
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/Can't]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/builtin/Sex]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Yet]]
+Type: [[Not]], [[Very]], [[Important]]
+Type: [[Person]], [[You]], [[Can't]], [[Do]], [[Sex]], [[With]], [[Yet]]

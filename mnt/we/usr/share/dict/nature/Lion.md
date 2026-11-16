@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/atomic/Cat]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Good]], [[usr/share/dict/parts/Haircut]]
+Type: [[Big]], [[Cat]], [[With]], [[Good]], [[Haircut]]

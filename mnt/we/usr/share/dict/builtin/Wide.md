@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/builtin/Width]]
+Type: [[Big]], [[Width]]

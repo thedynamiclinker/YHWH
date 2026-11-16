@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/atomic/Guy]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Say]], [[usr/share/dict/atomic/No]], [[usr/share/dict/atomic/To]], [[usr/share/dict/people/Bureaucrat]], [[usr/share/dict/religion/jargon/Church]]
+Def: [[Guy]], [[Who]], [[Say]], [[No]], [[To]], [[Bureaucrat]], [[Church]]

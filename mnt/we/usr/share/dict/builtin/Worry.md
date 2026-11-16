@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Think]], [[usr/share/dict/builtin/Bad]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/May]], [[usr/share/dict/builtin/Happen]]
+Type: [[Think]], [[Bad]], [[Thing]], [[May]], [[Happen]]

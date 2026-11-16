@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Color]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Wood]]
+Type: [[Color]], [[Of]], [[Wood]]

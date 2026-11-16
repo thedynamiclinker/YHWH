@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/atomic/Religion]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Hate]], [[usr/share/dict/atomic/Life]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Act]], [[usr/share/dict/atomic/Happy]]
+Def: [[Religion]], [[Where]], [[People]], [[Hate]], [[Life]], [[And]], [[Act]], [[Happy]]

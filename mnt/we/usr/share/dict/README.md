@@ -21,109 +21,109 @@ So for those who have ears to hear, lay open your mind, and let the Big LD Dict 
 Come inside and you'll find the fruits from every branch of the tree of knowledge, including but not limited to:
 
 Geopolitics
-- [[usr/share/dict/peoples/Arab]]
-- [[usr/share/dict/places/Israel]]
-- [[usr/share/dict/places/Greece]]
-- [[usr/share/dict/peoples/French]]
+- [[Arab]]
+- [[Israel]]
+- [[Greece]]
+- [[French]]
 
 Religion
-- [[usr/share/dict/religion/gods/God]]
-- [[usr/share/dict/religion/founders/Jesus]]
-- [[usr/share/dict/religion/jargon/Christ]]
-- [[usr/share/dict/religion/believers/Buddhist 1]]
-- [[usr/share/dict/religion/sects/Voodoo]]
-- [[usr/share/dict/religion/sects/Hoodoo]]
-- [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]]
-- [[usr/share/dict/religion/jargon/Torah|Torah]]
-- [[usr/share/dict/religion/gods/YHWH]]
-- [[usr/share/dict/religion/sects/Communism]]
+- [[God]]
+- [[Jesus]]
+- [[Christ]]
+- [[Buddhist 1]]
+- [[Voodoo]]
+- [[Hoodoo]]
+- [[Bible|Bible]]
+- [[Torah|Torah]]
+- [[YHWH]]
+- [[Communism]]
 
 Government
-- [[usr/share/dict/people/Bureaucrat]]
-- [[usr/share/dict/people/Senator]]
-- [[usr/share/dict/builtin/Empire]]
-- [[usr/share/dict/builtin/Country]]
-- [[usr/share/dict/builtin/King]]
+- [[Bureaucrat]]
+- [[Senator]]
+- [[Empire]]
+- [[Country]]
+- [[King]]
 
 Mathematics
-- [[usr/share/dict/builtin/Math]]
-- [[usr/share/dict/math/Function]]
+- [[Math]]
+- [[Function]]
 
 Physics
-- [[usr/share/dict/science/Electricity]]
-- [[usr/share/dict/science/Spacetime]]
-- [[usr/share/dict/science/Quantum]]
+- [[Electricity]]
+- [[Spacetime]]
+- [[Quantum]]
 
 Astronomy
-- [[usr/share/dict/nature/Sun]]
-- [[usr/share/dict/nature/Moon]]
-- [[usr/share/dict/places/Sky]]
+- [[Sun]]
+- [[Moon]]
+- [[Sky]]
 
 Engineering
-- [[usr/share/dict/builtin/Machine]]
-- [[usr/share/dict/builtin/Computer]]
+- [[Machine]]
+- [[Computer]]
 
 Geography
-- [[usr/share/dict/builtin/North]]
-- [[usr/share/dict/builtin/East]]
-- [[usr/share/dict/places/Mountain]]
+- [[North]]
+- [[East]]
+- [[Mountain]]
 
 Biology
-- [[usr/share/dict/builtin/Sex]]
-- [[usr/share/dict/parts/Menstruation]]
-- [[usr/share/dict/nature/Mammal]]
-- [[usr/share/dict/nature/Milk]]
+- [[Sex]]
+- [[Menstruation]]
+- [[Mammal]]
+- [[Milk]]
 
 Zoology
-- [[usr/share/dict/nature/Lion]]
-- [[usr/share/dict/builtin/Camel]]
-- [[usr/share/dict/nature/Owl]]
+- [[Lion]]
+- [[Camel]]
+- [[Owl]]
 
 Anatomy
-- [[usr/share/dict/parts/Tits]]
-- [[usr/share/dict/parts/Eye]]
-- [[usr/share/dict/parts/Arm]]
-- [[usr/share/dict/parts/Leg]]
-- [[usr/share/dict/parts/Blood]]
-- [[usr/share/dict/parts/Brain]]
-- [[usr/share/dict/parts/Penis]]
-- [[usr/share/dict/parts/Vagina]]
-- [[usr/share/dict/parts/Pussy]]
-- [[usr/share/dict/alphabet/egyptian/𓂺]]
+- [[Tits]]
+- [[Eye]]
+- [[Arm]]
+- [[Leg]]
+- [[Blood]]
+- [[Brain]]
+- [[Penis]]
+- [[Vagina]]
+- [[Pussy]]
+- [[𓂺]]
 
 Fashion
-- [[usr/share/dict/builtin/Pants]]
-- [[usr/share/dict/builtin/Shoe]]
-- [[usr/share/dict/builtin/Hat]]
+- [[Pants]]
+- [[Shoe]]
+- [[Hat]]
 
 Navigation
-- [[usr/share/dict/builtin/North]]
-- [[usr/share/dict/builtin/East]]
+- [[North]]
+- [[East]]
 
 Linguistics
-- [[usr/share/dict/builtin/Phonetic]]
-- [[usr/share/dict/builtin/Semantic]]
-- [[usr/share/dict/builtin/Letter]]
-- [[usr/share/dict/builtin/Character]]
+- [[Phonetic]]
+- [[Semantic]]
+- [[Letter]]
+- [[Character]]
 
 Western Languages
-- [[usr/share/dict/peoples/Egyptian]]
-- [[usr/share/dict/peoples/Coptic]]
-- [[usr/share/dict/peoples/Phoenician]]
-- [[usr/share/dict/peoples/Aramaic]]
-- [[usr/share/dict/peoples/Latin]]
+- [[Egyptian]]
+- [[Coptic]]
+- [[Phoenician]]
+- [[Aramaic]]
+- [[Latin]]
 
 Eastern Languages
-- [[usr/share/dict/alphabet/meanings/經]]
-- [[usr/share/dict/alphabet/meanings/根]]
+- [[經]]
+- [[根]]
 
 Philosophy
-- [[usr/share/dict/science/Philosophy]]
-- [[usr/share/dict/builtin/Science]]
-- [[usr/share/dict/builtin/Art|Art]]
+- [[Philosophy]]
+- [[Science]]
+- [[Art|Art]]
 
 Paradoxes
-- [[usr/share/dict/parts/Haircut]]
+- [[Haircut]]
 
 
 <span style="line-height: 1em"><span style="font-size: 1.5em; font-style: italic;">And more!</span><span style="font-size: 2.0em">©®™</span><span style="vertical-align: super; position: relative; top: -1.0em; font-size: 80%;">©®™</span><span style="vertical-align: super; position: relative; top: -3em; font-size: 40%;">©®™</span></span>

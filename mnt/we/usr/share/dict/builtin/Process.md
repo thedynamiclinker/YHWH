@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Reusable]], [[usr/share/dict/builtin/Action]], [[usr/share/dict/atomic/List]]
+Type: [[Reusable]], [[Action]], [[List]]

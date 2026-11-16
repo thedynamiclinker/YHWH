@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Turn]]
+Type: [[Turn]]

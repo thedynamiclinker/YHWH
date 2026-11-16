@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Past]]
+Type: [[Have]], [[In]], [[Past]]

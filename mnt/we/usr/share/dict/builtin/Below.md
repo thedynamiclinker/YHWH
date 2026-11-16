@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Be]], [[usr/share/dict/atomic/Low]]
+Type: [[Be]], [[Low]]

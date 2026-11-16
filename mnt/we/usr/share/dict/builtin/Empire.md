@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/atomic/Angry]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Harem]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/builtin/Country]]
+Type: [[Big]], [[Angry]], [[Country]], [[With]], [[Harem]], [[Of]], [[Many]], [[Other]], [[Country]]

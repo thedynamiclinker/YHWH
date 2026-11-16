@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Feel]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/atomic/Move]], [[usr/share/dict/atomic/Big]], [[usr/share/dict/atomic/Rock]], [[usr/share/dict/builtin/But]], [[usr/share/dict/builtin/Sometimes]], [[usr/share/dict/atomic/Rock]], [[usr/share/dict/atomic/Only]], [[usr/share/dict/atomic/In]], [[usr/share/dict/parts/Mind]]
+Type: [[Thing]], [[That]], [[Feel]], [[Like]], [[Move]], [[Big]], [[Rock]], [[But]], [[Sometimes]], [[Rock]], [[Only]], [[In]], [[Mind]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Can]]
+Type: [[Not]], [[Can]]

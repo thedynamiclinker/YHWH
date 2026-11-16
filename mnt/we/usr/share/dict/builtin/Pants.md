@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/parts/Leg]], [[usr/share/dict/builtin/Clothes]]
+Type: [[Leg]], [[Clothes]]

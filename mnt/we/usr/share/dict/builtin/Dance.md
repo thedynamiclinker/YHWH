@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Move]], [[usr/share/dict/parts/Body]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Music]]
+Type: [[Move]], [[Body]], [[To]], [[Music]]

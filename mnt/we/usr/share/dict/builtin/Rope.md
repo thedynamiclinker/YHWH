@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Tiny]], [[usr/share/dict/parts/Hair]], [[usr/share/dict/atomic/Twist]], [[usr/share/dict/builtin/Together]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Get]], [[usr/share/dict/atomic/Strong]]
+Type: [[Many]], [[Tiny]], [[Hair]], [[Twist]], [[Together]], [[And]], [[Get]], [[Strong]]

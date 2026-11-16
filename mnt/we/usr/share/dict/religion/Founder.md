@@ -1,2 +1,2 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Start]], [[usr/share/dict/atomic/New]], [[usr/share/dict/atomic/Thing]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Normal]]
+Def: [[Person]], [[Who]], [[Start]], [[New]], [[Thing]]
+Def: [[Person]], [[Who]], [[Very]], [[Not]], [[Normal]]

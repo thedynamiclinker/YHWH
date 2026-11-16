@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/When]], [[usr/share/man/usr/share/dict/atomic/A|A]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/builtin/Lots]] [[usr/share/dict/atomic/More|More]], [[usr/share/dict/atomic/Long]], [[usr/share/dict/atomic/Than]], [[usr/share/dict/atomic/It]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/builtin/Wide]]
+Type: [[When]], [[atomic/A|A]], [[Thing]], [[Is]], [[Lots]] [[More|More]], [[Long]], [[Than]], [[It]], [[Is]], [[Wide]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/What]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Get]], [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/Collect]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Thing]]
+Type: [[What]], [[You]], [[Get]], [[When]], [[You]], [[Collect]], [[Many]], [[Thing]]

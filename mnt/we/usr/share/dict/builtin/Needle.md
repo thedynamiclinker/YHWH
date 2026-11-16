@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Small]], [[usr/share/dict/atomic/Sharp]], [[usr/share/dict/builtin/Stick]]
+Type: [[Very]], [[Small]], [[Sharp]], [[Stick]]

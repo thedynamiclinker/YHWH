@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Try]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Feel]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/builtin/They]], [[usr/share/dict/atomic/Are]], [[usr/share/dict/builtin/Tribe]]
+Type: [[Word]], [[To]], [[Try]], [[Make]], [[People]], [[Feel]], [[Like]], [[They]], [[Are]], [[Tribe]]

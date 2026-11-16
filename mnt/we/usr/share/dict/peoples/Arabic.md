@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/peoples/Arab]], [[usr/share/dict/atomic/Thing]]
+Type: [[Arab]], [[Thing]]

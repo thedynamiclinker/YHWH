@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/parts/Sound]]
+Type: [[Big]], [[Sound]]

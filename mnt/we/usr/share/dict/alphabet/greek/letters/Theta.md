@@ -1,3 +1,3 @@
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Uppercase]], [[usr/share/man/usr/share/dict/alphabet/greek/uppercase/Θ|Θ]]
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Lowercase]], [[usr/share/man/usr/share/dict/alphabet/greek/lowercase/θ|θ]]
+Type: [[Greek]], [[Letter]], [[With]], [[Uppercase]], [[Θ|Θ]]
+Type: [[Greek]], [[Letter]], [[With]], [[Lowercase]], [[lowercase/θ|θ]]
 

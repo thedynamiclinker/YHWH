@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/New]], [[usr/share/dict/atomic/Person]]
-Type: [[usr/share/dict/atomic/New]], [[usr/share/dict/atomic/Animal]]
+Type: [[New]], [[Person]]
+Type: [[New]], [[Animal]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Serious]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Think]]
+Type: [[Serious]], [[Word]], [[Meaning]], [[Think]]

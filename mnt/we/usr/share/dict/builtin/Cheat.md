@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Follow]], [[usr/share/dict/atomic/Rule]]
+Type: [[Not]], [[Follow]], [[Rule]]

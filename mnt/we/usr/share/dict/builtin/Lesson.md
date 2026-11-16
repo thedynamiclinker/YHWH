@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Sentence]], [[usr/share/dict/atomic/List]], [[usr/share/dict/atomic/For]], [[usr/share/dict/builtin/Teaching]]
+Type: [[Sentence]], [[List]], [[For]], [[Teaching]]

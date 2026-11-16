@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Do]], [[usr/share/dict/builtin/Action]], [[usr/share/dict/atomic/By]], [[usr/share/dict/atomic/Follow]], [[usr/share/dict/builtin/Some]], [[usr/share/dict/builtin/Instruction]]
+Type: [[Do]], [[Action]], [[By]], [[Follow]], [[Some]], [[Instruction]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Old]], [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/Type]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Language]], [[usr/share/dict/builtin/Used]], [[usr/share/dict/atomic/For]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Empire]], [[usr/share/dict/atomic/Stuff]]
+Type: [[Old]], [[Jew]], [[Type]], [[Of]], [[Language]], [[Used]], [[For]], [[Bible|Bible]], [[And]], [[Empire]], [[Stuff]]

@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Uppercase]], [[usr/share/man/usr/share/dict/alphabet/greek/uppercase/Ε|Ε]]
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Lowercase]], [[usr/share/man/usr/share/dict/alphabet/greek/lowercase/ε|ε]]
+Type: [[Greek]], [[Letter]], [[With]], [[Uppercase]], [[Ε|Ε]]
+Type: [[Greek]], [[Letter]], [[With]], [[Lowercase]], [[ε|ε]]

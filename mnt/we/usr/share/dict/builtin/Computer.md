@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Living]], [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/Thing]]
+Type: [[Not]], [[Living]], [[Think]], [[Thing]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Two]], [[usr/share/dict/atomic/Big]], [[usr/share/dict/builtin/Sticks]], [[usr/share/dict/atomic/On]], [[usr/share/dict/builtin/Left]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Right]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/parts/Body]]
+Type: [[Two]], [[Big]], [[Sticks]], [[On]], [[Left]], [[And]], [[Right]], [[Of]], [[Body]]

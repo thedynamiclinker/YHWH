@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/In]], [[usr/share/dict/places/Europe]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Long]], [[usr/share/dict/builtin/Words]]
+Type: [[Place]], [[In]], [[Europe]], [[With]], [[Long]], [[Words]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Pretend]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/Share]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Take]], [[usr/share/dict/atomic/Instead]]
+Type: [[Pretend]], [[To]], [[Share]], [[But]], [[Take]], [[Instead]]

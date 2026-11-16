@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Plant]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Plant]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Eat]]
+Type: [[Part]], [[Of]], [[Plant]], [[That]], [[Plant]], [[Want]], [[You]], [[To]], [[Eat]]

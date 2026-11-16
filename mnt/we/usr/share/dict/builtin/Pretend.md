@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/builtin/Happen]], [[usr/share/dict/atomic/In]], [[usr/share/dict/parts/Mind]]
+Type: [[Make]], [[Thing]], [[Happen]], [[In]], [[Mind]]

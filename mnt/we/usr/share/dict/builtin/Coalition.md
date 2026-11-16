@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/builtin/Set]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Similar]], [[usr/share/dict/builtin/Goal]]
+Type: [[Person]], [[Set]], [[With]], [[Similar]], [[Goal]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Animal]], [[usr/share/dict/atomic/With]], [[usr/share/dict/parts/Tits]]
+Type: [[Animal]], [[With]], [[Tits]]

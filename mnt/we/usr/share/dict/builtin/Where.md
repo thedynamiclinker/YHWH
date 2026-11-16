@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/Question]]
+Type: [[Place]], [[Question]]

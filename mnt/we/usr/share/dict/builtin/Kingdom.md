@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/King]], [[usr/share/dict/atomic/Place]]
+Type: [[King]], [[Place]]

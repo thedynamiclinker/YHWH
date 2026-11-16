@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/love/Marriage]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/More]], [[usr/share/dict/atomic/Than]], [[usr/share/dict/atomic/One]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/builtin/Without]], [[usr/share/dict/builtin/Lying]]
-Type: [[usr/share/dict/atomic/Type]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Consentual]], [[usr/share/dict/love/Relationship]], [[usr/share/dict/atomic/That]], [[usr/share/dict/builtin/Everyone]], [[usr/share/dict/atomic/Think]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Very]], [[usr/share/dict/builtin/Bad]]
+Type: [[When]], [[You]], [[Do]], [[Marriage]], [[With]], [[More]], [[Than]], [[One]], [[Person]], [[Without]], [[Lying]]
+Type: [[Type]], [[Of]], [[Consentual]], [[Relationship]], [[That]], [[Everyone]], [[Think]], [[Is]], [[Very]], [[Bad]]

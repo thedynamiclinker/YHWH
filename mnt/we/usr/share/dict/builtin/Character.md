@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Shape]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Meaning]]
+Type: [[Shape]], [[Meaning]], [[Meaning]]

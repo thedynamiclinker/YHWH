@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Inside]], [[usr/share/dict/atomic/Place]], [[usr/share/dict/builtin/Where]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/Religion]]
+Type: [[Inside]], [[Place]], [[Where]], [[You]], [[Go]], [[To]], [[Do]], [[Religion]]

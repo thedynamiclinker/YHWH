@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/peoples/Chinese]], [[usr/share/dict/builtin/Language]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Original]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/people/Bureaucrat]], [[usr/share/dict/atomic/Talk]]
+Type: [[Chinese]], [[Language]], [[With]], [[Original]], [[Meaning]], [[Bureaucrat]], [[Talk]]

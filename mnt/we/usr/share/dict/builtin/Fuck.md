@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/General]], [[usr/share/dict/atomic/Purpose]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Sophisticated]], [[usr/share/dict/atomic/Meaning]]
-Type: [[usr/share/dict/atomic/Simple]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/builtin/Sex]]
+Type: [[General]], [[Purpose]], [[Word]], [[With]], [[Many]], [[Sophisticated]], [[Meaning]]
+Type: [[Simple]], [[Word]], [[Meaning]], [[Do]], [[Sex]]

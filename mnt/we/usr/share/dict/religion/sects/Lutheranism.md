@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/builtin/Group]], [[usr/share/dict/atomic/That]], [[usr/share/dict/builtin/Like]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/And]], [[usr/share/dict/builtin/Invent]], [[usr/share/dict/atomic/Way]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Be]], [[usr/share/dict/religion/sects/Catholic]]
+Def: [[Group]], [[That]], [[Like]], [[Bible|Bible]], [[And]], [[Invent]], [[Way]], [[To]], [[Not]], [[Be]], [[Catholic]]

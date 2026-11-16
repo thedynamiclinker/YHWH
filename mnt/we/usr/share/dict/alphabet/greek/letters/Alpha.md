@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Uppercase]], [[usr/share/man/usr/share/dict/alphabet/latin/uppercase/A|A]]
-Type: [[usr/share/dict/peoples/Greek]], [[usr/share/dict/builtin/Letter]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Lowercase]], [[usr/share/man/usr/share/dict/alphabet/greek/lowercase/α|α]]
+Type: [[Greek]], [[Letter]], [[With]], [[Uppercase]], [[uppercase/A|A]]
+Type: [[Greek]], [[Letter]], [[With]], [[Lowercase]], [[α|α]]

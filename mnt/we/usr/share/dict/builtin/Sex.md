@@ -1,3 +1,3 @@
-Type: [[usr/share/dict/atomic/Any]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Pants]], [[usr/share/dict/builtin/Parts]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Need]], [[usr/share/dict/atomic/Do]]
-Type: [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Put]], [[usr/share/dict/parts/Penis]], [[usr/share/dict/atomic/In]], [[usr/share/dict/parts/Vagina]]
-Type: [[usr/share/dict/builtin/Whether]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/parts/Penis]], [[usr/share/dict/atomic/Or]], [[usr/share/dict/parts/Vagina]]
+Type: [[Any]], [[Thing]], [[You]], [[Want]], [[Do]], [[With]], [[Pants]], [[Parts]], [[But]], [[Not]], [[Need]], [[Do]]
+Type: [[When]], [[You]], [[Put]], [[Penis]], [[In]], [[Vagina]]
+Type: [[Whether]], [[You]], [[Have]], [[Penis]], [[Or]], [[Vagina]]

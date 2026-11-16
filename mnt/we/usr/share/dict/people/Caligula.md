@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/peoples/Roman]], [[usr/share/dict/people/Emperor]], [[usr/share/dict/builtin/Little]], [[usr/share/dict/builtin/Boots]]
-Type: [[usr/share/dict/peoples/Roman]], [[usr/share/dict/people/Emperor]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Try]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/Horse]], [[usr/share/dict/people/Senator]]
+Type: [[Roman]], [[Emperor]], [[Little]], [[Boots]]
+Type: [[Roman]], [[Emperor]], [[Who]], [[Try]], [[To]], [[Make]], [[Horse]], [[Senator]]

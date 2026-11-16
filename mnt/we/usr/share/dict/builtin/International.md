@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/Thing]]
+Type: [[Multiple]], [[Country]], [[Thing]]

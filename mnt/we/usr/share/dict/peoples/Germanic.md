@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/places/Germany]], [[usr/share/dict/atomic/Thing]]
+Type: [[Germany]], [[Thing]]

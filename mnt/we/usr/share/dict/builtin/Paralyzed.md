@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Dead]], [[usr/share/dict/parts/Body]], [[usr/share/dict/builtin/Living]], [[usr/share/dict/parts/Mind]]
+Type: [[Dead]], [[Body]], [[Living]], [[Mind]]

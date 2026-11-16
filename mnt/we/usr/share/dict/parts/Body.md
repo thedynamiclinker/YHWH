@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Whole]], [[usr/share/dict/atomic/Thing]]
+Type: [[Whole]], [[Thing]]

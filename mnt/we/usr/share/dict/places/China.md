@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Middle]], [[usr/share/dict/builtin/Kingdom]]
+Type: [[Middle]], [[Kingdom]]

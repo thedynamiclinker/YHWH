@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/parts/Ejaculate]], [[usr/share/dict/atomic/Now]]
+Type: [[Ejaculate]], [[Now]]

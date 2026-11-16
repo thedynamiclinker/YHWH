@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Opposite]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Math]], [[usr/share/dict/builtin/Language]]
+Type: [[Opposite]], [[In]], [[Math]], [[Language]]

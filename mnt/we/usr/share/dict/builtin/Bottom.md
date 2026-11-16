@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Most]], [[usr/share/dict/atomic/Low]], [[usr/share/dict/atomic/Side]]
+Type: [[Most]], [[Low]], [[Side]]

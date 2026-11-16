@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Shoe]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Long]], [[usr/share/dict/parts/Neck]]
+Type: [[Shoe]], [[With]], [[Long]], [[Neck]]

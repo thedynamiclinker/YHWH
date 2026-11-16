@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/atomic/Famous]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Religion]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Need]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Lawyer]]
+Def: [[Famous]], [[People]], [[Religion]], [[That]], [[Make]], [[You]], [[Need]], [[Many]], [[Lawyer]]

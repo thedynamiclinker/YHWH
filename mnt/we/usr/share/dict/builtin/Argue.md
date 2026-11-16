@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Fight]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Words]]
+Type: [[Fight]], [[With]], [[Words]]

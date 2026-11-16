@@ -1,2 +1,2 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/On]], [[usr/share/dict/places/Floor]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/Talk]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Language]], [[usr/share/dict/builtin/They]], [[usr/share/dict/builtin/Invent]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/builtin/Read]], [[usr/share/dict/atomic/Long]], [[usr/share/dict/builtin/Book]]
+Def: [[Person]], [[Who]], [[Go]], [[On]], [[Floor]], [[And]], [[Talk]], [[In]], [[Language]], [[They]], [[Invent]]
+Def: [[Person]], [[Who]], [[Do]], [[Not]], [[Read]], [[Long]], [[Book]]

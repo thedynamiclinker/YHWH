@@ -1,2 +1,2 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/atomic/New]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/About]], [[usr/share/dict/places/America]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Come]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Your]], [[usr/share/dict/builtin/House]], [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/No]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/builtin/Them]], [[usr/share/dict/atomic/To]]
+Def: [[Person]], [[Who]], [[Like]], [[New]], [[Bible|Bible]], [[About]], [[America]]
+Def: [[Person]], [[Who]], [[Come]], [[To]], [[Your]], [[House]], [[When]], [[You]], [[No]], [[Want]], [[Them]], [[To]]

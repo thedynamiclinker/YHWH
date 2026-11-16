@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/man/usr/share/dict/parts/Foot]]
+Type: [[Multiple]], [[parts/Foot]]

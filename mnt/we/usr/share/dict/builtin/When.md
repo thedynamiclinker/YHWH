@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Time]], [[usr/share/dict/atomic/Question]]
+Type: [[Time]], [[Question]]

@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/Invisible]], [[usr/share/dict/atomic/Force]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Move]], [[usr/share/dict/atomic/You]], [[usr/share/dict/builtin/During]], [[usr/share/dict/builtin/Storm]]
-Type: [[usr/share/dict/builtin/Invisible]], [[usr/share/dict/atomic/Force]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/builtin/Leaf]], [[usr/share/dict/atomic/Move]]
+Type: [[Invisible]], [[Force]], [[That]], [[Move]], [[You]], [[During]], [[Storm]]
+Type: [[Invisible]], [[Force]], [[That]], [[Make]], [[Leaf]], [[Move]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Event]], [[usr/share/dict/atomic/Type]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Instance]]
+Type: [[Event]], [[Type]], [[Have]], [[Many]], [[Instance]]

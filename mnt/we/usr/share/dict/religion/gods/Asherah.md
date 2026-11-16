@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Wife]], [[usr/share/dict/atomic/Of]], [[usr/share/man/usr/share/dict/religion/gods/El]]
+Type: [[Wife]], [[Of]], [[El]]

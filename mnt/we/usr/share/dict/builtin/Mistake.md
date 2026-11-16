@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Good]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Do]]
-Type: [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/You]] [[usr/share/dict/atomic/Do]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Good]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Know]], [[usr/share/dict/atomic/It]], [[usr/share/dict/atomic/Is]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Good]]
+Type: [[Thing]], [[That]], [[Is]], [[Not]], [[Good]], [[To]], [[Do]]
+Type: [[When]], [[You]] [[Do]], [[Thing]], [[That]], [[Is]], [[Not]], [[Good]], [[But]], [[You]], [[Not]], [[Know]], [[It]], [[Is]], [[Not]], [[Good]]

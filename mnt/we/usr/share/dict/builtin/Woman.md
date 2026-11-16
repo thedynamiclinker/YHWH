@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Old]], [[usr/share/dict/atomic/Girl]]
+Type: [[Word]], [[Meaning]], [[Old]], [[Girl]]

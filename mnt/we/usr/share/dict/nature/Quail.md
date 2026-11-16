@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Bird]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/On]], [[usr/share/dict/parts/Head]]
+Type: [[Bird]], [[With]], [[Thing]], [[On]], [[Head]]

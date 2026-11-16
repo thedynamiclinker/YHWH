@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Show]], [[usr/share/dict/builtin/Some]], [[usr/share/dict/builtin/Direction]]
+Type: [[Show]], [[Some]], [[Direction]]

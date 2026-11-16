@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/True]], [[usr/share/dict/atomic/Thing]]
+Type: [[True]], [[Thing]]

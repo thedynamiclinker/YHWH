@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Small]], [[usr/share/dict/builtin/Fruit]]
+Type: [[Small]], [[Fruit]]

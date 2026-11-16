@@ -1,3 +1,3 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Strong]], [[usr/share/dict/builtin/Voice]], [[usr/share/dict/builtin/Inside]], [[usr/share/dict/parts/Head]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Feel]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/Feeling]], [[usr/share/dict/atomic/For]], [[usr/share/dict/nature/World]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Be]], [[usr/share/dict/builtin/Leader]], [[usr/share/dict/builtin/Without]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/atomic/To]]
+Def: [[Person]], [[With]], [[Strong]], [[Voice]], [[Inside]], [[Head]]
+Def: [[Person]], [[Who]], [[Feel]], [[Many]], [[Feeling]], [[For]], [[World]]
+Def: [[Person]], [[Who]], [[Be]], [[Leader]], [[Without]], [[Want]], [[To]]

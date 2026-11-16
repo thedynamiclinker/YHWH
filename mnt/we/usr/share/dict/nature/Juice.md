@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Liquid]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Come]], [[usr/share/dict/atomic/Out]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Thing]]
+Type: [[Liquid]], [[That]], [[Come]], [[Out]], [[Of]], [[Some]], [[Thing]]

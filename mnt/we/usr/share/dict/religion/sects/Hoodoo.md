@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Discount]], [[usr/share/dict/religion/sects/Voodoo]]
+Type: [[Discount]], [[Voodoo]]

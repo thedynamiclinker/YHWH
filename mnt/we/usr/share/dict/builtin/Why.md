@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Reason]], [[usr/share/dict/atomic/Question]]
+Type: [[Reason]], [[Question]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Good]]
+Type: [[Not]], [[Good]]

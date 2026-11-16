@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Past]]
-Type: [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Present]]
+Type: [[Name]], [[In]], [[Past]]
+Type: [[Name]], [[In]], [[Present]]

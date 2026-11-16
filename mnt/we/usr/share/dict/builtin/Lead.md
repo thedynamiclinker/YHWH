@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/What]], [[usr/share/dict/builtin/Leader]], [[usr/share/dict/atomic/Do]]
+Type: [[What]], [[Leader]], [[Do]]

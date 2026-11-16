@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Go]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Thing]]
+Type: [[Go]], [[In]], [[Thing]]

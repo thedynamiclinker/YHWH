@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Fuck]], [[usr/share/dict/atomic/Now]]
+Type: [[Fuck]], [[Now]]

@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/Rotate]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Past]]
-Type: [[usr/share/dict/builtin/Rotate]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Present]]
+Type: [[Rotate]], [[In]], [[Past]]
+Type: [[Rotate]], [[In]], [[Present]]

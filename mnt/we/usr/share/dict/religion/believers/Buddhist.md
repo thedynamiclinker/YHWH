@@ -1,1 +1,1 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Stop]], [[usr/share/dict/builtin/Being]], [[usr/share/dict/atomic/Alive]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Have]], [[usr/share/dict/builtin/Depression]]
+Def: [[Person]], [[Who]], [[Want]], [[To]], [[Stop]], [[Being]], [[Alive]], [[But]], [[Who]], [[Not]], [[Have]], [[Depression]]

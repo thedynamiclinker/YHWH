@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Use]], [[usr/share/dict/atomic/Name]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/Thing]]
-Type: [[usr/share/dict/atomic/Talk]], [[usr/share/dict/builtin/Loud]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Get]], [[usr/share/dict/builtin/Attention]]
+Type: [[Use]], [[Name]], [[For]], [[Thing]]
+Type: [[Talk]], [[Loud]], [[To]], [[Get]], [[Attention]]

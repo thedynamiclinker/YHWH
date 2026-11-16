@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Can]], [[usr/share/dict/builtin/Happen]]
+Type: [[Can]], [[Happen]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Brother]], [[usr/share/dict/atomic/Or]], [[usr/share/dict/atomic/Sister]]
+Type: [[Brother]], [[Or]], [[Sister]]

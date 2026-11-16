@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Turn]], [[usr/share/dict/atomic/Shape]], [[usr/share/dict/builtin/Outside]], [[usr/share/dict/parts/Head]], [[usr/share/dict/atomic/Into]], [[usr/share/dict/builtin/Idea]], [[usr/share/dict/atomic/In]], [[usr/share/dict/parts/Head]]
+Type: [[Turn]], [[Shape]], [[Outside]], [[Head]], [[Into]], [[Idea]], [[In]], [[Head]]

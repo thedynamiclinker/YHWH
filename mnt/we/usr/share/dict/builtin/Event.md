@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Time]], [[usr/share/dict/atomic/Thing]]
+Type: [[Time]], [[Thing]]

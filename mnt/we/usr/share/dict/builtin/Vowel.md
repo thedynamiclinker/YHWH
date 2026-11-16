@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/parts/Mouth]], [[usr/share/dict/parts/Sound]], [[usr/share/dict/builtin/Without]], [[usr/share/dict/builtin/Friction]]
+Type: [[Mouth]], [[Sound]], [[Without]], [[Friction]]

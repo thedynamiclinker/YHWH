@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/With]], [[usr/share/dict/builtin/Oil]], [[usr/share/dict/atomic/On]], [[usr/share/dict/parts/Head]]
+Type: [[Person]], [[With]], [[Oil]], [[On]], [[Head]]

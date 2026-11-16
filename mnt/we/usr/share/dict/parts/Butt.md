@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Sit]], [[usr/share/dict/atomic/On]]
+Type: [[Part]], [[You]], [[Sit]], [[On]]

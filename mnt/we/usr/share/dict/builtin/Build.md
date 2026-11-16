@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/From]], [[usr/share/dict/atomic/Stuff]]
+Type: [[Make]], [[Thing]], [[From]], [[Stuff]]

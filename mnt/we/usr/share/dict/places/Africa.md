@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Original]], [[usr/share/dict/builtin/Human]], [[usr/share/dict/atomic/Home]], [[usr/share/dict/atomic/Land]]
+Type: [[Original]], [[Human]], [[Home]], [[Land]]

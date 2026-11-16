@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/atomic/Big]], [[usr/share/dict/builtin/Letter]]
-Type: [[usr/share/dict/builtin/Town]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Most]], [[usr/share/dict/people/Bureaucrat]]
+Type: [[Big]], [[Letter]]
+Type: [[Town]], [[With]], [[Most]], [[Bureaucrat]]

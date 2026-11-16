@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Calm]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Want]], [[usr/share/dict/atomic/To]], [[usr/share/dict/builtin/Die]], [[usr/share/dict/builtin/But]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/Now]]
+Type: [[Calm]], [[People]], [[Who]], [[Want]], [[To]], [[Die]], [[But]], [[Not]], [[Now]]

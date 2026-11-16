@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Man]], [[usr/share/dict/atomic/With]], [[usr/share/dict/atomic/Most]], [[usr/share/dict/atomic/Power]]
+Type: [[Man]], [[With]], [[Most]], [[Power]]

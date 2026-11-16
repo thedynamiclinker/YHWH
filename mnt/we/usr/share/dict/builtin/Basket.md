@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Put]], [[usr/share/dict/builtin/Things]], [[usr/share/dict/atomic/In]]
+Type: [[Thing]], [[To]], [[Put]], [[Things]], [[In]]

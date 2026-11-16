@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/peoples/Latin]], [[usr/share/dict/builtin/Word]], [[usr/share/dict/atomic/Meaning]], [[usr/share/dict/atomic/Old]], [[usr/share/dict/atomic/Person]]
+Type: [[Latin]], [[Word]], [[Meaning]], [[Old]], [[Person]]

@@ -1,2 +1,2 @@
-Type: [[usr/share/dict/builtin/North]], [[usr/share/dict/atomic/Part]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/peoples/Jew]], [[usr/share/dict/atomic/Land]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Old]], [[usr/share/man/usr/share/dict/religion/books/Bible|Bible]], [[usr/share/dict/atomic/Time]]
-Type: [[usr/share/dict/peoples/Jew]], [[usr/share/dict/builtin/Country]], [[usr/share/dict/atomic/Now]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/builtin/People]], [[usr/share/dict/atomic/Very]], [[usr/share/dict/atomic/Angry]], [[usr/share/dict/atomic/At]]
+Type: [[North]], [[Part]], [[Of]], [[Jew]], [[Land]], [[In]], [[Old]], [[Bible|Bible]], [[Time]]
+Type: [[Jew]], [[Country]], [[Now]], [[That]], [[Many]], [[People]], [[Very]], [[Angry]], [[At]]

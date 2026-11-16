@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/When]], [[usr/share/dict/atomic/Many]], [[usr/share/dict/atomic/Person]], [[usr/share/dict/builtin/Like]], [[usr/share/dict/atomic/You]]
+Type: [[When]], [[Many]], [[Person]], [[Like]], [[You]]

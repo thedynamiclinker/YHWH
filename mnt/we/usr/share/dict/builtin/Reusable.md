@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Can]], [[usr/share/dict/atomic/Use]], [[usr/share/dict/atomic/Again]]
+Type: [[Can]], [[Use]], [[Again]]

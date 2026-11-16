@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Red]], [[usr/share/dict/builtin/Plus]], [[usr/share/dict/builtin/Yellow]]
+Type: [[Red]], [[Plus]], [[Yellow]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Thing]], [[usr/share/dict/atomic/That]], [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/You]], [[usr/share/dict/atomic/Slip]]
+Type: [[Thing]], [[That]], [[Make]], [[You]], [[Slip]]

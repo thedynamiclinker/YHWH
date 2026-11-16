@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Give]], [[usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Of]], [[usr/share/dict/atomic/Your]], [[usr/share/dict/builtin/Things]], [[usr/share/dict/atomic/To]], [[usr/share/dict/atomic/Other]], [[usr/share/dict/builtin/People]]
+Type: [[Give]], [[Some]], [[Of]], [[Your]], [[Things]], [[To]], [[Other]], [[People]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Have]], [[usr/share/dict/atomic/Good]], [[usr/share/dict/parts/Mind]]
+Type: [[Have]], [[Good]], [[Mind]]

@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Size]], [[usr/share/dict/atomic/In]], [[usr/share/dict/builtin/Left]], [[usr/share/dict/builtin/Right]], [[usr/share/dict/builtin/Direction]]
+Type: [[Size]], [[In]], [[Left]], [[Right]], [[Direction]]

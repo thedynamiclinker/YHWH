@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Event]], [[usr/share/dict/atomic/Start]]
+Type: [[Event]], [[Start]]

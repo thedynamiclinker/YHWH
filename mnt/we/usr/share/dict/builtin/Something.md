@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Some]], [[usr/share/dict/atomic/Thing]]
+Type: [[Some]], [[Thing]]

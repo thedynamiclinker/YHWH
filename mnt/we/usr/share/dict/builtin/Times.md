@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/dict/atomic/Time]]
+Type: [[Multiple]], [[Time]]

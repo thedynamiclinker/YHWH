@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Make]], [[usr/share/dict/atomic/For]], [[usr/share/dict/atomic/First]], [[usr/share/dict/atomic/Time]]
+Type: [[Make]], [[For]], [[First]], [[Time]]

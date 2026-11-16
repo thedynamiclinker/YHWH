@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Multiple]], [[usr/share/dict/religion/gods/God]]
+Type: [[Multiple]], [[God]]

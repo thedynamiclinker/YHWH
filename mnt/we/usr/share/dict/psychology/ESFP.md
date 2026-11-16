@@ -1,3 +1,3 @@
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Live]], [[usr/share/dict/atomic/Now]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/atomic/Feel]], [[usr/share/dict/atomic/First]]
-Def: [[usr/share/dict/atomic/Person]], [[usr/share/dict/atomic/Who]], [[usr/share/dict/builtin/Dance]], [[usr/share/dict/atomic/And]], [[usr/share/dict/atomic/No]], [[usr/share/dict/atomic/Think]]
+Def: [[Person]], [[Who]], [[Live]], [[Now]]
+Def: [[Person]], [[Who]], [[Feel]], [[First]]
+Def: [[Person]], [[Who]], [[Dance]], [[And]], [[No]], [[Think]]

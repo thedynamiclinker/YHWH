@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/builtin/Action]], [[usr/share/dict/atomic/For]], [[usr/share/dict/builtin/Explain]]
+Type: [[Action]], [[For]], [[Explain]]

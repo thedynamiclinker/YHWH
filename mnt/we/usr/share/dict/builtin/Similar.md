@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Almost]], [[usr/share/dict/atomic/Same]]
+Type: [[Almost]], [[Same]]

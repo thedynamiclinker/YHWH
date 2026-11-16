@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Be]], [[usr/share/dict/atomic/Now]]
+Type: [[Be]], [[Now]]

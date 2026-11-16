@@ -1,1 +1,1 @@
-Type: [[usr/share/dict/atomic/Place]], [[usr/share/dict/atomic/Not]], [[usr/share/dict/atomic/In]], [[usr/share/dict/atomic/Thing]]
+Type: [[Place]], [[Not]], [[In]], [[Thing]]
