@@ -55,11 +55,14 @@ test('binary, non-UTF8, oversized and PDF documents never become editable text',
 });
 test('mobile attachments delegate without reading media/workbooks; only PDF retains its preview', async () => {
   const { storage, call } = await fixture();
+  const read = storage.read;
+  storage.read = async () => { throw new Error('Attachment data should be left to the native opener.'); };
   for (const name of ['picture.svg', 'table.csv', 'table.tsv', 'book.xlsx', 'movie.mp4', 'sound.wav']) {
     await storage.write('/YHWH/' + name, new TextEncoder().encode('Attachment bytes'));
     const file = await call('file:read', '/YHWH/' + name);
-    assert.equal(file.kind, 'binary', name); assert.equal(file.bytes, undefined, name); assert.equal(file.content, undefined, name);
+    assert.equal(file.kind, 'binary', name); assert.equal(file.content, undefined, name);
   }
+  storage.read = read;
   await storage.write('/YHWH/preview.pdf', new TextEncoder().encode('%PDF-1.4\n'));
   assert.equal((await call('file:read', '/YHWH/preview.pdf')).kind, 'pdf');
 });

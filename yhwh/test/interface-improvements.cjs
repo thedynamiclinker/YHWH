@@ -75,6 +75,19 @@ module.exports = async function ({ app, page, run, open, directory, artifacts })
   assert.equal(await app.evaluate(() => globalThis.openedFiles.at(-1)), path.join(directory, 'preview.pdf'));
   await pdfRow.click({ modifiers: ['Control'] });
   assert.equal(await app.evaluate(() => globalThis.openedFiles.at(-1)), path.join(directory, 'preview.pdf'));
+  await page.evaluate(async () => { await window.yhwh.call('settings:save', { pdf_open: 'external' }, '/'); await window.YHWH.refresh(); });
+  const previewedFile = await page.evaluate(() => window.YHWH.active().file.path);
+  await open(path.join(directory, 'scroll.pdf'));
+  assert.equal(await app.evaluate(() => globalThis.openedFiles.at(-1)), path.join(directory, 'scroll.pdf'));
+  assert.equal(await page.evaluate(() => window.YHWH.active().file.path), previewedFile);
+  await page.evaluate(async () => { await window.yhwh.call('settings:save', { pdf_open: 'ask' }, '/'); await window.YHWH.refresh(); });
+  const choosingSystemApp = open(path.join(directory, 'scroll.pdf'));
+  // A checked input in the previous closed dialog can satisfy check() early.
+  await page.locator('#dialog[open] [name="remember-pdf"]').waitFor({ state: 'visible' });
+  await page.locator('#dialog[open] [name="remember-pdf"]').check();
+  await page.locator('[data-pdf="external"]').click(); await choosingSystemApp;
+  assert.equal(await page.evaluate(() => window.YHWH.active().config.values.pdf_open), 'external');
+  await page.evaluate(async () => { await window.yhwh.call('settings:save', { pdf_open: 'preview' }, '/'); await window.YHWH.refresh(); });
   await app.evaluate(({ shell }) => { shell.openPath = globalThis.realOpenPath; });
   // Copy paths through the actual right-click menu, including a nested file.
   const nested = path.join(directory, 'nested', 'child.txt');

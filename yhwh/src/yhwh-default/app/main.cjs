@@ -125,6 +125,8 @@ async function startTerminal(focus, id) {
   if (typeof id !== 'string' || terminals.has(id)) throw new Error('Invalid terminal.');
   const config = await configFor(focus.cwd);
   const cwd = await worlds.physical(focus);
+  if (focuses.get(focus.id) !== focus) throw new Error('Closed tab.');
+  if (terminals.has(id)) throw new Error('Invalid terminal.');
   if ([...terminals.values()].includes(focus.id)) throw new Error('This app tab already has a shell.');
   terminals.set(id, focus.id); focus.terminalId = id;
   host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });

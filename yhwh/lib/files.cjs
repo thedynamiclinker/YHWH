@@ -35,7 +35,7 @@ async function read(filename, config) {
   try { const buffer = Buffer.alloc(Math.min(stat.size, 8192)); const { bytesRead } = await handle.read(buffer); prefix = buffer.subarray(0, bytesRead); } finally { await handle.close(); }
   const type = await detect(filename, prefix, config);
   const result = { path: filename, name: path.basename(filename), size: stat.size, modified: stat.mtimeMs, ...type };
-  if (type.external) return { ...result, kind: 'binary' };
+  if (type.external || (type.viewer === 'pdf' && config?.pdf_open === 'external')) return { ...result, kind: 'binary' };
   if (type.viewer === 'pdf' && stat.size <= 64 * 1024 * 1024) return { ...result, kind: 'pdf', bytes: new Uint8Array(await fs.readFile(filename)) };
   if (prefix.includes(0) || stat.size > 16 * 1024 * 1024 || type.viewer === 'pdf') return { ...result, kind: 'binary' };
   try {

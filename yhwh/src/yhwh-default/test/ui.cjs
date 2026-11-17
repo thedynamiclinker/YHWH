@@ -23,6 +23,7 @@ const root = path.resolve(__dirname, variant === 'three' ? '../../yhwh-three' : 
   await fs.writeFile(path.join(config, 'theme.css'), '.statusbar { border-top-color: rgb(90, 70, 120); }');
   await fs.writeFile(path.join(config, 'rc'), "/\n    stylesheet='theme.css'\n", { mode: 0o600 });
   const sourceWords = await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8');
+  const wordsFile = path.join(temp, 'words.json'); await fs.writeFile(wordsFile, sourceWords);
   const env = { ...process.env, YHWH_INTERFACE: variant, YHWH_DATA_DIR: path.join(temp, 'profile'), YHWH_THREE_DATA_DIR: path.join(temp, 'profile-three'), YHWH_CONFIG_HOME: config, YHWH_SYSTEM_CONFIG: path.join(temp, 'system'), YHWH_NODE: process.execPath, YHWH_SHELL: require('node:child_process').execFileSync('which', ['bash'], { encoding: 'utf8' }).trim(), YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' };
   const chatFixture = path.join(temp, 'codex-fixture');
   await fs.writeFile(chatFixture, `#!/usr/bin/env node
@@ -41,6 +42,10 @@ process.stdin.on('end', () => {
   const errors = [];
   async function launch() {
     app = await electron.launch({ executablePath: require('../../../lib/electron.cjs')(), args: [root, '--disable-gpu', '--cwd', directory], env, timeout: 60000 });
+    await app.evaluate((_electron, { modulePath, wordsFile }) => {
+      const paths = process.getBuiltinModule('module').createRequire(modulePath)(modulePath), original = paths.etc;
+      paths.etc = (...parts) => parts.length === 2 && parts[0] === 'default' && parts[1] === 'words.json' ? wordsFile : original(...parts);
+    }, { modulePath: require.resolve('../../../lib/paths.cjs'), wordsFile });
     page = await app.firstWindow(); page.on('pageerror', error => errors.push(error.message));
     await page.waitForFunction(() => window.YHWH?.active());
     // Exercise mode swapping without depending on the remote Circus service.
@@ -402,8 +407,8 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('#margin-box .circus-image').count(), 0);
     await run('about'); await page.locator('[data-edit-word=aboutBody]').click(); await page.locator('#dialog textarea').fill('Test edit, written to source.'); await page.locator('#dialog .primary').click();
     await page.locator('#dialog').waitFor({ state: 'hidden' });
-    assert.equal(JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')).aboutBody, 'Test edit, written to source.');
-    await fs.writeFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), sourceWords);
+    assert.equal(JSON.parse(await fs.readFile(wordsFile, 'utf8')).aboutBody, 'Test edit, written to source.');
+    await fs.writeFile(wordsFile, sourceWords);
     await run('burnt'); assert.equal(await page.locator('[data-url="https://dashboard.stripe.com/register"]').count(), 1);
     await page.screenshot({ path: path.join(artifacts, '06-offerings.png') });
     await page.keyboard.press('Escape'); await run('piece'); assert.match(await page.locator('.dialog-body').textContent(), /No file is uploaded/); await page.keyboard.press('Escape');
@@ -496,7 +501,7 @@ process.stdin.on('end', () => {
     throw error;
   } finally {
     if (app) { await app.evaluate(({ app }) => app.exit()).catch(() => {}); await app.close().catch(() => {}); }
-    await fs.writeFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), sourceWords);
+    await fs.writeFile(wordsFile, sourceWords);
     await fs.rm(temp, { recursive: true, force: true });
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });

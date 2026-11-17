@@ -74,7 +74,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     if (stat.directory) throw new Error('Open a regular file.');
     const resolved = await config(path), type = fileType(path, new Uint8Array(), resolved.values, mime(path));
     const result = { ...stat, path, name: path.split('/').at(-1), ...type, config: resolved, kind: 'binary' };
-    if (type.external || stat.size > (type.viewer === 'pdf' ? 64 : 16) * 1024 * 1024) return result;
+    if (type.external || (type.viewer === 'pdf' && resolved.values.pdf_open === 'external') || stat.size > (type.viewer === 'pdf' ? 64 : 16) * 1024 * 1024) return result;
     const bytes = await storage.read(path);
     Object.assign(result, fileType(path, bytes, resolved.values, mime(path)), { modified: version(stat, bytes) });
     if (result.viewer === 'pdf') return { ...result, kind: 'pdf', bytes };

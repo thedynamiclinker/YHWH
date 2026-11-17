@@ -109,6 +109,12 @@ async function main() {
       await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, `${device.name}-seedis.png`));
       const improvements = require('../../../test/interface-improvements-2.cjs');
       const deviceArtifacts = path.join(artifacts, device.name); await fs.mkdir(deviceArtifacts, { recursive: true });
+      await page.evaluate(async () => { await window.yhwh.call('file:create', '/YHWH/table.csv'); await window.yhwh.call('file:save', '/YHWH/table.csv', 'Name,Value\nAbe,42\n', null); });
+      const activeDocument = await page.evaluate(() => window.YHWH.active().file?.path);
+      const attachmentDownload = page.waitForEvent('download');
+      await page.evaluate(() => window.YHWH.openFile('/YHWH/table.csv'));
+      const downloaded = await attachmentDownload; assert.equal(downloaded.suggestedFilename(), 'table.csv');
+      assert.equal(await page.evaluate(() => window.YHWH.active().file?.path), activeDocument);
       const pdfChooser = page.waitForEvent('filechooser');
       await page.evaluate(() => window.YHWH.run('mobile-import'));
       await (await pdfChooser).setFiles([{ name: 'scroll.pdf', mimeType: 'application/pdf', buffer: require('../../../test/viewer-fixtures.cjs')()['scroll.pdf'] }]);

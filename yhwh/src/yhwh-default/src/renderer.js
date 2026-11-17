@@ -152,7 +152,7 @@ async function startTerminal(tab) {
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
   pendingTerminal.delete(id);
   startingTerminals.delete(id);
-  tab.showTerminal = true; tab.expanded = '';
+  tab.showTerminal = tab.terminals.length > 0; tab.expanded = '';
   if (active() === tab) { update(); focusTerminal(tab); }
   return session;
 }
@@ -164,7 +164,7 @@ function focusTerminal(tab = active()) {
 }
 async function revealTerminal(tab = active()) {
   if (!tab.terminals.length) await newTerminal(tab);
-  tab.showTerminal = true; update(); focusTerminal(tab);
+  tab.showTerminal = tab.terminals.length > 0; update(); focusTerminal(tab);
 }
 async function closeTerminal(id = active()?.terminalId, exited = false) {
   const tab = tabs.find(item => item.terminals.some(session => session.id === id)); if (!tab) return;
