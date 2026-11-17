@@ -34,7 +34,7 @@ check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test
 	$(NODE) src/yhwh-mobile/test/ui.cjs
-	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-default/test/keys-ui.cjs src/yhwh-three/test/ui.cjs
+	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-default/test/keys-ui.cjs src/yhwh-three/test/ui.cjs src/yhwh-default/test/initial-ui.cjs
 test: verify-deps
 	$(NODE) --test test/*.test.cjs
 	$(NODE) --test src/yhwh-default/test/*.test.cjs
@@ -87,6 +87,7 @@ mobile-build: deps
 mobile-sync: mobile-build
 	./node_modules/.bin/cap sync
 mobile-check: mobile-build
+	$(NODE) --test test/initial.test.cjs
 	$(NODE) --test src/yhwh-mobile/test/*.test.cjs
 	$(NODE) src/yhwh-mobile/test/ui.cjs
 android: mobile-sync

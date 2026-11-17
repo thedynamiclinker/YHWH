@@ -127,6 +127,7 @@ async function main() {
         }));
         await page.screenshot({ path: path.join(deviceArtifacts, 'failure.png') }); throw error;
       }
+      await require('../../../test/initial-ui.cjs')(page, deviceArtifacts);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery, scrolling PDF and touch file moves.`);

@@ -93,12 +93,8 @@ const path = require('node:path');
     assert.match(await page.locator('[data-output]').textContent(), /ctrl\/alt\/shift\/k/);
     await page.locator('[data-close]').click();
     await page.keyboard.press('Control+Alt+u');
-<<<<<<< HEAD
-    await page.waitForFunction(() => document.querySelector('#dialog').open && document.querySelector('.key-output')?.textContent.trim() === 'ctrl/alt/u');
-=======
     await page.waitForFunction(() => document.querySelector('#dialog[open] h2')?.textContent === 'Key command · ctrl/alt/u'
-      && document.querySelector('.key-output')?.textContent.includes('ctrl/alt/u'));
->>>>>>> 3fbd54d (Prepare to invent unix.)
+      && document.querySelector('.key-output')?.textContent.trim() === 'ctrl/alt/u');
     assert.match(await fs.readFile(outputFile, 'utf8'), /^cwd\t/m);
     await page.locator('[data-close]').click();
 

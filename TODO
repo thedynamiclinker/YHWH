@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Edit these recent requests by following the [INSTRUCTIONS]
+
+---
+
+- Open in full screen mode when opening the app. [REVERT]
+
+- Have autosave on by default. [THAT MEANS BEHAVE LIKE OBSIDIAN]
+
+- Have inbuilt viewers for img, pdf, video, excel, csv, and other common files. [REVERT FOR NOW, WE NEED TO HAVE MIME TYPES AND PUNT TO THE SYSTEM'S XDG-OPEN THING LIKE RS FILE MANAGER DOES. IF THE USER HAS A FAVORITE APP FOR OPENING WHATEVER FILE TYPE, WE WANT TO USE THEIRS]
+
+- The markdown live preview option is very glitchy right now. It switches betwee source view and preview on every space and feels very jarring. Also the cursor goes to the line below current location when it switches to preview mode. Just make it source view by default and just have the button/shortcut toggle it to the preview mode. No live mode. [KEEP]
+
+- Have Ctrl+Shift+` also open the terminal (like in vscode and other apps.) [KEEP]
+
+- Add the option to open multiple terminal tabs and toggle between them when the terminal is focused. Like vscode does. Use sensible shortcuts for adding new terminal tabs and toggling between them. [REMOVE]
+
+- Also right now, if I type x in my terminal (which is aliased to exit), the terminal shows [Shell exited 0] but doesn't close the terminal and because I don't yet have the ability to open another terminal tab, the terminal becomes unusable if I type x. Fix all this. [YES PLEASE KEEP THIS AND FIX IF IT'S NOT FIXED YET, THIS ISN'T MACOS TERMINAL, IT HELPS NO ONE TO STAY OPEN WHEN DEAD]
+
+- When I right click on a file and say 'Move to Trash', right now that doesn't work. Fix it. [KEEP]
+
+- Also when I right click on a file, have two options for copy path: Copy full Path and Copy Relative Path. [KEEP]
+
+-  Make the pdf opener have scroll. [WANT TO OUTSOURCE MOST NON TEXT TYPES MIME APPLICATION DEFAULT PREFS ON EACH SYSTEM, BUT CAN KEEP A BUILTIN PDF VIEWER, DO WHAT OBSIDIAN DOES, AND FOR AMBIGUOUS HALF TEXT TYPES LIKE PDF, MAYBE CLICK PREVIEWS AND CTRL+CLICK OR DOUBLE CLICK OPENS EXTERNALLY. DO WHAT NEMO DOES FOR EXECUTABLE FILES: PREFERENCE THAT ASKS FOR DEFAULT ACROSS ALL, KEEP IT SIMPLE BUT CONFIGURABLE.]
+
+- Have the ability to drag and move around the files and folders in the file manager. [KEEP]
+EOF

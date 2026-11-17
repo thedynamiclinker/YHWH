@@ -13,6 +13,11 @@ sheet, tab counter and switcher, ribbon actions in a menu, and an editing
 toolbar above the keyboard. Tablets retain a wider layout and visible tab strip.
 Safe areas, portrait/landscape layouts and keyboard viewport changes are handled.
 
+The [Initial](../../../../doc/initial.md) adds a programmable touch shell: optional
+gestures, Unicode aliases, reusable Words, a command shelf, tap-to-compose
+pipelines, versioned rc/script files and live or fixed graphical file tabs.
+The same runtime/UI is available in the desktop and Three command palettes.
+
 ## Feature inheritance is required
 
 **All new features should be added to all versions of the app to the extent
@@ -171,9 +176,11 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
 | Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Unix terminal, terminal tabs/shortcuts and shell navigation | Requires desktop process/PTY APIs; unavailable on mobile |
-| Codex conversation | Requires the desktop executable/service; unavailable until a mobile service adapter is implemented |
-| World filesystem, Sinai/Horeb and fan mail | Desktop mounted source trees are not bundled; unavailable on mobile |
+| Initial · in-app shell | Shared interpreter and UI: Initials in `~/.initialrc`, Words in `~/bin`, Atomics and registered Builtins; pipes, sequence, redirection, substitution, help, optional trained gestures and editable Latin/Greek/Hebrew/Paleo tiles |
+| Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
+| Codex connection | Connect YHWH opens a guided account/device-login and remote workflow; browser sign-in stays external; direct in-app mobile conversation is not connected |
+| Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
+| Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Circus, desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
 | Three / TTY / company rehearsal | Remain separate interfaces; spatial scene and local-process workflows are not bundled in the mobile shell |
 
@@ -231,3 +238,8 @@ shell pipelines, virtual shell namespace commands and editing desktop prefix
 files require desktop filesystem/process APIs and return explicit unavailable
 messages on Android and iOS. The last mobile tab remains a usable blank tab.
 These source changes require rebuilding and installing a new native app.
+
+The Initial’s gesture and tile UI is shared with desktop/Three. TTY and the
+Obsidian plugin do not yet host its interpreter; their existing command interfaces
+and ordinary text editing remain. See [the Initial guide](../../../../doc/initial.md)
+for syntax, deliberate limits and persistence behavior.

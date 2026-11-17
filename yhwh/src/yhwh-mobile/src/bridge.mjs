@@ -5,9 +5,7 @@ export const unavailable = {
   'keys:run': 'Custom executable and JavaScript key files require the desktop host. Bundled commands work here.',
   'keys:shell': 'Shell pipelines and modifier-directory commands require desktop process APIs. Text, wildcard and regex search work here.',
   'keys:save': 'Editing prefix key files requires the desktop filesystem. Bundled keyboard bindings work here.',
-  chat: 'Talking to YHWH requires the desktop Codex service. A mobile service is not configured.',
-  'world:enter': 'The desktop world filesystem is not bundled on mobile.',
-  'world:leave': 'The desktop world filesystem is not bundled on mobile.',
+  chat: 'Open Connect YHWH for account sign-in and a Codex setup guide. In-app mobile chat is not connected yet.',
   'world:books': 'The desktop world libraries are not bundled on mobile.',
   circus: 'The circus network service is currently available on desktop.',
   'config:open': 'Mobile settings use JSON rather than shell rc files. Use Settings to edit them.',
@@ -55,13 +53,19 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     return result;
   }
   async function list(id, directory) {
-    const current = focus(id), cwd = normalize(directory || current.cwd, current.cwd), resolved = await config(cwd);
+    const current = focus(id);
+    let cwd = normalize(directory || current.cwd, current.cwd);
+    if (current.worldRoot && !inside(cwd, current.worldRoot)) cwd = current.worldRoot;
+    const resolved = await config(cwd);
     const entries = (await storage.list(cwd)).filter(item => resolved.values.show_hidden === 'true' || !item.name.startsWith('.'));
     entries.sort((a,b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, undefined, { numeric: true }));
-    return { cwd, entries, config: resolved };
+    return { cwd, entries, config: resolved, worldRoot: current.worldRoot || null, worldName: current.worldName || null };
   }
   async function navigate(id, directory) {
-    const path = normalize(directory, focus(id).cwd), stat = await storage.stat(path);
+    const current = focus(id);
+    let path = normalize(directory, current.cwd);
+    if (current.worldRoot && !inside(path, current.worldRoot)) path = current.worldRoot;
+    const stat = await storage.stat(path);
     if (!stat?.directory) throw new Error('Choose a directory.');
     const state = await list(id, path); focus(id).cwd = path; return state;
   }
@@ -92,6 +96,17 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       try { return await navigate(id, directory); } catch (error) { focuses.delete(id); throw error; }
     },
     'focus:close': id => focuses.delete(id), navigate,
+    async 'world:enter'(id, name) {
+      const current = focus(id);
+      const path = ['root','yhwh'].includes(name) ? `${HOME}/Worlds/${name === 'root' ? 'Man' : 'God'}` : normalize(name || current.cwd, current.cwd);
+      if (['root','yhwh'].includes(name)) {
+        for (const folder of [`${HOME}/Worlds`, path]) if (!await storage.stat(folder)) await storage.mkdir(folder);
+      }
+      if (!(await storage.stat(path))?.directory) throw new Error('Choose a folder for this view’s root.');
+      current.worldRoot = path; current.worldName = ['root','yhwh'].includes(name) ? name : 'folder';
+      return navigate(id, path);
+    },
+    'world:leave': async id => { const current = focus(id); current.worldRoot = null; current.worldName = null; return navigate(id, HOME); },
     list: id => list(id),
     'directory:list': async (id, directory) => (await list(id, directory)).entries,
     'path:stat': async filename => { const path = normalize(filename), stat = await storage.stat(path); if (!stat) throw new Error('ENOENT: path not found.'); return { ...stat, path }; },
@@ -152,7 +167,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'verse:get': reference => verses.get(reference), 'verse:random': () => verses.random('Genesis'),
     'verse:commentary': (...args) => verses.saveCommentary(...args),
   };
-  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save']);
+  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave']);
   return {
     // Parity tests require an explicit decision for every shared operation.
     supports: channel => Object.hasOwn(handlers, channel) || Object.hasOwn(unavailable, channel),

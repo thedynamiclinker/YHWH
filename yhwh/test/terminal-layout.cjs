@@ -6,7 +6,7 @@ module.exports = async function checkTerminalLayout(page, app, screenshot) {
   const fitted = () => page.waitForFunction(() => {
     const tab = window.YHWH.active(), panel = document.querySelector('#terminal-panel').getBoundingClientRect();
     return panel.width >= 280 && panel.height >= 90 && tab.terminal.cols > 20 && tab.terminal.rows > 1
-      && tab.shellSize === `${tab.terminal.cols}x${tab.terminal.rows}`;
+      && tab.terminals.find(session => session.id === tab.terminalId)?.shellSize === `${tab.terminal.cols}x${tab.terminal.rows}`;
   });
   const win = await app.browserWindow(page);
   const original = await win.evaluate(win => win.getSize());
@@ -27,10 +27,10 @@ module.exports = async function checkTerminalLayout(page, app, screenshot) {
     await fitted();
     // Hiding an ancestor must leave the running PTY's last useful size intact.
     const size = await page.evaluate(async () => {
-      const tab = window.YHWH.active(), before = tab.shellSize;
+      const tab = window.YHWH.active(), before = tab.terminals.find(session => session.id === tab.terminalId)?.shellSize;
       document.querySelector('#focus-area').hidden = true;
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      return { before, after: tab.shellSize, actual: `${tab.terminal.cols}x${tab.terminal.rows}` };
+      return { before, after: tab.terminals.find(session => session.id === tab.terminalId)?.shellSize, actual: `${tab.terminal.cols}x${tab.terminal.rows}` };
     });
     assert.equal(size.after, size.before); assert.equal(size.actual, size.before);
     await page.evaluate(() => { document.querySelector('#focus-area').hidden = false; }); await fitted();

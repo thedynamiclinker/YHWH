@@ -302,6 +302,7 @@ async function launch() {
     title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', development ? 'icon-development.png' : 'icon.png'), autoHideMenuBar: true,
     webPreferences: { preload: require('../../../lib/paths.cjs').output('default/ui/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
+  window.maximize();
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.on('close', event => { if (!quitting) { event.preventDefault(); command('quit'); } });

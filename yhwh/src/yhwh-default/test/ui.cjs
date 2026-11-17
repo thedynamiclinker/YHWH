@@ -63,7 +63,7 @@ process.stdin.on('end', () => {
     assert.match(await page.locator('.welcome').innerText(), /Guess who's back/i);
     assert.ok((await page.locator('.welcome').textContent()).includes(JSON.parse(sourceWords).welcomeBody));
     assert.equal(await page.locator('.personality').isVisible(), true);
-    assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()), true);
+    assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()), false);
     await require('../../../test/interface-improvements.cjs')({ app, page, run, open, directory, artifacts });
     assert.equal(await page.locator('#margin-box').isVisible(), false);
     await run('margins');
@@ -215,7 +215,9 @@ process.stdin.on('end', () => {
     }
     await checkVideoSize('.reading-view:visible video');
     await page.keyboard.press('Control+r');
+    await page.waitForFunction(() => window.YHWH.active().file.mode === 'source');
     await page.keyboard.press('Control+r');
+    await page.waitForFunction(() => window.YHWH.active().file.mode === 'reading');
     await checkVideoSize('.reading-view:visible video');
     assert.equal(await page.evaluate(() => window.YHWH.active().file.mode), 'reading');
     await run('reading-view');

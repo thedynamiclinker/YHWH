@@ -10,6 +10,7 @@ import { match as matchKey } from '../../../lib/key-names.cjs';
 import { showHotkeys } from './hotkeys.js';
 import { mountViewer } from './viewers.js';
 import { installFileDrag } from './file-drag.js';
+import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
@@ -196,6 +197,7 @@ async function closeTerminal(id = active()?.terminalId, exited = false) {
   if (active() === tab) renderTerminalTabs();
 }
 function welcome(tab) {
+  if (tab.initialView) return;
   tab.document.innerHTML = ui("-a-little-room-for-creation-open-a-file-ctrl-o-n", word('welcomeTitle', 'h1'), word('welcomeBody'));
 }
 function activate(id) {
@@ -209,7 +211,7 @@ function activate(id) {
   requestAnimationFrame(() => { if ($('#dialog').open) return; if (active()?.lastFocus === 'terminal' && !$('#terminal-panel').hidden) active().terminal.focus(); else if (active()?.lastFocus === 'files' && !$('#navigation-area').hidden) $('#file-list').focus(); else active()?.editor?.focus(); });
 }
 function tabTitles() {
-  const label = tab => ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
+  const label = tab => tab.customTitle || ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
   $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(label(tab)), tab.id, escape(label(tab)))).join('');
   for (const element of $('#tabs').querySelectorAll('[data-tab]')) element.draggable = true;
 }
@@ -324,8 +326,10 @@ async function refresh(tab = active()) {
     try { folder.entries = await call('directory:list', tab.id, path); } catch { tab.folders.delete(path); }
   }));
   if (tab.id === activeId) { renderFiles(); applyConfig(tab.config); }
+  emit('refresh', tab);
 }
 async function navigate(directory, tab = active(), history = true, focusFiles = false) {
+  if (tab.initialRoot && directory !== tab.initialRoot && !directory.startsWith(tab.initialRoot + '/')) directory = tab.initialRoot;
   const state = await call('navigate', tab.id, directory);
   Object.assign(tab, state); tab.selected.clear();
   const session = tab.terminals.find(item => item.id === tab.terminalId); if (session) session.cwd = tab.cwd;
@@ -345,7 +349,7 @@ async function mayReplace(tab) {
   if (choice === 0) { await save(tab); return true; }
   return choice === 1;
 }
-function clearDocument(tab) { clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
+function clearDocument(tab) { tab.initialView = null; tab.customTitle = null; clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
 async function openFile(filename, tab = active()) {
   if (!await mayReplace(tab)) return false;
   const file = await call('file:read', filename);
@@ -1210,6 +1214,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
   // A small public surface for plugins and interactive inspection. No Node in
   // the renderer; disk operations still cross the explicit preload boundary.
   window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile };
+  window.YHWH.initial = installInitial(window.YHWH, { home: boot.home, mobile: boot.interface === 'mobile', call });
   window.dispatchEvent(new Event('yhwh:ready'));
   if (boot.interface === 'three') {
     try { const { install } = await import(boot.effectsURL); window.YHWH.three = install(window.YHWH); }

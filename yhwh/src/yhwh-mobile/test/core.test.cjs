@@ -83,7 +83,7 @@ test('directory-scoped settings and character overrides survive relaunch and pre
 });
 test('unsupported platform services and future unknown operations fail explicitly', async () => {
   const { call } = await fixture();
-  for (const operation of ['chat', 'world:enter', 'config:open', 'a-new-desktop-feature']) await assert.rejects(call(operation), /desktop|mobile/i);
+  for (const operation of ['chat', 'world:books', 'config:open', 'a-new-desktop-feature']) await assert.rejects(call(operation), /desktop|mobile/i);
   await assert.rejects(call('external', 'javascript:alert(1)'), /Unsupported/);
 });
 test('every shared desktop bridge operation has an explicit mobile implementation or limitation', async () => {
@@ -109,4 +109,19 @@ test('native sharing and iOS privacy configuration remain present', async () => 
   assert.match(await fs.readFile(path.join(root, 'ios/App/App/PrivacyInfo.xcprivacy'), 'utf8'), /C617.1/);
   assert.match(await fs.readFile(path.join(root, 'android/app/build.gradle'), 'utf8'), /prepareYhwhWeb/);
   assert.match(await fs.readFile(path.join(root, 'ios/App/App.xcodeproj/project.pbxproj'), 'utf8'), /prepare.cjs ios/);
+});
+
+test('mobile folder roots constrain navigation per tab and can be left', async () => {
+  const { call } = await fixture();
+  await call('file:create', '/YHWH/project', true);
+  await call('file:create', '/YHWH/project/child', true);
+  await call('focus:new', 'two', '/YHWH');
+  const world = await call('world:enter', 'one', '/YHWH/project');
+  assert.equal(world.worldRoot, '/YHWH/project');
+  assert.equal((await call('navigate', 'one', '/YHWH')).cwd, '/YHWH/project');
+  assert.equal((await call('navigate', 'one', '/YHWH/project/child')).cwd, '/YHWH/project/child');
+  assert.equal((await call('list', 'two')).cwd, '/YHWH');
+  assert.equal((await call('world:leave', 'one')).cwd, '/YHWH');
+  assert.equal((await call('list', 'one')).worldRoot, null);
+  assert.equal((await call('world:enter', 'one', 'yhwh')).worldName, 'yhwh');
 });

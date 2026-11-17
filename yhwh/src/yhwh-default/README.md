@@ -6,7 +6,7 @@ Build, install and launch commands are defined in [the application guide](../../
 
 ## Working in the app
 
-The app opens fullscreen. Each **app tab** owns a current directory, zero or one document, and independent terminal tabs. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell. The terminal header has a + button and a close button for each shell.
+The app opens maximized. Each **app tab** owns a current directory, zero or one document, and independent terminal tabs. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell. The terminal header has a + button and a close button for each shell.
 
 | Operation | Default shortcuts |
 | --- | --- |

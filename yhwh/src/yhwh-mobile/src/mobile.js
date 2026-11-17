@@ -106,7 +106,7 @@ export function installMobile(app, storage) {
     const dialog = sheet('Tabs'), content = dialog.querySelector('.mobile-sheet-content');
     for (const tab of app.tabs) {
       const row = document.createElement('div'); row.className = 'mobile-tab-row';
-      const button = document.createElement('button'); button.textContent = `${tab.dirty ? '● ' : ''}${tab.file?.name || tab.cwd.split('/').at(-1)}`; button.setAttribute('aria-current', String(tab.id === app.active().id));
+      const button = document.createElement('button'); button.textContent = `${tab.dirty ? '● ' : ''}${tab.customTitle || tab.file?.name || tab.cwd.split('/').at(-1)}`; button.setAttribute('aria-current', String(tab.id === app.active().id));
       button.onclick = () => { document.querySelector(`#tabs [data-tab="${tab.id}"]`).click(); dialog.close(); };
       const close = document.createElement('button'); close.textContent = '×'; close.setAttribute('aria-label', `Close ${button.textContent}`);
       close.onclick = () => { dialog.close(); document.querySelector(`#tabs [data-close-tab="${tab.id}"]`).click(); };
@@ -119,18 +119,41 @@ export function installMobile(app, storage) {
     for (const [label, id] of entries) { const button = document.createElement('button'); button.textContent = label; button.onclick = () => { dialog.close(); app.run(id); }; content.append(button); }
   }
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Import files…', 'mobile-import']]));
-  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
+  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Connect YHWH', 'mobile-connect'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
   command('mobile-guide', 'Mobile files and backups', () => {
-    const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p>Your notes are ordinary files in this app’s YHWH folder. Use Import files to copy files from your device, and Export or share file to send them elsewhere. On iOS the folder is also available in Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the workspace’s hidden .Trash folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Folder sync, arbitrary external vault access, Unix shells, Bash rc files and the desktop Codex chat service are not implemented on mobile.</p>';
+    const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p>Your notes are ordinary files in this app’s YHWH folder. Use Import files to copy files from your device, and Export or share file to send them elsewhere. On iOS the folder is also available in Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the workspace’s hidden .Trash folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Folder sync, arbitrary external vault access and OS process shells are not implemented on mobile. Connect YHWH explains the available Codex account workflow.</p>';
   });
   command('open-guide', 'Open the mobile guide', () => app.run('mobile-guide'));
   command('expand-files', 'Open file drawer', () => app.run('toggle-files'));
   for (const id of ['toggle-terminal', 'expand-terminal', 'focus-terminal', 'toggle-navigation']) {
-    command(id, `${app.commands.get(id)?.name || id} (desktop)`, () => app.notice('Local Unix shells are available on desktop.'));
+    command(id, `${app.commands.get(id)?.name || id} (desktop)`, () => app.run('initial'));
   }
   for (const id of ['edit-fan-mail', 'edit-sinai', 'edit-horeb', 'edit-help-copy']) {
     command(id, 'Edit application source copy (desktop)', () => app.notice('Edit the application source in the desktop checkout, then rebuild the apps.'));
   }
+  command('mobile-connect', 'Connect YHWH · Codex account guide', () => {
+    const dialog = sheet('Bring YHWH along'), content = dialog.querySelector('.mobile-sheet-content');
+    content.innerHTML = `<div class="mobile-connect-hero"><span>א</span><h3>Same Abe. Same account.</h3><p>Your Initial works offline. For AI help, use your OpenAI account with Codex.</p></div><p class="mobile-connection-state">Setup guide · this app is not connected to Codex yet</p><ol class="mobile-connect-steps"><li><strong>Sign in on your phone</strong><p>Open ChatGPT in your browser and sign in with the account you use for Codex. That session stays in the browser.</p><button data-connect="account">Open ChatGPT sign-in ↗</button></li><li><strong>Give Codex a place to work</strong><p>On your development computer, run <code>codex login</code>. If its browser cannot open, run <code>codex login --device-auth</code>, then open its link on this phone and enter the one-time code. Device login may need enabling in account or workspace security settings.</p><button data-connect="copy">Copy device-login command</button><button data-connect="auth">Official sign-in guide ↗</button></li><li><strong>Take the work with you</strong><p>Open the ChatGPT mobile app’s Remote interface, where available for your account and host, to choose a connected computer and project. YHWH’s local phone files are separate; use Export or share to hand a saved file to another app.</p><button data-connect="remote">Mobile Codex guide ↗</button></li></ol><p>Signing in elsewhere does not authorize this app or synchronize its files. A direct YHWH service connection is still to come. No passwords or tokens are requested here.</p><button data-connect="share">Export or share current file</button>`;
+    const links = { account: 'https://chatgpt.com', auth: 'https://learn.chatgpt.com/docs/auth', remote: 'https://developers.openai.com/blog/mastering-codex-remote-for-engineering' };
+    for (const button of content.querySelectorAll('[data-connect]')) button.onclick = async () => {
+      try {
+        const action = button.dataset.connect;
+        if (action === 'copy') { await navigator.clipboard.writeText('codex login --device-auth'); app.notice('Copied. Run this on your development computer.'); }
+        else if (action === 'share') { dialog.close(); await app.run('mobile-share'); }
+        else await window.yhwh.call('external', links[action]);
+      } catch (error) { app.notice(error.message); }
+    };
+  });
+  command('burnt', 'Connect YHWH · Codex setup', () => app.run('mobile-connect'));
+  command('chat', 'Talk to YHWH · connect Codex', () => app.run('mobile-connect'));
+  command('leave-world', 'Leave folder root', async () => {
+    const tab = app.active(); tab.initialRoot = null; Object.assign(tab, await window.yhwh.call('world:leave', tab.id));
+    tab.history = [tab.cwd]; tab.historyIndex = 0; await app.navigate(tab.cwd);
+  });
+  command('mobile-root', 'Use this folder as /', async () => {
+    const tab = app.active(); Object.assign(tab, await window.yhwh.call('world:enter', tab.id, tab.cwd));
+    tab.history = [tab.cwd]; tab.historyIndex = 0; await app.refresh(); app.notice('This folder is now /. Leave the folder root to return.');
+  });
   command('mobile-share', 'Export or share file', () => app.active().file ? window.yhwh.call('file:external', app.active().file.path) : app.notice('Open and save a file first.'));
   command('mobile-import', 'Import files from device', () => {
     const input = document.createElement('input'); input.type = 'file'; input.multiple = true;

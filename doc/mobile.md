@@ -29,3 +29,10 @@ app to load the new code. Each step must succeed before the next runs. Respect
 adb's `ANDROID_SERIAL` selection; do not silently pick among multiple devices.
 This workflow needs no Android Studio, emulator or store account. It must not
 uninstall the app or clear the phone's workspace to deploy an update.
+
+The Initial is the mobile in-app command environment. Its runtime and touch UI
+are shared with desktop/Three; aliases and gestures are readable `.initialrc`
+text, Words are ordinary `~/bin` files, and disk writes retain version checks.
+Use [initial.md](initial.md) for its syntax and invariants. Mobile pseudo chroot
+is per-tab navigation into an app-owned folder, never a privilege boundary.
+Codex connection UI remains an honest setup guide until a service is connected.
