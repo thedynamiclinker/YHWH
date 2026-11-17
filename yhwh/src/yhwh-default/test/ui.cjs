@@ -339,6 +339,8 @@ process.stdin.on('end', () => {
     await page.evaluate(() => window.YHWH.active().terminal.focus());
     await page.keyboard.type("printf 'SYNC:%s\\n' \"$PWD\""); await page.keyboard.press('Enter');
     await page.waitForFunction(directory => { const t = window.YHWH.active().terminal; for (let i = 0; i < t.buffer.active.length; i++) if (t.buffer.active.getLine(i)?.translateToString().includes(`SYNC:${directory}`)) return true; return false; }, directory);
+    await require('../../../test/terminal-layout.cjs')(page, app, path.join(artifacts, '17-terminal-docking.png'));
+    console.log('✓ terminal docking, compact sizing, nested drops, hidden ancestors, recovery and real PTY size');
     await page.keyboard.press('Control+Shift+b'); await page.waitForFunction(() => window.YHWH.active().expanded === 'terminal'); assert.equal(await page.locator('#document').isVisible(), false); assert.equal(await page.locator('#files').isVisible(), true);
     await page.keyboard.press('Control+Shift+b');
     await page.keyboard.press('Control+t'); await page.waitForFunction(() => window.YHWH.tabs.length === 2);
@@ -478,6 +480,8 @@ process.stdin.on('end', () => {
     console.log('✓ ordered night letters, exact character copy, clickable source, spacing and persisted read state');
     await require('../../../test/startup-inbox.cjs')(page, Object.fromEntries(['night', 'keyboard', 'settings', 'yahoo'].map(name => [name, path.join(artifacts, `15-startup-${name}.png`)])));
     console.log('✓ overnight startup arc, legacy sender, hidden block setting, alternate senders, master mute and persistence');
+    await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, '16-seedis.png'));
+    console.log('✓ midnight timer, suspended-app cutoff, seedis envelope, Markdown, footnote, bundled attachment and persistence');
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);

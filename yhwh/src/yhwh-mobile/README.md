@@ -142,7 +142,11 @@ xcodebuild -project yhwh/src/yhwh-mobile/ios/App/App.xcodeproj \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
-The native launcher icons use the same 曰 glyph as the desktop launcher. The iOS project includes
+The native launcher icons use the installed desktop's third-mountain artwork;
+Android provides round and adaptive variants, while iOS applies its own mask.
+Regenerate the checked-in desktop and native exports together with
+`node yhwh/bin/icons.cjs` from the vault root (ImageMagick required only for
+regeneration). The iOS project includes
 the [Filesystem timestamp privacy declaration](https://capacitorjs.com/docs/apis/filesystem)
 and enables Files access to its Documents directory. Android's file provider
 shares only workspace files and cache files; no storage-wide permission is needed.

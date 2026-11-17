@@ -11,6 +11,7 @@ import { showHotkeys } from './hotkeys.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
+const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
 
 const bridge = window.yhwh;
 const $ = selector => document.querySelector(selector);
@@ -724,13 +725,13 @@ function receive(id, midnightOnly = false) {
   const midnight = nextMidnightLetter(presence, options);
   if (midnightOnly && !midnight) return;
   // An address change follows a block; the name joke keeps its existing order.
-  const letter = midnight || (startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id));
+  const letter = midnight || (startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id && letter.id !== 'seedis'));
   if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
   const sender = senderFor(presence, letter);
   if (!sender) return;
   presence.letters.push({ id: letter.id, sender, read: false, at: options.now }); presence.lastLetter = options.now; savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
-// No background delivery or catch-up burst: each later letter needs actual use.
+// Ordinary letters need actual use; seedis also has a visible-app midnight timer.
 document.addEventListener('click', () => receive());
 document.addEventListener('keydown', () => receive());
 // Wake at local midnight even if the user isn't typing. Hidden/suspended apps
@@ -772,7 +773,7 @@ function renderInbox() {
     const source = letter.source;
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const recipients = `<span>to ${escape(letter.to || 'Abe')}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
-    const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachment)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
+    const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
     host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
     host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
     verseUI.hydrate(host);

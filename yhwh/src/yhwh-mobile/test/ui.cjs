@@ -105,6 +105,7 @@ async function main() {
       await page.evaluate(() => window.YHWH.run('save'));
       await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, `${device.name}-night-name.png`));
       await require('../../../test/startup-inbox.cjs')(page, Object.fromEntries(['night', 'keyboard', 'settings', 'yahoo'].map(name => [name, path.join(artifacts, `${device.name}-startup-${name}.png`)])));
+      await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, `${device.name}-seedis.png`));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery.`);

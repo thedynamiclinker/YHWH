@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { primarySender, alternateSenders, letters, startNight, nextStartupLetter, senderFor } = require('../lib/inbox.cjs');
+const { primarySender, alternateSenders, letters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, senderFor } = require('../lib/inbox.cjs');
 const { canReceiveLetter, letterInterval } = require('../lib/presence.cjs');
 const words = require('../etc/default/words.json');
 const at = (hour, minute = 0, day = 15) => new Date(2026, 10, day, hour, minute).getTime();
@@ -72,4 +72,38 @@ test('all authored mail has editable text; the breakdown and Yahoo acquisition r
   assert.match(words.letterNightForever, /forenbevf/);
   assert.match(words.letterNightKeyboard, /jst yue n me{30,}/);
   assert.match(words.letterBlockedYahoo, /nous, 二.*YAHWOOO!/s);
+});
+
+test('seedis is eligible only in the local midnight minute, once, respecting mail controls and spacing', () => {
+  const state = { letters: [] };
+  for (const now of [at(23, 59), at(0, 1), at(1), at(12)]) assert.equal(nextMidnightLetter(state, { now }), undefined);
+  assert.equal(nextMidnightLetter(state, { now: at(0) }), midnightLetter);
+  assert.equal(nextMidnightLetter(state, { now: at(0) + 59999 }), midnightLetter);
+  for (const options of [{ inbox: false }, { theme: 'dawkins' }, { theme: 'nietzsche' }]) {
+    assert.equal(nextMidnightLetter(state, { now: at(0), ...options }), undefined);
+  }
+  assert.equal(nextMidnightLetter({ ...state, blockedYhwh: true }, { now: at(0) }), undefined);
+  assert.equal(nextMidnightLetter({ ...state, lastLetter: at(23, 59, 14) }, { now: at(0) }), undefined);
+  const persisted = JSON.parse(JSON.stringify({ letters: [{ id: 'seedis', at: at(0), read: true }] }));
+  assert.equal(nextMidnightLetter(persisted, { now: at(0, 0, 16) }), undefined);
+  assert.equal(midnightLetter.sender, primarySender);
+  assert.equal(midnightLetter.to, 'ʾbe');
+  assert.deepEqual(midnightLetter.cc, ['𐤀be', 'אbe', 'Abe', 'abe']);
+  assert.deepEqual(midnightLetter.bcc, ['ew']);
+});
+
+test('the next midnight follows local calendar days across DST and fractional UTC offsets', () => {
+  const { spawnSync } = require('node:child_process');
+  for (const [TZ, now, expected] of [
+    ['America/Chicago', '2026-03-08T06:30:00Z', '2026-03-09T05:00:00.000Z'],
+    ['America/Chicago', '2026-11-01T05:30:00Z', '2026-11-02T06:00:00.000Z'],
+    ['Asia/Kathmandu', '2026-11-15T17:00:00Z', '2026-11-15T18:15:00.000Z'],
+    ['UTC', '2026-11-15T23:59:59Z', '2026-11-16T00:00:00.000Z'],
+  ]) {
+    const program = `const { nextMidnight } = require(${JSON.stringify(require.resolve('../lib/inbox.cjs'))}); process.stdout.write(new Date(nextMidnight(Date.parse(${JSON.stringify(now)}))).toISOString());`;
+    const result = spawnSync(process.execPath, ['-e', program], { env: { ...process.env, TZ }, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, expected, TZ);
+  }
+  assert.equal(nextMidnight(at(0)), at(0, 0, 16));
 });

@@ -37,7 +37,7 @@ for (const [density, scale] of Object.entries({ mdpi: 1, hdpi: 1.5, xhdpi: 2, xx
   const directory = path.join(res, `mipmap-${density}`);
   for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) render(iconSVG(false, { size: 48 * scale }), path.join(directory, name));
   // Adaptive icons have a 108dp canvas and a central 66dp safe area.
-  const foreground = `<svg xmlns="http://www.w3.org/2000/svg" width="${108 * scale}" height="${108 * scale}" viewBox="0 0 108 108"><svg x="21" y="21" width="66" height="66" viewBox="0 0 1024 1024">${iconSVG(false).replace(/^<svg[^>]*>|<\/svg>\s*$/g, '')}</svg></svg>`;
+  const foreground = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${108 * scale}" height="${108 * scale}" viewBox="0 0 108 108"><svg x="21" y="21" width="66" height="66" viewBox="0 0 1024 1024">${iconSVG(false).replace(/^<svg[^>]*>|<\/svg>\s*$/g, '')}</svg></svg>`;
   render(foreground, path.join(directory, 'ic_launcher_foreground.png'));
 }
 render(iconSVG(false, { opaque: true }), path.join(root, 'src/yhwh-mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'));
