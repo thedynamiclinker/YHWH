@@ -1,5 +1,5 @@
-import { EditorView, WidgetType, Decoration } from '@codemirror/view';
-import { EditorState, StateField, Compartment } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { EditorState, Compartment } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { LanguageDescription, HighlightStyle, defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
@@ -28,58 +28,11 @@ export function renderMarkdown(text, filename) {
   }
   return template.innerHTML;
 }
-const language = new Compartment(), live = new Compartment();
+const language = new Compartment();
 const markdownHeadings = HighlightStyle.define([
   { tag: tags.heading2, class: 'cm-header-2' },
   { tag: tags.heading3, class: 'cm-header-3' },
 ], { scope: markdownLanguage });
-
-class MarkdownBlock extends WidgetType {
-  constructor(text, from) { super(); this.text = text; this.from = from; }
-  eq(other) { return this.text === other.text && this.from === other.from; }
-  toDOM(view) {
-    const element = document.createElement('div');
-    element.className = 'markdown-rendered live-block';
-    element.innerHTML = renderMarkdown(this.text, view.dom.closest('.document-content')?.dataset.filename);
-    element.addEventListener('mousedown', event => {
-      if (event.target.closest('video')) {
-        event.stopPropagation();
-        return;
-      }
-      if (event.target.closest('a')) {
-        // Keep the widget alive until click opens the link. Moving the editor
-        // selection here would replace it with source before click arrives.
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-      event.preventDefault();
-      view.dispatch({ selection: { anchor: Math.min(this.from, view.state.doc.length) }, scrollIntoView: true });
-      view.focus();
-    });
-    return element;
-  }
-  ignoreEvent(event) { return !!event.target.closest?.('a, video'); }
-}
-
-function preview(state) {
-  const text = state.doc.toString(), decorations = [];
-  let offset = 0;
-  for (const token of marked.lexer(text)) {
-    const from = offset;
-    offset += token.raw.length;
-    const to = offset - (token.raw.match(/\n*$/)?.[0].length || 0);
-    if (to <= from || token.type === 'space') continue;
-    const editing = state.selection.ranges.some(range => range.from <= to && range.to >= from);
-    if (!editing) decorations.push(Decoration.replace({ widget: new MarkdownBlock(token.raw, from), block: true }).range(from, to));
-  }
-  return Decoration.set(decorations, true);
-}
-const livePreview = StateField.define({
-  create: preview,
-  update(value, transaction) { return transaction.docChanged || transaction.selection ? preview(transaction.state) : value; },
-  provide: field => EditorView.decorations.from(field),
-});
 
 const editorTheme = EditorView.theme({
   '&': { height: '100%', color: 'var(--text)', background: 'transparent', fontSize: 'var(--editor-size)' },
@@ -99,25 +52,25 @@ export async function createEditor(parent, file, changed, cursor) {
     parent,
     state: EditorState.create({ doc: file.content.replace(/\r\n/g, '\n'), extensions: [
       basicSetup, editorTheme, EditorView.lineWrapping,
-      language.of([]), live.of([]),
+      language.of([]),
       EditorView.updateListener.of(update => {
         if (update.docChanged) changed(view.state.doc.toString());
         if (update.selectionSet || update.docChanged) { const pos = view.state.selection.main.head; const line = view.state.doc.lineAt(pos); cursor(line.number, pos - line.from + 1); }
       }),
     ] }),
   });
-  await setLanguage(view, file.language, file.mode !== 'source');
+  await setLanguage(view, file.language);
   return view;
 }
 
-export async function setLanguage(view, name, pretty) {
+export async function setLanguage(view, name) {
   const description = LanguageDescription.matchLanguageName(languages, name, true);
   const support = name === 'markdown' ? markdown({ codeLanguages: languages }) : description ? await description.load() : [];
   if (!view.dom.isConnected) return;
   // A custom highlighter replaces basicSetup's fallback; retain its existing
   // styles for inline Markdown and fenced code alongside the heading classes.
   const highlighting = name === 'markdown' ? [syntaxHighlighting(defaultHighlightStyle), syntaxHighlighting(markdownHeadings)] : [];
-  view.dispatch({ effects: [language.reconfigure([support, highlighting]), live.reconfigure(name === 'markdown' && pretty ? [livePreview] : [])] });
+  view.dispatch({ effects: [language.reconfigure([support, highlighting])] });
 }
 
 export async function formatText(text, name) {
@@ -131,7 +84,7 @@ export async function formatText(text, name) {
     const html = await import('prettier/plugins/html');
     return prettier.format(text, { parser: 'html', plugins: [html.default || html] });
   }
-  throw new Error('Pretty formatting is available for JSON and HTML. Markdown has Live Preview.');
+  throw new Error('Pretty formatting is available for JSON and HTML. Markdown has a separate preview.');
 }
 
 export function languageNames() { return ['plain', ...new Set(['markdown', 'shell', ...languages.map(item => item.name.toLowerCase())])].sort(); }

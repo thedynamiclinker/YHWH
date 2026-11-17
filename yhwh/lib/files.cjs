@@ -4,6 +4,9 @@ const { execFile } = require('node:child_process');
 const { promisify, TextDecoder } = require('node:util');
 const exec = promisify(execFile);
 const { fileType } = require('./file-type.cjs');
+const { pathToFileURL } = require('node:url');
+const { createHash } = require('node:crypto');
+const version = (stat, bytes) => `${stat.mtimeMs}:${stat.size}:${createHash('sha256').update(bytes).digest('hex')}`;
 
 async function list(directory, hidden = false) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -33,23 +36,23 @@ async function read(filename, config) {
   try { const buffer = Buffer.alloc(Math.min(stat.size, 8192)); const { bytesRead } = await handle.read(buffer); prefix = buffer.subarray(0, bytesRead); } finally { await handle.close(); }
   const type = await detect(filename, prefix, config);
   const result = { path: filename, name: path.basename(filename), size: stat.size, modified: stat.mtimeMs, ...type };
-  const image = type.mime.startsWith('image/') && type.mime !== 'image/svg+xml';
-  if (image && stat.size < 16 * 1024 * 1024) return { ...result, kind: 'image', data: `data:${type.mime};base64,${(await fs.readFile(filename)).toString('base64')}` };
-  if (prefix.includes(0) || stat.size > 16 * 1024 * 1024 || type.mime === 'application/pdf') return { ...result, kind: 'binary' };
+  if (['image', 'video', 'audio'].includes(type.viewer)) return { ...result, kind: type.viewer, url: pathToFileURL(filename).href };
+  if (['pdf', 'spreadsheet'].includes(type.viewer) && stat.size <= 64 * 1024 * 1024) return { ...result, kind: type.viewer, bytes: new Uint8Array(await fs.readFile(filename)) };
+  if (prefix.includes(0) || stat.size > 16 * 1024 * 1024 || type.viewer === 'pdf' || type.viewer === 'spreadsheet') return { ...result, kind: 'binary' };
   try {
-    const content = new TextDecoder('utf-8', { fatal: true }).decode(await fs.readFile(filename));
-    return { ...result, kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' };
+    const bytes = await fs.readFile(filename), content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return { ...result, modified: version(stat, bytes), kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' };
   } catch (error) { if (error.code === 'ERR_ENCODING_INVALID_ENCODED_DATA') return { ...result, kind: 'binary' }; throw error; }
 }
 
 async function save(filename, content, modified, force = false) {
   const stat = await fs.stat(filename).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
   if (!force && !stat && modified != null) throw new Error('This file was removed from disk. Use Save as to keep your edits, or explicitly overwrite from the file menu.');
-  if (!force && stat && modified != null && stat.mtimeMs !== modified) throw new Error('This file changed on disk. Reload it or explicitly overwrite from the file menu.');
+  if (!force && stat && modified != null && (typeof modified === 'number' ? stat.mtimeMs !== modified : version(stat, await fs.readFile(filename)) !== modified)) throw new Error('This file changed on disk. Reload it or explicitly overwrite from the file menu.');
   // Write through the existing file so symbolic links, permissions, and hard
   // links keep their normal Unix meaning. No per-directory metadata is created.
   await fs.writeFile(filename, content, 'utf8');
-  return { modified: (await fs.stat(filename)).mtimeMs };
+  return { modified: version(await fs.stat(filename), Buffer.from(content, 'utf8')) };
 }
 
 async function create(filename, directory = false) {

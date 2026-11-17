@@ -4,4 +4,4 @@ Promise.all([esbuild.build({ absWorkingDir: root, entryPoints: ['src/yhwh-defaul
   format: 'esm', outdir: output('default/ui'), sourcemap: true, target: 'chrome130', loader: { '.ttf': 'file', '.png': 'file' },
 }), esbuild.build({ absWorkingDir: root, entryPoints: ['src/yhwh-default/app/preload.cjs'], bundle: true,
   platform: 'node', format: 'cjs', external: ['electron'], outfile: output('default/ui/preload.cjs'), target: 'node22',
-})]).catch(() => process.exitCode = 1);
+}), require('../viewer-assets.cjs')(output('default/ui'))]).catch(() => process.exitCode = 1);

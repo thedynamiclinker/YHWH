@@ -64,7 +64,8 @@ The optional `// command:` line labels the action. `// when: files`,
 `// when: terminal`, or `// when: editor` limits it to the file list, terminal, or editor; omission
 means any focus. The API includes the existing plugin API (`run`, `notice`,
 `refresh`, command/event registration and interface helpers), plus `active`,
-`newTab`, and `openFile`. Modules are loaded through a blob URL; relative
+`newTab`, and `openFile`. Desktop key modules also receive `keyContext`, the
+focus at dispatch (`files`, `terminal`, `editor`, or an empty string). Modules are loaded through a blob URL; relative
 imports beside the source file are not resolved. There is no Node integration
 in the renderer. Native work belongs in an executable or the existing explicit
 bridge operations.
@@ -153,9 +154,12 @@ Ctrl+Shift+B maximizes the terminal vertically within the main area while
 leaving the file manager's visibility unchanged. Ctrl+E reaches the terminal's
 readline editing; it is no longer an app shortcut. Ctrl+Shift+E toggles files.
 
-Ctrl+T opens a tab; Ctrl+W closes it; Ctrl+Shift+T restores closed directory/file
-tabs in reverse closing order. Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PageDown /
-Ctrl+PageUp cycle. Ctrl+1–8 select positions; Ctrl+9 selects the last tab.
+Ctrl+T opens an app tab; Ctrl+W closes it; Ctrl+Shift+T restores closed directory/file
+tabs in reverse closing order outside the terminal. Ctrl+Tab / Ctrl+Shift+Tab
+and Ctrl+PageDown / Ctrl+PageUp cycle app tabs outside the terminal and shell
+tabs inside it. Ctrl+Shift+backtick opens a shell tab; Ctrl+Shift+T does the same
+inside the terminal. Ctrl+Shift+W closes the focused shell tab.
+Ctrl+1–8 select app tab positions; Ctrl+9 selects the last tab.
 Ctrl+Shift+PageUp / PageDown move the active tab. Middle-click closes a tab;
 dragging reorders it. Closing a background tab retains the active tab; closing
 the final desktop tab closes the window after the normal unsaved-file check.

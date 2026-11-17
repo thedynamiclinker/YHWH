@@ -7,5 +7,6 @@ const callChannels = [
   'choose:save', 'settings:save', 'config:open', 'config:reload', 'words:save', 'plugins', 'circus',
   'external', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
   'verse:random', 'verse:commentary', 'keys:run', 'keys:shell', 'keys:save',
+  'terminal:new', 'terminal:activate', 'terminal:close',
 ];
 module.exports = { callChannels };

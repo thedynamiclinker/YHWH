@@ -62,6 +62,12 @@ class Interface {
     this.shells = new Shells({ YHWH_INTERFACE: 'tty', YHWH_TTY_SOCKET: socket || '' });
     this.shells.on('render', () => this.schedule());
     this.shells.on('failure', message => this.notice(message));
+    this.shells.on('exit', id => {
+      const tab = workspace.tabs.find(tab => tab.id === id); if (!tab) return;
+      this.shells.closeTab(id); tab.showTerminal = false;
+      if (tab === this.tab && this.focus === 'terminal') this.setFocus('files');
+    });
+    workspace.on('autosave-error', message => this.notice(`Autosave paused: ${message}`));
     this.shells.on('cwd', (id, cwd) => {
       const tab = workspace.tabs.find(tab => tab.id === id);
       if (tab && cwd !== tab.cwd && !tab.worldRoot) this.safe(async () => { await workspace.navigate(cwd, tab, { fromShell: true }); if (tab === workspace.active) this.watch(); });
@@ -86,7 +92,7 @@ class Interface {
   safe(action) { return Promise.resolve().then(action).catch(error => this.notice(error.message)); }
   schedule() { if (!this.timer && !this.closed) this.timer = setTimeout(() => { this.timer = null; this.render(); }, 25); }
   notice(message) { this.message = clean(message); clearTimeout(this.messageTimer); this.messageTimer = setTimeout(() => { this.message = ''; this.schedule(); }, 8000); this.schedule(); }
-  setFocus(name) { this.focus = name; if (name === 'files') this.tab.showFiles = true; if (name === 'terminal') this.tab.showTerminal = true; ({ files: this.list, editor: this.preview, terminal: this.terminal })[name].focus(); this.schedule(); }
+  setFocus(name) { this.focus = name; if (name === 'files') this.tab.showFiles = true; if (name === 'terminal') { if (!this.shells.sessions.has(this.tab.id)) this.shells.start(this.tab); this.tab.showTerminal = true; } ({ files: this.list, editor: this.preview, terminal: this.terminal })[name].focus(); this.schedule(); }
   async start(target) { await this.workspace.newTab(target); this.watch(); this.setFocus('files'); this.render(); }
   watch() {
     this.watcher?.close(); clearTimeout(this.watchTimer);
@@ -206,6 +212,7 @@ class Interface {
     this.preview.setContent(content); this.preview.setScroll(0);
   }
   async guard(tab = this.tab) {
+    await tab.saveQueue?.catch(() => {});
     if (!tab.document?.dirty) return true;
     const choice = await this.pick('Unsaved changes', ['Save', 'Discard', 'Cancel']);
     if (choice === 0) { await this.save(tab); return !tab.document.dirty; }
@@ -230,6 +237,7 @@ class Interface {
     if (this.workspace.tabs.length === 1) return this.quit();
     if (!await this.guard()) return;
     this.closedTabs.push({ cwd: this.tab.cwd, file: this.tab.document?.file.path, index: this.workspace.index });
+    clearTimeout(this.tab.autosaveTimer);
     this.shells.closeTab(this.tab.id); this.workspace.tabs.splice(this.workspace.index, 1); await this.switchTab(Math.max(0, this.workspace.index - 1));
   }
   async reopenTab() {
@@ -252,6 +260,7 @@ class Interface {
         // Preserve unsaved buffers if the surrounding terminal disappears.
         this.workspace.state.recovery = this.workspace.tabs.filter(tab => tab.document?.dirty).map(tab => ({ path: tab.document.file.path, text: tab.document.text }));
       }
+      for (const tab of this.workspace.tabs) clearTimeout(tab.autosaveTimer);
       await this.workspace.persist(); this.closed = true;
       clearTimeout(this.timer); clearTimeout(this.messageTimer); clearTimeout(this.watchTimer); this.watcher?.close();
       process.off('SIGTERM', this.exitSignal); process.off('SIGHUP', this.exitSignal);
@@ -337,7 +346,7 @@ class Interface {
     if (full === 'C-s') return this.save();
     if (full === 'C-o') { const filename = await this.prompt('Open file or directory', tab.cwd + path.sep); if (filename) { const target = path.resolve(tab.cwd, filename); if ((await fs.stat(target)).isDirectory()) await this.navigate(target); else await this.open(target); } return; }
     if (full === 'C-n') return this.create(false);
-    if (full === 'C-r') { const modes = ['hybrid', 'reading', 'source']; tab.mode = modes[(modes.indexOf(tab.mode) + 1) % modes.length]; this.schedule(); return; }
+    if (full === 'C-r') { tab.mode = tab.mode === 'source' ? 'reading' : 'source'; this.schedule(); return; }
     if (full === 'C-l') { const target = await this.prompt('Go to directory', tab.cwd); if (target) await this.navigate(path.resolve(tab.cwd, target)); return; }
     if (this.focus === 'editor' && tab.document) {
       if (tab.mode === 'reading') { if (['up','k'].includes(full)) tab.document.top = Math.max(0, tab.document.top - 1); if (['down','j'].includes(full)) tab.document.top++; if (full === 'pageup') tab.document.top = Math.max(0, tab.document.top - 10); if (full === 'pagedown') tab.document.top += 10; }
@@ -466,8 +475,7 @@ class Interface {
   async trash() {
     const targets = this.selectedPaths(); if (!targets.length) return;
     if (await this.pick(`Move ${targets.length} item(s) to desktop Trash?`, ['Cancel', 'Move to Trash']) !== 1) return;
-    const { execFile } = require('node:child_process');
-    for (const filename of targets) await new Promise((resolve, reject) => execFile('gio', ['trash', '--', filename], error => error ? reject(error) : resolve()));
+    for (const filename of targets) await require('../../lib/trash.cjs').trash(filename);
     this.tab.selected.clear(); await this.workspace.refresh();
   }
   async external(target) {
@@ -542,7 +550,7 @@ class Interface {
     await this.text('Take a walk', steps.map(([id, label]) => `${state.steps.includes(id) ? '[x]' : '[ ]'} ${label}`).join('\n') + '\n\nProgress follows real actions. Pause from the command palette.');
   }
   async help() {
-    await this.text('el shaddai · keyboard', `shaddai: ${this.workspace.words.shaddai}\n\nFiles: h/j/k/l or arrows; Enter open; / filter; . hidden\nSpace select; y copy; x cut; p paste; a file; A directory\nF2 rename; D Trash (asks first); g/G first/last\n\nCtrl+P commands; : command; Ctrl+O open; Ctrl+N new\nCtrl+S save; Ctrl+F find; Ctrl+Z undo; Ctrl+Y redo\nCtrl+R hybrid / reading / source; Escape files\nCtrl+B shell; Shift+Tab cycle focus; Tab indents in editor\nCtrl+T new tab; Ctrl+W close; Ctrl+PageUp/PageDown switch tabs\nCtrl+1–8 / Ctrl+9 select tab; Ctrl+Shift+T reopen (terminal permitting)\nCtrl+L clears visible shell, otherwise edits location\nShell: normal keys including Ctrl+C/D; Shift+PageUp scrollback\nCtrl+Q or F10 quit; q quits from files; F1 help\n\n:cd PATH · :open PATH · :mkdir PATH · :set name=value\n:! COMMAND · Ctrl+P exposes settings, chat, verses, worlds,\ninbox, copy, offerings and the executable English workflow.\n\nYour terminal controls its own font and colors. Browser DOM\nplugins and spatial effects stay in the desktop interface.`);
+    await this.text('el shaddai · keyboard', `shaddai: ${this.workspace.words.shaddai}\n\nFiles: h/j/k/l or arrows; Enter open; / filter; . hidden\nSpace select; y copy; x cut; p paste; a file; A directory\nF2 rename; D Trash (asks first); g/G first/last\n\nCtrl+P commands; : command; Ctrl+O open; Ctrl+N new\nCtrl+S save; Ctrl+F find; Ctrl+Z undo; Ctrl+Y redo\nCtrl+R source / reading; Escape files\nCtrl+B shell; Shift+Tab cycle focus; Tab indents in editor\nCtrl+T new tab; Ctrl+W close; Ctrl+PageUp/PageDown switch tabs\nCtrl+1–8 / Ctrl+9 select tab; Ctrl+Shift+T reopen (terminal permitting)\nCtrl+L clears visible shell, otherwise edits location\nShell: normal keys including Ctrl+C/D; Shift+PageUp scrollback\nCtrl+Q or F10 quit; q quits from files; F1 help\n\n:cd PATH · :open PATH · :mkdir PATH · :set name=value\n:! COMMAND · Ctrl+P exposes settings, chat, verses, worlds,\ninbox, copy, offerings and the executable English workflow.\n\nYour terminal controls its own font and colors. Browser DOM\nplugins and spatial effects stay in the desktop interface.`);
   }
   commandList() {
     const command = (id, title, run) => [id, title, run];
@@ -574,7 +582,7 @@ class Interface {
       command('expand-files','Expand / restore files', () => { this.tab.expanded = this.tab.expanded === 'files' ? '' : 'files'; this.setFocus('files'); }),
       command('expand-terminal','Expand / restore shell', () => { this.tab.expanded = this.tab.expanded === 'terminal' ? '' : 'terminal'; this.setFocus('terminal'); }),
       command('restart-shell','Restart shell in current directory', () => { this.shells.closeTab(this.tab.id); this.shells.start(this.tab); this.setFocus('terminal'); }),
-      command('view-mode','Cycle hybrid / reading / source', () => this.key('', { full: 'C-r' })),
+      command('view-mode','Cycle source / reading', () => this.key('', { full: 'C-r' })),
       command('settings','Settings · directory scopes and presence', () => this.settings()), command('edit-config','Edit hierarchical rc', () => this.editConfig()),
       command('shaddai','shaddai · definition / edit', async () => { if (await this.text('shaddai', this.workspace.words.shaddai, { edit: true }) === 'edit') await this.editDefinition(); }),
       command('edit-shaddai','Edit shaddai definition', () => this.editDefinition()),

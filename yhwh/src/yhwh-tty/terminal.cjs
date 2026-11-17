@@ -13,7 +13,7 @@ class Shells extends EventEmitter {
     this.host.on('message', message => {
       const session = this.sessions.get(message.id); if (!session) return;
       if (message.type === 'data') session.term.write(message.data, () => this.emit('render', message.id));
-      else if (message.type === 'exit') { session.exited = true; this.emit('render', message.id); }
+      else if (message.type === 'exit') { session.exited = true; this.emit('exit', message.id); this.emit('render', message.id); }
       else if (message.type === 'cwd') this.emit('cwd', message.id, message.cwd);
       else if (message.type === 'error') this.emit('failure', message.message);
     });

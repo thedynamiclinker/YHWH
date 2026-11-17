@@ -74,8 +74,10 @@
     "lucide": "^0.468.0",
     "marked": "^17.0.1",
     "node-pty": "^1.1.0",
+    "pdfjs-dist": "^6.5.438",
     "prettier": "^3.6.2",
-    "three": "^0.185.0"
+    "three": "^0.185.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.2",
@@ -109,7 +111,9 @@
     "node-pty",
     "prettier",
     "three",
-    "electron"
+    "electron",
+    "pdfjs-dist",
+    "xlsx"
   ],
   "allowScripts": {
     "esbuild": true,

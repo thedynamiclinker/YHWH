@@ -214,3 +214,15 @@ plugin framework. It doesn't modify the source apps in `yhwh/src/company`, `yhwh
 `yhwh-three`. These constraints keep it an ordinary installable plugin.
 
 Code: MIT. Phoenician font: SIL OFL 1.1, see `assets/OFL.txt`.
+
+The navigator context menu includes Copy Full Path, Copy Relative Path (from the
+vault root), and confirmed Move to Trash through Obsidian’s file manager. Full
+filesystem paths require a host filesystem adapter. Window mode, built-in file
+viewers, native Markdown settings and terminal plugins remain owned by Obsidian;
+YHWH text views already autosave through its TextFileView API.
+
+The navigator supports dragging files and folders onto folders, breadcrumbs,
+the parent button or the list background to move them through Obsidian's file
+manager. Existing destinations and self/descendant moves are refused. On touch
+hosts without native dragging, use **Rename or move** in the context menu. PDF
+scrolling uses Obsidian's native viewer.

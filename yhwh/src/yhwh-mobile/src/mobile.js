@@ -159,8 +159,8 @@ export function installMobile(app, storage) {
   command('mobile-redo', 'Redo', () => { const editor = app.getEditor(); if (editor) { redo(editor); editor.focus(); } });
   command('mobile-hide-keyboard', 'Hide keyboard', () => document.activeElement?.blur());
 
-  // Recover unsaved work after the OS evicts the WebView. Saving remains
-  // explicit and recovery never overwrites the document on disk.
+  // Recover unsaved work after the OS evicts the WebView. Recovery pauses
+  // autosave until the draft has been reviewed and explicitly saved.
   let drafts;
   try { drafts = JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]'); } catch { drafts = []; }
   const pendingDrafts = new Map(drafts.map(draft => [draft.path, draft]));
@@ -185,6 +185,7 @@ export function installMobile(app, storage) {
           if (!await storage.stat(draft.path)) { app.notice('The original file is missing. Recreate it before recovering this draft.'); return; }
           if (!await app.openFile(draft.path, tab) || !tab.editor) return;
           tab.file.modified = draft.modified;
+          tab.autosaveError = 'Recovered draft: review and Save to resume autosave.';
           pendingDrafts.delete(draft.path);
           tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: draft.text } }); tab.editor.focus();
         } catch (error) { app.notice(error.message); }

@@ -6,7 +6,7 @@ const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const { output } = require('../../../lib/paths.cjs');
 const ui = output('mobile/ui'), artifacts = output('mobile/screenshots');
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.png': 'image/png' };
 async function main() {
   await fs.mkdir(artifacts, { recursive: true });
   const metadata = JSON.parse(await fs.readFile(output('mobile/metafile.json'), 'utf8'));
@@ -92,6 +92,7 @@ async function main() {
       assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /Saved from a phone/);
       // Recovery keeps the original on-disk content intact.
       await page.evaluate(() => {
+        window.YHWH.active().config.values.autosave = 'false';
         const editor = window.YHWH.getEditor(); editor.dispatch({ changes: { from: editor.state.doc.length, insert: 'Unsaved recovery draft' } });
         document.dispatchEvent(new Event('visibilitychange'));
       });
@@ -106,9 +107,29 @@ async function main() {
       await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, `${device.name}-night-name.png`));
       await require('../../../test/startup-inbox.cjs')(page, Object.fromEntries(['night', 'keyboard', 'settings', 'yahoo'].map(name => [name, path.join(artifacts, `${device.name}-startup-${name}.png`)])));
       await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, `${device.name}-seedis.png`));
+      const improvements = require('../../../test/interface-improvements-2.cjs');
+      const deviceArtifacts = path.join(artifacts, device.name); await fs.mkdir(deviceArtifacts, { recursive: true });
+      const pdfChooser = page.waitForEvent('filechooser');
+      await page.evaluate(() => window.YHWH.run('mobile-import'));
+      await (await pdfChooser).setFiles([{ name: 'scroll.pdf', mimeType: 'application/pdf', buffer: require('../../../test/viewer-fixtures.cjs')()['scroll.pdf'] }]);
+      await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Imported 1'));
+      await page.evaluate(() => window.YHWH.openFile('/YHWH/scroll.pdf'));
+      await improvements.pdf({ page, artifacts: deviceArtifacts });
+      try { await improvements.moves({ page, directory: '/YHWH', artifacts: deviceArtifacts, touch: true }); }
+      catch (error) {
+        console.error('Move UI state:', await page.evaluate(async () => {
+          const files = [];
+          async function walk(directory) {
+            for (const file of await window.yhwh.call('directory:list', window.YHWH.active().id, directory)) { files.push(file.path); if (file.directory) await walk(file.path); }
+          }
+          await walk('/YHWH');
+          return { files, toast: document.querySelector('#toast').textContent, tabs: window.YHWH.tabs.map(tab => ({ cwd: tab.cwd, file: tab.file?.path })) };
+        }));
+        await page.screenshot({ path: path.join(deviceArtifacts, 'failure.png') }); throw error;
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
-      await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery.`);
+      await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery, scrolling PDF and touch file moves.`);
     }
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }

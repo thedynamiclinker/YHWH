@@ -77,7 +77,7 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
   await files.create(filename); await fs.symlink(filename, alias); await fs.writeFile(other, 'other');
   const original = await files.read(alias); await files.save(alias, 'first', original.modified);
   assert.equal((await fs.lstat(alias)).isSymbolicLink(), true); assert.equal(await fs.readFile(filename, 'utf8'), 'first');
-  await assert.rejects(files.save(alias, 'bad', original.modified - 100), /changed on disk/);
+  await assert.rejects(files.save(alias, 'bad', original.modified + ':stale'), /changed on disk/);
   await assert.rejects(files.move(filename, other), /already exists/);
   assert.equal(await fs.readFile(other, 'utf8'), 'other');
   await fs.unlink(other);
@@ -107,7 +107,7 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
  });
  test('real shell cd and file-manager cd share cwd; navigation waits for a foreground command', { timeout: 12000 }, async t => {
   const base = await fixture(t), other = path.join(base, "quoted ' %20 # directory"); await fs.mkdir(other);
-  const child = spawn(process.execPath, [path.join(root, '../../bin/default/terminal-host.cjs')], { env: { ...process.env, YHWH_SHELL: '/bin/bash', YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' }, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const child = spawn(process.execPath, [path.join(root, '../../bin/default/terminal-host.cjs')], { env: { ...process.env, YHWH_SHELL: require('node:child_process').execFileSync('which', ['bash'], { encoding: 'utf8' }).trim(), YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' }, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
   t.after(() => { if (child.connected) child.disconnect(); });
   const messages = []; let stderr = ''; child.stderr.on('data', data => stderr += data); child.on('message', message => messages.push(message));
   async function until(predicate) { for (let i = 0; i < 150; i++) { if (predicate()) return; if (child.exitCode !== null) throw new Error(stderr || 'Shell host exited'); await new Promise(resolve => setTimeout(resolve, 40)); } throw new Error('Timed out waiting for shell event'); }

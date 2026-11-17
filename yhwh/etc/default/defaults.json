@@ -7,7 +7,7 @@
   "terminal_height": "240",
   "file_manager": "true",
   "terminal": "false",
-  "live_preview": "true",
+  "autosave": "true",
   "settings_fields": "theme,energy,font_size,show_hidden,bg,stylesheet,plugins",
   "ui_font_size": "16",
   "terminal_font_size": "15",

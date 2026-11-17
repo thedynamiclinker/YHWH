@@ -51,6 +51,24 @@ const { spawnSync } = require('node:child_process');
       await p.go('');
     });
     await page.screenshot({ path: path.join(screenshots, '01-navigator.png') });
+    await evaluate(async () => {
+      await app.vault.createFolder('Drag source'); await app.vault.createFolder('Drag destination');
+      await app.vault.create('Drag source/Dragged.md', 'Keep these contents');
+      await app.plugins.plugins.yhwh.go('');
+    });
+    const dragRow = name => page.locator('[data-type="yhwh-navigator"] .yhwh-file-row').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) });
+    await dragRow('Drag source').dragTo(dragRow('Drag destination'));
+    await page.waitForFunction(() => !!app.vault.getAbstractFileByPath('Drag destination/Drag source/Dragged.md'));
+    await evaluate(async () => { await app.plugins.plugins.yhwh.go('Drag destination/Drag source'); });
+    await dragRow('Dragged.md').dragTo(page.locator('[data-type="yhwh-navigator"] .yhwh-breadcrumbs').getByRole('button', { name: 'Vault root', exact: true }));
+    await page.waitForFunction(() => !!app.vault.getAbstractFileByPath('Dragged.md'));
+    assert.equal(await evaluate(() => app.vault.read(app.vault.getAbstractFileByPath('Dragged.md'))), 'Keep these contents');
+    await evaluate(async () => {
+      await app.vault.delete(app.vault.getAbstractFileByPath('Drag destination'), true);
+      await app.vault.delete(app.vault.getAbstractFileByPath('Dragged.md'));
+      await app.plugins.plugins.yhwh.go('');
+    });
+    console.log('✓ Navigator drags folders with descendants and moves files to vault-root breadcrumbs');
     await evaluate(async () => { await app.plugins.plugins.yhwh.toggleFilesFocus(); });
     assert.equal(await evaluate(() => app.workspace.getLeavesOfType('yhwh-navigator').length), 2);
     await evaluate(async () => { await app.plugins.plugins.yhwh.toggleFilesFocus(); });

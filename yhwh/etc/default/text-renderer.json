@@ -149,7 +149,7 @@
   "f5": "F5",
   "toggle-hidden-files": "Toggle hidden files",
   "ctrl-h-in-files-": "Ctrl+H (in files)",
-  "toggle-source-pretty-view": "Cycle hybrid / reading / source (format JSON / HTML)",
+  "toggle-source-pretty-view": "Toggle source / preview (format JSON / HTML)",
   "ctrl-shift-e": "Ctrl+Shift+E",
   "markdown-reading-view": "Markdown reading view",
   "reload-file-from-disk": "Reload file from disk",

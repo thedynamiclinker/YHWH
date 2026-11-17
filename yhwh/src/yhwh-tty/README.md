@@ -24,7 +24,7 @@ to files. Ctrl+P exposes all commands and F1 lists shortcuts.
 | New file / directory / rename / Trash | a, A, F2, D |
 | Open / save / new document | Ctrl+O, Ctrl+S, Ctrl+N |
 | Find / undo / redo | Ctrl+F, Ctrl+Z, Ctrl+Y |
-| Cycle Markdown hybrid / reading / source | Ctrl+R |
+| Toggle Markdown source / reading | Ctrl+R |
 | Toggle shell / files | Ctrl+B, Ctrl+Shift+E (terminal permitting) |
 | New / close / switch tabs | Ctrl+T, Ctrl+W, Alt+Left/Right |
 | Clear visible shell / enter location | Ctrl+L |
@@ -32,7 +32,7 @@ to files. Ctrl+P exposes all commands and F1 lists shortcuts.
 | Quit | Ctrl+Q, F10, q in files |
 
 The editor supports Unicode, multiline paste, cursor movement, undo/redo, search,
-explicit saves and save-as. It uses the desktop's actual file service: changed-on-
+autosave by default, explicit saves and save-as. Disable autosave with `:set autosave=false`; conflicts pause it for review. It uses the desktop's actual file service: changed-on-
 disk detection, permissions, symlinks, binary detection and move protection are
 shared. Replacing a dirty document, closing its tab and quitting ask about edits.
 Save-as refuses an existing destination; overwriting a changed file is a separate
@@ -57,7 +57,7 @@ when its backend fails. Payments open only a configured checkout after selection
 available from `:` in files. Browser DOM plugins, image rendering, spatial effects,
 and CodeMirror's rich editing widgets remain desktop features. Images/PDFs/binary
 files can open in the desktop's default application. Markdown reading mode is a
-plain terminal rendering; hybrid mode keeps editable source with heading colors.
+plain terminal rendering; source is the default and keeps heading colors. Exiting a shell hides it; focusing the terminal again starts a fresh one.
 
 `make tty-check` exercises models, file safety, paste, terminal emulation and a
 real PTY UI session. State is isolated in the tests; no real Codex work runs.

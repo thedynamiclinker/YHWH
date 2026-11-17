@@ -155,19 +155,22 @@ shares only workspace files and cache files; no storage-wide permission is neede
 
 | Feature | Android and iOS behavior |
 | --- | --- |
-| Editor, syntax, Markdown hybrid/reading/source, formatting, themes | Shared desktop renderer and editor |
+| Editor, syntax, Markdown source/preview, formatting, themes | Shared desktop renderer and editor |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |
-| Files, folders, rename, copy, explicit save, conflicts | Native Filesystem adapter; UTF-8/newlines retained; same-timestamp content changes detected |
+| Files, folders, move, rename, copy, autosave, explicit save, conflicts | Native Filesystem adapter; hold a file/folder for 450 ms, then drag onto a folder, `..` or blank space to move it; Move to folder picker also available; UTF-8/newlines retained; same-timestamp content changes detected |
 | Trash | Moves into hidden workspace `.Trash`; enable hidden files to recover |
 | Import / export / share | System file picker imports copies; native share sheet exports saved files; browser preview downloads |
+| Fullscreen | Native app content fills the window and respects safe areas; OS status/navigation controls remain under platform control |
+| Images, PDF, audio/video, Excel/ODS and CSV/TSV | Shared read-only viewers; continuously scrolling PDF pages with page/zoom controls; text/table toggle for CSV/TSV; PDF/workbooks and mobile media limited to 64 MiB, text to 16 MiB; platform codecs apply; oversized/unsupported formats use Export or share |
+| Copy paths | Full logical workspace path and path relative to the current directory; native private storage paths are not exposed |
 | Local Markdown images | Native WebView URLs into the app's workspace; remote images stay blocked by CSP |
 | Background / resume | Refreshes directory listings on resume; unsaved buffers remain; recovery drafts survive WebView eviction where local storage is available |
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
 | Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Unix terminal and shell navigation | Requires desktop process/PTY APIs; unavailable on mobile |
+| Unix terminal, terminal tabs/shortcuts and shell navigation | Requires desktop process/PTY APIs; unavailable on mobile |
 | Codex conversation | Requires the desktop executable/service; unavailable until a mobile service adapter is implemented |
 | World filesystem, Sinai/Horeb and fan mail | Desktop mounted source trees are not bundled; unavailable on mobile |
 | Circus, desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
@@ -181,8 +184,10 @@ Browser preview uses Capacitor's IndexedDB filesystem. Import preserves original
 and refuses existing destinations. Exports share the last saved file; save your
 buffer first. Uninstalling deletes local data, so keep exported backups.
 
-Recovery drafts never silently overwrite the disk. Recover a draft, review it,
-then save; if its disk version changed, normal conflict handling applies.
+Autosave is on by default, with a switch in Settings → Files & editor. Explicit
+Save and Save as remain available. Conflicts pause autosave rather than overwriting
+an external change. Recovery drafts pause autosave until reviewed and explicitly
+saved. Recover a draft, review it, then save; if its disk version changed, normal conflict handling applies.
 Draft recovery depends on available WebView storage and is not a backup system.
 
 ## Validation
@@ -204,6 +209,17 @@ signature verification, archive integrity, and exact equality between the APK's
 bundled UI and the shared build. The default and Three Electron UI suites and
 the repository's core test suite also passed. iOS native compilation and device
 testing have not been performed on this Linux host.
+
+The Obsidian plugin uses its host’s window, editor autosave and native viewers;
+it does not take over fullscreen or install a Unix terminal. Its navigator offers
+trash and both path-copy actions (absolute filesystem paths depend on the host).
+Its desktop navigator accepts file/folder drops onto folders, breadcrumbs, the
+parent button and list background through Obsidian's vault file manager. Touch
+dragging depends on the host; Rename or move remains available there.
+The TTY interface uses the terminal’s full screen, shared conflict-protected
+autosave, source/reading toggle and independent shells in its existing app tabs.
+Rich image/PDF/video rendering requires a graphical host; TTY opens those formats
+with the desktop viewer.
 
 ## Prefix keyboard system
 

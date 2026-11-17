@@ -20,11 +20,12 @@ class Document {
     return { row: before.length - 1, column: Array.from(before.at(-1)).length };
   }
   snapshot() { return { text: this.text, cursor: this.cursor }; }
-  restore(state) { this.text = state.text; this.cursor = state.cursor; }
+  restore(state) { this.text = state.text; this.cursor = state.cursor; this.onChange?.(); }
   replace(start, end, value) {
     this.undo.push(this.snapshot()); if (this.undo.length > 200) this.undo.shift(); this.redo = [];
     const points = this.points; points.splice(start, end - start, ...Array.from(value));
     this.text = points.join(''); this.cursor = start + Array.from(value).length;
+    this.onChange?.();
   }
   insert(value) { this.replace(this.cursor, this.cursor, value.replace(/\r\n?/g, '\n')); }
   backspace() { if (this.cursor) this.replace(this.cursor - 1, this.cursor, ''); }
@@ -108,20 +109,35 @@ class Workspace extends EventEmitter {
     const file = await files.read(filename, (await config.resolveConfig(filename)).values);
     if (file.kind !== 'text') return file;
     file.content = file.content.replace(/\r\n/g, '\n');
-    tab.document = new Document(file); tab.mode = file.language === 'markdown' ? 'hybrid' : 'source';
+    clearTimeout(tab.autosaveTimer);
+    tab.document = new Document(file); tab.mode = 'source'; tab.autosaveError = null;
+    const doc = tab.document; doc.onChange = () => this.scheduleSave(tab, doc);
     this.emit('change', tab); await this.work('house', 'open'); return file;
   }
-  async save(tab = this.active, { filename, force = false } = {}) {
+  scheduleSave(tab, doc = tab.document) {
+    clearTimeout(tab.autosaveTimer);
+    if (tab.document !== doc || !doc.dirty || tab.config.values.autosave === 'false' || tab.autosaveError) return;
+    tab.autosaveTimer = setTimeout(() => this.save(tab).catch(error => {
+      tab.autosaveError = error.message; this.emit('autosave-error', error.message);
+    }), 700);
+  }
+  save(tab = this.active, { filename, force = false } = {}) {
     const doc = tab.document; if (!doc) return;
-    const destination = filename ? path.resolve(tab.cwd, filename) : doc.file.path;
-    if (!destination) throw new Error('Choose a filename with Save as.');
-    if (filename && destination !== doc.file.path) {
-      await fs.lstat(destination).then(() => { throw new Error('A file with that name already exists.'); }, error => { if (error.code !== 'ENOENT') throw error; });
-    }
-    const content = doc.text.replace(/\n/g, doc.file.newline || '\n');
-    const result = await files.save(destination, content, destination === doc.file.path ? doc.file.modified : null, force);
-    doc.file = { ...doc.file, path: destination, name: path.basename(destination), modified: result.modified }; doc.saved = doc.text;
-    await this.refresh(tab); await this.work('bread', 'save');
+    clearTimeout(tab.autosaveTimer);
+    const operation = (tab.saveQueue || Promise.resolve()).catch(() => {}).then(async () => {
+      if (tab.document !== doc) return;
+      const destination = filename ? path.resolve(tab.cwd, filename) : doc.file.path;
+      if (!destination) throw new Error('Choose a filename with Save as.');
+      if (filename && destination !== doc.file.path) {
+        await fs.lstat(destination).then(() => { throw new Error('A file with that name already exists.'); }, error => { if (error.code !== 'ENOENT') throw error; });
+      }
+      const text = doc.text, content = text.replace(/\n/g, doc.file.newline || '\n');
+      const result = await files.save(destination, content, destination === doc.file.path ? doc.file.modified : null, force);
+      doc.file = { ...doc.file, path: destination, name: path.basename(destination), modified: result.modified }; doc.saved = text; tab.autosaveError = null;
+      await this.refresh(tab); await this.work('bread', 'save');
+      this.scheduleSave(tab, doc);
+    });
+    tab.saveQueue = operation; return operation;
   }
   async enterWorld(name) {
     const tab = this.active; tab.returnDirectory ||= tab.cwd; tab.worldRoot = await worlds.enter(name);

@@ -6,47 +6,54 @@ Build, install and launch commands are defined in [the application guide](../../
 
 ## Working in the app
 
-Each **app tab** owns one current directory, one persistent shell, and zero or one open document. There are no separate terminal tabs or editor tabs inside it. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell.
+The app opens fullscreen. Each **app tab** owns a current directory, zero or one document, and independent terminal tabs. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell. The terminal header has a + button and a close button for each shell.
 
 | Operation | Default shortcuts |
 | --- | --- |
 | Show/hide files | Ctrl+Shift+E |
 | Expand/restore files in the focus area | Ctrl+D |
 | Show/hide terminal | Ctrl+B, Ctrl+backtick, Ctrl+Alt+Shift+T |
+| New terminal tab | Ctrl+Shift+backtick; Ctrl+Shift+T while the terminal is focused |
+| Next / previous terminal | Ctrl+PageDown / PageUp; Ctrl+Tab / Ctrl+Shift+Tab while the terminal is focused |
+| Close terminal tab | Ctrl+Shift+W while the terminal is focused, or its × button |
 | Expand/restore terminal | Ctrl+Shift+B |
 | Show/hide files and terminal together | Ctrl+Shift+D |
 | Focus editor / files / terminal | Ctrl+Alt+1 / Ctrl+Alt+2 / Ctrl+Alt+3 |
 | New / close app tab | Ctrl+T / Ctrl+W |
-| Next / previous tab | Ctrl+Tab / Ctrl+Shift+Tab; Ctrl+PageDown / PageUp |
+| Next / previous app tab (outside the terminal) | Ctrl+Tab / Ctrl+Shift+Tab; Ctrl+PageDown / PageUp |
 | Parent directory | Alt+Up; Left or Backspace in the file list |
 | Back / forward | Alt+Left / Alt+Right |
 | Type a directory path | Ctrl+L |
 | New file / open file | Ctrl+N / Ctrl+O |
 | Choose a directory | Ctrl+Shift+O |
 | Save / Save as | Ctrl+S / Ctrl+Shift+S |
-| Cycle hybrid / reading / source; format JSON/HTML | Ctrl+R |
+| Toggle source / preview; format JSON/HTML | Ctrl+R |
 | Commands | Ctrl+P, Ctrl+Shift+P |
 | Settings / help | Ctrl+, / F1 |
 
-Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed tab; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
+Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed app tab outside the terminal; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
 
 Ctrl+Alt+Shift+K opens key capture and advanced text, wildcard, regex and shell searches. Bindings are ordinary files under `~/.config/yhwh/etc/keys` and ancestor `.yhwh` prefixes. [Keyboard system and prefix configuration](../../../doc/keys.md) describes editing, executable bindings and reloads. `yhwh keys list` prints the same effective list for Unix tools. The defaults use literal Ctrl bindings; separate `meta` bindings can configure Command on macOS.
 
-The file manager supports double-click/Enter to open, arrow keys, type-to-select, filtering, Ctrl/Shift selection, Ctrl+A, copy/cut/paste, new directories, F2 rename, and desktop Trash. Its `..` row and up button always work. Expanded mode shows sizes and modification dates. Drag the divider to resize it. Ctrl+H toggles hidden files while the file manager has focus; the text editor retains its own search/replace shortcuts.
+The file manager supports double-click/Enter to open, arrow keys, type-to-select, filtering, Ctrl/Shift selection, Ctrl+A, copy/cut/paste, new directories, F2 rename, and desktop Trash. The context menu includes **Copy Full Path** and **Copy Relative Path**, relative to the current directory (or the selected world root). Its `..` row and up button always work. Expanded mode shows sizes and modification dates. Drag the divider to resize it. Ctrl+H toggles hidden files while the file manager has focus; the text editor retains its own search/replace shortcuts.
+
+Drag files, folders or a selection onto a folder, `..`, or blank space in the file list to move them. Blank space means the current directory; empty space inside an expanded folder means that folder. Existing destinations and moves into a folder's own descendants are refused. Open documents keep their buffers and follow the new paths, including when a containing folder moves. **Move to folder…** in File actions also opens a destination picker.
 
 The terminal is an xterm.js terminal connected to a real node-pty shell. It starts even when hidden. A Bash/zsh/fish/PowerShell prompt hook reports the shell's directory; Linux also reads the shell process's actual cwd. The app preserves normal Bash/zsh startup files. File-manager navigation sends a quoted `cd` at the prompt. If a command is running, the most recent navigation waits for the next prompt. Shells without a supported hook have Linux cwd reporting but cannot accept queued file-manager navigation until a prompt hook is supplied. SSH sessions navigate their remote filesystem separately.
 
-`yhwh open file` from an app shell targets that same tab through `YHWH_TAB`. In an unrelated shell it opens an app tab. Hiding a shell keeps its process running; closing its app tab terminates it.
+`yhwh open file` from an app shell targets that same tab through `YHWH_TAB`. In an unrelated shell it opens an app tab. Hiding a shell keeps its process running; closing its terminal tab or app tab terminates it. `exit` (including an alias such as `x`) closes that terminal tab and selects the remaining shell. Exiting the last shell hides the panel; opening it again starts a fresh shell. Switching terminal tabs restores that shell’s directory in the file manager; navigation changes only the selected shell.
 
 ## Documents
 
-Text uses CodeMirror with syntax highlighting, undo, search, selection, and standard editing keys. Markdown defaults to **Hybrid**: blocks render until selected for editing. Ctrl+R cycles Hybrid → Reading → Source → Hybrid while retaining unsaved edits. Clicking a rendered link opens it without moving the editor selection. Markdown links, local images, and `[[relative/note|label]]` links are supported; a wikilink can omit `.md`. JSON's pretty action validates and indents JSON; HTML uses Prettier. Formatting changes the buffer and is undoable. Save writes it to disk.
+Text uses CodeMirror with syntax highlighting, undo, search, selection, and standard editing keys. Markdown opens in **Source**. Ctrl+R or the toolbar button toggles a separate read-only preview; returning to source preserves the cursor, selection, undo history and unsaved buffer. There is no live/hybrid mode. Clicking a preview link opens its destination. Markdown links, local images, and `[[relative/note|label]]` links are supported; a wikilink can omit `.md`. JSON's pretty action validates and indents JSON; HTML uses Prettier. Formatting changes the buffer and is undoable. Save writes it to disk.
 
-Click the big filename heading to rename the real file, including its extension. It refuses an existing destination. Saves preserve symbolic links and Unix permissions and reject a file whose modification time changed since opening. Reload or explicitly choose Overwrite from the file menu after reviewing a conflict. Unsaved changes prompt before replacing a document, closing a tab, or quitting. Saving is explicit, with Ctrl+S; there is no background autosave.
+Click the big filename heading to rename the real file, including its extension. It refuses an existing destination. Saves preserve symbolic links and Unix permissions and reject a file whose content or modification time changed since opening, including same-timestamp edits. Reload or explicitly choose Overwrite from the file menu after reviewing a conflict. Unsaved changes prompt before replacing a document, closing a tab, or quitting. Autosave is enabled by default and saves 700 ms after typing pauses. Turn it off in Settings → Files & editor or with `autosave=false` in rc. Ctrl+S and Save as remain available. Conflicts and write failures pause autosave and leave the buffer unsaved for review; reload, save elsewhere, or explicitly overwrite to resolve them.
 
 Filename, desktop MIME detection, and shebang determine highlighting. Extensionless files are not assumed to be Markdown. The bottom-right language menu can override the result just for the open file, for a filename, or for an extension, globally or under the current directory.
 
-Images have a basic preview. PDFs, binary/non-UTF-8 files, and files over 16 MiB are offered to the desktop's default application; they are never silently decoded and overwritten as text. Rich PDF editing, arbitrary HTML execution, remote image fetching, backlinks/indexing, and a complete Obsidian CLI/API are not implemented.
+Built-in read-only viewers display images (including SVG), PDF pages with page/zoom controls and selectable page text, local video/audio with playback controls, and Excel XLSX/XLS/XLSM and ODS workbooks with worksheet selection. CSV/TSV files retain a source editor; Ctrl+R toggles a table preview, including quoted cells and multiline values. Tables display up to 2,000 rows and 100 columns per sheet; formulas display cached values and macros never run. PDF/workbook input is limited to 64 MiB, editable text to 16 MiB. Media codecs depend on the platform. Unsupported/oversized files and failed previews can be opened externally from File actions. Viewers never overwrite the file. PDF editing, arbitrary HTML execution, remote image fetching, backlinks/indexing, and a complete Obsidian CLI/API are not implemented.
+
+PDF pages scroll continuously with the mouse wheel, keyboard or touch. Page and zoom controls stay above the document; the page indicator follows scrolling. Pages fit the available width at 100%; higher zoom permits horizontal scrolling. Only nearby pages retain rendered canvases.
 
 ## Hierarchical configuration
 
@@ -105,6 +112,7 @@ Settings saves ordinary sections to user `rc`, preserving handwritten sections a
     live_preview=true
     file_manager=true
     terminal=false
+    autosave=true
     line_width='820px'
     file_types='[{"extension":"note","language":"markdown"},{"filename":"^boop$","language":"python"}]'
     settings_fields='theme,energy,font_size,editor_font,show_hidden,stylesheet,plugins,layout'

@@ -1,0 +1,11 @@
+- Open in full screen mode when opening the app.
+- Have autosave on by default.
+- Have inbuilt viewers for img, pdf, video, excel, csv, and other common files.
+- The markdown live preview option is very glitchy right now. It switches betwee source view and preview on every space and feels very jarring. Also the cursor goes to the line below current location when it switches to preview mode. Just make it source view by default and just have the button/shortcut toggle it to the preview mode. No live mode.
+- Have Ctrl+Shift+` also open the terminal (like in vscode and other apps.)
+- Add the option to open multiple terminal tabs and toggle between them when the terminal is focused. Like vscode does. Use sensible shortcuts for adding new terminal tabs and toggling between them.
+- Also right now, if I type x in my terminal (which is aliased to exit), the terminal shows [Shell exited 0] but doesn't close the terminal and because I don't yet have the ability to open another terminal tab, the terminal becomes unusable if I type x. Fix all this.
+- When I right click on a file and say 'Move to Trash', right now that doesn't work. Fix it.
+- Also when I right click on a file, have two options for copy path: Copy full Path and Copy Relative Path.
+-  Make the pdf opener have scroll.
+- Have the ability to drag and move around the files and folders in the file manager.

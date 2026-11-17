@@ -8,6 +8,8 @@ import { createEditor, setLanguage, formatText, renderMarkdown, languageNames } 
 import { createVerseUI } from './verses.js';
 import { match as matchKey } from '../../../lib/key-names.cjs';
 import { showHotkeys } from './hotkeys.js';
+import { mountViewer } from './viewers.js';
+import { installFileDrag } from './file-drag.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
@@ -23,14 +25,15 @@ let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], plugi
 const active = () => tabs.find(tab => tab.id === activeId);
 const closedTabs = [];
 const keyModules = new Map();
+function keyContext(target = document.activeElement) {
+  return $('#file-list').contains(target) ? 'files' : $('#terminals').contains(target) ? 'terminal' : target.closest('.cm-editor') ? 'editor' : '';
+}
 function bindingFor(event) {
-  const target = event.target;
-  const context = $('#file-list').contains(target) ? 'files' : $('#terminals').contains(target) ? 'terminal' : target.closest('.cm-editor') ? 'editor' : '';
-  return matchKey(active()?.config.keys?.bindings || [], event, context);
+  return matchKey(active()?.config.keys?.bindings || [], event, keyContext(event.target));
 }
 async function executeBinding(binding) {
   if (binding.kind === 'disabled') return;
-  const tab = active();
+  const tab = active(), focus = keyContext();
   if (boot.interface === 'mobile' && binding.kind === 'js') return run(binding.command);
   const context = `cwd\t${tab.cwd}\nfile\t${tab.file?.path || ''}\n${[...tab.selected].map(path => `selected\t${path}\n`).join('')}`;
   const result = binding.kind === 'js' ? binding : await call('keys:run', tab.id, binding.combo, context);
@@ -42,7 +45,7 @@ async function executeBinding(binding) {
     }
     const module = await keyModules.get(result.source);
     if (typeof module.default !== 'function') throw new Error('Key module needs export default api => …');
-    await module.default({ ...pluginAPI(), run, refresh, active, newTab, openFile });
+    await module.default({ ...pluginAPI(), run, refresh, active, newTab, openFile, keyContext: focus });
   } else if (result.kind === 'unsupported') throw new Error('This host imports .js modules. Make shell/Python files executable and include a shebang.');
   else if (result.stdout || result.stderr || result.code) modal(`Key command · ${binding.combo}`, `<pre class="key-output">${escape(result.stdout || '')}${escape(result.stderr || '')}${result.code ? `\nExit ${result.code}` : ''}</pre>`);
 }
@@ -102,23 +105,95 @@ async function editWords(key) {
 
 async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
+  startingTerminals.add(id);
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', terminalExited: false };
+  const tab = { id, ...state, file: null, focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
-  tab.terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
-  tab.fit = new FitAddon(); tab.terminal.loadAddon(tab.fit); tab.terminal.open(tab.terminalElement);
-  tab.terminal.onData(data => bridge.terminal('write', { id, data }));
-  tab.terminal.attachCustomKeyEventHandler(event => {
-    const binding = bindingFor(event);
-    return !binding || binding.kind === 'disabled';
-  });
+  tab.terminals = [];
+  if (boot.capabilities?.terminal !== false) createTerminal(tab, id);
   tabs.push(tab); welcome(tab); activate(id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
   pendingTerminal.delete(id);
+  startingTerminals.delete(id);
   emit('tab', tab); return tab;
+}
+function createTerminal(tab, id = crypto.randomUUID()) {
+  const element = document.createElement('div'); element.className = 'terminal-session';
+  tab.terminalElement.append(element);
+  const terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
+  const fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(element);
+  tab.terminalNumber = (tab.terminalNumber || 0) + 1;
+  const session = { id, terminal, fit, element, cwd: tab.cwd, number: tab.terminalNumber };
+  terminal.onData(data => bridge.terminal('write', { id, data }));
+  terminal.attachCustomKeyEventHandler(event => {
+    const binding = bindingFor(event);
+    return !binding || binding.kind === 'disabled';
+  });
+  tab.terminals.push(session); selectTerminal(tab, session);
+  return session;
+}
+function selectTerminal(tab, session) {
+  tab.terminalId = session?.id; tab.terminal = session?.terminal; tab.fit = session?.fit;
+  for (const item of tab.terminals) item.element.hidden = item !== session;
+  if (active() === tab) renderTerminalTabs();
+}
+function renderTerminalTabs() {
+  const tab = active(); if (!tab) return;
+  $('#terminal-tabs').innerHTML = tab.terminals.map(session => `<span class="terminal-tab"><button role="tab" aria-selected="${session.id === tab.terminalId}" data-terminal="${session.id}" title="${escape(session.cwd)}">Shell ${session.number}</button><button data-close-terminal="${session.id}" aria-label="Close Shell ${session.number}">×</button></span>`).join('');
+}
+async function newTerminal(tab = active()) {
+  if (boot.capabilities?.terminal === false) throw new Error('Local Unix shells are available on desktop.');
+  const id = crypto.randomUUID();
+  startingTerminals.add(id);
+  try { await call('terminal:new', tab.id, id); }
+  catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
+  const session = createTerminal(tab, id);
+  for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
+  pendingTerminal.delete(id);
+  startingTerminals.delete(id);
+  tab.showTerminal = true; tab.expanded = '';
+  if (active() === tab) { update(); focusTerminal(tab); }
+  return session;
+}
+function focusTerminal(tab = active()) {
+  requestAnimationFrame(() => {
+    if (active() !== tab || $('#terminal-panel').hidden || $('#dialog').open) return;
+    fitTerminal(); tab.terminal?.focus();
+  });
+}
+async function revealTerminal(tab = active()) {
+  if (!tab.terminals.length) await newTerminal(tab);
+  tab.showTerminal = true; update(); focusTerminal(tab);
+}
+async function switchTerminal(id, tab = active()) {
+  const session = tab.terminals.find(item => item.id === id); if (!session) return;
+  await call('terminal:activate', tab.id, id);
+  selectTerminal(tab, session);
+  if (session.cwd !== tab.cwd) await navigate(session.cwd, tab);
+  if (active() === tab) { update(); focusTerminal(tab); }
+}
+async function cycleTerminal(delta) {
+  const tab = active(), index = tab.terminals.findIndex(item => item.id === tab.terminalId);
+  if (tab.terminals.length) await switchTerminal(tab.terminals[(index + delta + tab.terminals.length) % tab.terminals.length].id, tab);
+}
+async function closeTerminal(id = active()?.terminalId, exited = false) {
+  const tab = tabs.find(item => item.terminals.some(session => session.id === id)); if (!tab) return;
+  const index = tab.terminals.findIndex(item => item.id === id), session = tab.terminals[index];
+  if (!exited) await call('terminal:close', tab.id, id);
+  session.terminal.dispose(); session.element.remove(); tab.terminals.splice(index, 1);
+  if (tab.terminalId === id) {
+    const next = tab.terminals[Math.min(index, tab.terminals.length - 1)];
+    selectTerminal(tab, next);
+    if (next) await switchTerminal(next.id, tab);
+    else {
+      tab.showTerminal = false; if (tab.expanded === 'terminal') tab.expanded = '';
+      if (active() === tab) { update(); tab.editor?.focus(); }
+    }
+  }
+  if (active() === tab) renderTerminalTabs();
 }
 function welcome(tab) {
   tab.document.innerHTML = ui("-a-little-room-for-creation-open-a-file-ctrl-o-n", word('welcomeTitle', 'h1'), word('welcomeBody'));
@@ -146,13 +221,13 @@ function renderFiles() {
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.cwd;
-  $('#shell-state').textContent = tab.terminalExited ? ui("shell-exited") : ui("-files");
+  $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
   const folder = tab.folders.get(entry.path);
   const expanded = !!folder?.open;
   const row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
-  return row.replace('role="option"', `style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
+  return row.replace('role="option"', `draggable="${!entry.parent}" style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
 }
 async function toggleFolder(row, expand) {
   const tab = active(), path = row.dataset.path;
@@ -179,7 +254,7 @@ function focusView(view) {
 }
 function update() {
   const tab = active(); if (!tab) return;
-  tabTitles(); renderFiles();
+  tabTitles(); renderFiles(); renderTerminalTabs();
   const view = tab.focusView || 'document';
   $('#document').hidden = view !== 'document';
   $('#inbox-view').hidden = view !== 'inbox';
@@ -193,24 +268,25 @@ function update() {
   if (terminalWasHidden && !terminalPanel.hidden) requestAnimationFrame(() => {
     if (active() !== tab || terminalPanel.hidden || $('#dialog').open) return;
     fitTerminal();
-    tab.terminal.focus();
+    tab.terminal?.focus();
   });
   $('#workspace').dataset.expanded = tab.expanded;
   $('#title-row').hidden = !tab.file;
   $('#file-title').value = tab.file?.name || '';
-  $('#dirty-indicator').textContent = tab.dirty ? ui("unsaved") : '';
+  $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : '';
   $('#document-path').textContent = tab.file ? parent(tab.file.path) : tab.cwd;
   $('#language-button').textContent = tab.file?.language || ui("plain-text");
   $('#file-encoding').textContent = tab.file?.kind === 'text' ? ui("utf-8-", tab.file.newline === '\r\n' ? 'CRLF' : 'LF') : '';
-  $('#view-mode').textContent = tab.file?.language === 'markdown' ? tab.file.mode === 'source' ? ui("source") : tab.file.mode === 'reading' ? ui("reading") : ui("live-preview") : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
+  $('#view-mode').textContent = tab.file?.language === 'markdown' || tab.file?.viewer === 'table' ? tab.file.mode === 'source' ? ui("source") : 'Preview' : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
   $('#view-mode').disabled = tab.file?.kind !== 'text';
+  $('#title-row [data-command="save"]').disabled = !tab.editor;
   applyConfig(tab.config);
 }
 let temporaryEnergy;
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
   for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${Number(values.sidebar_width) || 258}px`, '--terminal-height': `${Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
-  for (const tab of tabs) tab.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
+  for (const tab of tabs) for (const session of tab.terminals) session.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
   const energy = temporaryEnergy ?? (values.theme === 'dawkins' ? 0 : values.theme === 'nietzsche' ? 50 : Number(values.energy ?? 100));
   document.body.dataset.theme = energy === 0 ? 'dawkins' : energy < 100 ? 'nietzsche' : 'yhwh';
   verseUI.setTheme(document.body.dataset.theme);
@@ -229,6 +305,7 @@ function applyConfig(config) {
 }
 function fitTerminal() {
   const tab = active(); if (!tab || $('#terminal-panel').hidden) return;
+  const session = tab.terminals.find(item => item.id === tab.terminalId); if (!session) return;
   // A panel can be hidden by an ancestor (for example expanded Files). Fitting
   // that zero-size box sends a 2x1 resize to the running shell.
   const box = tab.terminalElement.getBoundingClientRect();
@@ -236,7 +313,7 @@ function fitTerminal() {
   try {
     tab.fit.fit();
     const size = `${tab.terminal.cols}x${tab.terminal.rows}`;
-    if (tab.shellSize !== size) { bridge.terminal('resize', { id: tab.id, cols: tab.terminal.cols, rows: tab.terminal.rows }); tab.shellSize = size; }
+    if (session.shellSize !== size) { bridge.terminal('resize', { id: session.id, cols: tab.terminal.cols, rows: tab.terminal.rows }); session.shellSize = size; }
   } catch {}
 }
 async function refresh(tab = active()) {
@@ -251,6 +328,7 @@ async function refresh(tab = active()) {
 async function navigate(directory, tab = active(), history = true, focusFiles = false) {
   const state = await call('navigate', tab.id, directory);
   Object.assign(tab, state); tab.selected.clear();
+  const session = tab.terminals.find(item => item.id === tab.terminalId); if (session) session.cwd = tab.cwd;
   if (focusFiles && tab.entries.length) tab.selected.add(tab.entries[0].path);
   if (history && tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
   if (tab.id === activeId) {
@@ -261,29 +339,34 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
 }
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
 async function mayReplace(tab) {
+  await tab.saveQueue?.catch(() => {});
   if (!tab.dirty) return true;
   const choice = await choose(ui("unsaved-changes"), ui("save-changes-to-", tab.file.name), [ui("save"), ui("discard"), ui("cancel")]);
   if (choice === 0) { await save(tab); return true; }
   return choice === 1;
 }
-function clearDocument(tab) { tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
+function clearDocument(tab) { clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
 async function openFile(filename, tab = active()) {
   if (!await mayReplace(tab)) return false;
   const file = await call('file:read', filename);
   await navigate(parent(file.path), tab);
   clearDocument(tab); tab.focusView = 'document';
-  file.mode = file.language === 'markdown' && file.config.values.live_preview !== 'false' ? 'live' : 'source';
-  tab.file = file; tab.config = file.config; tab.dirty = false;
+  file.mode = 'source';
+  tab.file = file; tab.config = file.config; tab.dirty = false; tab.autosaveError = null;
   tab.selected = new Set([file.path]);
   tab.document.dataset.filename = file.path;
   tab.document.innerHTML = ui("template-3");
   if (file.kind === 'text') {
     tab.editor = await createEditor(tab.document.querySelector('.editor-host'), file, content => {
       tab.dirty = content !== tab.file.content.replace(/\r\n/g, '\n');
-      if (tab.id === activeId) { $('#dirty-indicator').textContent = tab.dirty ? ui("unsaved") : ''; tabTitles(); }
+      if (tab.id === activeId) { $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : ''; tabTitles(); }
       emit('change', { path: file.path, content });
+      scheduleAutosave(tab);
     }, (line, column) => { if (tab.id === activeId) $('#cursor-position').textContent = ui("ln-col", line, column); });
-  } else if (file.kind === 'image') tab.document.innerHTML = ui("template-4", file.data, escape(file.name));
+  } else if (['image', 'video', 'audio', 'pdf', 'spreadsheet'].includes(file.kind)) {
+    tab.document.replaceChildren();
+    tab.viewerCleanup = await mountViewer(tab.document, file);
+  }
   else {
     tab.document.innerHTML = ui("-this-format-opens-in-your-desktop-s-default-app", escape(file.name), escape(file.mime), humanSize(file.size));
     if (boot.interface === 'mobile') {
@@ -296,15 +379,33 @@ async function openFile(filename, tab = active()) {
   if (tab.id === activeId) { update(); tab.editor?.focus(); }
   emit('open', file); return true;
 }
-async function save(tab = active(), force = false) {
-  if (!tab?.editor) return;
-  const text = tab.editor.state.doc.toString();
-  const content = tab.file.newline === '\r\n' ? text.replace(/\n/g, '\r\n') : text;
-  const state = await call('file:save', tab.file.path, content, tab.file.modified, force);
-  Object.assign(tab.file, state, { content }); tab.dirty = tab.editor.state.doc.toString() !== text;
-  if (tab.id === activeId) update();
-  emit('save', tab.file);
-  if (presence.steps.length >= 2) receive('offering');
+function scheduleAutosave(tab) {
+  clearTimeout(tab.autosaveTimer);
+  if (!tab.dirty || tab.movingFile || tab.config.values.autosave === 'false' || tab.autosaveError) return;
+  tab.autosaveTimer = setTimeout(() => save(tab).catch(error => {
+    tab.autosaveError = error.message;
+    if (active() === tab) update();
+    notice(`Autosave paused: ${error.message}`);
+  }), 700);
+}
+function save(tab = active(), force = false) {
+  if (!tab?.editor) return Promise.resolve();
+  if (tab.movingFile) return moveFinished.then(() => save(tab, force));
+  clearTimeout(tab.autosaveTimer);
+  const file = tab.file, editor = tab.editor;
+  const operation = (tab.saveQueue || Promise.resolve()).catch(() => {}).then(async () => {
+    if (tab.file !== file || tab.editor !== editor) return;
+    const text = editor.state.doc.toString();
+    const content = file.newline === '\r\n' ? text.replace(/\n/g, '\r\n') : text;
+    const state = await call('file:save', file.path, content, file.modified, force);
+    Object.assign(file, state, { content });
+    tab.dirty = editor.state.doc.toString() !== text; tab.autosaveError = null;
+    if (tab.id === activeId) update();
+    emit('save', file); scheduleAutosave(tab);
+    if (presence.steps.length >= 2) receive('offering');
+  });
+  tab.saveQueue = operation;
+  return operation;
 }
 async function closeTab(id = activeId) {
   const tab = tabs.find(item => item.id === id);
@@ -313,7 +414,7 @@ async function closeTab(id = activeId) {
   closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index: tabs.indexOf(tab) });
   if (closedTabs.length > 30) closedTabs.shift();
   await call('focus:close', id);
-  tab.editor?.destroy(); tab.terminal.dispose(); tab.document.remove(); tab.terminalElement.remove();
+  clearDocument(tab); for (const session of tab.terminals) session.terminal.dispose(); tab.document.remove(); tab.terminalElement.remove();
   const index = tabs.indexOf(tab); tabs.splice(index, 1);
   if (!tabs.length) await newTab(tab.cwd);
   else if (activeId === id) activate(tabs[Math.min(index, tabs.length - 1)].id);
@@ -346,29 +447,89 @@ async function renameFile(filename = active()?.file?.path) {
 }
 async function renameTo(filename, name) {
   if (!name.trim() || /[/\\]/.test(name) || ['.', '..'].includes(name)) throw new Error(ui("use-a-filename-without-slashes-"));
-  const destination = await call('file:move', filename, join(parent(filename), name));
-  for (const tab of tabs) {
-    if (tab.file?.path === filename) {
-      const updated = await call('file:read', destination);
-      tab.file.path = destination; tab.file.name = name; tab.file.modified = updated.modified; tab.file.language = updated.language;
-      tab.document.dataset.filename = destination; tab.document.dataset.language = updated.language;
-      if (tab.editor) await setLanguage(tab.editor, updated.language, tab.file.mode !== 'source');
-    }
+  await moveItems([{ source: filename, destination: join(parent(filename), name) }]);
+}
+const withinPath = (value, root) => value === root || value?.startsWith(root.replace(/[/\\]$/, '') + (root.includes('\\') ? '\\' : '/'));
+const moveRoots = paths => [...new Set(paths)].filter(filename => !paths.some(other => other !== filename && withinPath(filename, other)));
+let movingFiles = false, moveFinished = Promise.resolve();
+async function moveItems(items) {
+  if (movingFiles) throw new Error('Wait for the current move to finish.');
+  items = items.filter(item => item.source !== item.destination);
+  if (!items.length) return;
+  for (const { source, destination } of items) {
+    if (withinPath(destination, source)) throw new Error('Cannot move a folder into itself.');
   }
-  await refresh(); update();
+  if (new Set(items.map(item => item.destination)).size !== items.length) throw new Error('The selected items have the same destination name.');
+  movingFiles = true;
+  let finishMove;
+  moveFinished = new Promise(resolve => { finishMove = resolve; });
+  const affected = tabs.filter(tab => items.some(item => withinPath(tab.file?.path, item.source)));
+  for (const tab of affected) { tab.movingFile = true; clearTimeout(tab.autosaveTimer); }
+  try {
+    await Promise.all(affected.map(tab => tab.saveQueue?.catch(() => {})));
+    // Check the whole selection before moving any item. The bridge also refuses
+    // collisions at the time of each move; a failure never overwrites a file.
+    for (const { destination } of items) {
+      const entries = await call('directory:list', active().id, parent(destination));
+      if (entries.some(entry => entry.name === basename(destination))) throw new Error(`A file named ${basename(destination)} already exists.`);
+    }
+    for (const { source, destination } of items) {
+      await call('file:move', source, destination);
+      const remap = value => withinPath(value, source) ? destination + value.slice(source.length) : value;
+      for (const tab of tabs) {
+        tab.selected = new Set([...tab.selected].map(remap));
+        tab.history = tab.history.map(remap);
+        tab.folders = new Map([...tab.folders].map(([filename, folder]) => [remap(filename), folder]));
+        if (withinPath(tab.cwd, source)) await navigate(remap(tab.cwd), tab, false);
+        for (const session of tab.terminals) session.cwd = remap(session.cwd);
+        if (!withinPath(tab.file?.path, source)) continue;
+        const filename = remap(tab.file.path);
+        tab.file.path = filename; tab.file.name = basename(filename); tab.document.dataset.filename = filename;
+        const updated = await call('file:read', filename);
+        // Keep a stale version stale if an external edit preceded the move.
+        if (updated.content === tab.file.content) tab.file.modified = updated.modified;
+        tab.file.language = updated.language; tab.document.dataset.language = updated.language;
+        if (tab.editor) await setLanguage(tab.editor, updated.language, tab.file.mode !== 'source');
+        else if (['image', 'audio', 'video'].includes(tab.file.kind)) {
+          Object.assign(tab.file, updated); tab.viewerCleanup?.(); tab.viewerCleanup = await mountViewer(tab.document, tab.file);
+        }
+      }
+    }
+  } finally {
+    movingFiles = false;
+    finishMove();
+    for (const tab of affected) { tab.movingFile = false; scheduleAutosave(tab); }
+    await Promise.all(tabs.map(tab => refresh(tab).catch(error => notice(error.message))));
+    update();
+  }
+}
+async function moveToDirectory(paths, directory) {
+  await moveItems(moveRoots(paths).map(source => ({ source, destination: join(directory, basename(source)) })));
+}
+async function moveFile(filename) {
+  const directory = await call('choose', 'directory', active().cwd);
+  if (directory) await moveToDirectory([filename], directory);
 }
 function selectedPaths() { return [...active().selected].filter(filename => filename !== parent(active().cwd) && filename !== active().worldRoot); }
 async function pasteFiles() {
   if (!clipboardFiles) return;
-  for (const filename of clipboardFiles.paths) await call(clipboardFiles.cut ? 'file:move' : 'file:copy', filename, join(active().cwd, basename(filename)));
-  if (clipboardFiles.cut) clipboardFiles = null;
+  if (clipboardFiles.cut) { await moveToDirectory(clipboardFiles.paths, active().cwd); clipboardFiles = null; }
+  else for (const filename of moveRoots(clipboardFiles.paths)) await call('file:copy', filename, join(active().cwd, basename(filename)));
   await refresh();
 }
 async function trashFiles(paths = selectedPaths()) {
   if (!paths.length) return;
   if (await choose(ui("move-to-trash"), boot.interface === 'mobile' ? `Move ${paths.length} item(s) to the workspace’s hidden .Trash folder?` : ui("move-item-s-to-the-desktop-trash-", paths.length), [ui("move-to-trash"), ui("cancel")]) !== 0) return;
-  for (const filename of paths) await call('file:trash', filename);
-  active().selected.clear(); await refresh();
+  for (const filename of paths) {
+    const within = value => value === filename || value?.startsWith(filename + '/');
+    const affected = tabs.filter(tab => within(tab.file?.path));
+    for (const tab of affected) if (!await mayReplace(tab)) return;
+    for (const tab of affected) clearTimeout(tab.autosaveTimer);
+    await call('file:trash', filename);
+    for (const tab of affected) { clearDocument(tab); tab.file = null; tab.dirty = false; tab.autosaveError = null; welcome(tab); }
+    for (const tab of tabs) if (within(tab.cwd)) await navigate(parent(filename), tab);
+  }
+  active().selected.clear(); await Promise.all(tabs.map(tab => refresh(tab))); update();
 }
 
 function settings() {
@@ -378,7 +539,7 @@ function settings() {
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
-    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Live preview', 'Format Markdown as you write.', toggle('live_preview'))}<p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
+    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}<p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
@@ -395,12 +556,12 @@ function settings() {
     for (const item of dialog.querySelectorAll('[data-category]')) item.setAttribute('aria-pressed', String(item === button));
   };
   dialog.querySelector('[data-edit-config]').onclick = async () => { dialog.close(); const filename = await call('config:open'); await openFile(filename); };
-  dialog.querySelector('[data-reload-config]').onclick = async () => { pluginKey = ''; await call('config:reload'); await refresh(); dialog.close(); notice(ui("configuration-reloaded-")); };
+  dialog.querySelector('[data-reload-config]').onclick = async () => { pluginKey = ''; await call('config:reload'); await refresh(); for (const item of tabs) scheduleAutosave(item); dialog.close(); notice(ui("configuration-reloaded-")); };
   dialog.querySelector('form').onsubmit = async event => {
     event.preventDefault();
     try {
       const data = Object.fromEntries(new FormData(event.target)), scope = data._scope; delete data._scope;
-      for (const key of ['show_hidden', 'live_preview', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
+      for (const key of ['show_hidden', 'autosave', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
       if (event.target.elements.spatial_effects) { data.spatial_effects = String(event.target.elements.spatial_effects.checked); data.motion = event.target.elements.spatial_effects.checked ? '1' : '0'; }
       data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
@@ -408,7 +569,7 @@ function settings() {
       if (data.energy && !(Number(data.energy) >= 0 && Number(data.energy) <= 100)) throw new Error(ui("yhwh-ness-must-be-between-0-and-100-"));
       for (const [key, min, max] of [['ui_font_size',14,24], ['font_size',12,36], ['terminal_font_size',12,28]]) if (!Number.isFinite(Number(data[key])) || Number(data[key]) < min || Number(data[key]) > max) throw new Error(`${key} must be between ${min} and ${max}.`);
       temporaryEnergy = undefined;
-      await call('settings:save', data, scope); presence.enabled = data.narrative === 'true'; savePresence(); await refresh(); dialog.close();
+      await call('settings:save', data, scope); presence.enabled = data.narrative === 'true'; savePresence(); await refresh(); for (const item of tabs) scheduleAutosave(item); dialog.close();
     } catch (error) { notice(error.message); }
   };
 }
@@ -436,13 +597,11 @@ function languageMenu() {
 }
 async function viewMode() {
   const tab = active(); if (!tab?.editor) return;
-  if (tab.file.language === 'markdown') {
-    // Hybrid → reading → source → hybrid, without changing the document.
-    if (tab.file.mode === 'live') return readingView();
-    tab.file.mode = tab.file.mode === 'reading' ? 'source' : 'live';
+  if (tab.file.language === 'markdown' || tab.file.viewer === 'table') {
+    if (tab.file.mode === 'source') return readingView();
+    tab.file.mode = 'source';
     tab.document.querySelector('.editor-host').hidden = false;
     tab.document.querySelector('.reading-view').hidden = true;
-    await setLanguage(tab.editor, 'markdown', tab.file.mode === 'live');
   } else {
     const text = await formatText(tab.editor.state.doc.toString(), tab.file.language);
     tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: text } });
@@ -450,11 +609,13 @@ async function viewMode() {
   tab.document.dataset.mode = tab.file.mode;
   update(); tab.editor.focus();
 }
-function readingView() {
-  const tab = active(); if (!tab?.editor || tab.file.language !== 'markdown') return;
+async function readingView() {
+  const tab = active(); if (!tab?.editor || (tab.file.language !== 'markdown' && tab.file.viewer !== 'table')) return;
   const reading = tab.document.querySelector('.reading-view');
   if (tab.file.mode === 'reading') return;
-  reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
+  tab.viewerCleanup?.(); tab.viewerCleanup = null; reading.replaceChildren();
+  if (tab.file.viewer === 'table') tab.viewerCleanup = await mountViewer(reading, { ...tab.file, content: tab.editor.state.doc.toString() });
+  else reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
   reading.hidden = false; tab.document.querySelector('.editor-host').hidden = true; tab.file.mode = 'reading'; tab.document.dataset.mode = 'reading'; update();
 }
 function fileMenu(filename = active()?.file?.path) {
@@ -462,9 +623,11 @@ function fileMenu(filename = active()?.file?.path) {
   const items = [
     [ui("open-in-a-new-app-tab"), () => openRequest({ path: filename })],
     [ui("rename-"), () => renameFile(filename)],
+    ['Move to folder…', () => moveFile(filename)],
     [ui("copy"), () => { clipboardFiles = { paths: [filename], cut: false }; }],
     [ui("cut"), () => { clipboardFiles = { paths: [filename], cut: true }; }],
-    [ui("copy-path"), () => call('clipboard:path', filename)],
+    ['Copy Full Path', () => call('clipboard:path', filename)],
+    ['Copy Relative Path', () => call('clipboard:path', filename, active().worldRoot || active().cwd)],
     [ui("open-in-desktop-application"), () => call('file:external', filename)],
     [ui("show-in-desktop-file-manager"), () => call('file:reveal', filename)],
     [ui("reading-view-markdown-"), readingView],
@@ -472,7 +635,11 @@ function fileMenu(filename = active()?.file?.path) {
     [ui("move-to-trash-"), () => trashFiles([filename])],
   ];
   const dialog = modal(basename(filename), ui("template-5", items.map(([label], i) => `<button data-menu="${i}">${escape(label)}</button>`).join('')));
-  for (const button of dialog.querySelectorAll('[data-menu]')) button.onclick = () => { dialog.close(); Promise.resolve().then(items[Number(button.dataset.menu)][1]).catch(error => notice(error.message)); };
+  for (const button of dialog.querySelectorAll('[data-menu]')) button.onclick = async () => {
+    const action = items[Number(button.dataset.menu)][1];
+    await new Promise(resolve => { dialog.addEventListener('close', resolve, { once: true }); dialog.close(); });
+    Promise.resolve().then(action).catch(error => notice(error.message));
+  };
 }
 function palette() {
   const dialog = modal(ui("commands"), ui("template-6"));
@@ -660,18 +827,22 @@ const definitions = [
   }],
   ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['expand-files', ui("expand-file-manager"), ui("ctrl-d"), () => { const tab = active(); tab.expanded = tab.expanded === 'files' ? '' : 'files'; tab.showFiles = true; update(); $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
-  ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), () => { const tab = active(); tab.showTerminal = !tab.showTerminal; tab.expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); if (tab.showTerminal) tab.terminal.focus(); }); }],
-  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), () => { const tab = active(); movePanel('terminal', 'bottom'); tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; tab.showTerminal = true; update(); requestAnimationFrame(() => { fitTerminal(); tab.terminal.focus(); }); }],
-  ['terminal-bottom', 'Dock terminal below document', '', () => { movePanel('terminal', 'bottom'); active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
-  ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); tab.showFiles = show; tab.showTerminal = show; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
-  ['focus-editor', ui("focus-editor"), "Ctrl+Alt+1", () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
-  ['focus-files', ui("focus-file-manager"), "Ctrl+Alt+2", () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
-  ['focus-terminal', ui("focus-terminal"), "Ctrl+Alt+3", () => { active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); active().terminal.focus(); }); }],
+  ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), async () => { const tab = active(); tab.expanded = ''; if (!tab.showTerminal) await revealTerminal(tab); else { tab.showTerminal = false; update(); tab.editor?.focus(); } }],
+  ['new-terminal', 'New terminal tab', 'Ctrl+Shift+` / Ctrl+Shift+T in terminal', () => newTerminal()],
+  ['close-terminal', 'Close terminal tab', 'Ctrl+Shift+W in terminal', () => closeTerminal()],
+  ['next-terminal', 'Next terminal tab', 'Ctrl+PageDown / Ctrl+Tab in terminal', () => cycleTerminal(1)],
+  ['previous-terminal', 'Previous terminal tab', 'Ctrl+PageUp / Ctrl+Shift+Tab in terminal', () => cycleTerminal(-1)],
+  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), async () => { const tab = active(), expanded = tab.expanded; movePanel('terminal', 'bottom'); await revealTerminal(tab); tab.expanded = expanded === 'terminal' ? '' : 'terminal'; update(); focusTerminal(tab); }],
+  ['terminal-bottom', 'Dock terminal below document', '', async () => { movePanel('terminal', 'bottom'); active().expanded = ''; await revealTerminal(); }],
+  ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), async () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); if (show && boot.capabilities?.terminal !== false && !tab.terminals.length) await newTerminal(tab); tab.showFiles = show; tab.showTerminal = show && boot.capabilities?.terminal !== false; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
+  ['focus-editor', ui("focus-editor"), 'Ctrl+Alt+1', () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
+  ['focus-files', ui("focus-file-manager"), 'Ctrl+Alt+2', () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
+  ['focus-terminal', ui("focus-terminal"), 'Ctrl+Alt+3', () => { active().expanded = ''; return revealTerminal(); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
-  ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal.clear(); active().terminal.focus(); bridge.terminal('write', { id: active().id, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
+  ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal?.clear(); active().terminal?.focus(); bridge.terminal('write', { id: active().terminalId, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
   ['refresh', ui("refresh-directory-and-configuration"), ui("f5"), () => refresh()],
   ['toggle-hidden', ui("toggle-hidden-files"), ui("ctrl-h-in-files-"), async () => { const tab = active(); await call('settings:save', { show_hidden: tab.config.values.show_hidden === 'true' ? 'false' : 'true' }, tab.cwd); await refresh(); }],
   ['view-mode', ui("toggle-source-pretty-view"), 'Ctrl+R', viewMode],
@@ -857,13 +1028,15 @@ listeners.set('tab', new Set([() => { if (tabs.length > 1) receive('covenant'); 
 listeners.set('navigate', new Set([() => { receive('seed'); renderChat(); if (active().worldRoot) progressWalk('world'); }]));
 listeners.set('focus', new Set([() => { renderChat(); updateInboxBadge(); }]));
 
-const pendingTerminal = new Map();
+const pendingTerminal = new Map(), startingTerminals = new Set();
 function terminalMessage(message) {
-  const tab = tabs.find(item => item.id === message.id);
-  if (!tab) { if (message.id && !message.closed) { if (!pendingTerminal.has(message.id)) pendingTerminal.set(message.id, []); pendingTerminal.get(message.id).push(message); } else if (message.type === 'error') notice(message.message); return; }
-  if (message.type === 'data') tab.terminal.write(message.data);
-  if (message.type === 'exit') { tab.terminalExited = true; tab.terminal.write(ui("-shell-exited-", message.code)); }
-  if (message.type === 'error') { notice(message.message); tab.terminal.write(`\r\n${message.message}\r\n`); }
+  const tab = tabs.find(item => item.terminals.some(session => session.id === message.id));
+  if (!tab) { if (startingTerminals.has(message.id)) { if (!pendingTerminal.has(message.id)) pendingTerminal.set(message.id, []); pendingTerminal.get(message.id).push(message); } else if (message.type === 'error') notice(message.message); return; }
+  const session = tab.terminals.find(item => item.id === message.id);
+  if (message.type === 'data') session.terminal.write(message.data);
+  if (message.type === 'cwd') session.cwd = message.cwd;
+  if (message.type === 'exit') closeTerminal(message.id, true).catch(error => notice(error.message));
+  if (message.type === 'error') { notice(message.message); session.terminal.write(`\r\n${message.message}\r\n`); }
 }
 bridge.on('terminal', terminalMessage);
 bridge.on('navigation', state => {
@@ -874,7 +1047,7 @@ bridge.on('navigation', state => {
   if (tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
   if (tab.id === activeId) update(); emit('navigate', { id: tab.id, cwd: tab.cwd });
 });
-bridge.on('directory-changed', ({ id }) => { const tab = tabs.find(item => item.id === id); if (tab) refresh(tab).catch(error => notice(error.message)); });
+bridge.on('directory-changed', ({ id }) => { const tab = tabs.find(item => item.id === id); if (tab && !movingFiles) refresh(tab).catch(error => notice(error.message)); });
 bridge.on('error', notice);
 bridge.on('command', run);
 bridge.on('open', opening => openRequest(opening).catch(error => notice(error.message)));
@@ -903,6 +1076,8 @@ document.addEventListener('click', event => {
     return;
   }
   const button = event.target.closest('[data-command]'); if (button) { run(button.dataset.command); return; }
+  const terminalClose = event.target.closest('[data-close-terminal]'); if (terminalClose) { closeTerminal(terminalClose.dataset.closeTerminal).catch(error => notice(error.message)); return; }
+  const terminalTab = event.target.closest('[data-terminal]'); if (terminalTab) { switchTerminal(terminalTab.dataset.terminal).catch(error => notice(error.message)); return; }
   const close = event.target.closest('[data-close-tab]'); if (close) { closeTab(close.dataset.closeTab).catch(error => notice(error.message)); return; }
   const tab = event.target.closest('#tabs [data-tab]'); if (tab) activate(tab.dataset.tab);
 });
@@ -953,6 +1128,18 @@ $('#file-list').oncontextmenu = event => {
   event.preventDefault(); active().selected = new Set([row.dataset.path]); renderFiles(); fileMenu(row.dataset.path);
 };
 let typeAhead = '', typeTimer;
+installFileDrag({
+  list: $('#file-list'), currentDirectory: () => active().cwd, move: moveToDirectory, notice,
+  pathsFor(row) {
+    const tab = active();
+    if (!tab.selected.has(row.dataset.path)) tab.selected = new Set([row.dataset.path]);
+    for (const item of $('#file-list').querySelectorAll('[data-path]')) {
+      item.classList.toggle('selected', tab.selected.has(item.dataset.path));
+      item.setAttribute('aria-selected', String(tab.selected.has(item.dataset.path)));
+    }
+    return selectedPaths();
+  },
+});
 $('#file-list').onkeydown = event => {
   const rows = [...$('#file-list').querySelectorAll('[data-path]')], tab = active();
   const current = rows.findIndex(row => tab.selected.has(row.dataset.path));

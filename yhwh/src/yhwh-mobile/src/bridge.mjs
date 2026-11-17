@@ -13,6 +13,9 @@ export const unavailable = {
   'config:open': 'Mobile settings use JSON rather than shell rc files. Use Settings to edit them.',
   'offering:piece': 'Use Export or share file to attach a document on mobile.',
   'window:close': 'Use your device’s app switcher to leave YHWH. Save any edits first.',
+  'terminal:new': 'Local Unix shells are available on desktop.',
+  'terminal:activate': 'Local Unix shells are available on desktop.',
+  'terminal:close': 'Local Unix shells are available on desktop.',
 };
 export function normalize(input, cwd = HOME) {
   if (typeof input !== 'string' || input.includes('\0') || input.includes('\\')) throw new Error('Invalid path.');
@@ -68,10 +71,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     if (stat.directory) throw new Error('Open a regular file.');
     const resolved = await config(path), type = fileType(path, new Uint8Array(), resolved.values, mime(path));
     const result = { ...stat, path, name: path.split('/').at(-1), ...type, config: resolved, kind: 'binary' };
-    if (stat.size > 16 * 1024 * 1024 || type.mime === 'application/pdf') return result;
+    if (stat.size > (type.viewer && type.viewer !== 'table' ? 64 : 16) * 1024 * 1024) return result;
     const bytes = await storage.read(path);
     Object.assign(result, fileType(path, bytes, resolved.values, mime(path)), { modified: version(stat, bytes) });
-    if (result.mime.startsWith('image/') && result.mime !== 'image/svg+xml') return { ...result, kind: 'image', data: `data:${result.mime};base64,${base64(bytes)}` };
+    if (['image', 'video', 'audio', 'pdf', 'spreadsheet'].includes(result.viewer)) return { ...result, kind: result.viewer, bytes };
     if (bytes.includes(0)) return result;
     try { const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes); return { ...result, kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' }; }
     catch { return result; }
@@ -122,7 +125,12 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     },
     'file:external': filename => share(normalize(filename)),
     'file:reveal': () => { throw new Error('Use Files in YHWH, or Export or share file to open a document in another app.'); },
-    'clipboard:path': filename => clipboard(normalize(filename)),
+    'clipboard:path': (filename, relativeTo) => {
+      const path = normalize(filename); if (!relativeTo) return clipboard(path);
+      const from = normalize(relativeTo).split('/'), to = path.split('/');
+      while (from.length && to.length && from[0] === to[0]) { from.shift(); to.shift(); }
+      return clipboard([...from.map(() => '..'), ...to].join('/') || '.');
+    },
     choose: (kind, cwd) => choose(kind, normalize(cwd)),
     'choose:save': (cwd, name) => choose('save', normalize(cwd), name),
     async 'settings:save'(values, scope = '/') {

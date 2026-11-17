@@ -10,7 +10,7 @@ const send = message => { if (process.connected) process.send(message); };
 
 function start({ id, cwd, env = {} }) {
   const shell = process.env.YHWH_SHELL || process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/bash');
-  const name = path.basename(shell), environment = { ...process.env, ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor', YHWH_TAB: id };
+  const name = path.basename(shell), environment = { ...process.env, ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor', YHWH_TAB: env.YHWH_TAB || id };
   environment.YHWH_PREFIX_SHELL ||= path.join(__dirname, '../prefix-shell.cjs');
   environment.YHWH_BUNDLED_COMPLETION ||= require('../../lib/paths.cjs').etc('completions', 'yhwh.bash');
   let args = [], temporary;
@@ -29,7 +29,9 @@ function start({ id, cwd, env = {} }) {
   terminal.onData(data => {
     send({ type: 'data', id, data });
     session.tail = (session.tail + data).slice(-32768);
-    const expression = /\x1b\]7;file:\/\/[^/]*(.*?)\x07/g;
+    // OSC can end with BEL or ST. Never consume a second OSC as part of cwd
+    // when the user's normal prompt uses the other terminator (e.g. VTE).
+    const expression = /\x1b\]7;file:\/\/[^/]*([^\x07\x1b]*)(?:\x07|\x1b\\)/g;
     let match, latest;
     while ((match = expression.exec(session.tail))) latest = match[1];
     if (latest) {

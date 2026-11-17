@@ -47,7 +47,7 @@ test('files preserve UTF-8 and CRLF and reject conflicting changes even at the s
 });
 test('binary, non-UTF8, oversized and PDF documents never become editable text', async () => {
   const { storage, call } = await fixture();
-  for (const [name, bytes] of [['binary', [65, 0, 66]], ['bad.txt', [255, 254]], ['document.pdf', [65, 66]]]) {
+  for (const [name, bytes] of [['binary', [65, 0, 66]], ['bad.txt', [255, 254]], ['document.dat', [0, 66]]]) {
     await storage.write('/YHWH/' + name, new Uint8Array(bytes)); assert.equal((await call('file:read', '/YHWH/' + name)).kind, 'binary');
   }
   storage.files.set('/YHWH/huge.txt', { size: 17000000, modified: 1 });

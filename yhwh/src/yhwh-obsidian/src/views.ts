@@ -1,7 +1,7 @@
 import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-views.json';
 const ui = interfaceText(interfaceCopy);
-import { App, ItemView, MarkdownRenderer, Menu, Modal, TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { App, FileSystemAdapter, ItemView, MarkdownRenderer, Menu, Modal, TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import type YHWH from './main';
 import { mode, parent, resolvePath, words } from './core';
 import { ATLAS } from './atlas';
@@ -33,6 +33,7 @@ export class Navigator extends ItemView {
   private filter = '';
   private index = 0;
   private visible: Array<TFile | TFolder> = [];
+  private dragged?: TFile | TFolder;
   constructor(leaf: WorkspaceLeaf, private plugin: YHWH) { super(leaf); }
   getViewType() { return NAV; }
   getDisplayText() { return ui("yhwh-files"); }
@@ -58,31 +59,58 @@ export class Navigator extends ItemView {
   openEntry(entry: TFile | TFolder, newTab = false) {
     this.plugin.run(() => entry instanceof TFolder ? this.plugin.go(entry.path) : this.plugin.open(entry, newTab));
   }
+  dropTarget(element: HTMLElement, directory: string) {
+    const valid = () => this.dragged && directory !== this.dragged.path && !directory.startsWith(this.dragged.path + '/');
+    element.addEventListener('dragover', event => {
+      if (!valid() || !event.dataTransfer?.types.includes('application/x-yhwh-obsidian-file')) return;
+      event.preventDefault(); event.stopPropagation(); event.dataTransfer.dropEffect = 'move'; element.addClass('yhwh-drop-target');
+    });
+    element.addEventListener('dragleave', () => element.removeClass('yhwh-drop-target'));
+    element.addEventListener('drop', event => {
+      if (!event.dataTransfer?.types.includes('application/x-yhwh-obsidian-file')) return;
+      event.preventDefault(); event.stopPropagation(); element.removeClass('yhwh-drop-target');
+      if (!valid()) return;
+      const file = this.dragged!; this.dragged = undefined;
+      this.plugin.run(async () => {
+        const destination = resolvePath(directory, file.name);
+        if (destination === file.path) return;
+        if (this.app.vault.getAbstractFileByPath(destination)) throw new Error('A file with that name already exists.');
+        await this.app.fileManager.renameFile(file, destination);
+      });
+    });
+  }
   render() {
     const p = this.plugin, el = this.contentEl;
     const hadFocus = el.contains(el.ownerDocument.activeElement);
     el.empty(); p.heading(el, ui("files"));
     const tools = el.createDiv('yhwh-tools');
-    button(tools, '↑', ui("parent-folder-alt-"), () => p.run(() => p.go(parent(p.folder)))).disabled = !p.folder;
+    const up = button(tools, '↑', ui("parent-folder-alt-"), () => p.run(() => p.go(parent(p.folder)))); up.disabled = !p.folder;
+    if (p.folder) this.dropTarget(up, parent(p.folder));
     button(tools, '+ file', ui("new-file"), () => p.run(() => p.newFile()));
     button(tools, '+ folder', ui("new-folder"), () => p.run(() => p.newFolder()));
     button(tools, '⛶', ui("toggle-file-manager-in-the-workspace-ctrl-d"), () => p.run(() => p.toggleFilesFocus()));
     button(tools, '>_', ui("toggle-navigation-console-ctrl-b"), () => p.run(() => p.toggle(CONSOLE)));
     button(tools, ui("3d"), ui("open-3d-directory"), () => p.run(() => p.show(ATLAS)));
     const crumbs = el.createDiv('yhwh-breadcrumbs');
-    button(crumbs, '/', ui("vault-root"), () => p.run(() => p.go('')));
+    this.dropTarget(button(crumbs, '/', ui("vault-root"), () => p.run(() => p.go(''))), '');
     let path = '';
     for (const part of p.folder.split('/').filter(Boolean)) {
       path = [path, part].filter(Boolean).join('/'); const target = path;
-      button(crumbs, part, ui("go-to-", target), () => p.run(() => p.go(target)));
+      this.dropTarget(button(crumbs, part, ui("go-to-", target), () => p.run(() => p.go(target))), target);
     }
     const filter = el.createEl('input', { type: 'search', value: this.filter, cls: 'yhwh-filter', attr: { placeholder: ui("filter-this-folder-"), 'aria-label': ui("filter-this-folder") } });
     const list = el.createDiv({ cls: 'yhwh-files', attr: { role: 'list', 'aria-label': ui("files-and-folders"), tabindex: '0' } });
+    this.dropTarget(list, p.folder);
     const fill = () => {
       list.empty(); this.visible = p.entries().filter(file => file.name.toLocaleLowerCase().includes(this.filter.toLocaleLowerCase()));
       this.index = Math.max(0, Math.min(this.index, this.visible.length - 1));
       for (const [index, file] of this.visible.entries()) {
         const row = list.createDiv({ cls: 'yhwh-file-row', attr: { role: 'listitem' } });
+        row.draggable = true;
+        row.addEventListener('dragstart', event => { this.dragged = file; event.stopPropagation(); event.dataTransfer!.effectAllowed = 'move'; event.dataTransfer!.setData('application/x-yhwh-obsidian-file', file.path); });
+        row.addEventListener('dragend', () => { this.dragged = undefined; this.contentEl.querySelectorAll('.yhwh-drop-target').forEach(el => el.removeClass('yhwh-drop-target')); });
+        if (file instanceof TFolder) this.dropTarget(row, file.path);
+        else row.addEventListener('dragover', event => event.stopPropagation());
         const b = button(row, `${file instanceof TFolder ? '▸' : '·'}  ${file.name}`, ui("open", file.name), () => { this.index = index; this.openEntry(file); });
         b.dataset.index = String(index); b.classList.toggle('is-selected', index === this.index);
         if (file instanceof TFile) row.createSpan({ text: file.extension || 'text', cls: 'yhwh-extension' });
@@ -91,6 +119,15 @@ export class Navigator extends ItemView {
           const menu = new Menu();
           if (file instanceof TFile) menu.addItem(item => item.setTitle(ui("open-in-new-tab")).setIcon('file-plus').onClick(() => this.openEntry(file, true)));
           menu.addItem(item => item.setTitle(ui("rename-or-move")).setIcon('pencil').onClick(() => p.run(() => p.rename(file))));
+          menu.addItem(item => item.setTitle('Copy Full Path').setIcon('copy').onClick(() => p.run(async () => {
+            const adapter = p.app.vault.adapter;
+            if (!(adapter instanceof FileSystemAdapter)) throw new Error('Full filesystem paths are unavailable in this Obsidian host. Use Copy Relative Path.');
+            await navigator.clipboard.writeText(adapter.getFullPath(file.path));
+          })));
+          menu.addItem(item => item.setTitle('Copy Relative Path').setIcon('copy').onClick(() => p.run(() => navigator.clipboard.writeText(file.path))));
+          menu.addItem(item => item.setTitle('Move to Trash').setIcon('trash').onClick(() => p.run(async () => {
+            if (await prompt(p.app, 'Move to Trash', `Type TRASH to move ${file.name} to Trash.`) === 'TRASH') await p.app.fileManager.trashFile(file);
+          })));
           menu.showAtMouseEvent(event);
         });
       }

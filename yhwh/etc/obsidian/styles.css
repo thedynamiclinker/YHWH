@@ -73,3 +73,4 @@
 .yhwh[data-mode=dawkins] .yhwh-space { background: #101010; border-radius: 0; }
 @media (prefers-reduced-motion: reduce) { .yhwh * { scroll-behavior: auto; } }
 @media (max-width: 500px) { .yhwh { padding: 9px; } .yhwh-heading { gap: 7px; } .yhwh-console-prompt { flex-wrap: wrap; } }
+.yhwh .yhwh-drop-target { outline: 2px solid var(--yhwh-accent, var(--interactive-accent)); outline-offset: -2px; background: var(--background-modifier-hover); }
