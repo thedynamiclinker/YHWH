@@ -170,6 +170,7 @@ process.stdin.on('end', () => {
     await page.waitForFunction(() => document.querySelector('#location').value === '/');
     await page.locator('#file-list .file-row[data-path$="/media"]').dblclick();
     await page.waitForFunction(() => document.querySelector('#location').value === '/media');
+    await page.waitForFunction(() => window.YHWH.active().entries.length === 1 && window.YHWH.active().entries[0].name === 'On The Lamb');
     assert.deepEqual(await page.evaluate(() => window.YHWH.active().entries.map(entry => entry.name)), ['On The Lamb']);
     await page.locator('#file-list [data-path]').filter({ hasText: 'On The Lamb' }).dblclick();
     const documentation = path.resolve(root, '../../../mnt/yhwh/boot/kernel/Documentation');

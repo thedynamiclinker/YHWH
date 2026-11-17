@@ -158,6 +158,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Editor, syntax, Markdown source/preview, formatting, themes | Shared desktop renderer and editor |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
+| `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |
 | Files, folders, move, rename, copy, autosave, explicit save, conflicts | Native Filesystem adapter; hold a file/folder for 450 ms, then drag onto a folder, `..` or blank space to move it; Move to folder picker also available; UTF-8/newlines retained; same-timestamp content changes detected |
 | Trash | Moves into hidden workspace `.Trash`; enable hidden files to recover |

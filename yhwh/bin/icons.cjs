@@ -19,8 +19,8 @@ function iconSVG(development, { size = 1024, inset = 32, opaque = false } = {}) 
 </svg>
 `;
 }
-function render(svg, filename) {
-  const result = spawnSync('magick', ['-background', 'none', 'svg:-', '-depth', '8', filename], { input: svg, maxBuffer: 10 * 1024 * 1024 });
+function render(svg, filename, opaque = false) {
+  const result = spawnSync('magick', ['-background', 'none', 'svg:-', '-strip', '-depth', '8', ...(opaque ? ['-alpha', 'off'] : []), filename], { input: svg, maxBuffer: 10 * 1024 * 1024 });
   if (result.error) throw new Error('Install ImageMagick to regenerate launcher assets: ' + result.error.message);
   if (result.status !== 0) throw new Error(result.stderr.toString());
 }
@@ -40,5 +40,5 @@ for (const [density, scale] of Object.entries({ mdpi: 1, hdpi: 1.5, xhdpi: 2, xx
   const foreground = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${108 * scale}" height="${108 * scale}" viewBox="0 0 108 108"><svg x="21" y="21" width="66" height="66" viewBox="0 0 1024 1024">${iconSVG(false).replace(/^<svg[^>]*>|<\/svg>\s*$/g, '')}</svg></svg>`;
   render(foreground, path.join(directory, 'ic_launcher_foreground.png'));
 }
-render(iconSVG(false, { opaque: true }), path.join(root, 'src/yhwh-mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'));
+render(iconSVG(false, { opaque: true }), path.join(root, 'src/yhwh-mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'), true);
 console.log('Exported circular desktop/Electron icons and installed artwork for Android/iOS.');
