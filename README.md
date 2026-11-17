@@ -2,6 +2,10 @@ Run `make` for a gui.
 
 Run `yhwh` for a cli.
 
+Run `make android-run` to build, install and open YHWH on an adb-connected Android
+phone. Repeat after code changes; app data is retained. NixOS gets the build
+toolchain automatically. See [the mobile guide](yhwh/src/yhwh-mobile/README.md).
+
 Run `make tty` for **el shaddai**, the ranger-like terminal interface.
 **shaddai**: “Nobody knows. Maybe mountains or ttys.” Edit the definition in
 Settings or through `Ctrl+P` → **Edit shaddai definition**.

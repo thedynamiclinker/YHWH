@@ -81,7 +81,7 @@ nix-shell:
 verify-deps:
 	@$(NODE) -e 'try { require.resolve("esbuild"); require.resolve("@inquirer/prompts"); } catch { console.error("Dependencies missing. Run make deps first."); process.exit(1); }'
 
-.PHONY: mobile-build mobile-sync mobile-check android android-apk ios
+.PHONY: mobile-build mobile-sync mobile-check android android-apk android-run ios
 mobile-build: deps
 	$(NODE) bin/build.cjs mobile
 mobile-sync: mobile-build
@@ -99,5 +99,11 @@ android-apk: mobile-sync
 		cd src/yhwh-mobile/android && ./gradlew assembleDebug; \
 	fi
 	cp src/yhwh-mobile/android/app/build/outputs/apk/debug/app-debug.apk var/tmp/yhwh/mobile/yhwh-debug.apk
+android-run:
+	@command -v adb >/dev/null || { printf '%s\n' 'adb is required on PATH. Connect and authorize your phone first.'; exit 1; }
+	adb get-state
+	$(MAKE) android-apk
+	adb install -r var/tmp/yhwh/mobile/yhwh-debug.apk
+	adb shell am start -S -W -n com.thedynamiclinker.yhwh/.MainActivity
 ios: mobile-sync
 	./node_modules/.bin/cap open ios

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+1. The terminal sometimes shrinks into the top right and gets really small and stuck. Any idea why? Not sure what causes it. Fix if you can, but no worries if can't figure it out since idk how to reproduce it yet.
+
+2. Make the .desktop file icons be circular like all the other icons in my current icon theme, and make the 'make install' one be derived from yhwh-icon-we-third-mountain.png and make the 'make develop' one be derived from yhwh-profile-pic-paleo-1.png but move the 4 paleo letters into a 2x2 grid like this:
+
+𐤄 𐤉
+𐤄 𐤅
+EOF

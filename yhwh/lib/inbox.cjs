@@ -3,7 +3,14 @@ const primarySender = 'yhwh@thedynamiclinker.com';
 const alternateSenders = ['jewvacation@gmail.com', 'yhwvacation@gmail.com', 'admin@yahoo.com'];
 const { canReceiveLetter } = require('./presence.cjs');
 const minute = 60000;
+const midnightLetter = {
+  id: 'seedis', title: 'seedis', textKey: 'letterSeedis', sender: primarySender,
+  to: 'ʾbe', cc: ['𐤀be', 'אbe', 'Abe', 'abe'], bcc: ['ew'], format: 'markdown',
+  attachment: 'biblical-polygyny.png',
+  note: 'Original fictional correspondence from YHWH. Delivered locally; no email is sent.',
+};
 const letters = [
+  midnightLetter,
   // Minutes after 21:00: a finite, sleepless night, crossing midnight.
   ...[
     ['night-intro', 17, 'a thought. call me', 'letterNightIntro', 'Genesis 12:2'],
@@ -26,6 +33,19 @@ const letters = [
     ['blocked-yahoo', 37, 'ABE. acquisition closed', 'letterBlockedYahoo'],
   ].map(([id, afterBlockMinutes, title, textKey], index) => ({ id, afterBlockMinutes, title, textKey, sender: alternateSenders[index], verse: 'Genesis 17:5', note: 'Fictional local mail. New names, grand promises, and an entirely imaginary Yahoo acquisition.' })),
 ];
+
+function nextMidnightLetter(state, options = {}) {
+  const now = options.now ?? Date.now(), local = new Date(now);
+  if (local.getHours() !== 0 || local.getMinutes() !== 0 || state.blockedYhwh) return;
+  if (canReceiveLetter(state, midnightLetter.id, { ...options, now })) return midnightLetter;
+}
+
+function nextMidnight(now = Date.now()) {
+  const next = new Date(now);
+  next.setDate(next.getDate() + 1);
+  next.setHours(0, 0, 0, 0);
+  return next.getTime();
+}
 
 function startNight(state, now) {
   if (Number.isFinite(state.nightStartedAt)) return false;
@@ -58,4 +78,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, startNight, nextStartupLetter, senderFor };
+module.exports = { primarySender, alternateSenders, letters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, senderFor };

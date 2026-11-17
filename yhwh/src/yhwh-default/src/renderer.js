@@ -9,7 +9,8 @@ import { createVerseUI } from './verses.js';
 import { match as matchKey } from '../../../lib/key-names.cjs';
 import { showHotkeys } from './hotkeys.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
-import { primarySender, letters as startupLetters, startNight, nextStartupLetter, senderFor } from '../../../lib/inbox.cjs';
+import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
+import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 
 const bridge = window.yhwh;
 const $ = selector => document.querySelector(selector);
@@ -227,7 +228,15 @@ function applyConfig(config) {
 }
 function fitTerminal() {
   const tab = active(); if (!tab || $('#terminal-panel').hidden) return;
-  try { tab.fit.fit(); bridge.terminal('resize', { id: tab.id, cols: tab.terminal.cols, rows: tab.terminal.rows }); } catch {}
+  // A panel can be hidden by an ancestor (for example expanded Files). Fitting
+  // that zero-size box sends a 2x1 resize to the running shell.
+  const box = tab.terminalElement.getBoundingClientRect();
+  if (box.width < 40 || box.height < 30) return;
+  try {
+    tab.fit.fit();
+    const size = `${tab.terminal.cols}x${tab.terminal.rows}`;
+    if (tab.shellSize !== size) { bridge.terminal('resize', { id: tab.id, cols: tab.terminal.cols, rows: tab.terminal.rows }); tab.shellSize = size; }
+  } catch {}
 }
 async function refresh(tab = active()) {
   if (!tab) return;
@@ -561,6 +570,7 @@ function movePanel(id, area) {
   const destination = ({ right: $('#right-panels'), center: $('#center-panels'), bottom: $('#focus-area'), left: $('#workspace') })[area];
   if (!destination || element.contains(destination)) throw new Error(ui("invalid-panel-position-"));
   if (area === 'left') destination.insertBefore(element, $('#focus-area')); else destination.append(element);
+  element.dataset.area = area;
   requestAnimationFrame(fitTerminal);
 }
 function addPanel({ id, title, area = 'right', render }) {
@@ -570,7 +580,12 @@ function addPanel({ id, title, area = 'right', render }) {
   const content = document.createElement('div'); element.append(content); render?.(content);
   const panel = { element, remove() { element.remove(); panels.delete(id); } }; panels.set(id, panel); movePanel(id, area); draggable(header, id); return panel;
 }
-function draggable(header, id) { header.draggable = true; header.ondragstart = event => event.dataTransfer.setData('application/x-yhwh-panel', id); }
+function draggable(header, id) {
+  header.draggable = true;
+  let control = false;
+  header.addEventListener('pointerdown', event => { control = !!event.target.closest('button, input, select, a'); });
+  header.ondragstart = event => { if (control) { event.preventDefault(); return; } event.stopPropagation(); event.dataTransfer.setData('application/x-yhwh-panel', id); };
+}
 function pluginAPI() {
   return { words, notice, editWords, addCommand, addPanel, movePanel, openFile, navigate, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
     createCitation: verseUI.createCitation, showVerse: verseUI.browse,
@@ -645,7 +660,8 @@ const definitions = [
   ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['expand-files', ui("expand-file-manager"), ui("ctrl-d"), () => { const tab = active(); tab.expanded = tab.expanded === 'files' ? '' : 'files'; tab.showFiles = true; update(); $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), () => { const tab = active(); tab.showTerminal = !tab.showTerminal; tab.expanded = ''; update(); requestAnimationFrame(() => { fitTerminal(); if (tab.showTerminal) tab.terminal.focus(); }); }],
-  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), () => { const tab = active(); tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; tab.showTerminal = true; update(); requestAnimationFrame(() => { fitTerminal(); tab.terminal.focus(); }); }],
+  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), () => { const tab = active(); movePanel('terminal', 'bottom'); tab.expanded = tab.expanded === 'terminal' ? '' : 'terminal'; tab.showTerminal = true; update(); requestAnimationFrame(() => { fitTerminal(); tab.terminal.focus(); }); }],
+  ['terminal-bottom', 'Dock terminal below document', '', () => { movePanel('terminal', 'bottom'); active().showTerminal = true; active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
   ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); tab.showFiles = show; tab.showTerminal = show; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
   ['focus-editor', ui("focus-editor"), "Ctrl+Alt+1", () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
   ['focus-files', ui("focus-file-manager"), "Ctrl+Alt+2", () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
@@ -700,13 +716,15 @@ function updateInboxBadge() {
   const count = presence.letters.filter(letter => !letter.read).length;
   $('#inbox-count').textContent = count ? ` · ${count}` : '';
 }
-function receive(id) {
+function receive(id, midnightOnly = false) {
   if (!active() || document.visibilityState !== 'visible') return;
   const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme };
   if (startNight(presence, options.now)) savePresence();
   const startup = nextStartupLetter(presence, options);
+  const midnight = nextMidnightLetter(presence, options);
+  if (midnightOnly && !midnight) return;
   // An address change follows a block; the name joke keeps its existing order.
-  const letter = startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id);
+  const letter = midnight || (startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id));
   if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
   const sender = senderFor(presence, letter);
   if (!sender) return;
@@ -715,6 +733,16 @@ function receive(id) {
 // No background delivery or catch-up burst: each later letter needs actual use.
 document.addEventListener('click', () => receive());
 document.addEventListener('keydown', () => receive());
+// Wake at local midnight even if the user isn't typing. Hidden/suspended apps
+// never backfill this letter later in the day. Recheck the clock on resume.
+let midnightTimer;
+function scheduleMidnightMail() {
+  clearTimeout(midnightTimer);
+  midnightTimer = setTimeout(() => { receive(undefined, true); scheduleMidnightMail(); }, Math.max(1, Math.min(60000, nextMidnight() - Date.now())));
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { receive(); scheduleMidnightMail(); } });
+window.addEventListener('focus', () => { receive(); scheduleMidnightMail(); });
+scheduleMidnightMail();
 function inbox() { focusView('inbox'); }
 function mailSettings() {
   const dialog = modal('Mail settings', `<form id="mail-settings-form"><details class="mail-sender-settings"><summary>Sender controls</summary><label class="setting-row"><span>Block ${primarySender}<small>Applies to this exact address. Earlier letters stay in your inbox.</small></span><input type="checkbox" role="switch" name="blocked_yhwh" ${presence.blockedYhwh ? 'checked' : ''}></label></details><div class="dialog-actions"><button type="button" data-mail-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`);
@@ -727,6 +755,12 @@ function mailSettings() {
     savePresence(); dialog.close();
   };
 }
+function mailMarkdown(text) {
+  // Numbered footnotes are part of this letter's editable Markdown copy.
+  const footnotes = String(text).replace(/^\[\^(\d+)\]:\s*(.+)$/gm, (_, number, note) => `<p id="mail-footnote-${number}"><sup>${number}</sup> ${escape(note)}</p>`)
+    .replace(/\[\^(\d+)\]/g, (_, number) => `<sup><a href="#mail-footnote-${number}" aria-label="Footnote ${number}">${number}</a></sup>`);
+  return renderMarkdown(footnotes);
+}
 function renderInbox() {
   const host = $('#inbox-view'), tab = active();
   const available = [...presence.letters].sort((a, b) => b.at - a.at).map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
@@ -736,7 +770,10 @@ function renderInbox() {
   if (selected) {
     const { letter, state } = selected;
     const source = letter.source;
-    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span><span>to Abe</span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${word(letter.textKey)}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
+    const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
+    const recipients = `<span>to ${escape(letter.to || 'Abe')}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
+    const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachment)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
+    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
     host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
     verseUI.hydrate(host);
   } else {
@@ -856,7 +893,7 @@ document.addEventListener('click', event => {
   if (anchor) {
     event.preventDefault(); const href = anchor.getAttribute('href'); if (!href) return;
     if (/^(https?:|mailto:)/.test(href)) call('external', href).catch(error => notice(error.message));
-    else if (href.startsWith('#')) active()?.document.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)?.scrollIntoView();
+    else if (href.startsWith('#')) (anchor.closest('.mail-message') || active()?.document)?.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)?.scrollIntoView();
     else {
       let decoded = href; try { decoded = decodeURIComponent(href); } catch {}
       const filename = join(parent(active().file?.path || join(active().cwd, '_')), decoded);
@@ -973,7 +1010,7 @@ for (const [selector, id] of [['#files > header', 'files'], ['#terminal-panel > 
 for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 'right'], ['#center-panels', 'center'], ['#terminal-panel', 'bottom']]) {
   const element = $(selector);
   element.ondragover = event => { if (event.dataTransfer.types.includes('application/x-yhwh-panel')) event.preventDefault(); };
-  element.ondrop = event => { const id = event.dataTransfer.getData('application/x-yhwh-panel'); if (id) { event.preventDefault(); try { movePanel(id, area); } catch (error) { notice(error.message); } } };
+  element.ondrop = event => { const id = event.dataTransfer.getData('application/x-yhwh-panel'); if (id) { event.preventDefault(); event.stopPropagation(); try { movePanel(id, area); } catch (error) { notice(error.message); } } };
 }
 
 (async () => {

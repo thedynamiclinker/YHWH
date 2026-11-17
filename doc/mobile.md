@@ -22,3 +22,10 @@ and copying the debug APK to `yhwh/var/tmp/yhwh/mobile/yhwh-debug.apk`. On
 NixOS it must supply the repository's mobile Nix toolchain, including native
 aapt2, without requiring Java or the Android SDK in the caller's PATH. A failed
 native build must fail the target before copying an APK from an earlier build.
+
+`make android-run` is the regular connected-device workflow: check adb before
+building, build the current APK, install with data retained, then restart the
+app to load the new code. Each step must succeed before the next runs. Respect
+adb's `ANDROID_SERIAL` selection; do not silently pick among multiple devices.
+This workflow needs no Android Studio, emulator or store account. It must not
+uninstall the app or clear the phone's workspace to deploy an update.

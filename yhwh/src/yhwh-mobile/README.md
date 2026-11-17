@@ -38,6 +38,7 @@ make mobile-check     # behavioral tests and phone/tablet browser workflows
 make mobile-sync      # rebuilds and cap syncs BOTH checked-in native projects
 make android          # sync, then open Android Studio
 make android-apk      # sync and compile a debug APK; sets up the toolchain on NixOS
+make android-run      # rebuild, install and open on your adb-connected phone
 make ios              # sync, then open Xcode on macOS
 ```
 
@@ -92,6 +93,23 @@ needed packages into the Nix store. It excludes emulators and system images.
 From the vault root, with the phone unlocked and USB debugging authorized:
 
 ```sh
+make android-run
+```
+
+Repeat this after source changes. It checks the adb connection before building,
+rebuilds the shared UI and debug APK, installs it while keeping app data, and
+restarts YHWH so the latest code loads. Nix supplies the build toolchain on NixOS;
+Android Studio, an emulator and a store account are not needed for this workflow.
+The first build may download dependencies; later builds reuse the Nix and Gradle
+caches. This installs bundled code, so the app also runs unplugged; it is not a
+live-reload server.
+
+If several devices are connected, select one with
+`ANDROID_SERIAL=SERIAL make android-run`, using its serial from `adb devices -l`.
+
+The equivalent individual steps are:
+
+```sh
 make android-apk
 adb devices -l
 adb install -r yhwh/var/tmp/yhwh/mobile/yhwh-debug.apk
@@ -111,6 +129,8 @@ file through the system picker and share sheet. These use the phone's app-owned
 workspace; the desktop vault is not copied or synchronized to it.
 
 If the app crashes, capture the crash log with `adb logcat -b crash -d`.
+For WebView UI errors, open `chrome://inspect/#devices` in desktop Chrome/Chromium
+while the debug app is running and select **inspect** under YHWH's WebView.
 See the official [adb documentation](https://developer.android.com/tools/adb)
 for installation, device selection and activity launch commands.
 
