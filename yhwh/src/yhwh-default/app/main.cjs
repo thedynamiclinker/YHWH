@@ -125,6 +125,7 @@ async function startTerminal(focus, id) {
   if (typeof id !== 'string' || terminals.has(id)) throw new Error('Invalid terminal.');
   const config = await configFor(focus.cwd);
   const cwd = await worlds.physical(focus);
+  if ([...terminals.values()].includes(focus.id)) throw new Error('This app tab already has a shell.');
   terminals.set(id, focus.id); focus.terminalId = id;
   host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });
 }
@@ -144,7 +145,7 @@ async function launch() {
   host.on('message', async message => {
     send('terminal', message);
     const focus = focuses.get(terminals.get(message.id));
-    if (message.type === 'exit') terminals.delete(message.id);
+    if (message.type === 'exit') { terminals.delete(message.id); if (focus?.terminalId === message.id) focus.terminalId = null; }
     if (message.type === 'cwd' && focus?.terminalId === message.id) {
       try { send('navigation', { id: focus.id, ...await navigate(focus.id, message.cwd, true) }); }
       catch (error) { send('error', error.message); }
@@ -168,13 +169,9 @@ async function launch() {
     const focus = focuses.get(id); focus?.watcher?.close(); clearTimeout(focus?.watchTimer); focuses.delete(id);
     for (const [terminalId, owner] of terminals) if (owner === id) { terminals.delete(terminalId); host.send({ type: 'close', id: terminalId }); }
   });
-  handle('terminal:new', async (id, terminalId) => {
+  handle('terminal:open', async (id, terminalId) => {
     const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
     await startTerminal(focus, terminalId);
-  });
-  handle('terminal:activate', async (id, terminalId) => {
-    const focus = focuses.get(id); if (!focus || terminals.get(terminalId) !== id) throw new Error('Closed terminal.');
-    focus.terminalId = terminalId;
   });
   handle('terminal:close', (id, terminalId) => {
     if (terminals.get(terminalId) !== id) return;
@@ -225,7 +222,10 @@ async function launch() {
   handle('file:move', async (source, target) => files.move(await sourcePath(source), await destination(target)));
   handle('file:copy', async (source, target) => { target = await destination(target); await fs.cp(await sourcePath(source), target, { recursive: true, errorOnExist: true, force: false }); return target; });
   handle('file:trash', filename => sourcePath(filename).then(value => require('../../../lib/trash.cjs').trash(value, target => shell.trashItem(target))));
-  handle('file:external', filename => sourcePath(filename).then(value => shell.openPath(value)));
+  handle('file:external', async filename => {
+    const error = await shell.openPath(await sourcePath(filename));
+    if (error) throw new Error(error);
+  });
   handle('file:reveal', filename => sourcePath(filename).then(value => shell.showItemInFolder(value)));
   handle('clipboard:path', (filename, relativeTo) => clipboard.writeText(relativeTo ? path.relative(relativeTo, filename) || '.' : path.resolve(filename)));
   handle('choose', async (kind, directory) => {
@@ -302,7 +302,6 @@ async function launch() {
     title: ui("yhwh"), icon: require('../../../lib/paths.cjs').etc('assets', development ? 'icon-development.png' : 'icon.png'), autoHideMenuBar: true,
     webPreferences: { preload: require('../../../lib/paths.cjs').output('default/ui/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
-  window.maximize();
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.on('close', event => { if (!quitting) { event.preventDefault(); command('quit'); } });

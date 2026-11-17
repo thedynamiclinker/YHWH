@@ -11,8 +11,7 @@ export const unavailable = {
   'config:open': 'Mobile settings use JSON rather than shell rc files. Use Settings to edit them.',
   'offering:piece': 'Use Export or share file to attach a document on mobile.',
   'window:close': 'Use your device’s app switcher to leave YHWH. Save any edits first.',
-  'terminal:new': 'Local Unix shells are available on desktop.',
-  'terminal:activate': 'Local Unix shells are available on desktop.',
+  'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
 };
 export function normalize(input, cwd = HOME) {
@@ -75,10 +74,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     if (stat.directory) throw new Error('Open a regular file.');
     const resolved = await config(path), type = fileType(path, new Uint8Array(), resolved.values, mime(path));
     const result = { ...stat, path, name: path.split('/').at(-1), ...type, config: resolved, kind: 'binary' };
-    if (stat.size > (type.viewer && type.viewer !== 'table' ? 64 : 16) * 1024 * 1024) return result;
+    if (type.external || stat.size > (type.viewer === 'pdf' ? 64 : 16) * 1024 * 1024) return result;
     const bytes = await storage.read(path);
     Object.assign(result, fileType(path, bytes, resolved.values, mime(path)), { modified: version(stat, bytes) });
-    if (['image', 'video', 'audio', 'pdf', 'spreadsheet'].includes(result.viewer)) return { ...result, kind: result.viewer, bytes };
+    if (result.viewer === 'pdf') return { ...result, kind: 'pdf', bytes };
     if (bytes.includes(0)) return result;
     try { const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes); return { ...result, kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' }; }
     catch { return result; }

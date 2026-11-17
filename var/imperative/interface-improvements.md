@@ -1,21 +1,21 @@
-- Open in full screen mode when opening the app. [REVERT]
+- Restore normal window startup; do not force fullscreen or maximization.
 
-- Have autosave on by default. [THAT MEANS BEHAVE LIKE OBSIDIAN]
+- Autosave ordinary text files by default, like Obsidian. Save after a short pause and when leaving or closing a document without routine Save/Discard prompts; retain explicit Save/Save as and concurrent-edit protection.
 
-- Have inbuilt viewers for img, pdf, video, excel, csv, and other common files. [REVERT FOR NOW, WE NEED TO HAVE MIME TYPES AND PUNT TO THE SYSTEM'S XDG-OPEN THING LIKE RS FILE MANAGER DOES. IF THE USER HAS A FAVORITE APP FOR OPENING WHATEVER FILE TYPE, WE WANT TO USE THEIRS]
+- Open images, media, Excel, CSV/TSV and other non-text attachments through the system’s MIME associations and preferred applications (xdg-open on Linux). Leave the current editor buffer intact and report launch failures.
 
-- The markdown live preview option is very glitchy right now. It switches betwee source view and preview on every space and feels very jarring. Also the cursor goes to the line below current location when it switches to preview mode. Just make it source view by default and just have the button/shortcut toggle it to the preview mode. No live mode. [KEEP]
+- Keep Markdown source view as the default, with a button/shortcut for a separate preview. No live mode or automatic switching while typing; preserve cursor, selection and undo history.
 
-- Have Ctrl+Shift+` also open the terminal (like in vscode and other apps.) [KEEP]
+- Keep Ctrl+Shift+backtick as an additional terminal toggle.
 
-- Add the option to open multiple terminal tabs and toggle between them when the terminal is focused. Like vscode does. Use sensible shortcuts for adding new terminal tabs and toggling between them. [REMOVE]
+- Remove multiple terminal tabs and their controls/shortcuts. Keep one shell per app tab; app-tab shortcuts work from the terminal too.
 
-- Also right now, if I type x in my terminal (which is aliased to exit), the terminal shows [Shell exited 0] but doesn't close the terminal and because I don't yet have the ability to open another terminal tab, the terminal becomes unusable if I type x. Fix all this. [YES PLEASE KEEP THIS AND FIX IF IT'S NOT FIXED YET, THIS ISN'T MACOS TERMINAL, IT HELPS NO ONE TO STAY OPEN WHEN DEAD]
+- Shell exit, including an alias such as x, closes the dead terminal immediately. Reopening starts a usable shell.
 
-- When I right click on a file and say 'Move to Trash', right now that doesn't work. Fix it. [KEEP]
+- Keep recoverable Move to Trash working from the file context menu.
 
-- Also when I right click on a file, have two options for copy path: Copy full Path and Copy Relative Path. [KEEP]
+- Keep Copy Full Path and Copy Relative Path in the file context menu.
 
--  Make the pdf opener have scroll. [WANT TO OUTSOURCE MOST NON TEXT TYPES MIME APPLICATION DEFAULT PREFS ON EACH SYSTEM, BUT CAN KEEP A BUILTIN PDF VIEWER, DO WHAT OBSIDIAN DOES, AND FOR AMBIGUOUS HALF TEXT TYPES LIKE PDF, MAYBE CLICK PREVIEWS AND CTRL+CLICK OR DOUBLE CLICK OPENS EXTERNALLY. DO WHAT NEMO DOES FOR EXECUTABLE FILES: PREFERENCE THAT ASKS FOR DEFAULT ACROSS ALL, KEEP IT SIMPLE BUT CONFIGURABLE.]
+- Keep the optional built-in PDF preview with continuous scrolling. Ask whether to preview or open in the system PDF app, with a remember-for-all-PDFs choice and a simple configurable default. Single-click uses that preference; Ctrl+click or double-click opens externally. Other non-text types use system apps. On mobile, use the native export/share sheet where direct default-app opening is unavailable.
 
-- Have the ability to drag and move around the files and folders in the file manager. [KEEP]
+- Keep drag-and-drop moves for files and folders, preserving open buffers and refusing destination collisions.

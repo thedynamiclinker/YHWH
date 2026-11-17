@@ -105,3 +105,20 @@ test('default prefix installation preserves user files and every shipped module 
     assert.deepEqual(invoked, [binding.command]);
   }
 });
+
+test('retired terminal-tab defaults upgrade without changing customized, executable or symlink bindings', async t => {
+  const base = await fixture(t), directory = path.join(base, 'etc/keys');
+  const legacy = "// command: new-terminal\nexport default api => api.run('new-terminal');\n";
+  await write(path.join(directory, 'ctrl/shift/backtick.js'), legacy);
+  await write(path.join(directory, 'ctrl/tab.js'), "export default api => api.notice('custom');\n");
+  const executable = "// command: reopen-tab\nexport default api => api.run(api.keyContext === 'terminal' ? 'new-terminal' : 'reopen-tab');\n";
+  await write(path.join(directory, 'ctrl/shift/t.js'), executable, 0o755);
+  const source = path.join(base, 'linked.js'); await write(source, legacy);
+  await fs.symlink(source, path.join(directory, 'ctrl/shift/w.js'));
+  await keys.seed(base);
+  assert.match(await fs.readFile(path.join(directory, 'ctrl/shift/backtick.js'), 'utf8'), /run\('toggle-terminal'\)/);
+  assert.match(await fs.readFile(path.join(directory, 'ctrl/tab.js'), 'utf8'), /notice\('custom'\)/);
+  assert.equal(await fs.readFile(path.join(directory, 'ctrl/shift/t.js'), 'utf8'), executable);
+  assert.equal((await fs.lstat(path.join(directory, 'ctrl/shift/w.js'))).isSymbolicLink(), true);
+  assert.equal(await fs.readFile(source, 'utf8'), legacy);
+});

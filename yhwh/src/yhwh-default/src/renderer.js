@@ -126,30 +126,27 @@ function createTerminal(tab, id = crypto.randomUUID()) {
   tab.terminalElement.append(element);
   const terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
   const fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(element);
-  tab.terminalNumber = (tab.terminalNumber || 0) + 1;
-  const session = { id, terminal, fit, element, cwd: tab.cwd, number: tab.terminalNumber };
+  const session = { id, terminal, fit, element, cwd: tab.cwd };
   terminal.onData(data => bridge.terminal('write', { id, data }));
   terminal.attachCustomKeyEventHandler(event => {
     const binding = bindingFor(event);
     return !binding || binding.kind === 'disabled';
   });
-  tab.terminals.push(session); selectTerminal(tab, session);
+  tab.terminals.push(session);
+  tab.terminalId = id; tab.terminal = terminal; tab.fit = fit;
   return session;
 }
-function selectTerminal(tab, session) {
-  tab.terminalId = session?.id; tab.terminal = session?.terminal; tab.fit = session?.fit;
-  for (const item of tab.terminals) item.element.hidden = item !== session;
-  if (active() === tab) renderTerminalTabs();
-}
-function renderTerminalTabs() {
-  const tab = active(); if (!tab) return;
-  $('#terminal-tabs').innerHTML = tab.terminals.map(session => `<span class="terminal-tab"><button role="tab" aria-selected="${session.id === tab.terminalId}" data-terminal="${session.id}" title="${escape(session.cwd)}">Shell ${session.number}</button><button data-close-terminal="${session.id}" aria-label="Close Shell ${session.number}">×</button></span>`).join('');
-}
 async function newTerminal(tab = active()) {
+  if (tab.terminals.length) return tab.terminals[0];
+  if (tab.startingTerminal) return tab.startingTerminal;
+  tab.startingTerminal = startTerminal(tab).finally(() => { tab.startingTerminal = null; });
+  return tab.startingTerminal;
+}
+async function startTerminal(tab) {
   if (boot.capabilities?.terminal === false) throw new Error('Local Unix shells are available on desktop.');
   const id = crypto.randomUUID();
   startingTerminals.add(id);
-  try { await call('terminal:new', tab.id, id); }
+  try { await call('terminal:open', tab.id, id); }
   catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
   const session = createTerminal(tab, id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
@@ -169,32 +166,14 @@ async function revealTerminal(tab = active()) {
   if (!tab.terminals.length) await newTerminal(tab);
   tab.showTerminal = true; update(); focusTerminal(tab);
 }
-async function switchTerminal(id, tab = active()) {
-  const session = tab.terminals.find(item => item.id === id); if (!session) return;
-  await call('terminal:activate', tab.id, id);
-  selectTerminal(tab, session);
-  if (session.cwd !== tab.cwd) await navigate(session.cwd, tab);
-  if (active() === tab) { update(); focusTerminal(tab); }
-}
-async function cycleTerminal(delta) {
-  const tab = active(), index = tab.terminals.findIndex(item => item.id === tab.terminalId);
-  if (tab.terminals.length) await switchTerminal(tab.terminals[(index + delta + tab.terminals.length) % tab.terminals.length].id, tab);
-}
 async function closeTerminal(id = active()?.terminalId, exited = false) {
   const tab = tabs.find(item => item.terminals.some(session => session.id === id)); if (!tab) return;
   const index = tab.terminals.findIndex(item => item.id === id), session = tab.terminals[index];
   if (!exited) await call('terminal:close', tab.id, id);
   session.terminal.dispose(); session.element.remove(); tab.terminals.splice(index, 1);
-  if (tab.terminalId === id) {
-    const next = tab.terminals[Math.min(index, tab.terminals.length - 1)];
-    selectTerminal(tab, next);
-    if (next) await switchTerminal(next.id, tab);
-    else {
-      tab.showTerminal = false; if (tab.expanded === 'terminal') tab.expanded = '';
-      if (active() === tab) { update(); tab.editor?.focus(); }
-    }
-  }
-  if (active() === tab) renderTerminalTabs();
+  tab.terminalId = null; tab.terminal = null; tab.fit = null;
+  tab.showTerminal = false; if (tab.expanded === 'terminal') tab.expanded = '';
+  if (active() === tab) { update(); tab.editor?.focus(); }
 }
 function welcome(tab) {
   if (tab.initialView) return;
@@ -256,7 +235,7 @@ function focusView(view) {
 }
 function update() {
   const tab = active(); if (!tab) return;
-  tabTitles(); renderFiles(); renderTerminalTabs();
+  tabTitles(); renderFiles();
   const view = tab.focusView || 'document';
   $('#document').hidden = view !== 'document';
   $('#inbox-view').hidden = view !== 'inbox';
@@ -279,7 +258,7 @@ function update() {
   $('#document-path').textContent = tab.file ? parent(tab.file.path) : tab.cwd;
   $('#language-button').textContent = tab.file?.language || ui("plain-text");
   $('#file-encoding').textContent = tab.file?.kind === 'text' ? ui("utf-8-", tab.file.newline === '\r\n' ? 'CRLF' : 'LF') : '';
-  $('#view-mode').textContent = tab.file?.language === 'markdown' || tab.file?.viewer === 'table' ? tab.file.mode === 'source' ? ui("source") : 'Preview' : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
+  $('#view-mode').textContent = tab.file?.language === 'markdown' ? tab.file.mode === 'source' ? ui("source") : 'Preview' : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
   $('#view-mode').disabled = tab.file?.kind !== 'text';
   $('#title-row [data-command="save"]').disabled = !tab.editor;
   applyConfig(tab.config);
@@ -344,15 +323,36 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
 async function mayReplace(tab) {
   await tab.saveQueue?.catch(() => {});
+  await flushAutosave(tab);
   if (!tab.dirty) return true;
   const choice = await choose(ui("unsaved-changes"), ui("save-changes-to-", tab.file.name), [ui("save"), ui("discard"), ui("cancel")]);
   if (choice === 0) { await save(tab); return true; }
   return choice === 1;
 }
 function clearDocument(tab) { tab.initialView = null; tab.customTitle = null; clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
-async function openFile(filename, tab = active()) {
-  if (!await mayReplace(tab)) return false;
+async function pdfAction(file) {
+  const preference = file.config.values.pdf_open;
+  if (['preview', 'external'].includes(preference)) return preference;
+  const answer = await new Promise(resolve => {
+    const dialog = modal('Open PDF', `<p>${escape(file.name)}</p><p>Preview here or use your system’s preferred PDF app?</p><label><input type="checkbox" name="remember-pdf"> Remember for all PDFs</label><div class="dialog-actions"><button data-pdf="preview">Preview here</button><button data-pdf="external">System app</button><button data-pdf="cancel">Cancel</button></div>`);
+    let result = { action: 'cancel', remember: false };
+    for (const button of dialog.querySelectorAll('[data-pdf]')) button.onclick = () => { result = { action: button.dataset.pdf, remember: dialog.querySelector('[name="remember-pdf"]').checked }; dialog.close(); };
+    dialog.addEventListener('close', () => resolve(result), { once: true });
+  });
+  if (answer.remember && answer.action !== 'cancel') {
+    await call('settings:save', { pdf_open: answer.action }, '/');
+    file.config.values.pdf_open = answer.action;
+    for (const tab of tabs) await refresh(tab);
+  }
+  return answer.action;
+}
+async function openFile(filename, tab = active(), options = {}) {
+  if (options.external) { await call('file:external', filename); return true; }
   const file = await call('file:read', filename);
+  const action = file.kind === 'text' ? 'preview' : file.kind === 'pdf' ? await pdfAction(file) : 'external';
+  if (action === 'cancel') return false;
+  if (action === 'external') { await call('file:external', file.path); return true; }
+  if (!await mayReplace(tab)) return false;
   await navigate(parent(file.path), tab);
   clearDocument(tab); tab.focusView = 'document';
   file.mode = 'source';
@@ -367,7 +367,7 @@ async function openFile(filename, tab = active()) {
       emit('change', { path: file.path, content });
       scheduleAutosave(tab);
     }, (line, column) => { if (tab.id === activeId) $('#cursor-position').textContent = ui("ln-col", line, column); });
-  } else if (['image', 'video', 'audio', 'pdf', 'spreadsheet'].includes(file.kind)) {
+  } else if (file.kind === 'pdf') {
     tab.document.replaceChildren();
     tab.viewerCleanup = await mountViewer(tab.document, file);
   }
@@ -391,6 +391,11 @@ function scheduleAutosave(tab) {
     if (active() === tab) update();
     notice(`Autosave paused: ${error.message}`);
   }), 700);
+}
+async function flushAutosave(tab) {
+  if (!tab.dirty || tab.config.values.autosave === 'false' || tab.autosaveError) return;
+  try { await save(tab); }
+  catch (error) { tab.autosaveError = error.message; if (active() === tab) update(); notice(`Autosave paused: ${error.message}`); }
 }
 function save(tab = active(), force = false) {
   if (!tab?.editor) return Promise.resolve();
@@ -494,9 +499,6 @@ async function moveItems(items) {
         if (updated.content === tab.file.content) tab.file.modified = updated.modified;
         tab.file.language = updated.language; tab.document.dataset.language = updated.language;
         if (tab.editor) await setLanguage(tab.editor, updated.language, tab.file.mode !== 'source');
-        else if (['image', 'audio', 'video'].includes(tab.file.kind)) {
-          Object.assign(tab.file, updated); tab.viewerCleanup?.(); tab.viewerCleanup = await mountViewer(tab.document, tab.file);
-        }
       }
     }
   } finally {
@@ -543,13 +545,14 @@ function settings() {
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
-    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}<p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
+    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Amount of YHWH', 'Dawkins ← Nietzsche → YHWH. The files stay put.', `<input type="range" name="energy" min="0" max="100" value="${escape(values.energy)}" aria-label="Amount of YHWH">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
   if (boot.interface === 'mobile') {
     dialog.querySelector('[name="terminal_font_size"]').closest('label').hidden = true;
-    dialog.querySelector('[data-section="files"] p.muted').textContent = 'Tap a file to open it. Swipe from the left edge to open Files.';
+    dialog.querySelector('[name="pdf_open"]').closest('label').querySelector('small').textContent = 'Preview here, or export/share through your device. Choose once for all PDFs or ask each time.';
+    dialog.querySelector('[data-section="files"] p.muted').textContent = 'Other attachments use your device’s export/share sheet.';
     dialog.querySelector('[data-section="advanced"] p.muted').textContent = 'Settings are saved on this device. Image and CSS paths refer to your YHWH workspace.';
     dialog.querySelector('[data-edit-config]').hidden = true;
     dialog.querySelector('[name="plugins"]').closest('label').hidden = true;
@@ -601,7 +604,7 @@ function languageMenu() {
 }
 async function viewMode() {
   const tab = active(); if (!tab?.editor) return;
-  if (tab.file.language === 'markdown' || tab.file.viewer === 'table') {
+  if (tab.file.language === 'markdown') {
     if (tab.file.mode === 'source') return readingView();
     tab.file.mode = 'source';
     tab.document.querySelector('.editor-host').hidden = false;
@@ -614,12 +617,11 @@ async function viewMode() {
   update(); tab.editor.focus();
 }
 async function readingView() {
-  const tab = active(); if (!tab?.editor || (tab.file.language !== 'markdown' && tab.file.viewer !== 'table')) return;
+  const tab = active(); if (!tab?.editor || tab.file.language !== 'markdown') return;
   const reading = tab.document.querySelector('.reading-view');
   if (tab.file.mode === 'reading') return;
   tab.viewerCleanup?.(); tab.viewerCleanup = null; reading.replaceChildren();
-  if (tab.file.viewer === 'table') tab.viewerCleanup = await mountViewer(reading, { ...tab.file, content: tab.editor.state.doc.toString() });
-  else reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
+  reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
   reading.hidden = false; tab.document.querySelector('.editor-host').hidden = true; tab.file.mode = 'reading'; tab.document.dataset.mode = 'reading'; update();
 }
 function fileMenu(filename = active()?.file?.path) {
@@ -815,7 +817,7 @@ const definitions = [
   ['hotkeys', 'Keyboard bindings', 'Ctrl+Alt+Shift+K', () => showHotkeys({ modal, active, call, refresh, commands, escape, notice, openFile, newTab, mobile: boot.interface === 'mobile' })],
   ['reload-keys', 'Reload configuration and keys', '', async () => { await call('config:reload'); await refresh(); notice('Configuration and keys reloaded.'); }],
   ['terminal-copy', 'Copy terminal selection', 'Ctrl+Shift+C', () => navigator.clipboard.writeText(active().terminal.getSelection())],
-  ['terminal-paste', 'Paste into terminal', 'Ctrl+Shift+V', async () => bridge.terminal('write', { id: active().id, data: await navigator.clipboard.readText() })],
+  ['terminal-paste', 'Paste into terminal', 'Ctrl+Shift+V', async () => bridge.terminal('write', { id: active().terminalId, data: await navigator.clipboard.readText() })],
   ['next-tab', ui("next-tab"), ui("ctrl-tab-ctrl-pagedown"), () => activate(tabs[(tabs.indexOf(active()) + 1) % tabs.length].id)],
   ['previous-tab', ui("previous-tab"), ui("ctrl-shift-tab-ctrl-pageup"), () => activate(tabs[(tabs.indexOf(active()) + tabs.length - 1) % tabs.length].id)],
   ['new-file', ui("new-file"), ui("ctrl-n"), () => newFile()],
@@ -831,11 +833,8 @@ const definitions = [
   }],
   ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
   ['expand-files', ui("expand-file-manager"), ui("ctrl-d"), () => { const tab = active(); tab.expanded = tab.expanded === 'files' ? '' : 'files'; tab.showFiles = true; update(); $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
-  ['toggle-terminal', ui("toggle-terminal"), ui("ctrl-b-ctrl-alt-shift-t"), async () => { const tab = active(); tab.expanded = ''; if (!tab.showTerminal) await revealTerminal(tab); else { tab.showTerminal = false; update(); tab.editor?.focus(); } }],
-  ['new-terminal', 'New terminal tab', 'Ctrl+Shift+` / Ctrl+Shift+T in terminal', () => newTerminal()],
-  ['close-terminal', 'Close terminal tab', 'Ctrl+Shift+W in terminal', () => closeTerminal()],
-  ['next-terminal', 'Next terminal tab', 'Ctrl+PageDown / Ctrl+Tab in terminal', () => cycleTerminal(1)],
-  ['previous-terminal', 'Previous terminal tab', 'Ctrl+PageUp / Ctrl+Shift+Tab in terminal', () => cycleTerminal(-1)],
+  ['toggle-terminal', ui("toggle-terminal"), 'Ctrl+B / Ctrl+` / Ctrl+Shift+`', async () => { const tab = active(); tab.expanded = ''; if (!tab.showTerminal) await revealTerminal(tab); else { tab.showTerminal = false; update(); tab.editor?.focus(); } }],
+  ['close-terminal', 'Close terminal', '', () => closeTerminal()],
   ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), async () => { const tab = active(), expanded = tab.expanded; movePanel('terminal', 'bottom'); await revealTerminal(tab); tab.expanded = expanded === 'terminal' ? '' : 'terminal'; update(); focusTerminal(tab); }],
   ['terminal-bottom', 'Dock terminal below document', '', async () => { movePanel('terminal', 'bottom'); active().expanded = ''; await revealTerminal(); }],
   ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), async () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); if (show && boot.capabilities?.terminal !== false && !tab.terminals.length) await newTerminal(tab); tab.showFiles = show; tab.showTerminal = show && boot.capabilities?.terminal !== false; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
@@ -916,7 +915,11 @@ function scheduleMidnightMail() {
   clearTimeout(midnightTimer);
   midnightTimer = setTimeout(() => { receive(undefined, true); scheduleMidnightMail(); }, Math.max(1, Math.min(60000, nextMidnight() - Date.now())));
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { receive(); scheduleMidnightMail(); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') { receive(); scheduleMidnightMail(); }
+  else for (const tab of tabs) flushAutosave(tab);
+});
+window.addEventListener('blur', () => { for (const tab of tabs) flushAutosave(tab); });
 window.addEventListener('focus', () => { receive(); scheduleMidnightMail(); });
 scheduleMidnightMail();
 function inbox() { focusView('inbox'); }
@@ -1080,8 +1083,6 @@ document.addEventListener('click', event => {
     return;
   }
   const button = event.target.closest('[data-command]'); if (button) { run(button.dataset.command); return; }
-  const terminalClose = event.target.closest('[data-close-terminal]'); if (terminalClose) { closeTerminal(terminalClose.dataset.closeTerminal).catch(error => notice(error.message)); return; }
-  const terminalTab = event.target.closest('[data-terminal]'); if (terminalTab) { switchTerminal(terminalTab.dataset.terminal).catch(error => notice(error.message)); return; }
   const close = event.target.closest('[data-close-tab]'); if (close) { closeTab(close.dataset.closeTab).catch(error => notice(error.message)); return; }
   const tab = event.target.closest('#tabs [data-tab]'); if (tab) activate(tab.dataset.tab);
 });
@@ -1100,7 +1101,9 @@ $('#tabs').addEventListener('drop', event => {
   const from = tabs.findIndex(tab => tab.id === id), to = tabs.findIndex(tab => tab.id === target.dataset.tab);
   if (from >= 0 && to >= 0) { tabs.splice(to, 0, tabs.splice(from, 1)[0]); tabTitles(); }
 });
+let pdfClickTimer;
 $('#file-list').onclick = event => {
+  clearTimeout(pdfClickTimer);
   const row = event.target.closest('[data-path]'); if (!row) return;
   const tab = active();
   if (event.ctrlKey || event.metaKey) { if (tab.selected.has(row.dataset.path)) tab.selected.delete(row.dataset.path); else tab.selected.add(row.dataset.path); }
@@ -1108,6 +1111,11 @@ $('#file-list').onclick = event => {
     const rows = [...$('#file-list').querySelectorAll('[data-path]')], first = rows.findIndex(item => tab.selected.has(item.dataset.path)), last = rows.indexOf(row);
     tab.selected = new Set(rows.slice(Math.min(first, last), Math.max(first, last) + 1).map(item => item.dataset.path));
   } else tab.selected = new Set([row.dataset.path]);
+  if (row.dataset.directory !== 'true' && /\.pdf$/i.test(row.dataset.path)) {
+    const filename = row.dataset.path;
+    if (event.ctrlKey || event.metaKey) openFile(filename, tab, { external: true }).catch(error => notice(error.message));
+    else if (event.detail === 1 && !event.shiftKey) pdfClickTimer = setTimeout(() => { if (active() === tab && tab.selected.has(filename)) openFile(filename, tab).catch(error => notice(error.message)); }, 300);
+  }
   // Keep the clicked rows alive so the browser can recognize a double-click.
   for (const item of $('#file-list').querySelectorAll('[data-path]')) {
     const selected = tab.selected.has(item.dataset.path);
@@ -1119,8 +1127,9 @@ $('#file-list').onclick = event => {
   if (event.detail === 1 && !event.ctrlKey && !event.metaKey && !event.shiftKey) toggleFolder(row).catch(error => notice(error.message));
 };
 $('#file-list').ondblclick = event => {
+  clearTimeout(pdfClickTimer);
   const row = event.target.closest('[data-path]'); if (!row) return;
-  (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path)).catch(error => notice(error.message));
+  (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path, active(), { external: /\.pdf$/i.test(row.dataset.path) })).catch(error => notice(error.message));
 };
 $('#file-list').onauxclick = event => {
   if (event.button !== 1) return;

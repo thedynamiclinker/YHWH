@@ -3,7 +3,7 @@
 The desktop and Three interface read bindings from ordinary prefix directories.
 The default user prefix is `${XDG_CONFIG_HOME:-~/.config}/yhwh`; `YHWH_CONFIG_HOME`
 can select another. On first launch the app copies shipped bindings into its
-`etc/keys` directory without replacing existing files. The installed defaults
+`etc/keys` directory without replacing custom files. Unmodified copies of the retired terminal-tab defaults are upgraded to the current app-tab/toggle bindings; masks, custom modules, executables and symlinks remain untouched. The installed defaults
 also remain the lowest layer, so an empty override disables a default.
 
 The layers, from least to most specific, are:
@@ -155,10 +155,11 @@ leaving the file manager's visibility unchanged. Ctrl+E reaches the terminal's
 readline editing; it is no longer an app shortcut. Ctrl+Shift+E toggles files.
 
 Ctrl+T opens an app tab; Ctrl+W closes it; Ctrl+Shift+T restores closed directory/file
-tabs in reverse closing order outside the terminal. Ctrl+Tab / Ctrl+Shift+Tab
-and Ctrl+PageDown / Ctrl+PageUp cycle app tabs outside the terminal and shell
-tabs inside it. Ctrl+Shift+backtick opens a shell tab; Ctrl+Shift+T does the same
-inside the terminal. Ctrl+Shift+W closes the focused shell tab.
+tabs in reverse closing order. Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PageDown /
+Ctrl+PageUp cycle app tabs from every pane, including the terminal.
+Ctrl+Shift+backtick toggles the terminal, just like Ctrl+backtick. Each app
+tab has one shell; exiting it hides the panel, and reopening starts a fresh
+shell. Ctrl+Shift+W remains Quit.
 Ctrl+1–8 select app tab positions; Ctrl+9 selects the last tab.
 Ctrl+Shift+PageUp / PageDown move the active tab. Middle-click closes a tab;
 dragging reorders it. Closing a background tab retains the active tab; closing

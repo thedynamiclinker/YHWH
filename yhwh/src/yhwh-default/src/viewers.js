@@ -7,52 +7,6 @@ export async function mountViewer(host, file) {
   const cleanup = () => { disposed = true; release(); root.remove(); };
   // Return cleanup immediately, including while a library or document loads.
   (async () => {
-    if (['image', 'video', 'audio'].includes(file.viewer)) {
-      const media = document.createElement(file.viewer === 'image' ? 'img' : file.viewer);
-      media.setAttribute('aria-label', file.name);
-      if (file.viewer === 'image') media.alt = file.name;
-      else { media.controls = true; media.preload = 'metadata'; }
-      let url = file.url || file.data;
-      if (!url) {
-        url = URL.createObjectURL(new Blob([file.bytes], { type: file.mime }));
-        release = () => { media.pause?.(); media.removeAttribute('src'); media.load?.(); URL.revokeObjectURL(url); };
-      } else release = () => { media.pause?.(); media.removeAttribute('src'); media.load?.(); };
-      media.onerror = () => { heading.textContent = 'This format or codec cannot be displayed here. Use File actions → Open externally.'; };
-      media.onload = media.onloadedmetadata = () => { heading.hidden = true; };
-      media.src = url; root.append(media); return;
-    }
-    if (file.viewer === 'spreadsheet' || file.viewer === 'table') {
-      const XLSX = await import('xlsx'); if (disposed) return;
-      const workbook = XLSX.read(file.viewer === 'table' ? file.content : file.bytes, {
-        type: file.viewer === 'table' ? 'string' : 'array', sheetRows: 2001,
-        ...(file.name.toLowerCase().endsWith('.tsv') ? { FS: '\t' } : {}),
-        cellHTML: false, cellFormula: false, bookVBA: false,
-      });
-      const tools = document.createElement('div'); tools.className = 'viewer-tools';
-      const sheets = document.createElement('select'); sheets.setAttribute('aria-label', 'Worksheet');
-      for (const name of workbook.SheetNames) sheets.add(new Option(name, name));
-      tools.append(sheets); root.append(tools);
-      const scroller = document.createElement('div'); scroller.className = 'table-scroll'; root.append(scroller);
-      function draw() {
-        const sheet = workbook.Sheets[sheets.value]; scroller.replaceChildren();
-        const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
-        range.e.r = Math.min(range.e.r, range.s.r + 1999); range.e.c = Math.min(range.e.c, range.s.c + 99);
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '', range });
-        const table = document.createElement('table'); table.setAttribute('aria-label', sheets.value);
-        const header = table.createTHead().insertRow();
-        for (const label of ['Row', ...Array.from({ length: range.e.c - range.s.c + 1 }, (_, i) => XLSX.utils.encode_col(i + range.s.c))]) {
-          const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
-        }
-        const body = table.createTBody();
-        rows.forEach((values, i) => {
-          const row = body.insertRow(), label = document.createElement('th'); label.scope = 'row'; label.textContent = String(i + range.s.r + 1); row.append(label);
-          for (let c = 0; c <= range.e.c - range.s.c; c++) row.insertCell().textContent = String(values[c] ?? '');
-        });
-        scroller.append(table); heading.hidden = false;
-        heading.textContent = 'Read-only preview · up to 2,000 rows and 100 columns per sheet. Formulas show saved values.';
-      }
-      sheets.onchange = draw; draw(); return;
-    }
     if (file.viewer === 'pdf') {
       const pdfjs = await import('pdfjs-dist/build/pdf.mjs'); if (disposed) return;
       pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;

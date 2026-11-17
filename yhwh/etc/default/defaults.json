@@ -8,6 +8,7 @@
   "file_manager": "true",
   "terminal": "false",
   "autosave": "true",
+  "pdf_open": "ask",
   "settings_fields": "theme,energy,font_size,show_hidden,bg,stylesheet,plugins",
   "ui_font_size": "16",
   "terminal_font_size": "15",

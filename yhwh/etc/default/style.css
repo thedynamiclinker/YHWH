@@ -146,13 +146,7 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 #terminals { flex: 1; min-height: 0; padding: 4px 12px 7px; }
 .terminal-instance { height: 100%; min-width: 0; overflow: hidden; }
 .terminal-session { height: 100%; }
-.terminal-tab-bar { display: flex; align-items: center; min-height: 30px; border-bottom: 1px solid var(--line); }
-#terminal-tabs { display: flex; flex: 1; overflow-x: auto; min-width: 0; }
-.terminal-tab { display: inline-flex; flex-shrink: 0; }
-.terminal-tab [aria-selected='true'] { background: var(--active-line); color: var(--purple); }
 .file-viewer { height: 100%; overflow: auto; padding: 16px; }
-.file-viewer img, .file-viewer video { display: block; max-width: 100%; max-height: 75vh; margin: auto; object-fit: contain; }
-.file-viewer audio { display: block; max-width: 100%; margin: 24px auto; }
 .viewer-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .viewer-tools input { width: 80px; }
 .viewer-status { color: var(--muted); }

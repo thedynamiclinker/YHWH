@@ -70,7 +70,7 @@ Implemented Atomics: `pwd`, `ls`, `cd`, `mkdir`, `touch`, `cat`, `echo`, `cp`,
 `mv`, `trash`, `grep`, `sort`, `head`, `wc`, `view`, `fm`, `open`, `chroot`,
 `help` and `man`. `?`, `help COMMAND` and `COMMAND --help` describe commands.
 `grep` performs literal case-insensitive matching. `cat` reads saved UTF-8
-files; `open` uses the existing editor/media viewers. File operations retain
+files; `open` uses the text editor, optional PDF preview or system attachment opener. File operations retain
 exclusive creation, version checks and recoverable Trash.
 
 `ls | view` makes a fixed graphical output tab. Its membership stays fixed

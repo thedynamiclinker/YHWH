@@ -1,2 +1,2 @@
-// command: new-terminal
-export default api => api.run('new-terminal');
+// command: toggle-terminal
+export default api => api.run('toggle-terminal');

@@ -113,7 +113,9 @@ async function main() {
       await page.evaluate(() => window.YHWH.run('mobile-import'));
       await (await pdfChooser).setFiles([{ name: 'scroll.pdf', mimeType: 'application/pdf', buffer: require('../../../test/viewer-fixtures.cjs')()['scroll.pdf'] }]);
       await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Imported 1'));
-      await page.evaluate(() => window.YHWH.openFile('/YHWH/scroll.pdf'));
+      const openingPDF = page.evaluate(() => window.YHWH.openFile('/YHWH/scroll.pdf'));
+      await page.locator('[name="remember-pdf"]').check(); await page.locator('[data-pdf="preview"]').click(); await openingPDF;
+      assert.equal(await page.evaluate(() => window.YHWH.active().config.values.pdf_open), 'preview');
       await improvements.pdf({ page, artifacts: deviceArtifacts });
       try { await improvements.moves({ page, directory: '/YHWH', artifacts: deviceArtifacts, touch: true }); }
       catch (error) {

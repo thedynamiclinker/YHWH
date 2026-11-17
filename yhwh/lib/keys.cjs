@@ -4,6 +4,17 @@ const { spawn } = require('node:child_process');
 const { canonical, listing, modifiers } = require('./key-names.cjs');
 const { root } = require('./paths.cjs');
 const defaults = path.join(root, 'etc/keys');
+// Upgrade only byte-for-byte copies of the retired terminal-tab defaults.
+// Custom modules, masks, executable programs and symlinks remain user-owned.
+const terminalTabDefaults = Object.fromEntries([
+  ['ctrl/tab.js', 'next-tab', "api.keyContext === 'terminal' ? 'next-terminal' : 'next-tab'"],
+  ['ctrl/pagedown.js', 'next-tab', "api.keyContext === 'terminal' ? 'next-terminal' : 'next-tab'"],
+  ['ctrl/pageup.js', 'previous-tab', "api.keyContext === 'terminal' ? 'previous-terminal' : 'previous-tab'"],
+  ['ctrl/shift/tab.js', 'previous-tab', "api.keyContext === 'terminal' ? 'previous-terminal' : 'previous-tab'"],
+  ['ctrl/shift/t.js', 'reopen-tab', "api.keyContext === 'terminal' ? 'new-terminal' : 'reopen-tab'"],
+  ['ctrl/shift/backtick.js', 'new-terminal', "'new-terminal'"],
+  ['ctrl/shift/w.js', 'quit', "api.keyContext === 'terminal' ? 'close-terminal' : 'quit'"],
+].map(([name, command, action]) => [name, `// command: ${command}\nexport default api => api.run(${action});\n`]));
 
 async function scan(directory, warnings = []) {
   const found = [];
@@ -39,12 +50,19 @@ async function seed(prefix, keysDirectory = 'etc/keys') {
   catch (error) { if (error.code !== 'EEXIST') throw error; }
   try { await fs.mkdir(destination, { recursive: true }); }
   catch { return; }
-  // Missing defaults are copied with exclusive creation; existing files are never overwritten.
+  // Missing defaults are copied with exclusive creation; custom files are never overwritten.
   // The shipped tree also remains the lowest-priority layer; an empty file masks it.
   for (const item of await scan(defaults)) {
-    const target = path.join(destination, path.relative(defaults, item.filename));
+    const relative = path.relative(defaults, item.filename), target = path.join(destination, relative);
     await fs.mkdir(path.dirname(target), { recursive: true });
-    try { await fs.copyFile(item.filename, target, require('node:fs').constants.COPYFILE_EXCL); } catch (error) { if (error.code !== 'EEXIST') throw error; }
+    try { await fs.copyFile(item.filename, target, require('node:fs').constants.COPYFILE_EXCL); }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      const legacy = terminalTabDefaults[relative.split(path.sep).join('/')];
+      if (!legacy) continue;
+      const stat = await fs.lstat(target);
+      if (stat.isFile() && !(stat.mode & 0o111) && await fs.readFile(target, 'utf8') === legacy) await fs.copyFile(item.filename, target);
+    }
   }
 }
 async function load(config) {

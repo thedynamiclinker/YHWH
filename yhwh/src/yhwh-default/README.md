@@ -6,21 +6,18 @@ Build, install and launch commands are defined in [the application guide](../../
 
 ## Working in the app
 
-The app opens maximized. Each **app tab** owns a current directory, zero or one document, and independent terminal tabs. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell. The terminal header has a + button and a close button for each shell.
+The app opens in a normal window. Each **app tab** owns a current directory, zero or one document, and one shell. Moving around the filesystem leaves the document open. New app tabs inherit the directory and start a fresh shell.
 
 | Operation | Default shortcuts |
 | --- | --- |
 | Show/hide files | Ctrl+Shift+E |
 | Expand/restore files in the focus area | Ctrl+D |
-| Show/hide terminal | Ctrl+B, Ctrl+backtick, Ctrl+Alt+Shift+T |
-| New terminal tab | Ctrl+Shift+backtick; Ctrl+Shift+T while the terminal is focused |
-| Next / previous terminal | Ctrl+PageDown / PageUp; Ctrl+Tab / Ctrl+Shift+Tab while the terminal is focused |
-| Close terminal tab | Ctrl+Shift+W while the terminal is focused, or its × button |
+| Show/hide terminal | Ctrl+B, Ctrl+backtick, Ctrl+Shift+backtick, Ctrl+Alt+Shift+T |
 | Expand/restore terminal | Ctrl+Shift+B |
 | Show/hide files and terminal together | Ctrl+Shift+D |
 | Focus editor / files / terminal | Ctrl+Alt+1 / Ctrl+Alt+2 / Ctrl+Alt+3 |
 | New / close app tab | Ctrl+T / Ctrl+W |
-| Next / previous app tab (outside the terminal) | Ctrl+Tab / Ctrl+Shift+Tab; Ctrl+PageDown / PageUp |
+| Next / previous app tab | Ctrl+Tab / Ctrl+Shift+Tab; Ctrl+PageDown / PageUp |
 | Parent directory | Alt+Up; Left or Backspace in the file list |
 | Back / forward | Alt+Left / Alt+Right |
 | Type a directory path | Ctrl+L |
@@ -31,7 +28,7 @@ The app opens maximized. Each **app tab** owns a current directory, zero or one 
 | Commands | Ctrl+P, Ctrl+Shift+P |
 | Settings / help | Ctrl+, / F1 |
 
-Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed app tab outside the terminal; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
+Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed app tab; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
 
 Ctrl+Alt+Shift+K opens key capture and advanced text, wildcard, regex and shell searches. Bindings are ordinary files under `~/.config/yhwh/etc/keys` and ancestor `.yhwh` prefixes. [Keyboard system and prefix configuration](../../../doc/keys.md) describes editing, executable bindings and reloads. `yhwh keys list` prints the same effective list for Unix tools. The defaults use literal Ctrl bindings; separate `meta` bindings can configure Command on macOS.
 
@@ -41,17 +38,19 @@ Drag files, folders or a selection onto a folder, `..`, or blank space in the fi
 
 The terminal is an xterm.js terminal connected to a real node-pty shell. It starts even when hidden. A Bash/zsh/fish/PowerShell prompt hook reports the shell's directory; Linux also reads the shell process's actual cwd. The app preserves normal Bash/zsh startup files. File-manager navigation sends a quoted `cd` at the prompt. If a command is running, the most recent navigation waits for the next prompt. Shells without a supported hook have Linux cwd reporting but cannot accept queued file-manager navigation until a prompt hook is supplied. SSH sessions navigate their remote filesystem separately.
 
-`yhwh open file` from an app shell targets that same tab through `YHWH_TAB`. In an unrelated shell it opens an app tab. Hiding a shell keeps its process running; closing its terminal tab or app tab terminates it. `exit` (including an alias such as `x`) closes that terminal tab and selects the remaining shell. Exiting the last shell hides the panel; opening it again starts a fresh shell. Switching terminal tabs restores that shell’s directory in the file manager; navigation changes only the selected shell.
+`yhwh open file` from an app shell targets that same tab through `YHWH_TAB`. In an unrelated shell it opens an app tab. Hiding the terminal keeps its process running; closing it through the command palette or closing its app tab terminates it. `exit` (including an alias such as `x`) disposes the shell and hides the panel immediately. Opening the terminal again starts a fresh usable shell. There are no terminal tabs; Ctrl+Tab and Ctrl+PageUp/Down switch app tabs even when the terminal has focus.
 
 ## Documents
 
 Text uses CodeMirror with syntax highlighting, undo, search, selection, and standard editing keys. Markdown opens in **Source**. Ctrl+R or the toolbar button toggles a separate read-only preview; returning to source preserves the cursor, selection, undo history and unsaved buffer. There is no live/hybrid mode. Clicking a preview link opens its destination. Markdown links, local images, and `[[relative/note|label]]` links are supported; a wikilink can omit `.md`. JSON's pretty action validates and indents JSON; HTML uses Prettier. Formatting changes the buffer and is undoable. Save writes it to disk.
 
-Click the big filename heading to rename the real file, including its extension. It refuses an existing destination. Saves preserve symbolic links and Unix permissions and reject a file whose content or modification time changed since opening, including same-timestamp edits. Reload or explicitly choose Overwrite from the file menu after reviewing a conflict. Unsaved changes prompt before replacing a document, closing a tab, or quitting. Autosave is enabled by default and saves 700 ms after typing pauses. Turn it off in Settings → Files & editor or with `autosave=false` in rc. Ctrl+S and Save as remain available. Conflicts and write failures pause autosave and leave the buffer unsaved for review; reload, save elsewhere, or explicitly overwrite to resolve them.
+Click the big filename heading to rename the real file, including its extension. It refuses an existing destination. Saves preserve symbolic links and Unix permissions and reject a file whose content or modification time changed since opening, including same-timestamp edits. Reload or explicitly choose Overwrite from the file menu after reviewing a conflict. Autosave is enabled by default: edits save to the ordinary file 700 ms after typing pauses, when the app loses focus, and before replacing a document, closing a tab, or quitting. Normal autosave does not require a Save/Discard dialog. Disabled autosave, conflicts and write failures retain unsaved-change prompts. Turn it off in Settings → Files & editor or with `autosave=false` in rc. Ctrl+S and Save as remain available. Conflicts and write failures pause autosave and leave the buffer unsaved for review; reload, save elsewhere, or explicitly overwrite to resolve them.
 
 Filename, desktop MIME detection, and shebang determine highlighting. Extensionless files are not assumed to be Markdown. The bottom-right language menu can override the result just for the open file, for a filename, or for an extension, globally or under the current directory.
 
-Built-in read-only viewers display images (including SVG), PDF pages with page/zoom controls and selectable page text, local video/audio with playback controls, and Excel XLSX/XLS/XLSM and ODS workbooks with worksheet selection. CSV/TSV files retain a source editor; Ctrl+R toggles a table preview, including quoted cells and multiline values. Tables display up to 2,000 rows and 100 columns per sheet; formulas display cached values and macros never run. PDF/workbook input is limited to 64 MiB, editable text to 16 MiB. Media codecs depend on the platform. Unsupported/oversized files and failed previews can be opened externally from File actions. Viewers never overwrite the file. PDF editing, arbitrary HTML execution, remote image fetching, backlinks/indexing, and a complete Obsidian CLI/API are not implemented.
+Attachments such as images, video/audio, Excel/ODS, CSV/TSV and other non-text files open with the system’s preferred application (`xdg-open` on Linux through Electron’s native opener). MIME detection uses shared-mime-info, with libmagic and filename fallbacks. This honors the user's file associations and leaves the current document and unsaved buffer in place. Failed launches report the system error. Ordinary text and source code remain editable.
+
+PDF is the optional built-in viewer. The first open asks **Preview here** or **System app**, with **Remember for all PDFs**. Settings → Files & editor → Open PDFs offers Ask each time, Preview here, or System app (`pdf_open=ask`, `preview`, or `external` in rc). A single click on a PDF row uses that preference; Ctrl+click or double-click opens it externally. Enter, Open file and linked PDFs use the preference. Preview is read-only, limited to 64 MiB, and offers an external-open action; larger PDFs open externally. Editable text is limited to 16 MiB. PDF editing, arbitrary HTML execution, remote image fetching, backlinks/indexing, and a complete Obsidian CLI/API are not implemented.
 
 PDF pages scroll continuously with the mouse wheel, keyboard or touch. Page and zoom controls stay above the document; the page indicator follows scrolling. Pages fit the available width at 100%; higher zoom permits horizontal scrolling. Only nearby pages retain rendered canvases.
 
@@ -113,6 +112,7 @@ Settings saves ordinary sections to user `rc`, preserving handwritten sections a
     file_manager=true
     terminal=false
     autosave=true
+    pdf_open=ask
     line_width='820px'
     file_types='[{"extension":"note","language":"markdown"},{"filename":"^boop$","language":"python"}]'
     settings_fields='theme,energy,font_size,editor_font,show_hidden,stylesheet,plugins,layout'

@@ -64,6 +64,7 @@ process.stdin.on('end', () => {
     assert.ok((await page.locator('.welcome').textContent()).includes(JSON.parse(sourceWords).welcomeBody));
     assert.equal(await page.locator('.personality').isVisible(), true);
     assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()), false);
+    assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized()), false);
     await require('../../../test/interface-improvements.cjs')({ app, page, run, open, directory, artifacts });
     assert.equal(await page.locator('#margin-box').isVisible(), false);
     await run('margins');
