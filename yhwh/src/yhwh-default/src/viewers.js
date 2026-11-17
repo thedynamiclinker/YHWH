@@ -1,5 +1,4 @@
-// Shared, read-only viewers. File contents never become executable HTML and
-// spreadsheet formulas/macros and PDF scripts are never run.
+// Shared, read-only PDF preview. PDF scripts are never run.
 export async function mountViewer(host, file) {
   const root = document.createElement('section'); root.className = `file-viewer viewer-${file.viewer}`; host.append(root);
   const heading = document.createElement('p'); heading.className = 'viewer-status'; heading.textContent = 'Loading preview…'; root.append(heading);

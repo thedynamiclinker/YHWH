@@ -157,10 +157,6 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .pdf-page-image { background: white; }
 .viewer-pdf canvas { display: block; width: 100%; height: auto; background: white; }
 .viewer-pdf pre { white-space: pre-wrap; }
-.table-scroll { max-width: 100%; overflow: auto; }
-.table-scroll table { border-collapse: collapse; font-size: .9rem; }
-.table-scroll td, .table-scroll th { border: 1px solid var(--line); padding: 6px 10px; white-space: pre-wrap; min-width: 48px; max-width: 480px; overflow-wrap: anywhere; }
-.table-scroll th { background: var(--panel); position: sticky; top: 0; }
 .xterm .xterm-viewport { background: transparent !important; }
 .right-panels { display: flex; flex-direction: column; max-width: 300px; border-left: 1px solid var(--line); background: var(--sidebar); }
 .right-panels:not(:has(> :not([hidden]))) { display: none; }

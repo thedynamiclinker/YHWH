@@ -40,20 +40,28 @@ module.exports = async function ({ app, page, run, open, directory, artifacts })
     globalThis.realOpenPath = shell.openPath; globalThis.openedFiles = [];
     shell.openPath = async filename => { globalThis.openedFiles.push(filename); return ''; };
   });
-  const currentFile = await page.evaluate(() => window.YHWH.active().file.path);
+  const currentFile = await page.evaluate(() => {
+    const tab = window.YHWH.active(); tab.config.values.autosave = 'false';
+    tab.editor.dispatch({ changes: { from: tab.editor.state.doc.length, insert: ' Preserve this draft.' } });
+    return tab.file.path;
+  });
   for (const name of ['preview.xlsx', 'preview.xls', 'preview.ods', 'preview.csv', 'preview.tsv', 'preview.svg', 'preview.webm', 'preview.wav']) {
     await open(path.join(directory, name));
     assert.equal(await app.evaluate(() => globalThis.openedFiles.at(-1)), path.join(directory, name));
     assert.equal(await page.evaluate(() => window.YHWH.active().file.path), currentFile);
+    assert.equal(await page.evaluate(() => window.YHWH.active().dirty), true);
   }
   // A failed system opener reports its real error and retains the document.
   await app.evaluate(({ shell }) => { shell.openPath = async () => 'No application is associated with this file'; });
   await assert.rejects(open(path.join(directory, 'preview.xlsx')), /No application is associated/);
   await app.evaluate(({ shell }) => { shell.openPath = async filename => { globalThis.openedFiles.push(filename); return ''; }; });
+  await page.evaluate(() => { window.YHWH.active().config.values.autosave = 'true'; });
+  // Replacing a recently edited document flushes autosave without prompting.
   const openingPDF = open(path.join(directory, 'preview.pdf'));
   await page.locator('[name="remember-pdf"]').check();
   await page.locator('[data-pdf="preview"]').click(); await openingPDF;
   assert.equal(await page.evaluate(() => window.YHWH.active().config.values.pdf_open), 'preview');
+  assert.match(await fs.readFile(note, 'utf8'), /Preserve this draft/);
   await open(path.join(directory, 'preview.pdf'));
   await page.waitForFunction(() => document.querySelector('.viewer-pdf details pre')?.textContent.includes('YHWH PDF preview'));
   await page.screenshot({ path: path.join(artifacts, '13-pdf-viewer.png') });

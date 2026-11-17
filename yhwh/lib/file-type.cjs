@@ -19,7 +19,7 @@ function fileType(filename, prefix, config = {}, mime = '') {
   const viewer = mime === 'application/pdf' ? 'pdf' : mime.startsWith('image/') ? 'image' : mime.startsWith('video/') ? 'video' : mime.startsWith('audio/') ? 'audio' : ['xlsx', 'xls', 'xlsm', 'ods'].includes(extension) || /spreadsheet|ms-excel/.test(mime) ? 'spreadsheet' : ['csv', 'tsv'].includes(extension) || ['text/csv', 'text/tab-separated-values'].includes(mime) ? 'table' : null;
   // Attachments belong to the user's preferred application. PDF is the one
   // optional in-app viewer; known source languages remain editable text.
-  const external = viewer ? viewer !== 'pdf' : !!mime && !['application/octet-stream', 'inode/x-empty', 'application/x-empty'].includes(mime) && !mime.startsWith('text/') && language === 'plain';
+  const external = viewer ? viewer !== 'pdf' : !!mime && !['application/octet-stream', 'inode/x-empty', 'application/x-empty', 'application/x-zerosize'].includes(mime) && !mime.startsWith('text/') && language === 'plain';
   return { mime: mime || 'application/octet-stream', language, viewer, external };
 }
 module.exports = { fileType };

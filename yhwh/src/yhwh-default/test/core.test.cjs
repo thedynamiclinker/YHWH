@@ -89,6 +89,20 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
   assert.equal((await files.read(binary)).kind, 'binary'); assert.equal((await files.read(plain)).kind, 'text');
   assert.deepEqual((await fs.readdir(base)).sort(), ['binary', 'boop']);
  });
+
+test('MIME attachments stay outside the editor, while PDF preview survives a missing extension', async t => {
+  const base = await fixture(t), fixtures = require('../../../test/viewer-fixtures.cjs')();
+  for (const name of ['preview.svg', 'preview.csv', 'preview.tsv', 'preview.xlsx', 'preview.wav', 'preview.webm']) {
+    const filename = path.join(base, name); await fs.writeFile(filename, fixtures[name]);
+    const file = await files.read(filename);
+    assert.equal(file.kind, 'binary', name);
+    assert.equal(file.content, undefined, name); assert.equal(file.bytes, undefined, name);
+  }
+  const filename = path.join(base, 'document'); await fs.writeFile(filename, fixtures['preview.pdf']);
+  const file = await files.read(filename);
+  assert.equal(file.mime, 'application/pdf'); assert.equal(file.kind, 'pdf');
+  assert.deepEqual(Buffer.from(file.bytes), fixtures['preview.pdf']);
+});
  test('CLI shares file operations, accepts Obsidian-style args, and dispatches adjacent executables', async t => {
   const base = await fixture(t), bin = path.join(base, 'bin'); await fs.mkdir(bin);
   const filename = path.join(base, 'boop');

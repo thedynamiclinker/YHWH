@@ -1111,7 +1111,7 @@ $('#file-list').onclick = event => {
     const rows = [...$('#file-list').querySelectorAll('[data-path]')], first = rows.findIndex(item => tab.selected.has(item.dataset.path)), last = rows.indexOf(row);
     tab.selected = new Set(rows.slice(Math.min(first, last), Math.max(first, last) + 1).map(item => item.dataset.path));
   } else tab.selected = new Set([row.dataset.path]);
-  if (row.dataset.directory !== 'true' && /\.pdf$/i.test(row.dataset.path)) {
+  if (event.pointerType !== 'touch' && row.dataset.directory !== 'true' && /\.pdf$/i.test(row.dataset.path)) {
     const filename = row.dataset.path;
     if (event.ctrlKey || event.metaKey) openFile(filename, tab, { external: true }).catch(error => notice(error.message));
     else if (event.detail === 1 && !event.shiftKey) pdfClickTimer = setTimeout(() => { if (active() === tab && tab.selected.has(filename)) openFile(filename, tab).catch(error => notice(error.message)); }, 300);

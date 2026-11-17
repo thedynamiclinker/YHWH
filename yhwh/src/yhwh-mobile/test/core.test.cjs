@@ -53,6 +53,16 @@ test('binary, non-UTF8, oversized and PDF documents never become editable text',
   storage.files.set('/YHWH/huge.txt', { size: 17000000, modified: 1 });
   assert.equal((await call('file:read', '/YHWH/huge.txt')).kind, 'binary');
 });
+test('mobile attachments delegate without reading media/workbooks; only PDF retains its preview', async () => {
+  const { storage, call } = await fixture();
+  for (const name of ['picture.svg', 'table.csv', 'table.tsv', 'book.xlsx', 'movie.mp4', 'sound.wav']) {
+    await storage.write('/YHWH/' + name, new TextEncoder().encode('Attachment bytes'));
+    const file = await call('file:read', '/YHWH/' + name);
+    assert.equal(file.kind, 'binary', name); assert.equal(file.bytes, undefined, name); assert.equal(file.content, undefined, name);
+  }
+  await storage.write('/YHWH/preview.pdf', new TextEncoder().encode('%PDF-1.4\n'));
+  assert.equal((await call('file:read', '/YHWH/preview.pdf')).kind, 'pdf');
+});
 test('create is exclusive under concurrent calls and failed writes do not block later operations', async () => {
   const { call } = await fixture();
   const results = await Promise.allSettled([call('file:create', '/YHWH/a'), call('file:create', '/YHWH/a')]);
