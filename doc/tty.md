@@ -1,16 +1,13 @@
-# el shaddai
+# Shaddai
 
-- `make tty` builds and opens the ranger-like terminal interface, named
-  `el shaddai`. The default editable definition of `shaddai` is exactly
-  `Nobody knows. Maybe mountains or ttys.` Personal edits persist outside the
-  workspace; shipped copy lives in `yhwh/etc/tty/words.json`.
-- Keep terminal file operations, hierarchical rc, shell host, read-only chat and
-  verse storage connected to the existing shared services. Do not silently relax
-  their save-conflict, permissions, symlink or backend-error behavior.
-- Preserve each tab's buffer and shell across navigation and hiding panes.
-  Dirty documents require a save/discard decision before replacement or closure.
-  Shell Ctrl+C/D belong to the shell; Ctrl+Q quits the interface. Paste is atomic
-  text and must never trigger application shortcuts.
-- Keep all terminal actions discoverable through the command palette. Rich DOM
-  plugins and spatial effects may remain specific to the desktop; document such
-  differences in the terminal guide.
+`make tty`, `yhwh tty [PATH]` and `yhwh open tty [PATH]` open the same Python
+workspace in your terminal. Press F1 for help and F10 to quit.
+
+Clients share ordinary directories, YHWH prefix files and executable
+[key bindings](keys.md). Keep those formats usable from a shell and from
+other languages. From a Shaddai shell, `yhwh open PATH` sends the path back
+to the current tab through `YHWH_TTY_SOCKET`.
+
+For Python setup and Shaddai settings, see the [client guide](../yhwh/src/shaddai/README.md).
+Earlier TTY recovery buffers and word edits are in `state-tty/session.json`
+under your YHWH config directory, or in `$YHWH_TTY_DATA_DIR/session.json`.

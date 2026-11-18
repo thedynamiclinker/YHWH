@@ -1,9 +1,10 @@
 .DEFAULT_GOAL := yhwh
 APP_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+SHADDAI := $(APP_DIR)/src/shaddai
 WORKSPACE ?= $(CURDIR)
 NODE ?= node
 export YHWH_NODE := $(shell command -v $(NODE))
-.PHONY: yhwh help deps build run tty tty-build tty-check develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell
+.PHONY: yhwh help deps build run tty tty-deps tty-build tty-check develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell
 help:
 	@cat "$(APP_DIR)/etc/make-help.txt"
 node_modules/.package-lock.json: package.json package-lock.json
@@ -18,12 +19,14 @@ yhwh: deps
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default $(if $(THEME),--theme "$(THEME)",)
 run:
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default
-tty-build: deps
-	$(NODE) bin/build.cjs tty
-tty: tty-build
-	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open tty $(if $(OPEN),"$(OPEN)",)
-tty-check: tty-build
-	$(NODE) --test src/yhwh-tty/test/*.test.cjs
+tty-deps:
+	$(MAKE) -C "$(SHADDAI)" deps
+tty-build: tty-deps
+	$(MAKE) -C "$(SHADDAI)" build
+tty: tty-deps
+	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh-tty" $(if $(OPEN),-- "$(OPEN)",)
+tty-check: tty-deps
+	$(MAKE) -C "$(SHADDAI)" check
 develop install: build
 	$(NODE) bin/prefix.cjs $@ $(if $(PREFIX),"$(PREFIX)",)
 	$(NODE) bin/desktop.cjs $@ "$(if $(PREFIX),$(PREFIX),$(HOME)/world$(if $(filter install,$@),/mnt/sinai,))" "$(WORKSPACE)"
@@ -33,13 +36,13 @@ uninstall:
 check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test
+	$(MAKE) tty-check
 	$(NODE) src/yhwh-mobile/test/ui.cjs
 	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-default/test/keys-ui.cjs src/yhwh-three/test/ui.cjs src/yhwh-default/test/initial-ui.cjs
 test: verify-deps
 	$(NODE) --test test/*.test.cjs
 	$(NODE) --test src/yhwh-default/test/*.test.cjs
 	$(NODE) --test src/yhwh-three/test/*.test.cjs
-	$(NODE) --test src/yhwh-tty/test/*.test.cjs
 	$(NODE) --test src/yhwh-mobile/test/*.test.cjs
 	npm --prefix src/yhwh-obsidian run check
 	npm --prefix src/yhwh-obsidian test

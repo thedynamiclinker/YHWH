@@ -7,6 +7,8 @@ manager adds list/tile layouts, selection, copy/cut/paste, rename, Trash, folder
 navigation and creation. Existing import/share and conflict handling still apply.
 
 Tap the small command-shelf button, or tap the configurable floating dot.
+Tap a tile to run it. Use its **⋯** button for help, editing, or adding the
+command to your composer. Search matches commands across all four locations.
 Holding the dot opens a sketch pad. Gestures are optional, user-trained,
 continuous strokes, with a visible match to tap before execution. Similar or
 unknown marks do not run an arbitrary command. Position and opacity are editable
@@ -17,8 +19,9 @@ under Initial → Guide → Gesture dot settings.
 - **Initials** are aliases in `~/.initialrc`. Choose a Latin, Greek, Hebrew or
   Paleo tile. Paleo uses the bundled Phoenician Unicode font. Any other Unicode
   name may be entered too. Transliteration starts from the chosen letter;
-  search names are editable and Reset restores the default. `愛` can have
-  `ai`, `love` and `amor` as names for the same action.
+  **Search names, script and gesture** holds the editable names and optional
+  gesture. Reset restores the default transliteration. `愛` can have `ai`,
+  `love` and `amor` as names for the same action.
 - **Words** are ordinary UTF-8 files in `~/bin`. The basename is the command.
   The builder proposes an unused filename, so a keyboard is optional. Editing
   an existing Word retains its version and refuses concurrent overwrites.
@@ -47,9 +50,10 @@ parsing never silently replaces them with defaults.
 
 ## Composition
 
-Use **+**, **Argument**, **| Pipe**, **Then**, **$()**, **> Output** and
-**#! Save Word** to build scripts without typing punctuation. Path pickers,
-glyph pickers, command pickers and suggested new names make the basic workflow
+Open **~ $ Compose**, then use **+ Command**, **Argument**, **| Pipe** and
+**Then** to build a command. **More tools** holds **$()** and **> Save output**.
+Run the draft directly or use **#! Save Word** to save it in `~/bin`.
+Path pickers, glyph pickers, command pickers and suggested new names make the basic workflow
 usable without a keyboard or drawing. Typing, IME input and custom longer names
 remain available.
 
@@ -76,8 +80,8 @@ exclusive creation, version checks and recoverable Trash.
 `ls | view` makes a fixed graphical output tab. Its membership stays fixed
 when files change; opening a listed item uses its current file. `fm .` makes
 a live folder tab, refreshed on mutations, navigation, save, focus and resume.
-The live and fixed views have distinct labels. Commands stop on the first error;
-preceding changes are retained, as with a sequence of ordinary file operations.
+Tap **Select** in either file view to copy, cut, paste, rename or trash files.
+Commands stop on the first error. Earlier changes stay in place.
 Recursive aliases/Words and excessively long runs fail within bounded limits.
 
 ## Folder roots and AI setup

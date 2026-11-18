@@ -6,11 +6,13 @@ module.exports=async function initialUI(page,artifacts) {
   await page.locator('#initial-commands').click();
   await page.waitForSelector('#initial-dialog[open] .initial-shelf');
   assert.equal(await dialog.locator('.initial-tile').count(),6);
+  assert.equal(await dialog.locator('[data-composer]').count(),0);
   await page.screenshot({path:path.join(artifacts,'initial-shelf.png')});
   // Create an alias using only glyph and action pickers, then train a mark.
   await press('alias');await press('glyph');
   await dialog.locator('[data-alphabet="Greek"]').click();
   await dialog.locator('[data-glyph="1"]').click();
+  await dialog.locator('summary').click();
   assert.equal(await dialog.locator('[name=names]').inputValue(),'beta');
   await press('action');await dialog.locator('.initial-choices button').filter({has:page.locator('b',{hasText:/^pwd$/})}).click();
   await press('train');
@@ -32,25 +34,46 @@ module.exports=async function initialUI(page,artifacts) {
   await press('match');assert.match(await dialog.locator('[data-match]').textContent(),/Β/);
   await page.screenshot({path:path.join(artifacts,'initial-gesture.png')});
   await press('back');await dialog.locator('[data-search]').fill('');
-  // The substitution and output buttons build runnable syntax without text input.
-  await press('clear');await press('sub');await dialog.locator('[data-find]').fill('pwd');
-  await dialog.locator('.initial-choices button').first().click();
-  assert.match(await dialog.locator('[data-composer]').inputValue(),/\$\('pwd'\)/);
+  // Running a tile cannot replace an unfinished command, and the advanced
+  // tools can build a substitution without typing shell punctuation.
+  await press('compose');
+  await dialog.locator('[data-composer]').fill('echo');
+  await press('back');
+  await dialog.getByRole('button', { name: 'Details for Β', exact: true }).click();
+  await press('run');
+  await page.waitForSelector('#initial-dialog[open] .initial-output');
+  await press('back');await press('back');await press('compose');
+  assert.equal(await dialog.locator('[data-composer]').inputValue(),'echo');
+  await dialog.locator('summary').click();
+  await press('sub');await dialog.locator('[data-find]').fill('pwd');
+  await dialog.locator('.initial-choices button').filter({has:page.locator('b',{hasText:/^pwd$/})}).click();
+  assert.equal(await dialog.locator('[data-composer]').inputValue(),'echo $(pwd)');
+  await press('undo');
+  assert.equal(await dialog.locator('[data-composer]').inputValue(),'echo');
   await press('clear');
 
   // Build a reusable pipeline entirely by tapping; the proposed filename is usable.
-  await press('word');const filename=await dialog.locator('[data-word-name]').inputValue();
   await press('command');
   await dialog.locator('.initial-choices button').filter({has:page.locator('b',{hasText:/^ls$/})}).click();
   await press('pipe');await press('command');
   await dialog.locator('.initial-choices button').filter({has:page.locator('b',{hasText:/^view$/})}).click();
-  assert.match(await dialog.locator('[data-composer]').inputValue(),/'ls' \| 'view'/);
-  await press('save');
+  assert.equal(await dialog.locator('[data-composer]').inputValue(),'ls | view');
+  await page.screenshot({path:path.join(artifacts,'initial-composer.png')});
+  await press('save-word');
+  const filename=await dialog.locator('[data-word-name]').inputValue();
+  await dialog.getByRole('button',{name:'Save Word',exact:true}).click();
   await page.waitForSelector('#initial-dialog[open] .initial-shelf');
   await page.screenshot({path:path.join(artifacts,'initial-words.png')});
+  await dialog.getByRole('button', { name: 'Details for ' + filename, exact: true }).click();
+  await press('edit');
+  assert.equal(await dialog.locator('[data-composer]').inputValue(),'ls | view');
+  await dialog.locator('[data-composer]').fill("'ls' | 'view'\n# My file list");
+  await press('save-word');
+  assert.equal(await dialog.locator('[data-word-name]').inputValue(),filename);
+  await dialog.getByRole('button',{name:'Save Word',exact:true}).click();
   await dialog.locator('.initial-tile').filter({has:page.locator('b',{hasText:filename})}).click();
   await page.waitForSelector('.document-content:not([hidden]) .initial-file-view');
-  assert.match(await page.locator('.document-content:not([hidden]) .initial-file-view > header').textContent(),/FIXED LIST/);
+  assert.match(await page.locator('.document-content:not([hidden]) .initial-file-view > header').textContent(),/Fixed list/);
   // A fixed result stays fixed while a live fm tab follows mutations.
   const frozen=await page.locator('.document-content:not([hidden]) [data-open]').count();
   await page.evaluate(()=>window.YHWH.initial.run('mkdir initial-live-test'));
@@ -59,6 +82,18 @@ module.exports=async function initialUI(page,artifacts) {
   await page.waitForSelector('.document-content:not([hidden]) .initial-file-view');
   await page.evaluate(()=>window.YHWH.initial.run('touch live-note.md'));
   await page.waitForFunction(()=>document.querySelector('.document-content:not([hidden]) .initial-file-grid')?.textContent.includes('live-note.md'));
+  const files = page.locator('.document-content:not([hidden]) .initial-file-view');
+  assert.equal(await files.getByRole('checkbox').count(),0);
+  await files.getByRole('searchbox').fill('live-note');
+  assert.equal(await files.locator('.initial-file-grid article:visible').count(),1);
+  await files.getByRole('button',{name:'Select',exact:true}).click();
+  await files.getByRole('button',{name:/live-note.md/}).click();
+  assert.equal(await files.getByRole('checkbox',{name:'Select live-note.md'}).isChecked(),true);
+  assert.equal(await files.getByRole('button',{name:'Copy',exact:true}).isEnabled(),true);
+  await files.getByRole('button',{name:'Done',exact:true}).click();
+  await files.getByRole('button',{name:'Select',exact:true}).waitFor();
+  assert.equal(await files.getByRole('checkbox').count(),0);
+  await files.getByRole('searchbox').fill('');
   await page.screenshot({path:path.join(artifacts,'initial-file-manager.png')});
   await page.evaluate(()=>window.YHWH.initial.run('chroot initial-live-test'));
   assert.equal(await page.evaluate(()=>window.YHWH.active().worldRoot),'/YHWH/initial-live-test');
@@ -73,6 +108,6 @@ module.exports=async function initialUI(page,artifacts) {
   await page.reload();await page.waitForFunction(()=>window.YHWH?.commands.has('mobile-tabs'));
   await page.locator('#initial-commands').click();await page.waitForSelector('#initial-dialog[open] .initial-shelf');
   await dialog.locator('[data-search]').fill('beta');assert.equal(await dialog.locator('.initial-tile b').textContent(),'Β');
-  assert.match(await page.evaluate(async name=>(await window.YHWH.initial.readWord(name)).content,filename),/ls.*\|.*view/);
+  assert.equal(await page.evaluate(async name=>(await window.YHWH.initial.readWord(name)).content,filename),"'ls' | 'view'\n# My file list");
   await dialog.locator('[data-close]').click();
 };

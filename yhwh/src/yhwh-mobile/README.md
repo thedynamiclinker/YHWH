@@ -182,7 +182,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Circus, desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
-| Three / TTY / company rehearsal | Remain separate interfaces; spatial scene and local-process workflows are not bundled in the mobile shell |
+| Three / Shaddai / company rehearsal | Separate clients. Shaddai uses a host terminal and Python with local Unix process and filesystem access. |
 
 Mobile paths such as `/YHWH/notes.md` are logical workspace paths. Native files
 are ordinary files under `Directory.Data/YHWH`: iOS Documents/YHWH (visible in
@@ -222,12 +222,11 @@ The Obsidian plugin uses its host’s window, editor autosave and native viewers
 it does not take over fullscreen or install a Unix terminal. Its navigator offers
 trash and both path-copy actions (absolute filesystem paths depend on the host).
 Its desktop navigator accepts file/folder drops onto folders, breadcrumbs, the
-parent button and list background through Obsidian's vault file manager. Touch
+`..` row and list background through Obsidian's vault file manager. Touch
 dragging depends on the host; Rename or move remains available there.
-The TTY interface uses the terminal’s full screen, shared conflict-protected
-autosave, source/reading toggle and independent shells in its existing app tabs.
-Rich image/PDF/video rendering requires a graphical host; TTY opens those formats
-with the desktop viewer.
+Shaddai uses the host terminal’s full screen and provides conflict-protected
+autosave, a source/reading toggle and independent shells in its app tabs.
+Shaddai opens rich file formats in an external viewer on a graphical host.
 
 ## Prefix keyboard system
 

@@ -250,6 +250,9 @@ process.stdin.on('end', () => {
     await page.screenshot({ path: path.join(artifacts, '01-welcome.png') });
     console.log('✓ compact filesystem layout; hidden running shell; user CSS loaded');
 
+    const parentRow = page.locator('#file-list > .file-row').first();
+    assert.equal(await parentRow.locator('.file-name').textContent(), '..');
+    assert.equal(await page.locator('#files [data-command="parent"]').count(), 0);
     const nestedRow = page.locator('#file-list [data-path]').filter({ hasText: 'nested' });
     await nestedRow.click();
     assert.equal(await nestedRow.getAttribute('aria-selected'), 'true');
@@ -288,7 +291,10 @@ process.stdin.on('end', () => {
       return false;
     });
     await run('toggle-terminal');
-    await page.locator('#file-list [data-parent="true"]').dblclick();
+    await page.locator('#file-filter').fill('no matching files');
+    assert.equal(await page.locator('#file-list .file-row').count(), 1);
+    assert.equal(await parentRow.getAttribute('data-path'), directory);
+    await parentRow.dblclick();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, directory);
     const notesRow = page.locator('#file-list [data-path]').filter({ hasText: 'notes.md' });
     await notesRow.click();

@@ -9,13 +9,14 @@ make android-apk     Sync and assemble a debug APK (automatic NixOS toolchain)
 make android-run     Build, install and open on an adb-connected phone (keeps data)
 make ios             Sync and open the iOS project in Xcode (requires macOS)
 make run             Open the built default interface
-make tty             Build and open el shaddai in a terminal (OPEN=PATH)
-make tty-build       Build the terminal interface
-make tty-check       Build and test the real terminal interface
+make tty             Open Shaddai in a terminal (OPEN=PATH)
+make tty-deps        Set up Shaddai's Python environment
+make tty-build       Build Shaddai's console diagnostic
+make tty-check       Test Shaddai in a PTY
 make three           Build and open the spatial interface (OPEN=PATH)
 make obsidian        Show plugin installation/publication commands
 make obsidian-install VAULT=PATH   Install plugin assets into an existing vault
-make check           Core, workflow, packaging and headless Electron UI tests
+make check           Core, workflow, Shaddai and headless UI tests
 make test            Core tests (no desktop, installation or uninstallation)
 make test-ui         Electron UI tests on the current display
 make develop         Editable symlinks into ~/world + violet Development desktop app

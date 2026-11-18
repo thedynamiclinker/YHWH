@@ -205,7 +205,7 @@ function renderFiles() {
   $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
-  const folder = tab.folders.get(entry.path);
+  const folder = entry.parent ? undefined : tab.folders.get(entry.path);
   const expanded = !!folder?.open;
   const row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
   return row.replace('role="option"', `draggable="${!entry.parent}" style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');

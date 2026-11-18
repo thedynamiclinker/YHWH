@@ -41,7 +41,7 @@ or simply copy the three plugin files to your vault's plugin directory.
   normal workspace tab, preserving existing editor tabs. **Ctrl+B** toggles
   the command line in a horizontal split below the active workspace pane.
   Obsidian allows dragging, resizing and docking these views normally.
-- **Alt+↑**, **←** and the parent button go up a folder, stopping at the vault
+- **Alt+↑**, **←** and the first file row (`..`) go up a folder, stopping at the vault
   root. **↑/↓** selects entries; **Enter/→** opens them; **F2** renames.
   Right-click an entry to rename/move it or open it in a new tab.
 - Create files with any extension, or create folders. Markdown and supported
@@ -222,7 +222,7 @@ viewers, native Markdown settings and terminal plugins remain owned by Obsidian;
 YHWH text views already autosave through its TextFileView API.
 
 The navigator supports dragging files and folders onto folders, breadcrumbs,
-the parent button or the list background to move them through Obsidian's file
+the `..` row or the list background to move them through Obsidian's file
 manager. Existing destinations and self/descendant moves are refused. On touch
 hosts without native dragging, use **Rename or move** in the context menu. PDF
 scrolling uses Obsidian's native viewer.

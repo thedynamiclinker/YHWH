@@ -1,0 +1,23 @@
+[project]
+name = "shaddai"
+description = "A YHWH workspace for the Linux console"
+readme = "README.md"
+dynamic = ["version"]
+requires-python = ">=3.11"
+dependencies = [
+    "prompt_toolkit",
+    "pyte",
+    "Pygments",
+]
+
+[project.scripts]
+shaddai = "shaddai.__main__:main"
+
+[tool.setuptools]
+script-files = ["bin/shaddai-fonts"]
+
+[tool.setuptools.dynamic]
+version = {attr = "shaddai.__version__"}
+
+[tool.setuptools.package-data]
+shaddai = ["defaults/config.toml"]

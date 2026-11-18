@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+root=$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")
+python=python3
+lib=$root/lib/shaddai
+if [ -d "$root/src/shaddai" ]; then
+    lib=$root/src
+    if [ -x "$root/.venv/bin/python" ]; then
+        python=$root/.venv/bin/python
+    fi
+fi
+export PATH="$root/bin:$PATH"
+export PYTHONPATH="$lib${PYTHONPATH:+:$PYTHONPATH}"
+exec "${SHADDAI_PYTHON:-$python}" -P -m shaddai "$@"

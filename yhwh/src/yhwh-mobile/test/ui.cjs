@@ -48,6 +48,14 @@ async function main() {
       await (await chooser).setFiles([{ name: 'notes.md', mimeType: 'text/markdown', buffer: Buffer.from('# A mobile note\n\nShared **Markdown**.\n\n[[other|Another note]]\n') }]);
       await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Imported 1'));
       await page.locator('#mobile-nav [data-command="toggle-files"]').tap();
+      await page.evaluate(() => window.yhwh.call('file:create', '/YHWH/Empty folder', true));
+      await page.locator('#file-list [data-path="/YHWH/Empty folder"]').tap();
+      await page.waitForFunction(() => window.YHWH.active().cwd === '/YHWH/Empty folder');
+      const parentRow = page.locator('#file-list > .file-row').first();
+      assert.equal(await parentRow.locator('.file-name').textContent(), '..');
+      assert.equal(await page.locator('#files [data-command="parent"]').count(), 0);
+      await parentRow.tap();
+      await page.waitForFunction(() => window.YHWH.active().cwd === '/YHWH');
       await page.locator('#file-list [data-path="/YHWH/notes.md"]').tap();
       await page.waitForFunction(() => window.YHWH.active()?.file?.name === 'notes.md');
       assert.equal(await page.locator('#navigation-area').isVisible(), false);

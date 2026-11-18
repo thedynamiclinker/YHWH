@@ -1,0 +1,103 @@
+# Shaddai overrides live in etc/config.toml. Shared shell profiles live under YHWH prefixes.
+# See F2 -> Configuration paths to inspect every active layer.
+[ui]
+tree_width = 28
+terminal_height = 10
+agent_width = 38
+terminal_visible = true
+tree_visible = true
+agent_visible = false
+mouse = true
+theme = "dark"
+
+[editor]
+wrap = true
+line_numbers = true
+autosave = false
+tab_size = 4
+max_file_bytes = 8388608
+
+[files]
+hidden = false
+ignore = [".git", ".venv", "node_modules", "__pycache__", "build"]
+search_limit = 20000
+
+[terminal]
+# Empty means $SHELL, then /bin/bash. Bash reads ~/.bashrc and prefix profiles.
+shell = ""
+scrollback = 5000
+
+[fonts]
+default = "Lat2-Terminus16.psfu.gz"
+apply_on_start = false
+restore_on_exit = true
+# The order defines Alt+- / Alt+= and F7 / F8 size steps.
+steps = ["lat9w-12.psfu.gz", "lat9w-14.psfu.gz", "Lat2-Terminus16.psfu.gz", "lat9w-16.psfu.gz", "LatGrkCyr-12x22.psfu.gz", "solar24x32.psfu.gz"]
+directories = ["/usr/share/kbd/consolefonts", "/usr/share/consolefonts", "/usr/lib/kbd/consolefonts", "/etc/kbd/consolefonts", "/run/current-system/sw/share/consolefonts"]
+
+[agent]
+backend = "codex"
+# Existing Codex login and model configuration are used. No API keys in this file.
+codex = "codex"
+sandbox = "read-only"
+timeout = 600
+# For backend="command": argv array, prompt on stdin, answer on stdout.
+command = []
+include_document = true
+mail = true
+mail_interval = 600
+quiet = false
+
+[keys]
+help = ["f1"]
+settings = ["f2", "escape ,"]
+palette = ["c-p"]
+shell_palette = ["escape p"]
+quick_open = ["c-o"]
+save = ["c-s"]
+save_as = ["escape s"]
+new = ["c-n", "c-t"]
+close = ["c-w"]
+quit = ["c-q", "f10"]
+toggle_tree = ["f3", "escape b", "escape c-e"]
+toggle_terminal = ["c-b", "f4", "escape c-@"]
+reload = ["f5"]
+maximize = ["f6", "escape enter"]
+maximize_files = ["c-d"]
+font_smaller = ["f7", "escape -"]
+font_larger = ["f8", "escape =", "escape +"]
+toggle_agent = ["f9"]
+cycle_maximize = ["f11"]
+focus_next = ["s-tab"]
+focus_left = ["escape h", "escape left"]
+focus_down = ["escape j", "escape down"]
+focus_up = ["escape k", "escape up"]
+focus_right = ["escape l", "escape right"]
+resize_left = ["escape H", "escape s-left"]
+resize_down = ["escape J", "escape s-down"]
+resize_up = ["escape K", "escape s-up"]
+resize_right = ["escape L", "escape s-right"]
+previous_tab = ["escape ["]
+next_tab = ["escape ]"]
+find = ["c-f"]
+undo = ["c-z"]
+redo = ["c-y"]
+preview = ["c-r", "escape r"]
+inbox = ["escape m"]
+location = ["escape o"]
+clear_terminal = ["c-l"]
+app_next = ["c-tab", "c-pagedown"]
+app_previous = ["s-c-tab", "c-pageup"]
+new_file = []
+new_directory = []
+rename = []
+trash = []
+toggle_hidden = []
+follow_link = ["escape g"]
+focus_editor = ["escape e"]
+focus_terminal = ["escape t"]
+new_shell = ["escape T"]
+close_shell = ["escape w"]
+focus_files = ["escape f"]
+focus_agent = ["escape a"]
+terminal_quote = ["escape q"]

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Replace the current "text" interface with ./shaddai or something like it. Want to have multiple clients, not all javascript, to force us to support other stuff in a generic enough way that it feels like old unix and just works. No boilerplate. Just do that. Simplicity is everything. Correctness and completeness are much lesser virtues. I trust you, so trust yourself. Go. <3
+EOF

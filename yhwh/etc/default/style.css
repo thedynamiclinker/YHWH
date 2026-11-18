@@ -52,7 +52,6 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .pane-header button { padding: 4px 6px; font-size: 15px; }
 .navigation-buttons { display: flex; align-items: center; padding: 3px 10px; gap: 3px; }
 .navigation-buttons button { color: var(--muted); padding: 3px 8px; }
-.navigation-buttons .up-button { color: var(--purple); background: var(--purple-bg); flex: 1; text-align: left; }
 #location-form { padding: 6px 12px; }
 #location { width: 100%; border-color: transparent; font-size: .875rem; background: #ffffff04; color: var(--muted); }
 #location:focus { color: var(--text); }
@@ -71,7 +70,6 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .file-row.directory .file-icon { color: var(--gold); }
 .file-row .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-size: .9375rem; }
 .file-row .file-size, .file-row .file-date { display: none; font-size: .875rem; color: var(--faint); }
-.parent-row { color: var(--purple); border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 5px; }
 .directory-footer { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; color: var(--faint); font-size: .8125rem; border-top: 1px solid var(--line); }
 .resize-handle { position: relative; z-index: 5; touch-action: none; }
 .sidebar-resize { width: 3px; margin-left: -3px; border-right: 1px solid var(--line); cursor: col-resize; }

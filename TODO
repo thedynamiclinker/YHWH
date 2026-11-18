@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Make the .. entry in the left fm be the top level file in every dir, don't make it a separate menu
+EOF

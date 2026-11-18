@@ -1,2 +1,19 @@
-#!/usr/bin/env node
-require('./tty/start.cjs').main().catch(error => { console.error(`el shaddai: ${error.message}`); process.exitCode = 1; });
+#!/bin/sh
+set -e
+
+if [ "${YHWH_INTROSPECTION:-}" = 1 ] && [ "${1:-}" = --help ]; then
+    printf '%s\n' 'yhwh-tty — Shaddai, the terminal workspace'
+    exit 0
+fi
+
+root=$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")
+if [ -z "${YHWH_HOME:-}" ]; then
+    YHWH_HOME=$root
+    if [ -d "$root/../mnt/root" ] && [ -d "$root/../mnt/yhwh" ]; then
+        YHWH_HOME=$(dirname -- "$root")
+    fi
+fi
+export YHWH_HOME
+export YHWH_COMMAND="${YHWH_COMMAND:-$root/bin/yhwh}"
+export PATH="$root/bin:$PATH"
+exec "$root/src/shaddai/bin/shaddai" "$@"

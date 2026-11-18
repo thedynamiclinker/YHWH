@@ -1,8 +1,8 @@
 # Keyboard bindings are files
 
-The desktop and Three interface read bindings from ordinary prefix directories.
+The desktop, Three and Shaddai clients read bindings from ordinary prefix directories.
 The default user prefix is `${XDG_CONFIG_HOME:-~/.config}/yhwh`; `YHWH_CONFIG_HOME`
-can select another. On first launch the app copies shipped bindings into its
+can select another. On first launch the graphical clients copy shipped bindings into their
 `etc/keys` directory without replacing custom files. Unmodified copies of the retired terminal-tab defaults are upgraded to the current app-tab/toggle bindings; masks, custom modules, executables and symlinks remain untouched. The installed defaults
 also remain the lowest layer, so an empty override disables a default.
 
@@ -21,6 +21,11 @@ reread external changes without closing the app or discarding editor buffers.
 Profile changes are included in that reload. Shells source their prefix startup
 files when they start and when their working directory changes; existing shell
 environments retain normal shell semantics when leaving a directory.
+
+Shaddai supplies its own terminal defaults and reads the same system, user
+and ancestor overrides. Executable bindings receive tab-separated context on
+stdin plus `YHWH_KEY`, `YHWH_TAB`, and `YHWH_PREFIX`. Shaddai understands the binding editor's
+simple `api.run('command')` files for actions available in the terminal.
 
 ## Names and behavior
 

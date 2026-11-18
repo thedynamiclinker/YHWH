@@ -31,8 +31,8 @@ export function prompt(app: App, title: string, label: string, value = ''): Prom
 export class Navigator extends ItemView {
   private unsubscribe?: () => void;
   private filter = '';
-  private index = 0;
-  private visible: Array<TFile | TFolder> = [];
+  private index = 1;
+  private visible: Array<TFile | TFolder | null> = [];
   private dragged?: TFile | TFolder;
   constructor(leaf: WorkspaceLeaf, private plugin: YHWH) { super(leaf); }
   getViewType() { return NAV; }
@@ -41,15 +41,20 @@ export class Navigator extends ItemView {
   async onOpen() {
     this.unsubscribe = this.plugin.watch(() => this.render());
     this.registerDomEvent(this.contentEl, 'keydown', event => {
-      if ((event.altKey && event.key === ui("arrowup")) || (event.key === ui("arrowleft") && (event.target as HTMLElement).tagName !== ui("input"))) {
+      const target = event.target as HTMLElement;
+      if ((event.altKey && event.key === ui("arrowup")) || (event.key === ui("arrowleft") && target.tagName !== ui("input"))) {
         event.preventDefault(); this.plugin.run(() => this.plugin.go(parent(this.plugin.folder))); return;
       }
-      if ((event.target as HTMLElement).tagName === ui("input")) return;
+      if (target.tagName === ui("input")) return;
+      if (target.dataset.index !== undefined) this.index = Number(target.dataset.index);
       if (event.key === ui("arrowdown") || event.key === ui("arrowup")) {
         event.preventDefault(); this.index = Math.max(0, Math.min(this.visible.length - 1, this.index + (event.key === ui("arrowdown") ? 1 : -1)));
         this.focusRow();
       } else if (event.key === ui("enter") || event.key === ui("arrowright")) {
-        event.preventDefault(); const entry = this.visible[this.index]; if (entry) this.openEntry(entry, event.ctrlKey || event.metaKey);
+        event.preventDefault();
+        const entry = this.visible[this.index];
+        if (entry === null) this.plugin.run(() => this.plugin.go(parent(this.plugin.folder)));
+        else if (entry) this.openEntry(entry, event.ctrlKey || event.metaKey);
       } else if (event.key === ui("f2")) {
         event.preventDefault(); const entry = this.visible[this.index]; if (entry) this.plugin.run(() => this.plugin.rename(entry));
       }
@@ -84,8 +89,6 @@ export class Navigator extends ItemView {
     const hadFocus = el.contains(el.ownerDocument.activeElement);
     el.empty(); p.heading(el, ui("files"));
     const tools = el.createDiv('yhwh-tools');
-    const up = button(tools, '↑', ui("parent-folder-alt-"), () => p.run(() => p.go(parent(p.folder)))); up.disabled = !p.folder;
-    if (p.folder) this.dropTarget(up, parent(p.folder));
     button(tools, '+ file', ui("new-file"), () => p.run(() => p.newFile()));
     button(tools, '+ folder', ui("new-folder"), () => p.run(() => p.newFolder()));
     button(tools, '⛶', ui("toggle-file-manager-in-the-workspace-ctrl-d"), () => p.run(() => p.toggleFilesFocus()));
@@ -102,10 +105,19 @@ export class Navigator extends ItemView {
     const list = el.createDiv({ cls: 'yhwh-files', attr: { role: 'list', 'aria-label': ui("files-and-folders"), tabindex: '0' } });
     this.dropTarget(list, p.folder);
     const fill = () => {
-      list.empty(); this.visible = p.entries().filter(file => file.name.toLocaleLowerCase().includes(this.filter.toLocaleLowerCase()));
+      list.empty();
+      const entries = p.entries().filter(file => file.name.toLocaleLowerCase().includes(this.filter.toLocaleLowerCase()));
+      this.visible = [null, ...entries];
       this.index = Math.max(0, Math.min(this.index, this.visible.length - 1));
       for (const [index, file] of this.visible.entries()) {
         const row = list.createDiv({ cls: 'yhwh-file-row', attr: { role: 'listitem' } });
+        if (!file) {
+          const target = parent(p.folder);
+          const up = button(row, '↑  ..', ui("parent-folder-alt-"), () => { this.index = index; p.run(() => p.go(target)); });
+          up.dataset.index = String(index); up.classList.toggle('is-selected', index === this.index);
+          if (p.folder) this.dropTarget(row, target);
+          continue;
+        }
         row.draggable = true;
         row.addEventListener('dragstart', event => { this.dragged = file; event.stopPropagation(); event.dataTransfer!.effectAllowed = 'move'; event.dataTransfer!.setData('application/x-yhwh-obsidian-file', file.path); });
         row.addEventListener('dragend', () => { this.dragged = undefined; this.contentEl.querySelectorAll('.yhwh-drop-target').forEach(el => el.removeClass('yhwh-drop-target')); });
@@ -131,9 +143,9 @@ export class Navigator extends ItemView {
           menu.showAtMouseEvent(event);
         });
       }
-      if (!this.visible.length) list.createEl('p', { text: this.filter ? ui("no-matching-entries-") : ui("this-folder-is-empty-"), cls: 'yhwh-muted' });
+      if (!entries.length) list.createEl('p', { text: this.filter ? ui("no-matching-entries-") : ui("this-folder-is-empty-"), cls: 'yhwh-muted' });
     };
-    filter.addEventListener('input', () => { this.filter = filter.value; this.index = 0; fill(); });
+    filter.addEventListener('input', () => { this.filter = filter.value; this.index = 1; fill(); });
     filter.addEventListener('keydown', event => { if (event.key === ui("arrowdown") || event.key === ui("enter")) { event.preventDefault(); this.focusRow(); } });
     fill();
     const footer = el.createDiv('yhwh-footer');
@@ -147,7 +159,7 @@ export class Navigator extends ItemView {
       if (p.circusError) footer.createEl('p', { text: p.circusError, cls: 'yhwh-errors' });
       button(footer, p.circusBusy ? ui("loading-") : ui("next-cartoon-"), ui("load-a-random-pairing-from-nietzschefamilycircus"), () => p.run(() => p.nextCircus())).disabled = p.circusBusy;
       p.external(footer, ui("nietzsche-family-circus-"), 'https://nietzschefamilycircus.com/');
-    } else p.copyBlock(footer, this.visible.length ? 'welcome' : 'empty');
+    } else p.copyBlock(footer, this.visible.length > 1 ? 'welcome' : 'empty');
     button(footer, ui("offerings"), ui("open-offerings"), () => p.offerings());
     if (hadFocus) this.focusRow();
   }
