@@ -1,22 +1,5 @@
-Run `make` for a gui.
+Stop reading, run `make`.
 
-Run `yhwh` for a cli.
+Hit tab after for more info.
 
-Run `make android-run` to build, install and open YHWH on an adb-connected Android
-phone. Repeat after code changes; app data is retained. NixOS gets the build
-toolchain automatically. See [the mobile guide](yhwh/src/yhwh-mobile/README.md).
-
-Run `make tty` for **el shaddai**, the ranger-like terminal interface.
-**shaddai**: “Nobody knows. Maybe mountains or ttys.” Edit the definition in
-Settings or through `Ctrl+P` → **Edit shaddai definition**.
-See [the terminal guide](yhwh/src/yhwh-tty/README.md) for keys and commands.
-
-`make develop` adds **YHWH (Development)** to your Linux app menu, linked to this
-checkout, with the LD logo on a dark background. `make install` adds **YHWH** with
-the logo on a light background, using the standalone package in `~/world/mnt/sinai`. Both open this
-workspace and can coexist. Re-run the relevant target to update it.
-
-Desktop entry templates and icons live in `usr/share/`. Installation resolves
-their paths into `${XDG_DATA_HOME:-~/.local/share}/applications` and `icons`.
-`make uninstall` removes unmodified desktop files it owns along with `~/world`.
-
+Nothing to see here.
