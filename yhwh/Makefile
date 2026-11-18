@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := yhwh
 APP_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-SHADDAI := $(APP_DIR)/src/shaddai
+SHADDAI := $(APP_DIR)/$(if $(wildcard $(APP_DIR)/../shaddai/bin/shaddai),../shaddai,src/shaddai)
 WORKSPACE ?= $(CURDIR)
 NODE ?= node
 export YHWH_NODE := $(shell command -v $(NODE))
@@ -19,14 +19,15 @@ yhwh: deps
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default $(if $(THEME),--theme "$(THEME)",)
 run:
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default
-tty-deps:
+tty-deps: $(if $(SHADDAI_PYTHON),,$(SHADDAI)/.venv/bin/shaddai)
+$(SHADDAI)/.venv/bin/shaddai: $(SHADDAI)/pyproject.toml
 	$(MAKE) -C "$(SHADDAI)" deps
 tty-build: tty-deps
 	$(MAKE) -C "$(SHADDAI)" build
 tty: tty-deps
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh-tty" $(if $(OPEN),-- "$(OPEN)",)
 tty-check: tty-deps
-	$(MAKE) -C "$(SHADDAI)" check
+	$(MAKE) -C "$(SHADDAI)" check $(if $(SHADDAI_PYTHON),TEST_PYTHON="$(SHADDAI_PYTHON)")
 develop install: build
 	$(NODE) bin/prefix.cjs $@ $(if $(PREFIX),"$(PREFIX)",)
 	$(NODE) bin/desktop.cjs $@ "$(if $(PREFIX),$(PREFIX),$(HOME)/world$(if $(filter install,$@),/mnt/sinai,))" "$(WORKSPACE)"

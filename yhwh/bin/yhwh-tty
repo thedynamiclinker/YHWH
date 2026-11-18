@@ -16,4 +16,7 @@ fi
 export YHWH_HOME
 export YHWH_COMMAND="${YHWH_COMMAND:-$root/bin/yhwh}"
 export PATH="$root/bin:$PATH"
+if [ -x "$root/../shaddai/bin/shaddai" ]; then
+    exec "$root/../shaddai/bin/shaddai" "$@"
+fi
 exec "$root/src/shaddai/bin/shaddai" "$@"

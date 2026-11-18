@@ -6,6 +6,7 @@ node_modules/
 /yhwh/etc/desktop/
 /.lord-agents.lock/
 .obsidian/workspace.json
+shaddai/.git
 
 # Shell-history exports can contain credentials.
 .bash_history

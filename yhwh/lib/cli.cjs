@@ -4,6 +4,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const paths = require('./paths.cjs');
 const workflows = ['begin','review','run','add','commit'];
 const files = ['create','read','append','prepend','list','search','move','rename','config'];
+const interfaces = ['default','three','obsidian','tty'];
 function commands(additional=[]) {
   const found = new Map();
   for (const directory of [...additional, path.join(paths.root,'bin'), ...(process.env.PATH || '').split(path.delimiter)]) {
@@ -57,8 +58,10 @@ async function main(args=process.argv.slice(2)) {
   }
   if(command==='_complete'){console.log((await require('./workflow.cjs').complete(rest[0])).join('\n'));return 0;}
   if(command==='open') {
-    let name=['three','tty'].includes(process.env.YHWH_INTERFACE)?process.env.YHWH_INTERFACE:'default';if(['default','three','obsidian','tty'].includes(rest[0]))name=rest.shift();
-    return execute(path.join(paths.root,'bin','yhwh-'+name),rest,{env:{...process.env,YHWH_INTERFACE:name}});
+    const name=interfaces.includes(rest[0])?rest.shift():process.env.YHWH_INTERFACE||'default';
+    const client=commands().get(name);
+    if(!client)throw new Error('Unknown interface: '+name);
+    return execute(client,rest,{env:{...process.env,YHWH_INTERFACE:name}});
   }
   if(workflows.includes(command))return require('./workflow.cjs').main(command,rest);
   if(files.includes(command)){await require('../bin/default/cli.cjs').main([command,...rest]);return process.exitCode||0;}

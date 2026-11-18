@@ -108,8 +108,8 @@ class Browser:
         self.tree.root = directory
         self.tree.expanded.clear()
         self.tree.rows.clear()
-        self.tree.selected = 0
         self.tree.query = ""
+        self.last_click = None
         self.refresh()
         if previous.parent == directory:
             self.tree.reveal(previous)
@@ -149,14 +149,14 @@ class Browser:
         if self.tree.current:
             path, _, directory = self.tree.current
             if directory:
-                self.navigate(path)
+                self.navigate(self.cwd.parent if path is None else path)
             else:
                 self.workspace.open(path)
 
     def expand(self):
         if self.tree.current:
             path, _, directory = self.tree.current
-            if directory and not self.physical(path).is_symlink():
+            if directory and path is not None and not self.physical(path).is_symlink():
                 self.tree.expanded.symmetric_difference_update({path})
                 self.refresh()
 
@@ -183,17 +183,22 @@ class Browser:
                 fragments.append(("", "\n"))
             style = "class:selected" if index == self.tree.selected else ""
             name_style = " class:folder" if directory and not style else ""
-            marker = (expanded if path in self.tree.expanded else collapsed) if directory else " "
-            name = label(path.name) + ("@" if self.physical(path).is_symlink() else "")
-            detail = "/" if directory else ""
+            if path is None:
+                marker, name, detail = " ", "..", ""
+            else:
+                marker = (expanded if path in self.tree.expanded else collapsed) if directory else " "
+                name = label(path.name) + ("@" if self.physical(path).is_symlink() else "")
+                detail = "/" if directory else ""
             fragments.append((style + name_style, f" {'  ' * depth}{marker} {name}{detail} ",
                               clickable(partial(self.click, index))))
-        return fragments or [("class:muted", "  No matches" if self.tree.query else "  Empty folder")]
+        if len(self.tree.rows) == 1:
+            fragments.append(("class:muted", "\n  No matches" if self.tree.query else "\n  Empty folder"))
+        return fragments
 
     def preview(self):
         path = self.selected
         if path is None:
-            return [("class:muted", " Select a file or folder")]
+            return [("class:muted", " Parent directory")]
         if self.preview_cache and self.preview_cache[0] == path:
             return self.preview_cache[1]
 

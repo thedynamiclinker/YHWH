@@ -217,6 +217,36 @@ class WorkspaceTests(unittest.TestCase):
         tty.shows("Already exists: moved.txt")
         tty.quit()
 
+    def test_parent_is_the_first_file_row_in_empty_and_filtered_directories(self):
+        root, tty = self.start()
+        (root / "Notes/Empty folder").mkdir()
+
+        def first_row_is_parent(lines):
+            return any(line.startswith("Files") and lines[index + 1].partition("│")[0].strip() == ".."
+                       for index, line in enumerate(lines[:-1]))
+
+        tty.wait_for(first_row_is_parent)
+        tty.send(b"\x04")
+        tty.wait_for(lambda lines: any(line.startswith("Places") and line.split("│", 2)[1].strip() == ".."
+                                      for line in lines if "│" in line))
+        self.assertFalse(any(line.partition("│")[0].strip() == "Parent" for line in tty.screen.display))
+        tty.send(b"\x04")
+        tty.wait_for(first_row_is_parent)
+        tty.send(b"\r")
+        tty.shows("Empty folder/")
+        tty.send(b"\r")
+        tty.wait_for(lambda lines: first_row_is_parent(lines) and
+                     any(line.partition("│")[0].strip() == "Empty folder" for line in lines))
+        tty.send(b"\r")
+        tty.shows("alpha.md")
+        tty.send(b"/impossible-match\r")
+        tty.shows("No matches")
+        tty.wait_for(first_row_is_parent)
+        tty.send(b"grD\r")
+        tty.shows("readme.txt")
+        self.assertTrue((root / "Notes/Empty folder").is_dir())
+        tty.quit()
+
 
 class TerminalScreenTests(unittest.TestCase):
     def test_private_cursor_position_query_used_by_tmux(self):

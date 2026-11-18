@@ -359,14 +359,13 @@ class Workspace:
             ("class:active" if self.pane == "files" else "", " Files ", clickable(lambda: self.focus("files"))),
             ("", " ‹ ", clickable(lambda: self.browser.step_history(-1))),
             ("", " › ", clickable(lambda: self.browser.step_history(1))),
-            ("", " ↑ ", clickable(lambda: self.browser.navigate(self.browser.cwd.parent))),
             ("class:heading", " ↙ " if expanded else " ↗ ", clickable(lambda: self.maximize("files"))),
             ("class:muted", f" {label(self.browser.cwd if expanded else self.browser.cwd.name or '/')} ",
              clickable(self.browser.location)),
         ]
 
     def places(self):
-        places = [("Workspace", self.browser.root), ("Home", Path.home()), ("Parent", self.browser.cwd.parent)]
+        places = [("Workspace", self.browser.root), ("Home", Path.home())]
         return [("class:heading", " Places\n\n")] + [
             ("class:active" if directory == self.browser.cwd else "", f" {name}\n",
              clickable(partial(self.browser.navigate, directory))) for name, directory in places
@@ -423,7 +422,7 @@ class Workspace:
         if self.reading and self.pane == "editor":
             details = "Reading   Esc Back   Alt+G Links"
         elif self.pane == "files":
-            details = f"{len(self.browser.tree.rows)} items   / Filter   Enter Open"
+            details = f"{len(self.browser.tree.rows) - 1} items   / Filter   Enter Open"
         elif self.pane == "terminal":
             details = ("Shell exited   Enter Restart" if self.shell and self.shell.exited
                        else f"{self.hint('new_shell')} New shell   Shift+PgUp Scrollback")

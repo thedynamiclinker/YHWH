@@ -132,7 +132,7 @@ class FileTree:
     hidden: bool = False
     ignore: list[str] = field(default_factory=list)
     expanded: set[Path] = field(default_factory=set)
-    rows: list[tuple[Path, int, bool]] = field(default_factory=list)
+    rows: list[tuple[Path | None, int, bool]] = field(default_factory=list)
     selected: int = 0
     errors: list[str] = field(default_factory=list)
     query: str = ""
@@ -154,8 +154,8 @@ class FileTree:
         return self.world.physical(path) if self.world else path
 
     def refresh(self):
-        selected = self.current[0] if self.current else None
-        self.rows = []
+        selected = self.current
+        self.rows = [(None, 0, True)]  # The parent row is navigation, with no selectable file path.
         self.errors = []
 
         def visit(directory, depth):
@@ -172,8 +172,10 @@ class FileTree:
                     visit(path, depth + 1)
 
         visit(self.root, 0)
-        if selected:
-            self.selected = next((i for i, row in enumerate(self.rows) if row[0] == selected), self.selected)
+        if selected is None:
+            self.selected = 1  # Prefer the first actual entry in a newly opened directory.
+        else:
+            self.selected = next((i for i, row in enumerate(self.rows) if row[0] == selected[0]), self.selected)
         self.selected = max(0, min(self.selected, len(self.rows) - 1))
 
     def reveal(self, path):

@@ -42,6 +42,13 @@ test('external commands are discovered only through --help and retain exit statu
  assert.match(f.ok('--help'),/boop\s+A small greeting/);assert.doesNotMatch(f.ok('commands'),/^loop$/m);assert.equal(f.run('boop').status,7);assert.equal(f.run('missing').status,127);
  const bash=spawnSync('bash',['--noprofile','--norc','-c','source "$1"; COMP_WORDS=(yhwh begin imp); COMP_CWORD=2; _yhwh_complete; printf "%s\\n" "${COMPREPLY[@]}"','bash',path.resolve(__dirname,'../etc/completions/yhwh.bash')],{cwd:f.root,env:{...f.env,PATH:path.dirname(cli)+path.delimiter+f.env.PATH},encoding:'utf8'});assert.match(bash.stdout,/improve/);
 });
+test('open can hand off to a client on PATH',async t=>{
+ const f=await fixture(t);
+ await fs.writeFile(path.join(f.bin,'yhwh-boop'),'#!/bin/sh\nread -r line\nprintf "%s\\n" "$PWD" "$1" "$line"\nexit 7\n',{mode:0o755});
+ const result=spawnSync(cli,['open','a note.md'],{cwd:f.root,env:{...f.env,YHWH_INTERFACE:'boop'},input:'from stdin\n',encoding:'utf8'});
+ assert.equal(result.status,7,result.stderr);
+ assert.equal(result.stdout,`${await fs.realpath(f.root)}\na note.md\nfrom stdin\n`);
+});
 test('archive and commit failures resume without re-execution or duplicate history',async t=>{
  const f=await fixture(t),task=await prepared(f);f.ok('run',task);
  await fs.mkdir(path.join(f.root,'var'));await fs.writeFile(path.join(f.root,'var/imperative'),'blocked');assert.notEqual(f.run('add',task).status,0);assert.ok(await fs.stat(path.join(f.root,'run',task)));await fs.unlink(path.join(f.root,'var/imperative'));f.ok('add',task);
