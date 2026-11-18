@@ -150,7 +150,7 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .viewer-status { color: var(--muted); }
 .viewer-pdf { display: flex; flex-direction: column; overflow: hidden; }
 .viewer-pdf .viewer-tools { flex-shrink: 0; }
-.pdf-pages { flex: 1; min-height: 0; overflow: auto; padding: 8px; overscroll-behavior: contain; }
+.pdf-pages { flex: 1; min-height: 0; overflow: auto; padding: 8px; overscroll-behavior: contain; overflow-anchor: none; }
 .pdf-page { margin: 0 auto 16px; }
 .pdf-page-image { background: white; }
 .viewer-pdf canvas { display: block; width: 100%; height: auto; background: white; }

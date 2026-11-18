@@ -9,6 +9,7 @@ import { createVerseUI } from './verses.js';
 import { match as matchKey } from '../../../lib/key-names.cjs';
 import { showHotkeys } from './hotkeys.js';
 import { mountViewer } from './viewers.js';
+import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
@@ -17,6 +18,16 @@ import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
 
 const bridge = window.yhwh;
+const interfaceZoomLevels = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+let interfaceZoomIndex = interfaceZoomLevels.indexOf(1);
+registerWheelZoom(window, direction => {
+  const next = Math.max(0, Math.min(interfaceZoomLevels.length - 1, interfaceZoomIndex + direction));
+  if (next === interfaceZoomIndex) return;
+  interfaceZoomIndex = next;
+  const factor = interfaceZoomLevels[next];
+  if (bridge.setInterfaceZoom) bridge.setInterfaceZoom(factor);
+  else document.documentElement.style.setProperty('--mobile-zoom', factor);
+});
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const call = (channel, ...args) => bridge.call(channel, ...args);

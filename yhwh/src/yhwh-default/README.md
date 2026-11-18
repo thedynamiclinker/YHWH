@@ -52,7 +52,7 @@ Attachments such as images, video/audio, Excel/ODS, CSV/TSV and other non-text f
 
 PDF is the optional built-in viewer. The first open asks **Preview here** or **System app**, with **Remember for all PDFs**. Settings → Files & editor → Open PDFs offers Ask each time, Preview here, or System app (`pdf_open=ask`, `preview`, or `external` in rc). A single click on a PDF row uses that preference; Ctrl+click or double-click opens it externally. Enter, Open file and linked PDFs use the preference. Preview is read-only, limited to 64 MiB, and offers an external-open action; larger PDFs open externally. Editable text is limited to 16 MiB. PDF editing, arbitrary HTML execution, remote image fetching, backlinks/indexing, and a complete Obsidian CLI/API are not implemented.
 
-PDF pages scroll continuously with the mouse wheel, keyboard or touch. Page and zoom controls stay above the document; the page indicator follows scrolling. Pages fit the available width at 100%; higher zoom permits horizontal scrolling. Only nearby pages retain rendered canvases.
+PDF pages scroll continuously with the mouse wheel, keyboard or touch. Hold Ctrl and roll the wheel up to zoom in or down to zoom out. Over the PDF pages, this zooms around the pointer and updates the PDF zoom selector. Elsewhere it scales the whole YHWH interface. Page and zoom controls stay above the document, and the page indicator follows scrolling. Pages fit the available width at 100%. Higher zoom permits horizontal scrolling. Only nearby pages retain rendered canvases.
 
 ## Hierarchical configuration
 

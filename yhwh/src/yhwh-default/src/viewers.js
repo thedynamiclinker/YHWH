@@ -1,3 +1,5 @@
+import { registerWheelZoom } from './wheel-zoom.js';
+
 // Shared, read-only PDF preview. PDF scripts are never run.
 export async function mountViewer(host, file) {
   const root = document.createElement('section'); root.className = `file-viewer viewer-${file.viewer}`; host.append(root);
@@ -23,7 +25,10 @@ export async function mountViewer(host, file) {
       const pageInput = document.createElement('input'); pageInput.type = 'number'; pageInput.min = 1; pageInput.max = pdf.numPages; pageInput.value = 1; pageInput.setAttribute('aria-label', 'PDF page');
       const count = document.createElement('span'); count.textContent = `/ ${pdf.numPages}`;
       const zoom = document.createElement('select'); zoom.setAttribute('aria-label', 'PDF zoom');
-      for (const value of [0.75, 1, 1.5, 2]) zoom.add(new Option(`${value * 100}%`, value)); zoom.value = '1';
+      for (const value of [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3]) {
+        zoom.add(new Option(`${Math.round(value * 100)}%`, value));
+      }
+      zoom.value = '1';
       tools.append(previous, pageInput, count, next, zoom); root.append(tools);
       const scroller = document.createElement('div'); scroller.className = 'pdf-pages'; scroller.tabIndex = 0;
       scroller.setAttribute('role', 'region'); scroller.setAttribute('aria-label', 'PDF pages'); root.append(scroller);
@@ -37,7 +42,7 @@ export async function mountViewer(host, file) {
         summary.textContent = `Page ${index + 1} text`; text.append(summary, content); element.append(placeholder, text); scroller.append(element);
         return { element, placeholder, content, size: initialSize, rendered: false };
       });
-      let current = 1, scale = 1, drawing = false, pending = false;
+      let current = 1, scale, pixelRatio, drawing = false, pending = false;
       function controls() {
         pageInput.value = current; previous.disabled = current === 1; next.disabled = current === pdf.numPages;
       }
@@ -67,7 +72,7 @@ export async function mountViewer(host, file) {
               const mine = generation, number = pages.indexOf(item) + 1;
               const page = await pdf.getPage(number); if (disposed || mine !== generation) { pending = true; break; }
               item.size = page.getViewport({ scale: 1 }); sizePage(item);
-              const ratio = Math.min(devicePixelRatio || 1, 2, Math.sqrt(16000000 / (item.size.width * item.size.height * scale * scale)));
+              const ratio = Math.min(pixelRatio, Math.sqrt(16000000 / (item.size.width * item.size.height * scale * scale)));
               const viewport = page.getViewport({ scale: scale * ratio }), canvas = document.createElement('canvas');
               canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
               canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `${file.name}, page ${number}`);
@@ -83,10 +88,11 @@ export async function mountViewer(host, file) {
         } finally { drawing = false; }
       }
       const redraw = () => draw().catch(error => { if (!disposed) { heading.hidden = false; heading.textContent = error.message; } });
+      const scrollUnit = () => scroller.getBoundingClientRect().width / scroller.offsetWidth;
       function goTo(number) {
         current = Math.max(1, Math.min(pdf.numPages, Math.trunc(number) || 1));
         const element = pages[current - 1].element;
-        scroller.scrollTop += element.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+        scroller.scrollTop += (element.getBoundingClientRect().top - scroller.getBoundingClientRect().top) / scrollUnit() - 8;
         controls(); redraw();
       }
       scroller.onscroll = () => {
@@ -97,15 +103,34 @@ export async function mountViewer(host, file) {
       };
       previous.onclick = () => goTo(current - 1); next.onclick = () => goTo(current + 1);
       pageInput.onchange = () => goTo(Number(pageInput.value));
-      function resize() {
-        const number = current;
-        scale = Number(zoom.value) * Math.min(1, Math.max(100, scroller.clientWidth - 16) / initialSize.width);
+      function resize(pointer) {
+        if (!scroller.clientWidth) return;
+        const nextScale = Number(zoom.value) * Math.min(1, Math.max(100, scroller.clientWidth - 16) / initialSize.width);
+        const unit = scrollUnit();
+        const nextPixelRatio = Math.min((devicePixelRatio || 1) * unit, 2);
+        if (nextScale === scale && nextPixelRatio === pixelRatio) return;
+        const anchor = pointer && scale && visiblePages().find(({ element }) => element.getBoundingClientRect().bottom > pointer.clientY);
+        const before = anchor && anchor.element.getBoundingClientRect();
+        const previousScale = scale;
+        scale = nextScale;
+        pixelRatio = nextPixelRatio;
         generation++; renderTask?.cancel();
         for (const item of pages) { item.placeholder.replaceChildren(); item.rendered = false; sizePage(item); }
-        goTo(number);
+        if (before) {
+          const after = anchor.element.getBoundingClientRect(), factor = scale / previousScale;
+          scroller.scrollLeft += (after.left - pointer.clientX + (pointer.clientX - before.left) * factor) / unit;
+          scroller.scrollTop += (after.top - pointer.clientY + (pointer.clientY - before.top) * factor) / unit;
+          redraw();
+        } else goTo(current);
       }
-      zoom.onchange = resize;
-      observer = new ResizeObserver(resize); observer.observe(scroller);
+      registerWheelZoom(scroller, (direction, pointer) => {
+        const next = Math.max(0, Math.min(zoom.length - 1, zoom.selectedIndex + direction));
+        if (next === zoom.selectedIndex) return;
+        zoom.selectedIndex = next;
+        resize(pointer);
+      });
+      zoom.onchange = () => resize();
+      observer = new ResizeObserver(() => resize()); observer.observe(scroller);
       resize();
     }
   })().catch(error => {

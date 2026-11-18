@@ -1,5 +1,10 @@
 /* Additive phone/tablet layout over the shared desktop stylesheet. */
-body.is-mobile { height: var(--mobile-height, 100dvh); padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); -webkit-tap-highlight-color: transparent; }
+:root {
+  zoom: var(--mobile-zoom, 1);
+  --mobile-layout-width: calc(100vw / var(--mobile-zoom, 1));
+  --mobile-layout-height: calc(var(--mobile-height, 100dvh) / var(--mobile-zoom, 1));
+}
+body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); -webkit-tap-highlight-color: transparent; }
 .is-mobile button { min-height: 44px; touch-action: manipulation; }
 .is-mobile input, .is-mobile select, .is-mobile textarea { font-size: max(16px, 1rem); }
 .is-mobile .titlebar { padding: 0 12px; gap: 8px; }
@@ -17,12 +22,12 @@ body.is-mobile { height: var(--mobile-height, 100dvh); padding-top: env(safe-are
 .keyboard-open #mobile-nav { display: none !important; }
 .keyboard-open #mobile-editor-toolbar { padding-bottom: env(safe-area-inset-bottom); }
 #mobile-drawer-backdrop { position: fixed; inset: 0; z-index: 19; background: #0008; border-radius: 0; }
-.is-mobile #navigation-area:not([hidden]) { position: fixed; top: env(safe-area-inset-top); bottom: calc(58px + env(safe-area-inset-bottom)); left: env(safe-area-inset-left); width: min(86vw, 360px); z-index: 20; border-right: 1px solid var(--line); box-shadow: 10px 0 30px #0004; }
+.is-mobile #navigation-area:not([hidden]) { position: fixed; top: env(safe-area-inset-top); bottom: calc(58px + env(safe-area-inset-bottom)); left: env(safe-area-inset-left); width: min(calc(var(--mobile-layout-width) * .86), 360px); z-index: 20; border-right: 1px solid var(--line); box-shadow: 10px 0 30px #0004; }
 .is-mobile .file-row { min-height: 44px; }
 .is-mobile .navigation-buttons button { flex-shrink: 0; }
-.is-mobile dialog { max-width: min(100vw - 16px, 780px); max-height: calc(var(--mobile-height, 100dvh) - env(safe-area-inset-top) - 24px); overflow: auto; overscroll-behavior: contain; }
+.is-mobile dialog { max-width: min(var(--mobile-layout-width) - 16px, 780px); max-height: calc(var(--mobile-layout-height) - env(safe-area-inset-top) - 24px); overflow: auto; overscroll-behavior: contain; }
 .is-mobile dialog::backdrop { background: #0008; }
-#mobile-dialog { width: min(100vw - 16px, 560px); padding: 16px; }
+#mobile-dialog { width: min(var(--mobile-layout-width) - 16px, 560px); padding: 16px; }
 #mobile-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 #mobile-dialog h2 { font-size: 1.2rem; margin: 0; }
 .mobile-sheet-content { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -32,7 +37,7 @@ body.is-mobile { height: var(--mobile-height, 100dvh); padding-top: env(safe-are
 .mobile-tab-row { display: flex; gap: 6px; }
 .mobile-tab-row button:first-child { flex: 1; text-align: left; overflow-wrap: anywhere; }
 .mobile-tab-row [aria-current="true"] { color: var(--purple); background: var(--purple-bg); }
-.is-mobile #toast { bottom: calc(125px + env(safe-area-inset-bottom)); max-width: calc(100vw - 24px); overflow-wrap: anywhere; }
+.is-mobile #toast { bottom: calc(125px + env(safe-area-inset-bottom)); max-width: calc(var(--mobile-layout-width) - 24px); overflow-wrap: anywhere; }
 .is-mobile .document-title { padding: 16px 16px 8px; }
 .is-mobile #file-title { font-size: 24px; }
 .is-mobile .document-toolbar { height: auto; min-height: 44px; padding: 0 8px; }

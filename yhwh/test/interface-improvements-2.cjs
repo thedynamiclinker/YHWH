@@ -3,11 +3,45 @@ const path = require('node:path');
 
 exports.pdf = async function ({ page, artifacts }) {
   const scroller = page.locator('.viewer-pdf .pdf-pages');
+  const zoom = page.getByLabel('PDF zoom');
   await page.waitForFunction(() => document.querySelector('.pdf-page canvas')?.height > 0);
   assert.equal(await page.locator('.pdf-page').count(), 8);
   assert.ok(await scroller.evaluate(el => el.scrollHeight > el.clientHeight));
+
+  const titlebar = page.locator('.titlebar');
+  const titlebarHeight = await titlebar.evaluate(el => el.getBoundingClientRect().height * devicePixelRatio);
+  const ctrlWheel = async delta => {
+    await page.keyboard.down('Control');
+    try { await page.mouse.wheel(0, delta); }
+    finally { await page.keyboard.up('Control'); }
+  };
+  await titlebar.hover();
+  await ctrlWheel(-120);
+  await page.waitForFunction(height => document.querySelector('.titlebar').getBoundingClientRect().height * devicePixelRatio > height * 1.05, titlebarHeight);
+  assert.equal(await zoom.inputValue(), '1');
+  await titlebar.hover();
+  await ctrlWheel(120);
+  await page.waitForFunction(height => Math.abs(document.querySelector('.titlebar').getBoundingClientRect().height * devicePixelRatio - height) < 1, titlebarHeight);
+
+  await scroller.evaluate(el => { el.scrollTop = 60; });
+  const firstPage = page.locator('.pdf-page[data-page="1"] .pdf-page-image');
+  const beforeWheel = await firstPage.boundingBox();
+  const viewport = await scroller.boundingBox();
+  const pointerY = viewport.y + 100;
+  await page.mouse.move(viewport.x + viewport.width / 2, pointerY);
+  await ctrlWheel(-120);
+  await page.waitForFunction(() => document.querySelector('[aria-label="PDF zoom"]').value === '1.1');
+  const afterWheel = await firstPage.boundingBox();
+  assert.ok(afterWheel.width > beforeWheel.width * 1.05, 'Ctrl+wheel enlarged the PDF');
+  const anchoredY = afterWheel.y + (pointerY - beforeWheel.y) * (afterWheel.height / beforeWheel.height);
+  assert.ok(Math.abs(pointerY - anchoredY) < 3, 'The PDF stayed anchored under the pointer');
+  assert.equal(await titlebar.evaluate(el => el.getBoundingClientRect().height * devicePixelRatio), titlebarHeight);
+  await ctrlWheel(120);
+  await page.waitForFunction(() => document.querySelector('[aria-label="PDF zoom"]').value === '1');
+
   await scroller.hover(); await page.mouse.wheel(0, 1700);
   await page.waitForFunction(() => Number(document.querySelector('[aria-label="PDF page"]').value) > 1);
+  assert.equal(await zoom.inputValue(), '1');
   const current = await page.locator('[aria-label="PDF page"]').inputValue();
   await page.waitForFunction(number => document.querySelector(`.pdf-page[data-page="${number}"] canvas`), current);
   await page.locator('[aria-label="PDF page"]').fill('8'); await page.locator('[aria-label="PDF page"]').press('Enter');
