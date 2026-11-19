@@ -58,6 +58,29 @@ class YhwhTTYTests(unittest.TestCase):
         tty.shows("Commands")
         tty.send(name.encode() + b"\r")
 
+    def test_bundled_email_uses_the_inbox_and_keeps_its_read_state(self):
+        defaults = LAUNCHER.parents[2] / "etc/default"
+        library = self.data / "yhwh/etc/default"
+        (library / "yhwh-emails.json").symlink_to(defaults / "yhwh-emails.json")
+        (library / "words.json").write_text((defaults / "words.json").read_text())
+        put(self.user / "rc", "/\n    terminal=false\n")
+        inbox = Path(self.env["SHADDAI_PREFIX"]) / "var/inbox.json"
+        put(inbox, json.dumps({"letters": {"covenant": {"read": True, "at": 1}}, "last": 1}))
+        tty = self.launch()
+        self.command(tty, "New app tab")
+        self.command(tty, "Inbox")
+        tty.shows("* Q--- ohelet")
+        tty.send(b"Q--- ohelet\r")
+        tty.shows("Abe it's Q--- _(oh hell)_ ohelet.")
+        tty.shows("https://youtu.be/tH2w6Oxx0kQ")
+        tty.send(b"\x1bg")
+        tty.shows("Open link")
+        tty.send(b"https://youtu.be/tH2w6Oxx0kQ\r")
+        tty.wait_for(lambda _: self.opened.exists())
+        self.assertEqual(self.opened.read_text().strip(), "https://youtu.be/tH2w6Oxx0kQ")
+        self.assertEqual({key: item["read"] for key, item in json.loads(inbox.read_text())["letters"].items()},
+                         {"covenant": True, "qohelet": True})
+
     def test_panel_shortcuts_cycle_and_resize_from_inside_the_shell(self):
         put(self.user / "rc", "/\n    terminal=false\n")
         tty = self.launch()

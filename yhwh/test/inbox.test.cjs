@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { primarySender, alternateSenders, letters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, senderFor } = require('../lib/inbox.cjs');
+const { primarySender, alternateSenders, letters, emailLetters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, senderFor } = require('../lib/inbox.cjs');
 const { canReceiveLetter, letterInterval } = require('../lib/presence.cjs');
 const words = require('../etc/default/words.json');
 const at = (hour, minute = 0, day = 15) => new Date(2026, 10, day, hour, minute).getTime();
@@ -66,12 +66,32 @@ test('blocking the exact address stops work mail and starts the three alternate-
 });
 
 test('all authored mail has editable text; the breakdown and Yahoo acquisition retain the requested words', () => {
-  assert.equal(new Set(letters.map(letter => letter.id)).size, letters.length);
-  for (const letter of letters) assert.ok(words[letter.textKey]?.length, letter.textKey);
+  const authored = [...letters, ...emailLetters];
+  assert.equal(new Set(authored.map(letter => letter.id)).size, authored.length);
+  for (const letter of authored) assert.ok(words[letter.textKey]?.length, letter.textKey);
   assert.match(words.letterNightMilk, /milky abe/);
   assert.match(words.letterNightForever, /forenbevf/);
   assert.match(words.letterNightKeyboard, /jst yue n me{30,}/);
   assert.match(words.letterBlockedYahoo, /nous, 二.*YAHWOOO!/s);
+});
+
+test('the nine emails arrive separately in source order and respect presence controls', () => {
+  let state = { letters: [{ id: 'house', read: true, at: at(12) }], lastLetter: at(12) };
+  assert.equal(emailLetters.length, 9);
+  for (const [index, expected] of emailLetters.entries()) {
+    const now = at(12) + (index + 1) * letterInterval;
+    assert.equal(nextEmailLetter(state, { now: now - 1 }), undefined);
+    for (const options of [{ inbox: false }, { theme: 'dawkins' }, { theme: 'nietzsche' }]) {
+      assert.equal(nextEmailLetter(state, { now, ...options }), undefined);
+    }
+    assert.equal(nextEmailLetter({ ...state, blockedYhwh: true }, { now }), undefined);
+    assert.equal(nextEmailLetter(state, { now }), expected);
+    state.letters.push({ id: expected.id, read: false, at: now });
+    state.lastLetter = now;
+    state = JSON.parse(JSON.stringify(state));
+  }
+  assert.equal(nextEmailLetter(state, { now: at(16) }), undefined);
+  assert.equal(state.letters[0].read, true);
 });
 
 test('seedis is eligible only in the local midnight minute, once, respecting mail controls and spacing', () => {

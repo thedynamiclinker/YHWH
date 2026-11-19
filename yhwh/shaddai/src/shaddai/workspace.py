@@ -1248,9 +1248,9 @@ class Workspace:
         state = self.services.state("inbox")
         letters = state.get("letters", {})
         commands = {"Back to workspace": partial(self.focus, "editor")}
-        for key, state in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
+        for key, message in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
             if letter := self.services.letters.get(key):
-                marker = "* " if not state["read"] else ""
+                marker = "* " if not message["read"] else ""
                 commands[marker + letter["title"]] = partial(self.read_letter, key)
         toggle = ("Unblock " if state.get("blocked") else "Block ") + SENDER
 
@@ -1264,8 +1264,11 @@ class Workspace:
     def read_letter(self, key):
         letter = self.services.letters[key]
         text = self.services.letter(key)
+        if not (letter.get("note") or letter.get("verse")):
+            self.show(letter["title"], text, back=self.inbox)
+            return
         copy = self.config.library.json("default/text-verses.json")
-        verses = self.services.cited_verses(letter["verse"])
+        verses = self.services.cited_verses(letter.get("verse", ""))
         sources_open = True
         open_commentary = set()
 
@@ -1292,7 +1295,7 @@ class Workspace:
 
             disclosure(copy["mail-sources"], sources_open, toggle_sources)
             if sources_open:
-                lines.extend(["", letter["note"]])
+                lines.extend(["", letter.get("note", "")])
                 for verse in verses:
                     verse_id = verse["id"]
                     expanded = verse_id in open_commentary

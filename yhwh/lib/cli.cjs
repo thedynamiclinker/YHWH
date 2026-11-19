@@ -50,7 +50,24 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','keys',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if (command === 'inbox') {
+    if (rest.length === 1 && ['-h', '--help'].includes(rest[0])) {
+      console.log('Usage: yhwh inbox [MESSAGE-ID]\nList bundled YHWH email subjects and IDs, or read a message.');
+      return 0;
+    }
+    if (rest.length > 1) throw new Error('Usage: yhwh inbox [MESSAGE-ID]');
+    const { primarySender, emailLetters } = require('./inbox.cjs');
+    if (!rest.length) {
+      for (const letter of emailLetters) console.log(`${letter.id}\t${letter.title}`);
+      return 0;
+    }
+    const letter = emailLetters.find(item => item.id === rest[0]);
+    if (!letter) throw new Error(`Unknown YHWH email: ${rest[0]}. Run yhwh inbox to list messages.`);
+    const words = JSON.parse(fs.readFileSync(paths.etc('default', 'words.json'), 'utf8'));
+    console.log(`From: YHWH <${primarySender}>\nSubject: ${letter.title}\n\n${words[letter.textKey]}`);
+    return 0;
+  }
   if(command==='keys')return require('./keys-cli.cjs').main(rest);
   if(command==='completion') {
     const shell=rest[0]||'bash';if(!['bash','zsh'].includes(shell))throw new Error('Use completion bash|zsh.');

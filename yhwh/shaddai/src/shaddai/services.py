@@ -44,8 +44,17 @@ class Services:
         return self.config.library.json("default/words.json")
 
     @cached_property
+    def email_letters(self):
+        try:
+            messages = self.config.library.json("default/yhwh-emails.json")["messages"]
+        except FileNotFoundError:
+            return {}
+        return {message["id"]: message for message in messages}
+
+    @cached_property
     def letters(self):
-        return self.config.library.json("default/action-letters.json") if self.config.library.etc else {}
+        work = self.config.library.json("default/action-letters.json") if self.config.library.etc else {}
+        return work | self.email_letters
 
     @cached_property
     def levels(self):
@@ -128,23 +137,28 @@ class Services:
             return 100
 
     def delivery(self, key):
-        if not self.config["agent"]["mail"] or not self.config.library.etc or not self.config.yhwh.active:
+        if not self.config["agent"]["mail"] or not self.config.library.etc:
+            return
+        shared_config = self.config.yhwh.active
+        if not shared_config and not os.environ.get("YHWH_HOME"):
             return
         values = self.config.yhwh.values
         energy = self.current_level().get("energy", self.energy(values))
-        if energy == 0:
-            return
-        if energy < 100 and key != "inspect":
+        pending = (key,) if shared_config and (energy >= 100 or (energy > 0 and key == "inspect")) else ()
+        if energy >= 100:
+            pending += tuple(self.email_letters)
+        if not pending:
             return
 
         def deliver(state):
-            if state.get("blocked") or time() - state.get("last", 0) < self.config["agent"]["mail_interval"]:
+            now = time()
+            if state.get("blocked") or now - state.get("last", 0) < self.config["agent"]["mail_interval"]:
                 return False
             letters = state.setdefault("letters", {})
-            if key in letters:
+            candidate = next((letter_id for letter_id in pending if letter_id not in letters), None)
+            if candidate is None:
                 return False
-            now = time()
-            letters[key] = {"read": False, "at": now}
+            letters[candidate] = {"read": False, "at": now}
             state["last"] = now
             return True
 
@@ -169,7 +183,9 @@ class Services:
             return True
 
         letter = self.letters[key]
-        body = self.address(self.words[letter["textKey"]])
+        body = self.words[letter["textKey"]]
+        if letter.get("format") != "markdown":
+            body = self.address(body)
         message = self.state("inbox")["letters"][key]
         self.update("inbox", mark_read)
         date = datetime.fromtimestamp(message["at"]).astimezone().isoformat(timespec="minutes")

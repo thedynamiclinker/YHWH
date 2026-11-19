@@ -1,8 +1,10 @@
 import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-main.json';
 const ui = interfaceText(interfaceCopy);
-import { FileView, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { Component, FileView, MarkdownRenderer, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { ancestors, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
+import email from '../../../etc/default/yhwh-emails.json';
+import letterCopy from '../../../etc/default/words.json';
 import { ORIGIN as circusOrigin, parsePair, type CircusPair } from '../../../lib/circus.cjs';
 import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
@@ -46,6 +48,7 @@ export default class YHWH extends Plugin {
       ['focus-files', ui("toggle-file-manager-in-the-workspace"), () => this.toggleFilesFocus(), 'd'],
       ['toggle-console', ui("toggle-navigation-console"), () => this.toggle(CONSOLE), 'b'],
       ['open-atlas', ui("open-3d-directory"), () => this.show(ATLAS)],
+      ['emails', 'Read YHWH emails', () => this.emails()],
       ['up', ui("go-to-parent-folder"), () => this.go(parent(this.folder))],
       ['new-file', ui("new-file-in-current-folder"), () => this.newFile()],
       ['new-folder', ui("new-folder-in-current-folder"), () => this.newFolder()],
@@ -355,6 +358,7 @@ export default class YHWH extends Plugin {
     for (const line of this.level().about || []) el.createEl('p', { text: line });
     this.external(el, ui("about-us-"), 'https://thedynamiclinker.com');
     this.external(el, ui("about-yhwh-genesis-by-the-nameless-"), ui("https-www-amazon-com-dp-b0hnq23qkt"));
+    button(el, 'YHWH emails', 'Read YHWH emails', () => { modal.close(); this.emails(); });
     button(el, ui("offerings"), ui("open-offerings"), () => { modal.close(); this.offerings(); });
     const future = el.createEl('details');
     future.createEl('summary', { text: ui("coming-soon") });
@@ -362,6 +366,34 @@ export default class YHWH extends Plugin {
     future.createEl('p', { text: ui("sync-stuff-and-dating-are-concepts-with-no-payme") });
     button(future, ui("open-3d-directory"), ui("open-local-3d-directory"), () => { modal.close(); this.run(() => this.show(ATLAS)); });
     if (this.configErrors.length) el.createEl('pre', { text: this.configErrors.join('\n'), cls: 'yhwh-errors' });
+    modal.open();
+  }
+  emails() {
+    const modal = new Modal(this.app);
+    const el = modal.contentEl;
+    let reading: Component | undefined;
+    const clear = () => { reading?.unload(); reading = undefined; el.empty(); };
+    const list = (returnTo?: string) => {
+      clear();
+      modal.setTitle('YHWH emails');
+      const subjects = el.createEl('ul');
+      for (const message of email.messages) {
+        const control = button(subjects.createEl('li'), message.title, message.title, () => this.run(() => read(message)));
+        if (message.id === returnTo) control.focus();
+      }
+    };
+    const read = async (message: typeof email.messages[number]) => {
+      clear();
+      modal.setTitle(message.title);
+      button(el, '← YHWH emails', 'Back to YHWH emails', () => list(message.id)).focus();
+      el.createEl('p', { text: `From: YHWH <${email.sender}>` });
+      reading = new Component();
+      reading.load();
+      const body = letterCopy[message.textKey as keyof typeof letterCopy];
+      await MarkdownRenderer.render(this.app, body.replace(/^(https?:\/\/\S+)$/gm, '<$1>'), el.createDiv('markdown-rendered'), '', reading);
+    };
+    modal.onClose = clear;
+    list();
     modal.open();
   }
   offerings() {

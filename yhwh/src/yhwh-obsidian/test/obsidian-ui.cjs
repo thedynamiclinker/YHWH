@@ -44,6 +44,17 @@ const { spawnSync } = require('node:child_process');
     await page.locator('[data-type="yhwh-navigator"] .yhwh-heading').waitFor();
     console.log('✓ Plugin loads in real Obsidian with a separate profile and vault');
     const evaluate = fn => page.evaluate(fn);
+    await evaluate(() => app.commands.executeCommandById('yhwh:emails'));
+    const emailModal = page.locator('.modal:visible');
+    await emailModal.getByRole('button', { name: 'Q--- ohelet', exact: true }).waitFor();
+    assert.equal(await emailModal.getByRole('listitem').count(), 9);
+    await emailModal.getByRole('button', { name: 'Q--- ohelet', exact: true }).click();
+    await emailModal.getByText('oh hell', { exact: false }).waitFor();
+    assert.equal(await emailModal.getByRole('link').getAttribute('href'), 'https://youtu.be/tH2w6Oxx0kQ');
+    await emailModal.getByRole('button', { name: 'Back to YHWH emails' }).click();
+    await emailModal.getByRole('button', { name: 'For got to send the song', exact: true }).click();
+    assert.equal(await emailModal.locator('a').filter({ hasText: '丫' }).getAttribute('href'), 'https://youtu.be/RKsBl_HMKTY?is=urHug_dAXqHPU98G');
+    await page.keyboard.press('Escape');
     await evaluate(async () => {
       const p = app.plugins.plugins.yhwh;
       const file = app.vault.getAbstractFileByPath('Welcome.md');

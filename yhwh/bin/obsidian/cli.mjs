@@ -100,11 +100,15 @@ async function exportSupport(destination) {
   await mkdir(join(destination, 'scripts'), { recursive: true });
   await copyFile(fileURLToPath(import.meta.url), join(destination, 'scripts/cli.mjs'));
   await cp(join(system,'etc/obsidian'),join(destination,'etc'),{recursive:true});
+  await mkdir(join(destination, 'etc/default'), { recursive: true });
+  for (const file of ['levels.json', 'yhwh-emails.json', 'words.json'])
+    await copyFile(join(system, 'etc/default', file), join(destination, 'etc/default', file));
   await mkdir(join(destination,'lib'),{recursive:true});
-  for (const file of ['text.cjs','text.d.cts']) await copyFile(join(system,'lib',file),join(destination,'lib',file));
+  for (const file of ['text.cjs', 'text.d.cts', 'levels.cjs', 'levels.d.cts', 'circus.cjs', 'circus.d.cts'])
+    await copyFile(join(system,'lib',file),join(destination,'lib',file));
   for (const file of await readdir(join(destination,'src'))) if (/\.ts$/.test(file)) {
     const target=join(destination,'src',file);
-    await writeFile(target,(await readFile(target,'utf8')).replaceAll('../../../etc/obsidian/','../etc/').replaceAll('../../../lib/','../lib/'));
+    await writeFile(target,(await readFile(target,'utf8')).replaceAll('../../../etc/obsidian/','../etc/').replaceAll('../../../etc/default/','../etc/default/').replaceAll('../../../lib/','../lib/'));
   }
   for (const file of await readdir(join(destination,'test'))) if (/\.(mjs|cjs)$/.test(file)) {
     const target=join(destination,'test',file);

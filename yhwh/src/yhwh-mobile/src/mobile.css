@@ -9,7 +9,9 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile input, .is-mobile select, .is-mobile textarea { font-size: max(16px, 1rem); }
 .is-mobile .titlebar { padding: 0 12px; gap: 8px; }
 .is-mobile .titlebar .window-title, .is-mobile .titlebar [data-command="help"] { display: none; }
-.is-mobile .titlebar .brand { margin-right: auto; }
+.is-mobile .titlebar .brand { margin-right: auto; min-width: 0; }
+.is-mobile .titlebar .brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-mobile .titlebar [data-command="inbox"] { flex-shrink: 0; white-space: nowrap; }
 .is-mobile .personality label { font-size: .75rem; white-space: nowrap; }
 .is-mobile .personality input { width: clamp(38px, 12vw, 68px); }
 .is-mobile #mode-name { min-width: 0; }

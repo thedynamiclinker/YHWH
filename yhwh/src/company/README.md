@@ -18,6 +18,9 @@ See [the THWH guide](docs/THWH.md) for controls and shared state.
 
 The commands below run from `yhwh/src/company`. `make` opens the company app. Use `make run-thwh` to launch paired review, or `make run-yhwh` to launch the original
 company rehearsal app, and `make help` to list the available operations.
+
+Use **Help → YHWH emails** in either review app to read the nine bundled
+messages individually.
 Each combined target builds before running, including with parallel Make.
 `make build-thwh` and `make build-yhwh` prepare the shared, locked npm dependencies
 when the package files change; both apps run directly from source without a

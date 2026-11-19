@@ -447,6 +447,7 @@ body .verse-block .highlight-c { background-color: #3b454d !important; }
 .inbox-home { flex-shrink: 0; color: var(--purple); background: var(--purple-bg); }
 .mail-body { margin: 36px 0; font-size: 1.1rem; line-height: 1.8; }
 .mail-markdown { overflow-wrap: anywhere; }
+.mail-markdown p { white-space: pre-line; }
 .mail-markdown hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
 .mail-attachment { margin: 24px 0; }
 .mail-attachment figcaption { color: var(--muted); font-size: .8rem; margin-bottom: 12px; overflow-wrap: anywhere; }

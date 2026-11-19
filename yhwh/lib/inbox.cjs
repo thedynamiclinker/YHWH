@@ -1,5 +1,5 @@
 // Local literary mail, shared by the desktop, Three and mobile renderers.
-const primarySender = 'yhwh@thedynamiclinker.com';
+const { sender: primarySender, messages: emailLetters } = require('../etc/default/yhwh-emails.json');
 const alternateSenders = ['jewvacation@gmail.com', 'yhwvacation@gmail.com', 'admin@yahoo.com'];
 const { canReceiveLetter } = require('./presence.cjs');
 const minute = 60000;
@@ -68,6 +68,11 @@ function nextStartupLetter(state, options = {}) {
     && now >= state.nightStartedAt + letter.afterMinutes * minute && ready(letter));
 }
 
+function nextEmailLetter(state, options) {
+  if (state.blockedYhwh) return;
+  return emailLetters.find(letter => canReceiveLetter(state, letter.id, options));
+}
+
 function senderFor(state, letter) {
   if (letter.sender) return letter.sender;
   if (!state.blockedYhwh) return primarySender;
@@ -78,4 +83,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, senderFor };
+module.exports = { primarySender, alternateSenders, letters, emailLetters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, senderFor };

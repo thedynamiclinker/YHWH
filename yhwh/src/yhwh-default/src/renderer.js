@@ -23,7 +23,7 @@ import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
-import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
+import { primarySender, letters as startupLetters, emailLetters, startNight, nextStartupLetter, nextEmailLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
 
@@ -1273,6 +1273,7 @@ const letters = [
   ...Object.entries(actionLetters).map(([id, letter]) => ({ id, ...letter })),
   ...nightLetters,
   ...startupLetters,
+  ...emailLetters,
 ];
 function savePresence() { localStorage.setItem(presenceKey, JSON.stringify(presence)); updateInboxBadge(); }
 function updateInboxBadge() {
@@ -1283,11 +1284,14 @@ function receive(id, midnightOnly = false) {
   if (!active() || document.visibilityState !== 'visible') return;
   const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme };
   if (startNight(presence, options.now)) savePresence();
-  const startup = nextStartupLetter(presence, options);
-  const midnight = nextMidnightLetter(presence, options);
-  if (midnightOnly && !midnight) return;
-  // An address change follows a block; the name joke keeps its existing order.
-  const letter = midnight || (startup?.afterBlockMinutes !== undefined ? startup : nextNightLetter(presence, options) || startup || letters.find(letter => letter.id === id && letter.id !== 'seedis'));
+  let letter = nextMidnightLetter(presence, options);
+  if (!letter && !midnightOnly) {
+    const startup = nextStartupLetter(presence, options);
+    const work = id && canReceiveLetter(presence, id, options) && actionLetters[id] && { id, ...actionLetters[id] };
+    // Address changes take priority; the name, overnight and work letters keep their slots.
+    letter = startup?.afterBlockMinutes !== undefined ? startup
+      : nextNightLetter(presence, options) || startup || work || (id && nextEmailLetter(presence, options));
+  }
   if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
   const sender = senderFor(presence, letter);
   if (!sender) return;
@@ -1324,7 +1328,7 @@ function mailSettings() {
 }
 $('[data-mail-settings]').onclick = mailSettings;
 function mailMarkdown(text) {
-  // Numbered footnotes are part of this letter's editable Markdown copy.
+  // Render numbered footnotes in editable Markdown letters.
   const footnotes = String(text).replace(/^\[\^(\d+)\]:\s*(.+)$/gm, (_, number, note) => `<p id="mail-footnote-${number}"><sup>${number}</sup> ${escape(note)}</p>`)
     .replace(/\[\^(\d+)\]/g, (_, number) => `<sup><a href="#mail-footnote-${number}" aria-label="Footnote ${number}">${number}</a></sup>`);
   return renderMarkdown(footnotes);
@@ -1340,7 +1344,9 @@ function renderInbox() {
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
-    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`;
+    const note = source?.note || letter.note;
+    const sources = note || letter.verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details>` : '';
+    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
     host.querySelector('[data-mail-back]').onclick = () => {
       tab.mailId = null;
       renderInbox();

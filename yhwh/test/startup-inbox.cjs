@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
-const { primarySender, alternateSenders, letters } = require('../lib/inbox.cjs');
-const { nightLetters } = require('../lib/presence.cjs');
+const { primarySender, alternateSenders, letters, emailLetters } = require('../lib/inbox.cjs');
+const { nightLetters, letterInterval } = require('../lib/presence.cjs');
 const copy = require('../etc/default/words.json');
 
 module.exports = async function checkStartupInbox(page, screenshots) {
@@ -115,4 +115,30 @@ module.exports = async function checkStartupInbox(page, screenshots) {
   await run('inbox');
   assert.equal(await page.locator('[data-mail="house"]').count(), 1);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+
+  // Work advances the authored correspondence even after its own topic was delivered.
+  await page.clock.setFixedTime(new Date(blockedAt));
+  await page.evaluate(at => localStorage.setItem('yhwh:presence:v1', JSON.stringify({
+    letters: [{ id: 'covenant', read: true, at }],
+    lastLetter: at,
+  })), blockedAt - letterInterval);
+  await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
+  for (const [index, letter] of emailLetters.entries()) {
+    const now = blockedAt + index * letterInterval;
+    await page.clock.setFixedTime(new Date(now));
+    await run('new-tab'); await run('inbox');
+    await page.locator('[data-mail="' + letter.id + '"].unread').click();
+    assert.equal(await page.locator('.mail-message h1').textContent(), letter.title);
+    const link = copy[letter.textKey].match(/https?:\/\/[^\s)]+/)?.[0];
+    const links = await page.locator('.mail-body a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
+    assert.deepEqual(links, link ? [link] : [], letter.id);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    const received = (await readState()).letters.slice(1);
+    assert.equal(received.length, index + 1);
+    assert.deepEqual(received.at(-1), { id: letter.id, sender: primarySender, read: true, at: now });
+  }
+  await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
+  await run('inbox');
+  assert.equal(await page.locator('.mail-row').count(), emailLetters.length + 1);
+  assert.equal(await page.locator('.mail-row.unread').count(), 0);
 };

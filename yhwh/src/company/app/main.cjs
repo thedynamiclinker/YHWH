@@ -13,6 +13,8 @@ const { pathToFileURL } = require("node:url");
 const { Workspace } = require("../../../lib/company/workspace.cjs");
 const { hunks } = require("../../../lib/company/repository.cjs");
 const { Review } = require("../../../lib/company/review.cjs");
+const { primarySender, emailLetters } = require("../../../lib/inbox.cjs");
+const { etc } = require("../../../lib/paths.cjs");
 const thwh = process.argv.includes("--thwh");
 
 if (thwh) {
@@ -48,6 +50,25 @@ function handle(channel, callback, serial = true) {
     queue = operation.catch(() => {});
     return operation;
   });
+}
+
+async function readEmail(letter) {
+  try {
+    const words = JSON.parse(await fs.readFile(etc("default", "words.json"), "utf8"));
+    const body = words[letter.textKey];
+    const link = body.match(/https?:\/\/[^\s)>]+/u)?.[0];
+    const { response } = await dialog.showMessageBox(window, {
+      title: "YHWH emails",
+      message: letter.title,
+      detail: 'From: YHWH <' + primarySender + '>\n\n' + body,
+      buttons: link ? ["Close", "Open link"] : ["Close"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (response === 1 && link) await shell.openExternal(link);
+  } catch (error) {
+    dialog.showErrorBox("Could not open YHWH email", error.message);
+  }
 }
 
 app
@@ -182,10 +203,17 @@ app
         {
           label: "Help",
           role: "help",
-          submenu: require("../../../etc/company/help-links.json").map(({ label, url }) => ({
-            label,
-            click: () => shell.openExternal(url),
-          })),
+          submenu: [
+            { label: "YHWH emails", submenu: emailLetters.map(letter => ({
+              label: letter.title,
+              click: () => readEmail(letter),
+            })) },
+            { type: "separator" },
+            ...require("../../../etc/company/help-links.json").map(({ label, url }) => ({
+              label,
+              click: () => shell.openExternal(url),
+            })),
+          ],
         },
       ]),
     );
