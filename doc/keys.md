@@ -168,7 +168,7 @@ shell. Ctrl+Shift+W remains Quit.
 Ctrl+1–8 select app tab positions; Ctrl+9 selects the last tab.
 Ctrl+Shift+PageUp / PageDown move the active tab. Middle-click closes a tab;
 dragging reorders it. Closing a background tab retains the active tab; closing
-the final desktop tab closes the window after the normal unsaved-file check.
+the final tab returns to the welcome screen after the normal unsaved-file check.
 Reopening starts a new shell, since the closed shell process has exited.
 Pane focus uses Ctrl+Alt+1/2/3. Linux Ctrl bindings are literal; a `meta` file
 can define a separate Command binding on macOS.

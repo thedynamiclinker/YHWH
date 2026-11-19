@@ -32,7 +32,7 @@ commands and a comment with the tile positions. If text edits change the
 commands, the file opens in the text composer.
 
 **Let there be Logos** opens the tutorial with the exact text of
-[LOGOS.md](../LOGOS.md) and loads its two pipelines onto the grid.
+[LOGOS.md](../yamr/sacred-text/LOGOS.md) and loads its two pipelines onto the grid.
 Fresh setups get Γ, Ꞁ, L, ᒧ and the bundled `demos` Logos. The ᒧ tile can also
 be called by the name ⅃ used in the example. The first row sorts a directory
 listing. The second writes “Logos Demos.” Existing `~/.initialrc` files keep

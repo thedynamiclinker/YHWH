@@ -5,7 +5,7 @@ import { readGrid, serializeGrid } from '../../../lib/initial-grid.mjs';
 import { inInitialPreview } from './preview-dialog.js';
 import { renderMarkdown } from './editor.js';
 import { fileIcons } from './file-icons.js';
-import logosTutorial from '../../../../LOGOS.md';
+import logosTutorial from '../../../../yamr/sacred-text/LOGOS.md';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 const draftKey = 'yhwh:initial:draft';

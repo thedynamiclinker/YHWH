@@ -8,6 +8,7 @@ const path = require('node:path');
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'yhwh-key-ui-'));
   const config = path.join(temp, 'prefix'), directory = path.join(temp, 'files');
   await fs.mkdir(directory); await fs.mkdir(path.join(config, 'etc/keys/alt/ctrl'), { recursive: true });
+  await fs.writeFile(path.join(config, 'rc'), '/\n    autosave=false\n', { mode: 0o600 });
   const outputFile = path.join(directory, 'from-executable');
   await fs.writeFile(path.join(config, 'etc/keys/alt/ctrl/u'), '#!/bin/sh\ncat > from-executable\nprintf "%s\\n" "$YHWH_KEY"\n', { mode: 0o755 });
   const variant = process.env.YHWH_TEST_INTERFACE === 'three' ? 'three' : 'default';
@@ -95,19 +96,41 @@ const path = require('node:path');
     // External module changes are live after a reload, preserving an unsaved buffer.
     const filename = path.join(directory, 'draft.md'); await fs.writeFile(filename, 'original');
     await page.evaluate(filename => window.YHWH.openFile(filename), filename);
-    await page.evaluate(() => { window.YHWH.active().config.values.autosave = 'false'; window.YHWH.getEditor().dispatch({ changes: { from: 0, insert: 'unsaved ' } }); });
+    await page.evaluate(() => window.YHWH.getEditor().dispatch({ changes: { from: 0, insert: 'unsaved ' } }));
     const modulePath = path.join(config, 'etc/keys/ctrl/alt/j.js');
     await fs.mkdir(path.dirname(modulePath), { recursive: true });
     await fs.writeFile(modulePath, "export default api => api.notice('External module loaded');\n");
     await run('reload-keys'); await page.keyboard.press('Control+Alt+j');
     await page.waitForFunction(() => document.querySelector('#toast').textContent === 'External module loaded');
     assert.equal(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), 'unsaved original');
-    // Avoid changing the fixture's on-disk draft in cleanup.
-    await page.evaluate(() => { window.YHWH.active().dirty = false; });
-    assert.deepEqual(errors, []);
     const artifacts = require('../../../lib/paths.cjs').output(variant, 'screenshots'); await fs.mkdir(artifacts, { recursive: true });
     await run('hotkeys'); await page.locator('[data-advanced]').click(); await page.locator('[data-query]').fill('ctrl');
     await page.screenshot({ path: path.join(artifacts, 'keys-advanced.png') });
-    console.log('✓ terminal Ctrl+E and vertical expansion; tab shortcuts; capture, filters, pipelines, namespaces, executable/module reloads');
+    await page.locator('[data-close]').click();
+
+    const background = await page.evaluate(() => window.YHWH.tabs.find(tab => tab !== window.YHWH.active()).id);
+    await page.locator(`#tabs [data-close-tab="${background}"]`).click();
+    await page.waitForFunction(() => window.YHWH.tabs.length === 1);
+    await page.keyboard.press('Control+w');
+    await page.locator('#dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+    assert.equal(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), 'unsaved original');
+    await page.keyboard.press('Control+w');
+    await page.locator('#dialog').getByRole('button', { name: 'Discard', exact: true }).click();
+    await page.locator('.welcome:visible').waitFor();
+    assert.equal(await page.locator('#tabs [data-tab]').count(), 1);
+    assert.equal(await page.locator(`#tabs [data-tab="${current}"]`).count(), 0);
+    assert.equal(await fs.readFile(filename, 'utf8'), 'original');
+    const home = await page.evaluate(() => window.YHWH.active().id);
+
+    await page.keyboard.press('Control+Shift+t');
+    await page.waitForFunction(() => window.YHWH.getEditor()?.state.doc.toString() === 'original');
+    await page.locator(`#tabs [data-close-tab="${home}"]`).click();
+    await page.waitForFunction(() => window.YHWH.tabs.length === 1);
+    const reopened = await page.evaluate(() => window.YHWH.active().id);
+    await page.locator(`#tabs [data-close-tab="${reopened}"]`).click();
+    await page.locator('.welcome:visible').waitFor();
+    assert.equal(await page.locator(`#tabs [data-tab="${reopened}"]`).count(), 0);
+    assert.deepEqual(errors, []);
+    console.log('✓ terminal Ctrl+E and vertical expansion; tab shortcuts and last-tab welcome screen; capture, filters, pipelines, namespaces, executable/module reloads');
   } finally { if (app) await app.close(); await fs.rm(temp, { recursive: true, force: true }); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

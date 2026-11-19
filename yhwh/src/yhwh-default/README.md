@@ -28,7 +28,7 @@ The app opens in a normal window. Each **app tab** owns a current directory, zer
 | Commands | Ctrl+P, Ctrl+Shift+P |
 | Settings / help | Ctrl+, / F1 |
 
-Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed app tab; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final desktop tab closes the window after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
+Ctrl+1–8 select tabs; Ctrl+9 selects the last tab. Ctrl+Shift+T reopens a closed app tab; Ctrl+Shift+PageUp/PageDown move it. Middle-click closes tabs and dragging reorders them. Closing the final tab returns to the welcome screen after checking unsaved edits. Escape restores an expanded pane. Ctrl+E belongs to terminal editing.
 
 Ctrl+Alt+Shift+K opens key capture and advanced text, wildcard, regex and shell searches. Bindings are ordinary files under `~/.config/yhwh/etc/keys` and ancestor `.yhwh` prefixes. [Keyboard system and prefix configuration](../../../doc/keys.md) describes editing, executable bindings and reloads. `yhwh keys list` prints the same effective list for Unix tools. The defaults use literal Ctrl bindings; separate `meta` bindings can configure Command on macOS.
 

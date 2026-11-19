@@ -148,7 +148,9 @@ async function editWords(key) {
 async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   startingTerminals.add(id);
-  const state = await call('focus:new', id, directory);
+  let state;
+  try { state = await call('focus:new', id, directory); }
+  catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
   const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
@@ -573,17 +575,29 @@ function save(tab = active(), force = false) {
 }
 async function closeTab(id = activeId) {
   const tab = tabs.find(item => item.id === id);
-  if (!tab || !await mayReplace(tab)) return;
-  if (tabs.length === 1 && boot.interface !== 'mobile') { await call('window:close'); return; }
-  closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index: tabs.indexOf(tab) });
-  if (closedTabs.length > 30) closedTabs.shift();
-  await call('focus:close', id);
-  clearDocument(tab); for (const session of tab.terminals) session.terminal.dispose(); tab.document.remove(); tab.terminalElement.remove();
-  const index = tabs.indexOf(tab); tabs.splice(index, 1);
-  if (!tabs.length) await newTab(tab.cwd);
-  else if (activeId === id) activate(tabs[Math.min(index, tabs.length - 1)].id);
-  else update();
-  emit('close', { id });
+  if (!tab || tab.closing) return;
+  tab.closing = true;
+  try {
+    if (!await mayReplace(tab)) return;
+    await call('focus:close', id);
+    const index = tabs.indexOf(tab);
+    closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index });
+    if (closedTabs.length > 30) closedTabs.shift();
+    clearDocument(tab);
+    for (const session of tab.terminals) session.terminal.dispose();
+    tab.document.remove();
+    tab.terminalElement.remove();
+    tabs.splice(index, 1);
+    if (!tabs.length) {
+      try { await newTab(tab.cwd); }
+      catch (error) {
+        if (tab.cwd === boot.home) throw error;
+        if (!tabs.length) await newTab(boot.home);
+      }
+    } else if (activeId === id) activate(tabs[Math.min(index, tabs.length - 1)].id);
+    else update();
+    emit('close', { id });
+  } finally { tab.closing = false; }
 }
 async function reopenTab() {
   const state = closedTabs.pop(); if (!state) return;
