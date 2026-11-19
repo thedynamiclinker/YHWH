@@ -1,0 +1,73 @@
+{
+  "levels": [
+    {
+      "id": "dawkins",
+      "label": "Dawkins",
+      "energy": 0,
+      "lines": ["The old testament god is the most unpleasant character in all fiction."],
+      "asides": [
+        "God is a fiction.",
+        "LD is a two letter sequence, or perhaps an abbreviation of something or other, how should I know, it's possible for an abbreviation to stand for anything."
+      ]
+    },
+    {
+      "id": "nietzsche",
+      "label": "Nietzsche",
+      "energy": 50,
+      "lines": ["God is dead.", "It's Over Man.™", "Lord is a four letter word."]
+    },
+    {
+      "id": "yhwh",
+      "label": "YHWH",
+      "energy": 100,
+      "edition": "Free",
+      "welcome": "Welcome to We.",
+      "lines": ["God is a four letter word.", "LD is a four letter word."]
+    },
+    {
+      "id": "pro",
+      "label": "曰",
+      "energy": 120,
+      "edition": "Pro",
+      "welcome": "Welcome to 山三",
+      "poem": "               אל\nL||⅂ is a four letter 山||Δ\n            ..   && 二",
+      "names": ["Mo"],
+      "offer": {
+        "title": "Upgrade to YHWH Pro!",
+        "lines": ["Now with Mo' YHWH!", "Pro-Mo code YHWH.", "Hey Mo, have you seen Abe?"]
+      }
+    },
+    {
+      "id": "elite",
+      "label": "Zanmen",
+      "glyph": "咱",
+      "energy": 140,
+      "edition": "Elite",
+      "welcome": "Welcome to 咱",
+      "poem": "     ==   iv\nL||⅂ is ʌ si\nL&&二     ==\n et\n   er     =\nŁ||⅂      Γ&&\n           ɛtit 𓃾𓉐𓁶一\n           ɚ..   二𐤀𐤁\n        山 er... 三\n      W@  𐤄  肏        \n         Hey has any一\n               |   one\n            seen\n                Abe?\n           Yah  丫\n                曰  You    \n      Son   日      月\n       of\n        ʌ ... .. .\n                  愛 Yah!",
+      "welcomePoem": "We一 \nWe'll\nʌ ə אל Ω \nWɔˀ  əm...\nWe're.. 二.. 爾 兒 耳?\n-- --\nWelcome 陰\n    you\n    我們 to\n         二 We.\n    \nL||D 有 \n     have 我 \n          Mercy.",
+      "names": ["Josh", "Son", "Jesus 𐤇 Christ What Was Ur Name Again", "XP", "χLD人 I mean χLD I mean how many people are you again???"],
+      "offer": {
+        "title": "Upgrade to Zanmen Elite!",
+        "lines": ["曰 again and you get 咱.", "Hey Mo, has anyone seen Josh?"]
+      },
+      "tagline": "Toward a pro-human AI apoca… ʌ … 曰.",
+      "filter": "Find a fi… 爾? 兒? File.",
+      "conversation": "Where are… 丫ou?"
+    }
+  ],
+  "stripe": {
+    "title": "Set up Stripe",
+    "status": "This preview unlocks the level on this device. No payment is collected.",
+    "steps": [
+      "In a Stripe sandbox, create products and prices for YHWH Pro and Zanmen Elite. Create a Payment Link for each.",
+      "For Pro, create a coupon and a promotion code named YHWH, then enable promotion codes on the Payment Link. Test checkout in the sandbox.",
+      "Before taking live payments, activate the Stripe account. Verify signed Checkout webhooks on your server and grant the matching level only after confirming payment. Keep Stripe secrets on the server."
+    ],
+    "links": {
+      "Create Payment Links": "https://docs.stripe.com/payment-links/create",
+      "Set up promotion codes": "https://docs.stripe.com/payments/checkout/discounts?ui=full-page",
+      "Verify payments and fulfill upgrades": "https://docs.stripe.com/checkout/fulfillment?ui=full-page"
+    }
+  }
+}

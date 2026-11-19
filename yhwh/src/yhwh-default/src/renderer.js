@@ -15,6 +15,7 @@ import { installFileDrag } from './file-drag.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
+import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, addressCopy } from '../../../lib/levels.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
@@ -37,6 +38,20 @@ const verseUI = createVerseUI({ call, modal, notice });
 const tabs = [], commands = new Map(), listeners = new Map();
 let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], pluginKey = '', pluginGeneration = 0;
 const active = () => tabs.find(tab => tab.id === activeId);
+const editionKey = 'yhwh:edition:v1';
+let edition = readEdition();
+function readEdition() {
+  try { return editionState(JSON.parse(localStorage.getItem(editionKey))); }
+  catch { return editionState(); }
+}
+function saveEdition(value) {
+  localStorage.setItem(editionKey, JSON.stringify(value));
+  edition = value;
+}
+let temporaryEnergy, energySave = Promise.resolve(), energyRevision = 0;
+const currentEnergy = (config = active()?.config) => temporaryEnergy ?? edition.selected ?? freeEnergy(config?.values || {});
+const currentLevel = () => levelAt(currentEnergy());
+const address = (value, nameIndex = 0) => addressCopy(value, currentLevel(), nameIndex);
 const closedTabs = [];
 const keyModules = new Map();
 function keyContext(target = document.activeElement) {
@@ -76,7 +91,10 @@ function notice(message) { $('#toast').textContent = message; $('#toast').classL
 function run(name) { const item = commands.get(name); if (item) return Promise.resolve().then(item.run).catch(error => notice(error.message)); }
 function addCommand(item) { commands.set(item.id, item); return () => commands.delete(item.id); }
 function editButton(key) { return ui("-", key, key); }
-function word(key, tag = 'p') { return `<${tag}><span class="character-copy">${escape(words[key])}</span> ${editButton(key)}</${tag}>`; }
+function word(key, tag = 'p', level = currentLevel()) {
+  const nameIndex = key === 'aboutBody' ? 2 : key === 'landRegistry' ? 4 : 0;
+  return `<${tag}><span class="character-copy">${escape(addressCopy(words[key], level, nameIndex))}</span> ${editButton(key)}</${tag}>`;
+}
 
 function modal(title, content, setup) {
   const dialog = $('#dialog');
@@ -125,7 +143,7 @@ async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   startingTerminals.add(id);
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
+  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', dawkinsAside: Math.floor(Math.random() * 3) };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
@@ -194,9 +212,26 @@ async function closeTerminal(id = active()?.terminalId, exited = false) {
   tab.showTerminal = false; if (tab.expanded === 'terminal') tab.expanded = '';
   if (active() === tab) { update(); if (tab.lastFocus === 'terminal') restoreAfterTerminal(tab); }
 }
-function welcome(tab) {
+function levelLabel(level) {
+  return `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}`;
+}
+function levelLines(level, tab = active()) {
+  return [...(level.lines || []), level.asides?.[tab?.dawkinsAside]].filter(Boolean);
+}
+function levelPoem(text) {
+  return text ? `<pre class="level-poem" dir="ltr" tabindex="0">${escape(text)}</pre>` : '';
+}
+function welcome(tab, level = levelAt(currentEnergy(tab.config))) {
   if (tab.initialView) return;
-  tab.document.innerHTML = ui("-a-little-room-for-creation-open-a-file-ctrl-o-n", word('welcomeTitle', 'h1'), word('welcomeBody'));
+  tab.welcomeLevel = level.id;
+  const [headline, ...lines] = level.welcome ? [level.welcome, ...levelLines(level, tab)] : levelLines(level, tab);
+  const heading = level.id === 'yhwh'
+    ? `<p class="level-greeting">${escape(headline)}</p>${word('welcomeTitle', 'h1', level)}`
+    : `<h1>${escape(headline)}</h1>`;
+  const greeting = level.welcome ? word('welcomeBody', 'p', level) : '';
+  const copy = lines.map(line => `<p>${escape(line)}</p>`).join('');
+  tab.document.innerHTML = ui('welcome-screen', escape(levelLabel(level)), heading,
+    `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${levelPoem(level.poem)}</div>`);
 }
 function activate(id) {
   const tab = tabs.find(item => item.id === id);
@@ -325,26 +360,47 @@ function update() {
   $('#title-row [data-command="save"]').disabled = !tab.editor;
   applyConfig(tab.config);
 }
-let temporaryEnergy;
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
   for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${Number(values.sidebar_width) || 258}px`, '--terminal-height': `${Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
   for (const tab of tabs) for (const session of tab.terminals) session.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
-  const energy = temporaryEnergy ?? (values.theme === 'dawkins' ? 0 : values.theme === 'nietzsche' ? 50 : Number(values.energy ?? 100));
-  document.body.dataset.theme = energy === 0 ? 'dawkins' : energy < 100 ? 'nietzsche' : 'yhwh';
+  const energy = currentEnergy(config), level = levelAt(energy);
+  const levelChanged = document.body.dataset.level !== level.id;
+  document.body.dataset.level = level.id;
+  document.body.dataset.theme = energy < 100 ? level.id : 'yhwh';
   verseUI.setTheme(document.body.dataset.theme);
   const view = active()?.focusView || 'document';
   $('#margin-box').classList.toggle('margin-widget', view === 'document');
   verseUI.setVisible(view === 'margins' || (view === 'document' && document.body.dataset.theme === 'nietzsche'));
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
-  $('#energy').value = energy;
-  $('#mode-name').textContent = energy === 0 ? ui("dawkins") : energy < 100 ? ui("nietzsche") : ui("yhwh");
-  $('#divine-footnote').textContent = energy === 0 ? words.dawkins : energy < 100 ? words.nietzsche : words.footer;
+  const slider = $('#energy');
+  slider.max = String(edition.unlocked);
+  slider.value = energy;
+  slider.setAttribute('aria-valuetext', levelLabel(level));
+  $('#mode-name').textContent = level.glyph || level.label;
+  $('#mode-name').setAttribute('aria-label', `${levelLabel(level)}. Choose level`);
+  const upgrade = nextUpgrade(edition.unlocked), upgradeButton = $('#upgrade-button');
+  upgradeButton.hidden = !upgrade;
+  if (upgrade) {
+    upgradeButton.textContent = upgrade.glyph || upgrade.label;
+    upgradeButton.title = upgrade.offer.title;
+    upgradeButton.setAttribute('aria-label', upgrade.offer.title);
+  }
+  $('#divine-footnote').textContent = addressCopy(words[footerKey(level)], level, 1);
+  $('.window-title').textContent = level.tagline || 'Toward a pro-human AI apocalypse.';
+  $('#file-filter').placeholder = level.filter || 'Filter files…';
+  const tab = active();
+  if (tab && !tab.file && tab.welcomeLevel !== level.id) welcome(tab, level);
+  if (levelChanged && tab?.focusView === 'chat') renderChat();
+  if (levelChanged && tab?.focusView === 'inbox') renderInbox();
   $('#workspace').style.backgroundImage = config.background ? `linear-gradient(#1b1b20ce,#1b1b20ce), url("${config.background}")` : '';
   $('#user-theme').textContent = config.css || '';
   document.title = values.title || ui("-yhwh", active()?.file?.name || basename(active()?.cwd || ''));
   reloadPlugins(config).catch(error => notice(error.message));
   emit('config', config);
+}
+function footerKey(level) {
+  return level.id === 'dawkins' || level.id === 'nietzsche' ? level.id : 'footer';
 }
 function fitTerminal() {
   const tab = active(); if (!tab || $('#terminal-panel').hidden || $('#terminals').hidden) return;
@@ -800,7 +856,33 @@ function seedFunding() {
   const payment = active().config.values.stripe_payment_link;
   modal(words.seedTitle, `${word('seedBody')}<blockquote class="character-copy">${escape(words.seedQuote)}</blockquote><small><span class="character-copy">${escape(words.seedAttribution)}</span> ${editButton('seedQuote')} ${editButton('seedAttribution')}</small><div class="dialog-actions">${payment ? '<button class="primary" data-command="pay">Give YHWH money ↗</button>' : '<p class="muted">Donation checkout is not connected yet, Abe.</p>'}</div>`);
 }
-function upgrades() { modal(ui("coming-soon"), ui("support-development", word('upgrades'), word('comingSoon'))); }
+function comingSoon() { modal(ui("coming-soon"), ui("support-development", word('upgrades'), word('comingSoon'))); }
+function upgrades() {
+  const upgrade = nextUpgrade(edition.unlocked);
+  if (!upgrade) return modes();
+  const { title, lines } = upgrade.offer;
+  const dialog = modal(title, `<div class="edition-offer">
+    <p class="offer-lead">${escape(lines[0])}</p>
+    ${lines.slice(1).map(line => `<p>${escape(line)}</p>`).join('')}
+    <button class="primary" type="button" data-steal-upgrade>Steal Upgrade</button>
+    <p class="muted">${escape(stripe.status)}</p>
+    <details class="stripe-setup"><summary>${escape(stripe.title)}</summary>
+      <ol>${stripe.steps.map(step => `<li>${escape(step)}</li>`).join('')}</ol>
+      ${Object.entries(stripe.links).map(([label, url]) => `<p><a href="${escape(url)}">${escape(label)} ↗</a></p>`).join('')}
+    </details>
+  </div>`);
+  dialog.querySelector('[data-steal-upgrade]').onclick = () => {
+    if (nextUpgrade(edition.unlocked) !== upgrade) return;
+    try {
+      saveEdition({ unlocked: upgrade.energy, selected: upgrade.energy });
+      energyRevision++; temporaryEnergy = undefined;
+      applyConfig(active().config);
+      dialog.close();
+      $('#mode-name').focus();
+      notice(`${upgrade.edition} unlocked on this device.`);
+    } catch (error) { notice(error.message); }
+  };
+}
 async function circus() {
   const dialog = modal(ui("nietzsche-family-circus"), ui("fetching-a-cartoon-and-a-wildly-inappropriate-ph"));
   try {
@@ -810,13 +892,34 @@ async function circus() {
   } catch (error) { if (dialog.open) dialog.querySelector(ui("-dialog-body-p")).textContent = error.message; }
 }
 function modes() {
-  const dialog = modal(ui("yhwh-ness"), ui("yhwh-all-the-personality-nietzsche-a-little-doub"));
-  for (const button of dialog.querySelectorAll('[data-energy]')) button.onclick = () => { setEnergy(Number(button.dataset.energy)); dialog.close(); };
+  const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);
+  const choices = unlockedLevels(edition.unlocked).map(level => `<button data-energy="${level.energy}" aria-pressed="${level === current}">${escape(level.label)} ${level.edition ? `<span>${escape(level.edition)}</span>` : ''}</button>`).join('');
+  const dialog = modal(ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
+    <p class="muted">${escape(levelLines(current).join(' '))}</p>
+    <div class="dialog-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>${upgrade ? `<button data-command="upgrades">${escape(upgrade.offer.title)}</button>` : ''}</div>`);
+  for (const button of dialog.querySelectorAll('[data-energy]')) button.onclick = () => {
+    dialog.close(); setEnergy(Number(button.dataset.energy)).catch(error => notice(error.message));
+  };
 }
 async function setEnergy(value) {
+  if (!Number.isInteger(value) || value < 0 || value > edition.unlocked) return;
+  const level = levelAt(value), revision = ++energyRevision;
+  if (level.offer) {
+    try { saveEdition({ ...edition, selected: level.energy }); }
+    finally { temporaryEnergy = undefined; applyConfig(active().config); }
+    return;
+  }
   temporaryEnergy = value; applyConfig(active().config);
-  await call('settings:save', { theme: value === 0 ? 'dawkins' : value < 100 ? 'nietzsche' : 'yhwh', energy: String(value) });
-  temporaryEnergy = undefined; await refresh();
+  const saved = energySave.then(async () => {
+    if (edition.selected && revision === energyRevision) saveEdition({ ...edition, selected: undefined });
+    await call('settings:save', { theme: level.id, energy: String(value) });
+    await refresh();
+  });
+  energySave = saved.catch(() => {});
+  try { await saved; }
+  finally {
+    if (revision === energyRevision) { temporaryEnergy = undefined; applyConfig(active().config); }
+  }
 }
 function higherHelp() {
   modal(words.helpTitle, `<div class="higher-choices"><button data-command="be-yhwh">${escape(words.god)}</button><button data-command="be-root">${escape(words.man)}</button></div>`);
@@ -878,7 +981,7 @@ function draggable(header, id) {
   header.ondragstart = event => { if (control) { event.preventDefault(); return; } event.stopPropagation(); event.dataTransfer.setData('application/x-yhwh-panel', id); };
 }
 function pluginAPI() {
-  return { words, notice, editWords, addCommand, addPanel, movePanel, openFile, navigate, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
+  return { words, notice, editWords, addCommand, addPanel, movePanel, openFile, navigate, address, currentLevel, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
     createCitation: verseUI.createCitation, showVerse: verseUI.browse,
     on(name, callback) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(callback); return () => listeners.get(name).delete(callback); },
     injectCSS(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); return () => style.remove(); },
@@ -973,7 +1076,7 @@ const definitions = [
     if (state) {
       const link = linkAt(state, state.selection.main.head);
       if (link) return followLink(link);
-      notice('Place the cursor on a Markdown link, Abe.');
+      notice(address('Place the cursor on a Markdown link, Abe.', 1));
     }
   }],
   ['reading-view', ui("markdown-reading-view"), '', readingView],
@@ -991,9 +1094,10 @@ const definitions = [
   ['offerings', ui("offerings"), '', offerings], ['burnt', ui("burnt-offering-setup-guide"), '', burnt], ['piece', ui("piece-offering"), '', piece],
   ['choose-offering', ui("choose-a-piece-offering"), '', async () => { const filename = await call('offering:piece', active().cwd); if (filename) notice(ui("email-prepared-attach-yourself-before-sending-no", filename)); }],
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
-  ['upgrades', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', upgrades],
+  ['upgrades', 'Upgrade YHWH · Pro and Elite preview', '', upgrades],
+  ['coming-soon', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
   ['modes', ui("yhwh-nietzsche-dawkins"), '', modes], ['circus', ui("nietzsche-family-circus"), '', circus],
-  ['edit-footer', ui("edit-status-text"), '', () => editWords(document.body.dataset.theme === 'dawkins' ? 'dawkins' : document.body.dataset.theme === 'nietzsche' ? 'nietzsche' : 'footer')],
+  ['edit-footer', ui("edit-status-text"), '', () => editWords(footerKey(currentLevel()))],
   ['quit', ui("quit"), ui("ctrl-q"), async () => { for (const tab of tabs) if (!await mayReplace(tab)) return; await call('window:close'); }],
 ];
 for (const [id, name, keys, fn] of definitions) addCommand({ id, name, keys, run: fn });
@@ -1077,18 +1181,19 @@ function renderInbox() {
     const { letter, state } = selected;
     const source = letter.source;
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
-    const recipients = `<span>to ${escape(letter.to || 'Abe')}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
+    const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
     host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
     host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
     verseUI.hydrate(host);
   } else {
     const rows = available.map(({ letter, state }) => {
-      const preview = String(words[letter.textKey] || '').replace(/\s+/g, ' ').slice(0, 140);
+      const text = words[letter.textKey] || '';
+      const preview = (letter.format === 'markdown' ? text : address(text)).replace(/\s+/g, ' ').slice(0, 140);
       const sender = state.sender || primarySender;
       return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH<small title="${escape(sender)}">${escape(sender)}</small></span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time></button>`;
     }).join('');
-    host.insertAdjacentHTML('beforeend', `<div class="mail-list" aria-label="Messages">${rows || '<p class="mail-empty muted">No letters. A quiet miracle, Abe.</p>'}</div>`);
+    host.insertAdjacentHTML('beforeend', `<div class="mail-list" aria-label="Messages">${rows || `<p class="mail-empty muted">${escape(address('No letters. A quiet miracle, Abe.', 1))}</p>`}</div>`);
     for (const row of host.querySelectorAll('[data-mail]')) row.onclick = () => {
       tab.mailId = row.dataset.mail;
       presence.letters.find(item => item.id === tab.mailId).read = true;
@@ -1127,7 +1232,7 @@ function showChat() {
       const messages = readChat(key), conversation = [...messages, { role: 'user', content: message }].slice(-79);
       chatPending.add(key); chatErrors.delete(key); renderChat();
       try {
-        const answer = await call('chat', tab.id, conversation);
+        const answer = await call('chat', tab.id, conversation, currentEnergy(tab.config));
         localStorage.setItem(key, JSON.stringify([...conversation, { role: 'assistant', content: answer }].slice(-80)));
         localStorage.removeItem(key + ':draft');
       } catch (error) { chatErrors.set(key, error.message); }
@@ -1142,9 +1247,11 @@ function readChat(key) { try { return JSON.parse(localStorage.getItem(key)) || [
 function renderChat() {
   if (!chatPanel || !active()) return;
   const key = chatStorageKey(), element = chatPanel.element, log = element.querySelector('.conversation-log');
-  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? 'Abe' : document.body.dataset.theme === 'yhwh' ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${document.body.dataset.theme === 'yhwh' ? 'Abe. Show me what you’re making. I’ll come down and look. We’re gonna spread your seed everywhere.' : 'Ask about this directory or your work, Abe.'}</p>`;
+  const divine = document.body.dataset.theme === 'yhwh';
+  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? escape(address('Abe', 3)) : divine ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${escape(address(divine ? 'Abe. Show me what you’re making. I’ll come down and look. We’re gonna spread your seed everywhere.' : 'Ask about this directory or your work, Abe.', 3))}</p>`;
   if (chatPending.has(key)) log.insertAdjacentHTML('beforeend', '<p role="status">Waiting for Codex…</p>');
   const form = element.querySelector('form'); form.querySelector('textarea').value = localStorage.getItem(key + ':draft') || '';
+  form.querySelector('textarea').placeholder = currentLevel().conversation || 'Where are you?';
   form.querySelector('button').disabled = chatPending.has(key); form.querySelector('textarea').disabled = chatPending.has(key);
   const error = form.querySelector('.chat-error'); error.hidden = !chatErrors.has(key); error.textContent = chatErrors.get(key) || '';
   log.scrollTop = log.scrollHeight;

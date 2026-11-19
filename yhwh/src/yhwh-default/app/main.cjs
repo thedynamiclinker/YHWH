@@ -9,6 +9,7 @@ const { pathToFileURL } = require('node:url');
 const files = require('../../../lib/files.cjs');
 const { resolveConfig, configLocations, userDirectory, saveSettings } = require('./config.cjs');
 const keys = require('../../../lib/keys.cjs');
+const { freeEnergy, levelAt } = require('../../../lib/levels.cjs');
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
@@ -206,13 +207,14 @@ async function launch() {
     return worlds.list({ ...focus, cwd }, config.values.show_hidden === 'true');
   });
   const conversations = new Set();
-  handle('chat', async (id, messages) => {
+  handle('chat', async (id, messages, selectedEnergy) => {
     const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
     if (conversations.has(id)) throw new Error('Already waiting for a reply.');
     conversations.add(id);
     try {
       const config = await configFor(focus.cwd);
-      const energy = config.values.theme === 'dawkins' ? 0 : config.values.theme === 'nietzsche' ? 50 : Number(config.values.energy ?? 100);
+      const energy = Number.isInteger(selectedEnergy) && selectedEnergy >= 0 && selectedEnergy <= levelAt(Infinity).energy
+        ? selectedEnergy : freeEnergy(config.values);
       return await require('./chat.cjs').chat({ directory: await worlds.physical(focus), energy, messages });
     } finally { conversations.delete(id); }
   });
