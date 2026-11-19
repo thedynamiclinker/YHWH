@@ -6,7 +6,7 @@ const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 const { installDesktop, uninstallDesktop } = require('../bin/desktop.cjs');
 
-test('desktop installs coexist, launch the correct package and cwd, and preserve modified files', async () => {
+test('desktop installs coexist, request the configured launch directory, and preserve modified files', async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'yhwh-desktop-install-'));
   const original = { ...process.env };
   try {
@@ -20,8 +20,8 @@ test('desktop installs coexist, launch the correct package and cwd, and preserve
       const cli = path.join(prefix, 'lib/node_modules/yhwh-system/bin/default/cli.cjs');
       await fs.mkdir(path.dirname(cli), { recursive: true });
       await fs.writeFile(cli, `exports.main = async args => require('node:fs').writeFileSync(process.env.CAPTURE, JSON.stringify({ args, cwd: process.cwd(), flavor: process.env.YHWH_DESKTOP_FLAVOR, runtime: process.env.YHWH_ELECTRON, tab: process.env.YHWH_TAB }));`);
-      await installDesktop(mode, prefix, workspace);
-      await installDesktop(mode, prefix, workspace); // Updating an unmodified installation is idempotent.
+      await installDesktop(mode, prefix);
+      await installDesktop(mode, prefix); // Updating an unmodified installation is idempotent.
       const desktop = path.join(data, 'applications', `${id}.desktop`);
       const entry = await fs.readFile(desktop, 'utf8');
       assert.match(entry, /Terminal=false/);
@@ -32,7 +32,7 @@ test('desktop installs coexist, launch the correct package and cwd, and preserve
       const launcher = path.join(data, 'yhwh', `${id}.cjs`);
       const launched = spawnSync(process.execPath, [launcher], { env: { ...process.env, CAPTURE: capture, YHWH_TAB: 'stale-tab' }, encoding: 'utf8' });
       assert.equal(launched.status, 0, launched.stderr);
-      assert.deepEqual(JSON.parse(await fs.readFile(capture, 'utf8')), { args: ['--cwd', workspace], cwd: workspace, flavor: mode === 'develop' ? 'development' : 'installed', runtime: process.env.YHWH_ELECTRON });
+      assert.deepEqual(JSON.parse(await fs.readFile(capture, 'utf8')), { args: ['--desktop-launch'], cwd: process.cwd(), flavor: mode === 'develop' ? 'development' : 'installed', runtime: process.env.YHWH_ELECTRON });
       const opened = path.join(workspace, 'a note.md');
       assert.equal(spawnSync(process.execPath, [launcher, opened], { env: { ...process.env, CAPTURE: capture } }).status, 0);
       assert.deepEqual(JSON.parse(await fs.readFile(capture, 'utf8')).args, ['open', opened]);
@@ -41,12 +41,12 @@ test('desktop installs coexist, launch the correct package and cwd, and preserve
       if (!menuLaunch.error) {
         assert.equal(menuLaunch.status, 0, menuLaunch.stderr);
         for (let i = 0; i < 100 && !await fs.stat(capture).catch(() => null); i++) await new Promise(resolve => setTimeout(resolve, 20));
-        assert.equal(JSON.parse(await fs.readFile(capture, 'utf8')).cwd, workspace);
+        assert.deepEqual(JSON.parse(await fs.readFile(capture, 'utf8')).args, ['--desktop-launch']);
       }
     }
     const development = path.join(data, 'applications/yhwh-development.desktop');
     await fs.appendFile(development, '# Abe customized this\n');
-    await assert.rejects(installDesktop('develop', path.join(temp, 'develop'), workspace), /preserved/);
+    await assert.rejects(installDesktop('develop', path.join(temp, 'develop')), /preserved/);
     await uninstallDesktop();
     assert.match(await fs.readFile(development, 'utf8'), /Abe customized this/);
     await assert.rejects(fs.access(path.join(data, 'applications/yhwh.desktop')), { code: 'ENOENT' });

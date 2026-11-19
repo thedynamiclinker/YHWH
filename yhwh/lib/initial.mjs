@@ -114,7 +114,8 @@ export function resolvePath(input, cwd, home, root) {
 }
 export function createInitial(host) {
   let aliases = [], words = [], rcVersion, initialized = false, writing = Promise.resolve();
-  const home = host.home, rcPath = `${home}/.initialrc`, bin = `${home}/bin`;
+  const home = host.home, rcPath = `${home.replace(/\/$/, '')}/.initialrc`, bin = `${home.replace(/\/$/, '')}/bin`;
+  const requireRun = action => { throw new Error(`Use Run to ${action}.`); };
   const maybeRead = async path => { try { return await host.read(path); } catch (error) { if (/ENOENT|not found|does not exist/i.test(error.message)) return null; throw error; } };
   async function reload() {
     const rc = await maybeRead(rcPath);
@@ -216,6 +217,7 @@ export function createInitial(host) {
           } else argv.push(await expand(token.word, context));
         }
         if (!argv.length || !argv[0]) throw new Error('Choose a command first.');
+        if (context.preview && outputPath) requireRun('write redirected output');
         input=await command(argv, input, context);
         if (outputPath) {
           let file=await maybeRead(outputPath);
@@ -253,10 +255,11 @@ export function createInitial(host) {
       context.cwd=nested.cwd; context.root=nested.root; return result;
     }
     const requireArgs = count => { if (args.length < count) throw new Error(`Choose ${count} argument${count===1?'':'s'} for ${name}. ${help(name).split('\n')[1]}`); };
+    if (context.preview && ['mkdir', 'touch', 'cp', 'mv', 'trash'].includes(name)) requireRun(`execute ${name}`);
     if (name==='pwd') return text(context.root ? context.cwd.slice(context.root.length) || '/' : context.cwd);
     if (name==='echo') return text(args.join(' '));
     if (name==='ls') return { kind: 'entries', entries: await host.list(path(args[0] || '.')) };
-    if (name==='cd') { const target=path(args[0] || context.root || home); const stat=await host.stat(target); if (!stat.directory) throw new Error('Choose a folder.'); context.cwd=target; if (!context.capture) await host.navigate(target); return text(target); }
+    if (name==='cd') { const target=path(args[0] || context.root || home); const stat=await host.stat(target); if (!stat.directory) throw new Error('Choose a folder.'); context.cwd=target; if (!context.capture && !context.preview) await host.navigate(target); return text(target); }
     if (name==='mkdir' || name==='touch') { requireArgs(1); const target=path(args[0]); if (name==='touch') { try { await host.stat(target); return text(target); } catch(error) { if (!/ENOENT|not found|does not exist/i.test(error.message)) throw error; } } await host.create(target,name==='mkdir'); return text(target); }
     if (name==='cat') { if (!args.length) return input; const contents=[]; for (const arg of args) { const file=await host.read(path(arg)); if (file.kind !== 'text') throw new Error('cat reads saved UTF-8 text. Use open for other formats.'); contents.push(file.content); } return text(contents.join('\n')); }
     if (name==='cp' || name==='mv') { requireArgs(2); await host[name==='cp'?'copy':'move'](path(args[0]),path(args[1])); return text(path(args[1])); }
@@ -271,10 +274,10 @@ export function createInitial(host) {
     if (name==='wc') return text(input.kind==='entries' ? input.entries.length : asText(input).split('\n').filter(Boolean).length);
     if (name==='view' || name==='fm') { if (context.capture) throw new Error('Choose a command with output inside $(), such as pwd or cat.'); const target=path(args[0] || '.'); if (name==='fm' && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await (context.display?.view || host.view)(name==='fm' ? { kind:'live', path:target, root:context.root } : { ...input, kind:input.kind==='entries'?'snapshot':'text', root:context.root }); return {kind:'displayed',text:''}; }
     if (name==='open') { requireArgs(1); if (context.capture) throw new Error('open displays a document; use cat inside $().'); await (context.display?.open || host.open)(path(args[0])); return text(''); }
-    if (name==='chroot') { if (context.capture) throw new Error('Change the folder root outside $().'); const target=args[0]==='--leave'?null:path(args[0] || '.'); if (target && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await host.chroot(target); context.root=target; context.cwd=target || home; return text(target ? 'This folder is now /. Use chroot --leave to return.' : 'Returned to the workspace.'); }
+    if (name==='chroot') { if (context.capture) throw new Error('Change the folder root outside $().'); const target=args[0]==='--leave'?null:path(args[0] || '.'); if (target && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); if (!context.preview) await host.chroot(target); context.root=target; context.cwd=target || home; return text(target ? 'This folder is now /. Use chroot --leave to return.' : 'Returned to the workspace.'); }
     if (name==='help') return text(args[0] ? help(args[0]) : 'The Initial · a terminal for fingers.\nTap tiles, type names, or draw your own gestures.\nLetters live in ~/.initialrc. Logos are files in ~/bin.\nPATH: ~/bin → /bin Atomics → /usr/bin Builtins.\nUse | to pass output, a new line to do the next thing, > to save output, and $() to use output as an argument.\n\n' + atomics.map(([name,label])=>`${name} — ${label}`).join('\n'));
     const builtin=host.builtins().find(item=>item.id===name || `/usr/bin/${item.id}`===name);
-    if (builtin) { if (context.capture) throw new Error('App actions do not produce text for $().'); await (context.display?.builtin ? context.display.builtin(builtin) : builtin.run()); return text(''); }
+    if (builtin) { if (context.capture) throw new Error('App actions do not produce text for $().'); if (context.preview) requireRun(`open ${builtin.name}`); await (context.display?.builtin ? context.display.builtin(builtin) : builtin.run()); return text(''); }
     throw new Error(`No command named “${name}”. Browse Atomics, Builtins, Letters or Logos.`);
   }
   return { reload, catalog, run, saveAlias, removeAlias, saveWord, help, home, rcPath, bin, readWord: name => host.read(`${bin}/${name}`) };

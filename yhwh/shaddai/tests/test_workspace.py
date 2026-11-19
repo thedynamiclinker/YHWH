@@ -77,7 +77,7 @@ class WorkspaceTTY:
         self.wait_for(lambda lines: any(text in line for line in lines))
 
     def exact_line(self, text):
-        self.wait_for(lambda lines: text in lines)
+        self.wait_for(lambda lines: any(line.rsplit("│", 1)[-1].strip() == text for line in lines))
 
     def quit(self):
         self.send(F10)
@@ -156,7 +156,7 @@ class WorkspaceTests(unittest.TestCase):
         tty.send(b"\x1b[96;5u")
         tty.shows("New shell")
         tty.send(b"export SHADDAI_TEST=kept; stty size\r")
-        tty.exact_line("9 110")
+        tty.exact_line("9 80")
 
         tty.send(TERMINAL)
         tty.wait_for(lambda lines: not any("Shell 1" in line for line in lines))
@@ -166,9 +166,9 @@ class WorkspaceTests(unittest.TestCase):
         tty.exact_line("state-kept")
 
         tty.send(F6)
-        tty.wait_for(lambda lines: lines[1].startswith("Terminal"))
+        tty.wait_for(lambda lines: "Terminal" in lines[1])
         tty.send(b"stty size\r")
-        tty.exact_line("27 110")
+        tty.exact_line("27 80")
 
         tty.send(b"\x1bT")
         tty.shows("Shell 2")

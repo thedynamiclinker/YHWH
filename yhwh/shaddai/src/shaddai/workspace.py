@@ -43,14 +43,24 @@ from .files import BinaryFile, Document, fuzzy
 from .fonts import ConsoleFonts
 from .navigation import serve_paths
 from .terminal import Shell, TerminalControl
-from .services import LETTERS, SENDER, WALK, Services, web_links
-from .yhwh import World, save_setting
+from .services import SENDER, WALK, Services, web_links
+from .yhwh import Prefixes, World, save_setting
 
 
 PANES = ("files", "editor", "terminal")
 MODIFIED_KEYS = {
     "ctrl/alt/1": ("f13", "49;7"), "ctrl/alt/2": ("f14", "50;7"), "ctrl/alt/3": ("f15", "51;7"),
     "ctrl/shift/e": ("f16", "101;6"), "ctrl/tab": ("f20", "9;5"), "ctrl/shift/tab": ("f21", "9;6"),
+}
+PANEL_KEYS = {
+    "terminal_expand": ("Terminal up", "ctrl/up", "up", False),
+    "terminal_collapse": ("Terminal down", "ctrl/down", "down", False),
+    "files_expand": ("File manager right", "ctrl/right", "right", False),
+    "files_collapse": ("File manager left", "ctrl/left", "left", False),
+    "terminal_grow": ("Resize terminal up", "ctrl/alt/shift/up", "up", True),
+    "terminal_shrink": ("Resize terminal down", "ctrl/alt/shift/down", "down", True),
+    "files_grow": ("Resize file manager right", "ctrl/alt/shift/right", "right", True),
+    "files_shrink": ("Resize file manager left", "ctrl/alt/shift/left", "left", True),
 }
 THEMES = {
     "dark": {
@@ -149,6 +159,7 @@ class Workspace:
         self.search = SearchToolbar()
         self.reader_title = ""
         self.reader_links = {}
+        self.reader_actions = {}
         self.reader_return = None
         self.reader_wrap = True
         self.level_aside_positions = {}
@@ -238,15 +249,19 @@ class Workspace:
             bar(self.shell_bar, lambda: self.tab_position(self.shell_bar())),
             Window(self.terminal, style="class:terminal", wrap_lines=False),
         ], height=lambda: None if self.zoom == "terminal" or self.rows < 15
-            else Dimension.exact(min(self.terminal_height, max(3, self.rows // 2))))
+            else Dimension.exact(min(self.terminal_height, max(3, self.rows - 6))))
+        files_visible = lambda: self.visible("files")
+        center_visible = lambda: self.visible("editor") or self.visible("terminal")
         base = HSplit([
             bar(self.workspace_bar),
-            when(VSplit([
-                when(files, lambda: self.visible("files")),
-                when(divider(), lambda: self.visible("files") and self.visible("editor")),
-                when(editor, lambda: self.visible("editor")),
-            ]), lambda: self.visible("files") or self.visible("editor")),
-            when(terminal, lambda: self.visible("terminal")),
+            VSplit([
+                when(files, files_visible),
+                when(divider(), lambda: files_visible() and center_visible()),
+                when(HSplit([
+                    when(editor, lambda: self.visible("editor")),
+                    when(terminal, lambda: self.visible("terminal")),
+                ]), center_visible),
+            ]),
             when(self.answer, lambda: self.answer_action is not None),
             Window(FormattedTextControl(self.status), height=1,
                    style=lambda: "class:attention" if self.message else "class:bar", wrap_lines=False),
@@ -255,6 +270,8 @@ class Workspace:
                                            content=CompletionsMenu(max_height=9, scroll_offset=1))])
 
     def visible(self, pane):
+        if self.zoom == "terminal":
+            return pane == "terminal" or (pane == "files" and self.tree_visible and self.columns >= 56)
         if self.zoom:
             return pane == self.zoom
         if self.rows < 15 and (self.pane == "terminal" or pane == "terminal"):
@@ -266,6 +283,9 @@ class Workspace:
         return self.columns >= 56 or pane == self.upper_pane
 
     def run(self):
+        for letter, direction in zip("ABCD", ("up", "down", "right", "left")):
+            for code, modifiers in ((7, "c-"), (8, "c-s-")):
+                ANSI_SEQUENCES[f"\x1b[1;{code}{letter}"] = (Keys.Escape, Keys(modifiers + direction))
         # Prompt Toolkit represents these extended keys as Meta+Control pairs.
         for code in ("96;5", "96;6", "126;6"):
             ANSI_SEQUENCES[f"\x1b[{code}u"] = (Keys.Escape, Keys.ControlAt)
@@ -361,7 +381,7 @@ class Workspace:
         return [
             ("class:heading", f" {label(self.reader_title)} "),
             ("", " Back ", clickable(self.close_reader)),
-            ("", " Links ", clickable(self.follow_link)),
+            ("", " Actions " if self.reader_actions else " Links ", clickable(self.follow_link)),
         ]
 
     def file_bar(self):
@@ -431,7 +451,8 @@ class Workspace:
         if self.quoted:
             return " Next key goes directly to the shell"
         if self.reading and self.pane == "editor":
-            details = "Reading   Esc Back   Alt+G Links"
+            details = ("Reading   Esc Back   Enter Toggle   Alt+G Actions" if self.reader_actions
+                       else "Reading   Esc Back   Alt+G Links")
         elif self.pane == "files":
             details = f"{len(self.browser.tree.rows) - 1} items   / Filter   Enter Open"
         elif self.pane == "terminal":
@@ -521,13 +542,44 @@ class Workspace:
                 self.focus(self.upper_pane)
 
     def resize(self, direction):
+        values = self.config.yhwh.values
+        def delta(key, fallback):
+            try:
+                return min(50, max(1, int(values.get(key, fallback))))
+            except ValueError:
+                return fallback
+
         if direction in ("left", "right"):
-            if self.tree_visible and self.columns >= 56 and self.zoom is None:
+            if self.tree_visible and self.columns >= 56 and self.zoom != "files":
                 width = min(self.tree_width, self.columns - 30)
-                self.tree_width = min(min(120, self.columns - 30), max(12, width + (3 if direction == "right" else -3)))
+                step = delta("panel_resize_columns", 3)
+                self.tree_width = min(self.columns - 30, max(12, width + (step if direction == "right" else -step)))
         elif self.terminal_visible and self.zoom is None:
-            height = min(self.terminal_height, max(3, self.rows // 2))
-            self.terminal_height = min(100, max(3, height + (2 if direction == "up" else -2)))
+            limit = max(3, self.rows - 6)
+            height = min(self.terminal_height, limit)
+            step = delta("panel_resize_rows", 1)
+            self.terminal_height = min(limit, max(3, height + (step if direction == "up" else -step)))
+
+    def move_split(self, direction, incremental=False):
+        files = direction in ("left", "right")
+        pane, attribute = ("files", "tree_visible") if files else ("terminal", "terminal_visible")
+        step = 1 if direction in ("up", "right") else -1
+        current = 2 if self.zoom == pane else int(getattr(self, attribute))
+        if incremental and current == 1 and self.visible(pane):
+            self.resize(direction)
+            return
+        next_size = min(2, max(0, current + step))
+        if current == next_size:
+            return
+        if next_size == 2:
+            self.zoom = pane
+        elif self.zoom == pane or (not files and step > 0):
+            self.zoom = None
+        setattr(self, attribute, next_size > 0)
+        if next_size == 2 or (next_size == 1 and not self.visible(pane)):
+            self.focus(pane)
+        elif next_size == 0 and self.pane == pane:
+            self.focus(self.upper_pane if not files else "editor")
 
     def load(self, path):
         return Document.load(path, self.config["editor"]["max_file_bytes"])
@@ -864,9 +916,10 @@ class Workspace:
     def pick(self, title, choices):
         self.palette(title, [(None, name, action, False) for name, action in choices.items()])
 
-    def show(self, title, text, links=None, *, back=None, wrap=True):
+    def show(self, title, text, links=None, *, back=None, wrap=True, actions=None):
         self.reader_title = title
         self.reader_links = links if links is not None else web_links(text)
+        self.reader_actions = actions or {}
         self.reader_return = back
         self.reader_wrap = wrap
         self.reader.text = "\n".join(label(line.expandtabs(4)) for line in text.split("\n"))
@@ -912,11 +965,13 @@ class Workspace:
 
     def follow_link(self):
         links = self.reader_links if self.reading else self.document_links()
-        if not links:
+        actions = {self.reader.document.lines[row]: action for row, action in self.reader_actions.items()} if self.reading else {}
+        if not links and not actions:
             self.message = "No web links on this page"
             return
-        self.pick("Open link", {label(name): partial(self.open if isinstance(url, Path) else self.external, url)
-                                for name, url in links.items()})
+        actions.update({label(name): partial(self.open if isinstance(url, Path) else self.external, url)
+                        for name, url in links.items()})
+        self.pick("Reading actions" if self.reading and self.reader_actions else "Open link", actions)
 
     def tty_command(self, argv, *, pause=False, directory=None):
         def run():
@@ -989,7 +1044,7 @@ class Workspace:
         if path.is_file():
             self.open(path)
 
-    def shared_setting(self, key, title, default, choices=None):
+    def shared_setting(self, key, title, default, choices=None, *, validate=None):
         def select(value):
             value = value.strip()
             if not value:
@@ -998,6 +1053,8 @@ class Workspace:
                 raise ValueError(f"Choose {' or '.join(choices)}.")
             if key == "energy" and (not value.isdecimal() or not 0 <= int(value) <= 100):
                 raise ValueError("Enter a number from 0 to 100.")
+            if validate:
+                value = validate(value)
 
             def apply(scope):
                 save_setting(scope, key, value)
@@ -1066,6 +1123,50 @@ class Workspace:
             "Toggle restoring original font on exit": partial(toggle, "restore_on_exit"),
         })
 
+    def default_directory(self):
+        def save(value):
+            if value and not (Path.home() / Path(value).expanduser()).is_dir():
+                raise ValueError("Choose an existing default directory.")
+            save_setting(Path("/"), "default_directory", value)
+            self.refresh()
+            self.message = "Saved default directory for launcher starts."
+
+        current = Prefixes(Path("/"), global_only=True).values.get("default_directory", "")
+        self.ask("Default directory for launcher starts (blank for home)", save, current)
+
+    def panel_key_settings(self):
+        def size(value):
+            if not value.isdecimal() or not 1 <= int(value) <= 50:
+                raise ValueError("Enter a whole number from 1 to 50.")
+            return value
+
+        options = {
+            "File manager resize step (columns)": partial(self.shared_setting, "panel_resize_columns", "Columns per keypress", "3", validate=size),
+            "Terminal resize step (rows)": partial(self.shared_setting, "panel_resize_rows", "Rows per keypress", "1", validate=size),
+        }
+        for name, (title, default, _, _) in PANEL_KEYS.items():
+            options[title] = partial(self.shared_setting, "key_" + name, f"{title} (e.g. Ctrl+Up or off)", default,
+                                     validate=partial(self.validate_panel_key, name))
+        self.pick("Keys", options)
+
+    def validate_panel_key(self, name, value):
+        value = value.lower().replace(" ", "").replace("+", "/") or PANEL_KEYS[name][1]
+        if value == "off":
+            return value
+        *mods, key = value.split("/")
+        key = key.removeprefix("arrow") if key in ("arrowup", "arrowdown", "arrowleft", "arrowright") else key
+        modifiers = ("ctrl", "alt", "shift")
+        if len(set(mods)) != len(mods) or any(mod not in modifiers for mod in mods):
+            raise ValueError("Use a terminal key combination such as Ctrl+Up.")
+        combo = "/".join([*(mod for mod in modifiers if mod in mods), key])
+        stroke = self.prefix_key(combo)
+        KeyBindings().add(*stroke)(lambda event: None)  # Validate against supported terminal keys.
+        values = self.config.yhwh.values
+        if any(other != name and stroke == self.prefix_key(values.get("key_" + other) or default)
+               for other, (_, default, _, _) in PANEL_KEYS.items()):
+            raise ValueError("That combination is already assigned to a panel shortcut.")
+        return combo
+
     def settings(self):
         def set_theme(theme):
             self.config.save("ui", "theme", theme)
@@ -1080,11 +1181,13 @@ class Workspace:
                                      ("yhwh", "nietzsche", "dawkins")),
             }),
             "Files and editor": lambda: self.pick("Files and editor", {
+                "Default directory": self.default_directory,
                 "Show hidden files": partial(self.shared_setting, "show_hidden", "Show hidden files", "false", booleans),
                 "Show file manager": partial(self.shared_setting, "file_manager", "Show file manager", "true", booleans),
                 "Autosave": partial(self.shared_setting, "autosave", "Autosave", "true", booleans),
                 "Editor keys": self.editor_modes,
             }),
+            "Keys": self.panel_key_settings,
             "Terminal": lambda: self.shared_setting("terminal", "Show terminal at startup", "false", booleans),
             "Presence": lambda: self.pick("Presence", {
                 "Amount of YHWH (0–100)": partial(self.shared_setting, "energy", "Amount of YHWH", "100"),
@@ -1145,10 +1248,10 @@ class Workspace:
         state = self.services.state("inbox")
         letters = state.get("letters", {})
         commands = {"Back to workspace": partial(self.focus, "editor")}
-        for key, letter in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
-            if key in LETTERS:
-                marker = "* " if not letter["read"] else ""
-                commands[marker + LETTERS[key][0]] = partial(self.read_letter, key)
+        for key, state in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
+            if letter := self.services.letters.get(key):
+                marker = "* " if not state["read"] else ""
+                commands[marker + letter["title"]] = partial(self.read_letter, key)
         toggle = ("Unblock " if state.get("blocked") else "Block ") + SENDER
 
         def block():
@@ -1159,8 +1262,49 @@ class Workspace:
         self.pick("Inbox" if letters else "Inbox · no letters yet", commands)
 
     def read_letter(self, key):
-        title, text = self.services.letter(key)
-        self.show(title, text, back=self.inbox)
+        letter = self.services.letters[key]
+        text = self.services.letter(key)
+        copy = self.config.library.json("default/text-verses.json")
+        verses = self.services.cited_verses(letter["verse"])
+        sources_open = True
+        open_commentary = set()
+
+        def toggle_sources():
+            nonlocal sources_open
+            sources_open = not sources_open
+
+        def toggle_commentary(verse_id):
+            open_commentary.symmetric_difference_update({verse_id})
+
+        def render(cursor_row=0):
+            lines = text.split("\n") + [""]
+            actions = {}
+
+            def disclosure(title, expanded, toggle):
+                row = len(lines)
+                lines.append(f"{'v' if expanded else '>'} {title}")
+
+                def activate():
+                    toggle()
+                    render(row)
+
+                actions[row] = activate
+
+            disclosure(copy["mail-sources"], sources_open, toggle_sources)
+            if sources_open:
+                lines.extend(["", letter["note"]])
+                for verse in verses:
+                    verse_id = verse["id"]
+                    expanded = verse_id in open_commentary
+                    lines.extend(["", verse["english"], "", verse["original"], ""])
+                    citation = copy["commentary-citation"].replace("{{0}}", verse["reference"])
+                    disclosure(citation, expanded, partial(toggle_commentary, verse_id))
+                    if expanded:
+                        lines.extend(["", self.services.commentary(verse) or copy["no-commentary"]])
+            self.show(letter["title"], "\n".join(lines), back=self.inbox, actions=actions)
+            self.reader.buffer.cursor_position = self.reader.document.translate_row_col_to_index(cursor_row, 0)
+
+        render()
 
     def fan_mail(self):
         rows = self.config.library.json("default/fan-mail.json")
@@ -1410,8 +1554,10 @@ class Workspace:
         if name in ("ctrl/backtick", "ctrl/shift/backtick"):
             return ("escape", "c-@")
         *modifiers, key = name.split("/")
-        if "meta" in modifiers:
+        if name == "off" or "meta" in modifiers:
             return ()
+        if "ctrl" in modifiers and "shift" in modifiers and key in ("left", "right", "up", "down", "pageup", "pagedown"):
+            return ("escape", "c-s-" + key) if "alt" in modifiers else ("c-s-" + key,)
         key = {"backtick": "`", "comma": ",", "slash": "/", "plus": "+", "period": ".",
                "backslash": "\\", "space": " "}.get(key, key)
         if "ctrl" in modifiers:
@@ -1508,6 +1654,11 @@ class Workspace:
         def close_reader(event):
             self.close_reader()
 
+        @keys.add("enter", filter=~answering & reading & Condition(
+            lambda: self.reader.document.cursor_position_row in self.reader_actions))
+        def toggle_disclosure(event):
+            self.attempt(self.reader_actions[self.reader.document.cursor_position_row])
+
         @keys.add("escape", filter=~answering & ~terminal & ~reading & ~vim & Condition(lambda: self.zoom is not None))
         def restore(event):
             self.zoom = None
@@ -1569,7 +1720,8 @@ class Workspace:
             self.confirm_discard(self.tabs, event.app.exit)
 
         bind("quit", quit_app, True)
-        for name, binding in self.config.yhwh.keys().items():
+        prefix_keys = self.config.yhwh.keys()
+        for name, binding in prefix_keys.items():
             if binding.kind == "module":
                 continue
             handler = self.prefix_command(binding) if binding.kind == "command" else None
@@ -1589,6 +1741,19 @@ class Workspace:
                     keys.add(*stroke, filter=active)(lambda event, handler=handler: self.attempt(handler))
                 except ValueError:
                     continue  # The outer terminal has no prompt-toolkit key for this chord.
+        for name, (_, default, direction, incremental) in PANEL_KEYS.items():
+            value = self.config.yhwh.values.get("key_" + name)
+            combo = value or default
+            if not value and combo in prefix_keys:
+                continue
+            if stroke := self.prefix_key(combo):
+                def move(event, direction=direction, incremental=incremental):
+                    self.move_split(direction, incremental)
+
+                try:
+                    keys.add(*stroke, filter=~answering & ~Condition(lambda: self.quoted))(move)
+                except ValueError:
+                    continue
         def cut_line(event):
             buffer = self.tab.editor.buffer
             document = buffer.document

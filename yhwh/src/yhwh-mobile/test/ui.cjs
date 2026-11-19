@@ -68,16 +68,16 @@ async function main() {
       await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Imported 1'));
       await page.locator('#mobile-nav [data-command="toggle-files"]').tap();
       if (device.width < 800) assert.equal(await dot.isVisible(), false);
-      await page.evaluate(() => window.yhwh.call('file:create', '/YHWH/Empty folder', true));
-      await page.locator('#file-list [data-path="/YHWH/Empty folder"]').tap();
-      await page.waitForFunction(() => window.YHWH.active().cwd === '/YHWH/Empty folder');
+      await page.evaluate(() => window.yhwh.call('file:create', '/Empty folder', true));
+      await page.locator('#file-list [data-path="/Empty folder"]').tap();
+      await page.waitForFunction(() => window.YHWH.active().cwd === '/Empty folder');
       const parentRow = page.locator('#file-list > .file-row').first();
       assert.equal(await parentRow.locator('.file-name').textContent(), '..');
       assert.equal(await parentRow.locator('.file-control-icon').count(), 1);
       assert.equal(await page.locator('#files [data-command="parent"]').count(), 0);
       await parentRow.tap();
-      await page.waitForFunction(() => window.YHWH.active().cwd === '/YHWH');
-      await page.locator('#file-list [data-path="/YHWH/notes.md"]').tap();
+      await page.waitForFunction(() => window.YHWH.active().cwd === '/');
+      await page.locator('#file-list [data-path="/notes.md"]').tap();
       await page.waitForFunction(() => window.YHWH.active()?.file?.name === 'notes.md');
       assert.equal(await page.locator('#navigation-area').isVisible(), false);
       await page.evaluate(() => {
@@ -86,7 +86,7 @@ async function main() {
       });
       await page.locator('#mobile-editor-toolbar [data-command="save"]').tap();
       await page.waitForFunction(() => !window.YHWH.active().dirty);
-      assert.match(await page.evaluate(async () => (await window.yhwh.call('file:read', '/YHWH/notes.md')).content), /Saved from a phone/);
+      assert.match(await page.evaluate(async () => (await window.yhwh.call('file:read', '/notes.md')).content), /Saved from a phone/);
       await page.locator('#mobile-editor-toolbar [data-command="choose-view-mode"]').tap();
       await page.locator('#dialog [data-mode="reading"]').tap();
       await page.locator('.reading-view:visible').waitFor();
@@ -104,7 +104,7 @@ async function main() {
       await page.getByRole('button', { name: 'Inbox', exact: true }).tap();
       await page.locator('#mobile-nav').getByRole('button', { name: 'Back', exact: true }).tap();
       assert.equal(await page.locator('#document').isVisible(), true);
-      assert.equal(await page.evaluate(() => window.YHWH.active().file.path), '/YHWH/notes.md');
+      assert.equal(await page.evaluate(() => window.YHWH.active().file.path), '/notes.md');
       await page.evaluate(() => window.YHWH.run('settings'));
       await page.locator('#settings-form input[name=font_size]').fill('21');
       await page.locator('#settings-form button[type=submit]').tap();
@@ -126,7 +126,7 @@ async function main() {
       });
       await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
       assert.equal(await page.evaluate(() => window.YHWH.active().config.values.font_size), '21');
-      await page.evaluate(() => window.YHWH.openFile('/YHWH/notes.md'));
+      await page.evaluate(() => window.YHWH.openFile('/notes.md'));
       assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /Saved from a phone/);
       // Recovery keeps the original on-disk content intact.
       await page.evaluate(() => {
@@ -134,12 +134,12 @@ async function main() {
         const editor = window.YHWH.getEditor(); editor.dispatch({ changes: { from: editor.state.doc.length, insert: 'Unsaved recovery draft' } });
         document.dispatchEvent(new Event('visibilitychange'));
       });
-      await page.waitForFunction(() => JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]').length === 1);
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('yhwh:mobile:drafts-v2') || '[]').length === 1);
       await page.reload(); await page.waitForSelector('#mobile-dialog[open]');
-      await page.locator('#mobile-dialog button', { hasText: 'Recover /YHWH/notes.md' }).tap();
+      await page.locator('#mobile-dialog button', { hasText: 'Recover /notes.md' }).tap();
       await page.waitForFunction(() => window.YHWH?.active().editor?.state.doc.toString().includes('Unsaved recovery draft'));
       assert.equal(await page.evaluate(() => window.YHWH.active().dirty), true);
-      assert.doesNotMatch(await page.evaluate(async () => (await window.yhwh.call('file:read', '/YHWH/notes.md')).content), /Unsaved recovery draft/);
+      assert.doesNotMatch(await page.evaluate(async () => (await window.yhwh.call('file:read', '/notes.md')).content), /Unsaved recovery draft/);
       // Save the recovered test buffer before the night-mail reload check.
       await page.evaluate(() => window.YHWH.run('save'));
       await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, `${device.name}-night-name.png`));
@@ -147,28 +147,28 @@ async function main() {
       await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, `${device.name}-seedis.png`));
       const improvements = require('../../../test/interface-improvements-2.cjs');
       const deviceArtifacts = path.join(artifacts, device.name); await fs.mkdir(deviceArtifacts, { recursive: true });
-      await page.evaluate(async () => { await window.yhwh.call('file:create', '/YHWH/table.csv'); await window.yhwh.call('file:save', '/YHWH/table.csv', 'Name,Value\nAbe,42\n', null); });
+      await page.evaluate(async () => { await window.yhwh.call('file:create', '/table.csv'); await window.yhwh.call('file:save', '/table.csv', 'Name,Value\nAbe,42\n', null); });
       const activeDocument = await page.evaluate(() => window.YHWH.active().file?.path);
       const attachmentDownload = page.waitForEvent('download');
-      await page.evaluate(() => window.YHWH.openFile('/YHWH/table.csv'));
+      await page.evaluate(() => window.YHWH.openFile('/table.csv'));
       const downloaded = await attachmentDownload; assert.equal(downloaded.suggestedFilename(), 'table.csv');
       assert.equal(await page.evaluate(() => window.YHWH.active().file?.path), activeDocument);
       const pdfChooser = page.waitForEvent('filechooser');
       await page.evaluate(() => window.YHWH.run('mobile-import'));
       await (await pdfChooser).setFiles([{ name: 'scroll.pdf', mimeType: 'application/pdf', buffer: require('../../../test/viewer-fixtures.cjs')()['scroll.pdf'] }]);
       await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Imported 1'));
-      const openingPDF = page.evaluate(() => window.YHWH.openFile('/YHWH/scroll.pdf'));
+      const openingPDF = page.evaluate(() => window.YHWH.openFile('/scroll.pdf'));
       await page.locator('[name="remember-pdf"]').check(); await page.locator('[data-pdf="preview"]').click(); await openingPDF;
       assert.equal(await page.evaluate(() => window.YHWH.active().config.values.pdf_open), 'preview');
       await improvements.pdf({ page, artifacts: deviceArtifacts });
-      try { await improvements.moves({ page, directory: '/YHWH', artifacts: deviceArtifacts, touch: true }); }
+      try { await improvements.moves({ page, directory: '/', artifacts: deviceArtifacts, touch: true }); }
       catch (error) {
         console.error('Move UI state:', await page.evaluate(async () => {
           const files = [];
           async function walk(directory) {
             for (const file of await window.yhwh.call('directory:list', window.YHWH.active().id, directory)) { files.push(file.path); if (file.directory) await walk(file.path); }
           }
-          await walk('/YHWH');
+          await walk('/');
           return { files, toast: document.querySelector('#toast').textContent, tabs: window.YHWH.tabs.map(tab => ({ cwd: tab.cwd, file: tab.file?.path })) };
         }));
         await page.screenshot({ path: path.join(deviceArtifacts, 'failure.png') }); throw error;
@@ -178,7 +178,7 @@ async function main() {
       const help = page.locator('[data-panel=yhwh-chat]');
       await help.getByRole('textbox', { name: 'Message YHWH' }).fill('Where am I?');
       await help.getByRole('button', { name: 'Send', exact: true }).click();
-      await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
+      await help.getByRole('log').getByText(/You’re in \/, Abe/).waitFor();
       await help.getByRole('button', { name: 'Close conversation' }).click();
       await require('../../../test/levels-ui.cjs')(page, path.join(deviceArtifacts, 'zanmen.png'));
       await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
@@ -186,10 +186,26 @@ async function main() {
       await page.evaluate(() => window.YHWH.run('chat'));
       await help.getByRole('button', { name: 'History', exact: true }).click();
       await help.getByRole('navigation', { name: 'Chat history' }).getByRole('button', { name: 'Where am I?' }).click();
-      await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
+      await help.getByRole('log').getByText(/You’re in \/, Abe/).waitFor();
       await help.getByRole('button', { name: /New chat/ }).click();
       await help.getByRole('log').getByText(/^Josh\. Ask where you are/).waitFor();
       await help.getByRole('button', { name: 'Close conversation' }).click();
+      await page.evaluate(() => window.YHWH.run('settings'));
+      await page.locator('[data-category=files]').tap();
+      await page.locator('[name=default_directory]').fill('/Empty folder');
+      await page.locator('[data-category=keys]').tap();
+      await page.locator('[name=panel_resize_pixels]').fill('15');
+      await page.getByRole('button', { name: 'Save settings' }).tap();
+      await page.locator('#dialog').waitFor({ state: 'hidden' });
+      await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
+      assert.equal(await page.evaluate(() => window.YHWH.active().cwd), '/Empty folder');
+      await page.keyboard.press('Control+ArrowRight');
+      const drawer = page.locator('#navigation-area');
+      await drawer.waitFor();
+      const drawerWidth = (await drawer.boundingBox()).width;
+      await page.keyboard.press('Control+Alt+Shift+ArrowLeft');
+      assert.equal(Math.round((await drawer.boundingBox()).width - drawerWidth), -15);
+      await page.keyboard.press('Control+ArrowLeft'); await drawer.waitFor({ state: 'hidden' });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF and all five YHWH levels.`);

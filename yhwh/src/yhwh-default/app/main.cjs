@@ -37,18 +37,28 @@ const conversations = new Map();
 function send(channel, message) { if (window && !window.isDestroyed()) window.webContents.send(channel, message); }
 function command(name) { send('command', name); }
 function flag(argv, name) { const inline = argv.find(arg => arg.startsWith(`${name}=`)); if (inline) return inline.slice(name.length + 1); const index = argv.indexOf(name); return index < 0 ? null : argv[index + 1]; }
-function request(argv, cwd = process.cwd()) {
-  const filename = flag(argv, '--open');
-  return { path: path.resolve(cwd, filename || flag(argv, '--cwd') || (three && (flag(argv, '--root') || process.env.YHWH_THREE_OPEN)) || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme') };
+const defaultDirectory = async () => (await resolveConfig(path.parse(os.homedir()).root, { ...configOptions, globalOnly: true })).values.default_directory;
+async function request(argv, cwd = process.cwd(), configured) {
+  let filename = flag(argv, '--open') || flag(argv, '--cwd') || (three && (flag(argv, '--root') || process.env.YHWH_THREE_OPEN));
+  let warning;
+  if (!filename && argv.includes('--desktop-launch')) {
+    const value = configured ?? await defaultDirectory();
+    const home = os.homedir();
+    filename = path.resolve(home, value === '~' ? '' : value.replace(/^~[\\/]/, ''));
+    if (!await fs.stat(filename).then(stat => stat.isDirectory(), () => false)) {
+      warning = `Default directory is unavailable: ${filename}`;
+      filename = home;
+    }
+  }
+  return { path: path.resolve(cwd, filename || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme'), warning };
 }
 
 const locked = app.requestSingleInstanceLock();
 if (!locked) app.quit();
 else {
   app.on('second-instance', (_event, argv, cwd) => {
-    const opening = request(argv, cwd);
-    if (loaded) send('open', opening); else pendingOpens.push(opening);
     window?.show(); window?.focus();
+    request(argv, cwd).then(opening => { if (loaded) send('open', opening); else pendingOpens.push(opening); }).catch(error => send('error', error.message));
   });
   app.on('open-file', (event, filename) => { event.preventDefault(); const opening = { path: filename }; if (loaded) send('open', opening); else pendingOpens.push(opening); });
   app.whenReady().then(launch).catch(error => { dialog.showErrorBox(ui("yhwh-could-not-start"), error.stack || error.message); app.quit(); });
@@ -181,7 +191,9 @@ async function startTerminal(focus, id) {
 async function launch() {
   await fs.mkdir(profile, { recursive: true });
   await fs.mkdir(userDirectory(), { recursive: true });
-  const initialConfig = await resolveConfig(request(process.argv).path, configOptions);
+  const configured = await defaultDirectory();
+  const initial = await request(process.argv, process.cwd(), configured);
+  const initialConfig = await resolveConfig(initial.path, configOptions);
   await keys.seed(userDirectory(), initialConfig.values.keys_directory);
   host = spawn(process.env.YHWH_NODE || 'node', [path.join(__dirname, '../../../bin/default/terminal-host.cjs')], {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: undefined }, stdio: ['ignore', 'pipe', 'pipe', 'ipc'], windowsHide: true,
@@ -201,7 +213,7 @@ async function launch() {
   });
   handle('bootstrap', async () => {
     loaded = true;
-    return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial: request(process.argv), pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
+    return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial, defaultDirectory: configured, pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
   handle('focus:new', async (id, directory) => {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));

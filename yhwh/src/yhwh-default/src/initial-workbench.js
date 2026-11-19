@@ -47,8 +47,10 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
   const setStatus = message => { $('.initial-shell-status').textContent = message; };
   let category = 'Atomics', list = false, adding = false, running = false;
   const draft = readDraft();
-  let cells = draft.cells || {}, editing = draft.file || null, selected = null, currentScreen = 'output', outputPanel = null;
+  let cells = draft.cells || {}, editing = draft.file || null, selected = null, currentScreen = 'output';
+  let outputPanel = null, scriptOutput = null;
   let matches = [];
+  let pending, execution = 0;
   const action = fn => async (...args) => {
     try { return await fn(...args); }
     catch (error) { report(error); setStatus(error.message); }
@@ -110,11 +112,11 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
     adding = !adding;
     $('[data-add]').setAttribute('aria-pressed', String(adding));
     if (adding) {
-      show('grid');
+      showScript();
       setStatus('Tap a command to add it. Select a square to choose its position.');
     } else setStatus('');
   };
-  $('[data-screen="grid"]').onclick = () => show('grid');
+  $('[data-screen="grid"]').onclick = showScript;
   $('[data-screen="output"]').onclick = () => show('output');
 
   function renderCatalog() {
@@ -148,28 +150,43 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
   function pathTitle() {
     $('[data-screen-path]').textContent = currentScreen === 'grid' ? '~/bin/' + (editing?.name || '$word') : '/dev/stdout';
   }
+  function showOutput(container) {
+    const grid = currentScreen === 'grid';
+    const panel = grid ? scriptOutput : outputPanel;
+    container.replaceChildren(panel || element('p', grid ? 'Script output appears here.' : address('Try a command, Abe. Drag it up here when it does what you want.', 1), 'initial-empty'));
+  }
+  function showScript() {
+    show('grid');
+    if (!scriptOutput && Object.keys(cells).length) execute(gridSource(cells), undefined, { automatic: true, script: true });
+  }
   function show(which) {
     currentScreen = which;
     for (const button of shell.querySelectorAll('[data-screen]')) button.setAttribute('aria-pressed', String(button.dataset.screen === which));
     pathTitle();
     screen.replaceChildren();
     if (which === 'grid') renderGrid();
-    else if (outputPanel) screen.append(outputPanel);
-    else screen.append(element('p', address('Try a command, Abe. Drag it up here when it does what you want.', 1), 'initial-empty'));
+    else showOutput(screen);
     screen.classList.remove('initial-screen-enter');
     requestAnimationFrame(() => screen.classList.add('initial-screen-enter'));
   }
   function renderGrid() {
+    const stdout = element('div', null, 'initial-grid-output');
+    stdout.setAttribute('aria-label', 'Script stdout');
+    stdout.setAttribute('aria-live', 'polite');
+    showOutput(stdout);
+    screen.append(stdout);
     const layout = element('div', null, 'initial-grid');
     layout.setAttribute('aria-label', 'Script grid, five rows and five columns');
     for (let index = 0; index < gridSize; index++) {
       const command = cells[index];
-      const label = catalog().find(item => token(item) === command || item.names?.includes(command))?.name || command;
+      const first = command?.match(/^(?:'(?:[^']*)'|\S+)/u)?.[0];
+      const label = catalog().find(item => token(item) === first || item.names?.includes(first))?.name || first;
       const square = button(label || '·', () => {
         selected = selected === index ? null : index;
         for (const [i, item] of [...layout.children].entries()) item.setAttribute('aria-pressed', String(selected === i));
-        if (selected !== null) setStatus(command ? 'Drag to move this tile, or remove it.' : 'Choose a command for this square.');
-        remove.disabled = selected == null || !cells[selected];
+        setStatus(selected != null && !command ? 'Choose a command for this square.' : '');
+        edit.disabled = remove.disabled = selected == null || !cells[selected];
+        editor.hidden = true;
       }, `Row ${1 + Math.floor(index / 5)}, column ${1 + index % 5}${command ? ': ' + command : ': empty'}`);
       square.dataset.cell = index;
       square.title = command || '';
@@ -179,23 +196,44 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
       layout.append(square);
     }
     const tools = element('div', null, 'initial-grid-tools');
+    const editor = element('form', null, 'initial-inline-form');
+    editor.hidden = true;
+    const input = element('input');
+    input.setAttribute('aria-label', 'Tile command and options');
+    input.spellcheck = false;
+    input.autocomplete = 'off';
+    const apply = element('button', 'Apply');
+    apply.type = 'submit';
+    editor.append(input, apply, button('Cancel', () => { editor.hidden = true; edit.focus(); }));
+    editor.onsubmit = action(event => {
+      event.preventDefault();
+      const command = input.value.trim();
+      if (!validTile(command)) return;
+      if (cells[selected] === command) { editor.hidden = true; edit.focus(); return; }
+      cells[selected] = command;
+      changed(selected);
+    });
+    const edit = button('Edit tile', () => {
+      editor.hidden = false;
+      input.value = cells[selected];
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
     const clear = button('New', () => {
       if (Object.keys(cells).length && !confirm('Clear this script and start a new one?')) return;
       editGrid({}, null);
     });
-    const remove = button('Remove', () => {
-      delete cells[selected]; selected = null; changed();
-    });
+    const remove = button('Remove', () => removeTile(selected));
     clear.disabled = !editing && !Object.keys(cells).length;
-    remove.disabled = selected == null || !cells[selected];
-    const runGrid = button('Run', () => execute(gridSource(cells)));
+    edit.disabled = remove.disabled = selected == null || !cells[selected];
+    const runGrid = button('Run', () => execute(gridSource(cells), undefined, { script: true }));
     const saveGrid = button('Save Logos', () => save(cells, editing));
     runGrid.disabled = saveGrid.disabled = !gridSource(cells);
-    tools.append(clear, remove, runGrid, saveGrid);
-    screen.append(layout, tools);
+    tools.append(clear, edit, remove, runGrid, saveGrid);
+    screen.append(layout, editor, tools);
   }
 
-  function renderOutput(value, { open, title } = {}) {
+  function renderOutput(value, { open, title } = {}, script) {
     outputPanel = element('div', null, 'initial-output-panel');
     if (title) outputPanel.append(element('h3', title));
     if (value.entries) {
@@ -212,35 +250,63 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
     } else {
       outputPanel.append(element('pre', asText(value) || 'Completed.', 'initial-output'));
     }
-    show('output');
+    if (script) scriptOutput = outputPanel;
+    if (currentScreen === 'output') showOutput(screen);
+    else if (script) showOutput($('.initial-grid-output'));
     return outputPanel;
   }
 
-  async function execute(source, item) {
-    if (running || !source.trim()) return;
+  function execute(source, item, { automatic = false, script = false } = {}) {
+    if (!automatic) { setStatus(''); show('output'); }
+    pending = { source, item, automatic, script, id: ++execution };
+    if (!source.trim()) {
+      pending = null;
+      if (outputPanel === scriptOutput) outputPanel = null;
+      scriptOutput = null;
+      showOutput(currentScreen === 'grid' ? $('.initial-grid-output') : screen);
+    } else renderOutput({ text: 'Running…' }, undefined, script);
+    return drain();
+  }
+
+  async function drain() {
+    if (running || !pending) return;
     running = true;
-    setStatus('');
-    renderOutput({ text: 'Running…' });
     try {
-      const result = await run(source, { preview, full: $('[data-full]').checked, item, renderOutput });
-      if (result && currentScreen === 'output') renderOutput(result);
-    } catch (error) {
-      if (currentScreen === 'output') renderOutput({ text: error.message }, { title: '/dev/stderr' });
-      report(error);
+      while (pending) {
+        const { source, item, automatic, script, id } = pending;
+        pending = null;
+        const publish = (value, options) => id === execution ? renderOutput(value, options, script) : element('div');
+        try {
+          const result = await run(source, { preview, full: !automatic && $('[data-full]').checked, item, renderOutput: publish, automatic });
+          if (result) publish(result);
+        } catch (error) {
+          publish({ text: error.message }, { title: '/dev/stderr' });
+          if (!automatic && id === execution) report(error);
+        }
+      }
     } finally { running = false; }
   }
 
   function changed(focus = null) {
+    setStatus('');
     writeDraft(cells, editing);
     show('grid');
     if (focus !== null) screen.querySelector(`[data-cell="${focus}"]`)?.focus({ preventScroll: true });
+    execute(gridSource(cells), undefined, { automatic: true, script: true });
+  }
+  function validTile(command) {
+    try {
+      const tokens = tokenize(command);
+      if (tokens[0]?.word && !tokens.some(part => part === ';' || part === '|')) return true;
+      setStatus('Use one command per square. The grid adds the pipes and newlines.');
+    } catch (error) { setStatus(error.message); }
+    return false;
+  }
+  function removeTile(index) {
+    delete cells[index]; selected = null; changed(index);
   }
   function place(command, at = selected, from, focus = true) {
-    const tokens = tokenize(command);
-    if (!tokens.length || tokens.some(part => [';', '|'].includes(part))) {
-      setStatus('Use one command per square. The grid adds the pipes and newlines.');
-      return;
-    }
+    if (!validTile(command)) return;
     if (at == null || (!Object.keys(cells).length && from == null)) {
       at = Array.from({ length: gridSize }, (_, index) => index).find(index => !cells[index]);
     }
@@ -311,7 +377,7 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
       if (preview.contains(target)) {
         const cell = target.closest('[data-cell]');
         place(payload.command, cell ? Number(cell.dataset.cell) : null, payload.index, event.pointerType !== 'touch');
-      }
+      } else if (payload.index != null && shelf.contains(target)) removeTile(payload.index);
     }
     tile.onpointerup = event => finish(event, true);
     tile.onpointercancel = event => finish(event, false);

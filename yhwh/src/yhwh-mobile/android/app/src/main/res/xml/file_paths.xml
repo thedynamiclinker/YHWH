@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <files-path name="yhwh_documents" path="YHWH/" />
+    <external-files-path name="yhwh_external_documents" path="." />
     <cache-path name="yhwh_cache" path="." />
 </paths>

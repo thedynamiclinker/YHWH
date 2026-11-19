@@ -176,20 +176,24 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
 | Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Tiles run into an inline workspace and drag into a 5×5 script grid. The center dot fades in when pressed and fades out on release. The text composer supports pipes, redirects and substitutions. |
+| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid, select a tile to edit its options, and see the preview update above the grid. Use Run for file writes or app actions. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
+| Panel keys | Hardware keyboards can hide, show, maximize or incrementally resize the file drawer. Configure the combinations and pixel step in Settings → Keys. The Initial opens as a sheet on mobile. |
 | Talk to YHWH | Shared composer and local left-side History for offline workspace help. Live chat setup opens the desktop connection guide. Live agent writes, chat attachments, and direct mail delivery require the desktop host. Electronic Mail can open a draft in the device’s mail app. |
-| Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
+| Folder roots | Optional per-tab navigation into an existing folder using Use this folder as /. |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Nietzsche Family Circus | Available in Nietzsche mode. The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |
 | Desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
 | Three / Shaddai / company rehearsal | Separate clients. Shaddai uses a host terminal and Python with local Unix process and filesystem access. |
 
-Mobile paths such as `/YHWH/notes.md` are logical workspace paths. Native files
-are ordinary files under `Directory.Data/YHWH`: iOS Documents/YHWH (visible in
-Files → On My iPhone/iPad → YHWH) and Android's app-private files directory.
-Private JSON state is stored separately under `Directory.Library/yhwh`.
-Browser preview uses Capacitor's IndexedDB filesystem. Import preserves originals
+Mobile opens at `/`, with **Settings → Files & editor → Default directory** for
+starting in a subfolder. On fresh installs `/` is the app’s external files
+directory on Android and its Documents directory on iOS. The Android system
+picker imports files from shared storage. iOS exposes documents in Files → On
+My iPhone/iPad → YHWH. Existing installations map their previous documents
+folder to `/` in place. Absolute `/YHWH/...` paths written into documents or
+scripts can be updated to `/...`. Private JSON state remains separate.
+Browser preview uses Capacitor’s IndexedDB filesystem. Import preserves originals
 and refuses existing destinations. Exports share the last saved file; save your
 buffer first. Uninstalling deletes local data, so keep exported backups.
 

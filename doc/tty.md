@@ -5,6 +5,16 @@ terminal. Use `make tty OPEN=PATH` to open a directory or file, `make tty-build`
 to build the console diagnostic, and `make tty-check` to run the PTY tests.
 Press F1 for help and F10 to quit.
 
+The file manager stays on the left and the terminal docks under the editor. Use
+Ctrl+Up/Down for the terminal and Ctrl+Right/Left for the file manager to step
+between hidden, split and maximized. Add Alt+Shift for smaller moves. Set the
+key combinations and step in rows or columns under **Settings → Keys**. These
+shortcuts depend on the outer terminal sending the modified arrow keys.
+
+A normal launch uses your current directory. Use `shaddai --launcher` for
+launcher shortcuts. It opens the global **Settings → Files and editor → Default
+directory**, which defaults to your home directory and is shared with desktop.
+
 Use **YHWH-ness · levels and upgrades** in the command palette to switch levels,
 read the welcome passages, or try the Pro and Elite previews. The terminal
 reader links to the original Nietzsche Family Circus. The palette uses the

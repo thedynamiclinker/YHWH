@@ -1,10 +1,12 @@
 # Interface
 
 - Start with readable files and an editor, no vault or required narrative. Interface/editor/terminal default to 16/18/15px and remain configurable.
-- The quiet grey “Need Some Help?” button presents only God and Man. Other worlds and jokes stay discoverable through commands and exploration; do not restore the native menu duplicate.
+- The quiet grey “Need Some Help?” button opens the God and Man views of the desktop’s mounted sources. The mobile equivalent opens Files and backups.
 - Settings use categories, switches, sliders, and bounded numbers; rc remains the advanced escape hatch. Preserve directory scope and handwritten rc.
 - On desktop, single click selects and unfolds a folder. Double click or Enter enters it. On touch, tap a row to open it, tap the triangle to expand in place, and use the row menu for file actions. Keep filters and scroll positions per tab.
 - Ctrl+L clears a focused terminal. From another pane it focuses the file location field. Explicit terminal actions focus the terminal when they reveal it.
+- A shell launch inherits the caller’s directory. Launchers use **Settings → Files & editor → Default directory**. Desktop defaults to the user’s home. Mobile defaults to its storage root.
+- Ctrl+Up/Down steps the terminal between hidden, split and vertically maximized. Ctrl+Right/Left does the same for the file manager. Add Shift+Alt for incremental resizing. **Settings → Keys** edits each shortcut and the resize step, with pixels on desktop and rows or columns in Shaddai.
 - Use clear tool labels and restrained Unix-style marks, not decorative platform symbols. Keep the first screen quiet.
 - Preserve the interface theme while coloring Markdown H2 text blue (#6d9eeb) and H3 text pale yellow (#ffe599), matching `.obsidian/snippets/ld.css`, in preview and source modes.
 

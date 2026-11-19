@@ -46,6 +46,16 @@ module.exports=async function initialUI(page,artifacts) {
   await dialog.getByRole('button', { name: 'Save Logos', exact: true }).click();
   await dialog.locator('.initial-tile', { hasText: 'tutorial-grid' }).waitFor();
   assert.match(await page.evaluate(() => window.YHWH.initial.readWord('tutorial-grid').then(file => file.content)), /Γ \| Ꞁ \| pwd/);
+  await dialog.getByRole('button', { name: 'Script', exact: true }).tap();
+  const last = dialog.locator('[data-cell="6"]');
+  await last.tap();
+  await dialog.getByRole('button', { name: 'Edit tile' }).tap();
+  await dialog.getByRole('textbox', { name: 'Tile command and options' }).fill("echo 'Edited on touch'");
+  await dialog.getByRole('button', { name: 'Apply' }).tap();
+  await dialog.locator('.initial-grid-output .initial-output', { hasText: 'Edited on touch' }).waitFor();
+  await dialog.getByRole('button', { name: 'Remove' }).tap();
+  await dialog.locator('.initial-grid-output .initial-output', { hasText: 'Logos Demos' }).waitFor();
+  assert.doesNotMatch(await dialog.locator('.initial-grid-output').textContent(), /Edited on touch/);
   assert.equal(await dialog.locator('[data-composer]').count(),0);
   await page.screenshot({path:path.join(artifacts,'initial-shelf.png')});
   // Create an alias using only glyph and action pickers, then train a mark.
@@ -66,7 +76,7 @@ module.exports=async function initialUI(page,artifacts) {
   await dialog.locator('[data-search]').fill('beta');
   assert.equal(await dialog.locator('.initial-tile b').textContent(),'Β');
   await dialog.locator('.initial-tile').click();
-  await dialog.locator('.initial-output', { hasText: '/YHWH' }).waitFor();
+  await dialog.locator('.initial-output', { hasText: '/' }).waitFor();
   await dialog.locator('[data-options] summary').click(); await dialog.locator('[data-tool="draw"]').click();
   const drawBox=await dialog.locator('canvas').boundingBox();
   await page.mouse.move(drawBox.x+45,drawBox.y+30);await page.mouse.down();
@@ -138,9 +148,9 @@ module.exports=async function initialUI(page,artifacts) {
   await files.getByRole('searchbox').fill('');
   await page.screenshot({path:path.join(artifacts,'initial-file-manager.png')});
   await page.evaluate(()=>window.YHWH.initial.run('chroot initial-live-test'));
-  assert.equal(await page.evaluate(()=>window.YHWH.active().worldRoot),'/YHWH/initial-live-test');
-  await page.evaluate(()=>window.YHWH.navigate('/YHWH'));
-  assert.equal(await page.evaluate(()=>window.YHWH.active().cwd),'/YHWH/initial-live-test');
+  assert.equal(await page.evaluate(()=>window.YHWH.active().worldRoot),'/initial-live-test');
+  await page.evaluate(()=>window.YHWH.navigate('/'));
+  assert.equal(await page.evaluate(()=>window.YHWH.active().cwd),'/initial-live-test');
   await page.evaluate(()=>window.YHWH.initial.run('chroot --leave'));
   await page.evaluate(()=>window.YHWH.run('mobile-connect'));
   assert.match(await page.locator('#mobile-dialog').textContent(),/not authorize|not connected|still to come/);
@@ -160,7 +170,7 @@ module.exports=async function initialUI(page,artifacts) {
     assert.equal(await dialog.isVisible(), false);
   });
   await page.locator('#initial-gesture-result button', { hasText: /^Run$/ }).click();
-  await dialog.locator('.initial-output', { hasText: '/YHWH' }).waitFor();
+  await dialog.locator('.initial-output', { hasText: '/' }).waitFor();
   await dialog.locator('[data-close]').click();
   await cdp.detach();
 };

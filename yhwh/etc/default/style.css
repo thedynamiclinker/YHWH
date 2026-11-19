@@ -262,6 +262,7 @@ body[data-theme='nietzsche'] { --purple: #c9b192; --purple-bg: #3e342c; --gold: 
 .setting-row strong { font-weight:500; }
 .setting-row small { max-width:34ch; font-size:.875rem; }
 .setting-row input:not([type=checkbox]):not([type=range]) { width:110px; }
+.setting-row :is(input[name^='key_'], input[name='default_directory']) { width: min(210px, 100%) !important; }
 .setting-row input[type=range] { width:150px; accent-color:var(--purple); }
 .setting-row input[type=checkbox] { appearance:none; width:36px; height:22px; border-radius:20px; background:var(--line); position:relative; cursor:pointer; flex-shrink:0; }
 .setting-row input[type=checkbox]::after { content:''; position:absolute; width:14px; height:14px; border-radius:50%; background:var(--text); top:3px; left:3px; }
@@ -335,6 +336,28 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 
 /* The book's reference between rules, English left, original right. */
 .verse-block { min-width: 0; margin: 18px 0; }
+/* Dark ink and highlights from We The Nameless/master.tex. These override the light EPUB colors. */
+body .verse-block :is(.source-j, .source-je, .source-jp, .source-jpp, .source-jm) { color: #94c091 !important; }
+body .verse-block :is(.source-e, .source-ep, .source-epp, .yellow) { color: #e0c99c !important; }
+body .verse-block :is(.source-p, .source-pr, .source-pp, .source-r, .source-rc, .source-diff, .annotation-p, .annotation-r) { color: #6d88ae !important; }
+body .verse-block :is(.source-pr, .source-r, .source-rc, .source-diff, .annotation-r) { background-color: #36414b !important; }
+body .verse-block :is(.source-rje, .annotation-rje) { color: #98c295 !important; background-color: #344837 !important; }
+body .verse-block :is(.source-dtra, .source-dtrh, .source-dtn) { color: #b1a383 !important; }
+body .verse-block .source-dtrb { color: #ad876e !important; }
+body .verse-block :is(.source-bookofrecords, .source-records) { color: #abb4a9 !important; }
+body .verse-block .source-other { color: #a3aea3 !important; }
+body .verse-block .source-x { color: #d9d4c6 !important; }
+body .verse-block :is(.source-proto, .source-protoa, .source-protof) { color: #b5bcb0 !important; }
+body .verse-block :is(.source-red, .source-rb) { color: #bd6e71 !important; background-color: #413d43 !important; }
+body .verse-block :is(.source-reblacktor, .source-ra) { color: #fff !important; background-color: #4a5156 !important; }
+body .verse-block :is(.annotation-a, .ink) { color: #e8e2d2 !important; }
+body .verse-block :is(.annotation-b, .red, .source-json) { color: #e7a8a2 !important; }
+body .verse-block :is(.annotation-c, .blue) { color: #a4b6d0 !important; }
+body .verse-block .green { color: #accaa4 !important; }
+body .verse-block .gray { color: #b1b9ad !important; }
+body .verse-block .highlight-a { background-color: #434a4d !important; }
+body .verse-block .highlight-b { background-color: #434347 !important; }
+body .verse-block .highlight-c { background-color: #3b454d !important; }
 .verse-heading { border-block: 1px solid var(--line); text-align: center; padding: 3px 0; margin-bottom: 14px; }
 .verse-heading button { font: 1rem/1.4 Georgia, 'Times New Roman', serif; color: var(--gold); padding: 3px 10px; }
 .verse-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }

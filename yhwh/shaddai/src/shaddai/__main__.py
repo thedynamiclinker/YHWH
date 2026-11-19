@@ -8,6 +8,7 @@ import sys
 from . import __version__
 from .config import Config
 from .navigation import send_path
+from .yhwh import Prefixes
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,15 +19,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     parser = argparse.ArgumentParser(prog="shaddai", description="A terminal workspace for text files.")
-    parser.add_argument("path", nargs="?", type=Path, default=Path.cwd(),
+    parser.add_argument("path", nargs="?", type=Path,
                         help="directory or text file to open")
+    parser.add_argument("--launcher", action="store_true", help="start in the configured default directory")
     parser.add_argument("--prefix", type=Path, help="directory for configuration and state")
     parser.add_argument("--doctor", action="store_true", help="check startup without opening the workspace")
     parser.add_argument("--version", action="version", version=f"Shaddai {__version__}")
     args = parser.parse_args(argv)
 
     try:
-        path = args.path.expanduser().absolute()
+        path = args.path or Path.cwd()
+        warning = ""
+        if args.launcher and args.path is None:
+            value = Prefixes(Path("/"), global_only=True).values.get("default_directory", "")
+            path = Path.home() / Path(value).expanduser()
+            if not path.is_dir():
+                warning = f"Default directory is unavailable: {path}"
+                path = Path.home()
+        path = path.expanduser().absolute()
         directory = path.is_dir()
         if not directory and not path.is_file():
             parser.error(f"expected a directory or regular file: {path}")
@@ -39,6 +49,8 @@ def main(argv: list[str] | None = None) -> int:
         from .workspace import Workspace
 
         workspace = Workspace(root, Config(root, args.prefix), file=None if directory else path)
+        if warning:
+            workspace.message = warning
     except ModuleNotFoundError as error:
         if error.name not in ("prompt_toolkit", "pyte", "pygments"):
             raise

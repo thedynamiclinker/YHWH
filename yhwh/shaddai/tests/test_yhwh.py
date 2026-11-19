@@ -33,6 +33,10 @@ class YhwhTTYTests(unittest.TestCase):
             "welcomeBody": "Ah! There you are. Hey Abe, can I stay with you for a bit?",
             "aboutBody": "Abe, I’m with The Nameless.",
         }))
+        app_data = LAUNCHER.parents[2] / "etc"
+        fixture_data = self.data / "yhwh/etc"
+        for name in ("default/action-letters.json", "default/text-verses.json", "verses"):
+            (fixture_data / name).symlink_to(app_data / name)
         put(self.data / "mnt/yhwh/mnt/sinai/README.md", "1. [Genesis](https://example.org/genesis)\n2. Exodus\n")
         put(self.data / "mnt/yhwh/readme.md", "world file\n")
         put(self.data / "mnt/we/readme.md", "shared world overlay\n")
@@ -53,6 +57,33 @@ class YhwhTTYTests(unittest.TestCase):
         tty.send(prefix)
         tty.shows("Commands")
         tty.send(name.encode() + b"\r")
+
+    def test_panel_shortcuts_cycle_and_resize_from_inside_the_shell(self):
+        put(self.user / "rc", "/\n    terminal=false\n")
+        tty = self.launch()
+        ctrl_up, ctrl_down = b"\x1b[1;5A", b"\x1b[1;5B"
+        tty.send(ctrl_up)
+        tty.shows("Shell 1")
+        shell_row = lambda lines: next((i for i, line in enumerate(lines) if "Shell 1" in line), -1)
+        split = shell_row(tty.screen.display)
+        tty.send(b"\x1b[1;8A")
+        tty.wait_for(lambda lines: shell_row(lines) == split - 1)
+        tty.send(ctrl_up)
+        tty.wait_for(lambda lines: shell_row(lines) == 1)
+        tty.send(ctrl_down)
+        tty.wait_for(lambda lines: shell_row(lines) == split - 1)
+        tty.send(ctrl_down)
+        tty.wait_for(lambda lines: shell_row(lines) == -1)
+        tty.send(b"\x1b[1;5C")
+        tty.shows("Places")
+        tty.send(b"\x1b[1;5D")
+        tty.wait_for(lambda lines: not any("Places" in line for line in lines))
+
+    def test_launcher_uses_the_global_default_directory(self):
+        destination = self.work / "Start here"
+        put(destination / "launch-marker.md", "# Launcher")
+        put(self.user / "rc", f"/\n    default_directory={shlex.quote(str(destination))}\n")
+        self.launch(args=["--launcher"]).shows("launch-marker.md")
 
     def test_level_preview_can_be_unlocked_and_relocked_across_restarts(self):
         app_root = Path(__file__).resolve().parents[2]
@@ -147,6 +178,16 @@ class YhwhTTYTests(unittest.TestCase):
         tty.shows("I came down to look")
         tty.send(b"I came down to look\r")
         tty.shows("Shell letter")
+        tty.shows("v In the Margins, Literary sources")
+        tty.shows("> From We The Nameless: Genesis 18:20")
+        tty.shows("> From We The Nameless: Genesis 18:21")
+        tty.send(b"\x1bg")
+        tty.shows("Reading actions")
+        tty.send(b"From We The Nameless: Genesis 18:20\r")
+        tty.shows("Ok so YHWH mentions that Sodom and Gomorrah are:")
+        tty.send(b"\r")
+        tty.wait_for(lambda lines: any("> From We The Nameless: Genesis 18:20" in line for line in lines)
+                     and all("Ok so YHWH mentions" not in line for line in lines))
         self.command(tty, "Settings")
         tty.send(b"Browse console fonts\r")
         tty.shows("Terminal device: /dev/pts/")

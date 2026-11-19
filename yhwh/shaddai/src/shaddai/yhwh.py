@@ -71,11 +71,13 @@ def assignment_name(key):
 
 
 class Prefixes:
-    def __init__(self, path):
+    def __init__(self, path, *, global_only=False):
         self.user = config_home()
         system = Path(os.environ.get("YHWH_SYSTEM_CONFIG") or "/etc/yhwh").absolute()
         self.locations = [(system, system), (self.user, self.user)]
-        self.locations.extend((parent / ".yhwh", parent) for parent in reversed((path, *path.parents)))
+        if not global_only:
+            self.locations.extend((parent / ".yhwh", parent) for parent in reversed((path, *path.parents)))
+        self.target = path
         self.environment = dict(os.environ)
         self.values = {}
         self.files, self.warnings = [], []
@@ -130,7 +132,7 @@ class Prefixes:
                 entries = sections(filename.read_text())
                 expanded = shell_output("\n".join(
                     f'printf "%s\\0" "{scope}" >&__OUTPUT__' for scope, _ in entries), base, env)
-                target = self.locations[-1][1]
+                target = self.target
                 matches = [(scope, lines) for (_, lines), value in zip(entries, expanded)
                            if target.is_relative_to(scope := Path(os.path.abspath(base / value)))]
                 lines = [line for _, block in sorted(matches, key=lambda item: len(str(item[0]))) for line in block]

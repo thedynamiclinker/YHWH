@@ -2,7 +2,8 @@ import { fileType } from '../../../lib/file-type.cjs';
 import { addressCopy, levelAt } from '../../../lib/levels.cjs';
 import { draft, message } from '../../../lib/mail-message.cjs';
 
-export const HOME = '/YHWH';
+export const HOME = '/';
+export const legacyPath = value => /^\/YHWH(?=\/|$)/.test(value) ? value.slice(5) || '/' : value;
 export const unavailable = {
   'keys:run': 'Custom executable and JavaScript key files require the desktop host. Bundled commands work here.',
   'keys:shell': 'Shell pipelines and modifier-directory commands require desktop process APIs. Text, wildcard and regex search work here.',
@@ -16,17 +17,14 @@ export const unavailable = {
 };
 export function normalize(input, cwd = HOME) {
   if (typeof input !== 'string' || input.includes('\0') || input.includes('\\')) throw new Error('Invalid path.');
-  if (input === '/') return HOME;
   const parts = (input.startsWith('/') ? input : `${cwd}/${input}`).split('/'), result = [];
   for (const part of parts) {
-    if (part === '..') { if (result.length <= 1) throw new Error('Stay inside the YHWH workspace.'); result.pop(); }
+    if (part === '..') result.pop();
     else if (part && part !== '.') result.push(part);
   }
-  const path = '/' + result.join('/');
-  if (path !== HOME && !path.startsWith(HOME + '/')) throw new Error('Stay inside the YHWH workspace.');
-  return path;
+  return '/' + result.join('/');
 }
-const inside = (path, root) => path === root || path.startsWith(root + '/');
+const inside = (path, root) => root === '/' || path === root || path.startsWith(root + '/');
 const base64 = bytes => { let result = ''; for (let i = 0; i < bytes.length; i += 8192) result += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(result); };
 const mime = name => ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', pdf: 'application/pdf', avif: 'image/avif' })[name.split('.').at(-1).toLowerCase()] || '';
 function version(stat, bytes) {
@@ -43,6 +41,14 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
   const emit = (name, value) => { for (const fn of events.get(name) || []) fn(value); };
   const focus = id => { const value = focuses.get(id); if (!value) throw new Error('That tab has closed.'); return value; };
   const changed = () => { for (const id of focuses.keys()) emit('directory-changed', { id }); };
+  async function loadSettings() {
+    const current = await storage.loadState('settings-v2', null);
+    if (current) return current;
+    const previous = await storage.loadState('settings', {});
+    const migrated = { ...previous['/'], ...previous['/YHWH'] };
+    const entries = [['/', migrated], ...Object.entries(previous).filter(([scope]) => scope.startsWith('/YHWH/')).map(([scope, values]) => [legacyPath(scope), values])];
+    return Object.fromEntries(entries.map(([scope, values]) => [scope, Object.fromEntries(Object.entries(values).map(([key, value]) => [key, ['bg', 'stylesheet', 'default_directory'].includes(key) ? legacyPath(value) : value]))]));
+  }
   async function config(path) {
     const values = { ...defaults, file_manager: 'false', terminal: 'false' };
     for (const scope of Object.keys(settings).filter(scope => scope === '/' || inside(path, scope)).sort((a,b) => a.length - b.length)) Object.assign(values, settings[scope]);
@@ -86,8 +92,14 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
   const handlers = {
     async bootstrap() {
       await storage.init();
-      settings = await storage.loadState('settings', {}); customWords = await storage.loadState('words', {});
-      return { root: HOME, interface: 'mobile', home: HOME, platform, initial: { path: HOME }, pending: [], words: { ...words, ...customWords }, capabilities: { terminal: false, chat: false } };
+      settings = await loadSettings(); customWords = await storage.loadState('words', {});
+      const defaultDirectory = settings['/']?.default_directory || '';
+      let initial = { path: HOME };
+      if (defaultDirectory) {
+        const path = normalize(defaultDirectory.replace(/^~(?=\/|$)/, ''));
+        initial = (await storage.stat(path))?.directory ? { path } : { path: HOME, warning: `Default directory is unavailable: ${path}` };
+      }
+      return { root: HOME, interface: 'mobile', home: HOME, defaultDirectory, platform, initial, pending: [], words: { ...words, ...customWords }, capabilities: { terminal: false, chat: false } };
     },
     async 'focus:new'(id, directory) {
       if (typeof id !== 'string' || focuses.has(id)) throw new Error('Invalid tab.');
@@ -97,12 +109,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'focus:close': id => focuses.delete(id), navigate,
     async 'world:enter'(id, name) {
       const current = focus(id);
-      const path = ['root','yhwh'].includes(name) ? `${HOME}/Worlds/${name === 'root' ? 'Man' : 'God'}` : normalize(name || current.cwd, current.cwd);
-      if (['root','yhwh'].includes(name)) {
-        for (const folder of [`${HOME}/Worlds`, path]) if (!await storage.stat(folder)) await storage.mkdir(folder);
-      }
+      if (name === 'root' || name === 'yhwh') throw new Error('Use an existing folder as the root on mobile.');
+      const path = normalize(name || current.cwd, current.cwd);
       if (!(await storage.stat(path))?.directory) throw new Error('Choose a folder for this view’s root.');
-      current.worldRoot = path; current.worldName = ['root','yhwh'].includes(name) ? name : 'folder';
+      current.worldRoot = path; current.worldName = 'folder';
       return navigate(id, path);
     },
     'world:leave': async id => { const current = focus(id); current.worldRoot = null; current.worldName = null; return navigate(id, HOME); },
@@ -133,8 +143,9 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       await unused(destination); await storage.copy(source, destination); changed(); return destination;
     },
     async 'file:trash'(filename) {
-      const source = normalize(filename); if (source === HOME || source === `${HOME}/.Trash`) throw new Error('Cannot trash the workspace or its Trash folder.');
-      const target = `${HOME}/.Trash`; if (!await storage.stat(target)) await storage.mkdir(target);
+      const target = '/.Trash', source = normalize(filename);
+      if (source === HOME || source === target) throw new Error('Cannot trash the storage root or its Trash folder.');
+      if (!await storage.stat(target)) await storage.mkdir(target);
       await storage.move(source, `${target}/${crypto.randomUUID()}-${source.split('/').at(-1)}`); changed();
     },
     'file:external': filename => share(normalize(filename)),
@@ -152,9 +163,9 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       for (const [key, value] of Object.entries(values)) if (!/^[a-zA-Z_]\w*$/.test(key) || typeof value !== 'string') throw new Error('Invalid setting.');
       if (values.plugins && values.plugins !== '[]') throw new Error('Mobile currently supports bundled plugins only.');
       const next = { ...settings, [scope]: { ...settings[scope], ...values } };
-      await storage.saveState('settings', next); settings = next;
+      await storage.saveState('settings-v2', next); settings = next;
     },
-    'config:reload': async () => { settings = await storage.loadState('settings', {}); },
+    'config:reload': async () => { settings = await loadSettings(); },
     async 'words:save'(values) {
       for (const [key, value] of Object.entries(values)) if (!(key in words) || typeof value !== 'string') throw new Error('Unknown text entry.');
       const next = { ...customWords, ...values }; await storage.saveState('words', next); customWords = next; return { ...words, ...next };

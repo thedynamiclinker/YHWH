@@ -115,7 +115,7 @@ async function main(argv = process.argv.slice(2), bin = process.env.YHWH_BIN || 
     try { await fs.stat(command); } catch { throw new Error(`Unknown command or path: ${command}. Run yhwh help.`); }
     desktopArgs.splice(0, 1, '--open', path.resolve(command));
   }
-  if (!desktopArgs.includes('--open') && !desktopArgs.includes('--cwd')) desktopArgs.push('--cwd', process.cwd());
+  if (!desktopArgs.includes('--open') && !desktopArgs.includes('--cwd') && !desktopArgs.includes('--desktop-launch')) desktopArgs.push('--cwd', process.cwd());
   await start(desktopArgs);
 }
 module.exports = { main, externalCommands };

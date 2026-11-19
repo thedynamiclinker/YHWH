@@ -1,16 +1,32 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { HOME, normalize } from './bridge.mjs';
+import { normalize } from './bridge.mjs';
 
 const encode = bytes => { let result = ''; for (let i = 0; i < bytes.length; i += 8192) result += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(result); };
 const missing = error => error.code === 'OS-PLUG-FILE-0008' || /(?:does not exist|not found|ENOENT)/i.test(error.message);
-export function createStorage() {
-  const location = path => ({ directory: Directory.Data, path: `YHWH${normalize(path).slice(HOME.length)}` });
+export function createStorage(platform) {
+  let volume, prefix, initializing;
+  const location = path => ({ directory: volume, path: [prefix, normalize(path).slice(1)].filter(Boolean).join('/') });
   const state = name => ({ directory: Directory.Library, path: `yhwh/${name}.json` });
   const statResult = result => ({ directory: result.type === 'directory', size: result.size, modified: result.mtime });
   const api = {
-    async stat(path) { try { return statResult(await Filesystem.stat(location(path))); } catch (error) { if (missing(error)) return null; throw error; } },
-    async init() { if (!await api.stat(HOME)) await Filesystem.mkdir({ ...location(HOME), recursive: true }); },
-    async list(path) { return (await Filesystem.readdir(location(path))).files.map(item => ({ name: item.name, path: `${path}/${item.name}`, ...statResult(item) })); },
+    async stat(path) {
+      const target = location(path);
+      if (!target.path && platform === 'web') return { directory: true, size: 0, modified: 0 };
+      try { return statResult(await Filesystem.stat(target)); } catch (error) { if (missing(error)) return null; throw error; }
+    },
+    init() {
+      return initializing ??= (async () => {
+        let layout = await api.loadState('storage-root', null);
+        if (!layout) {
+          const legacy = await Filesystem.stat({ directory: Directory.Data, path: 'YHWH' }).then(item => item.type === 'directory', error => { if (missing(error)) return false; throw error; });
+          layout = legacy ? 'legacy' : 'documents';
+          await api.saveState('storage-root', layout);
+        }
+        volume = layout === 'documents' && platform === 'android' ? Directory.External : Directory.Data;
+        prefix = layout === 'legacy' ? 'YHWH' : '';
+      })();
+    },
+    async list(path) { return (await Filesystem.readdir(location(path))).files.map(item => ({ name: item.name, path: normalize(item.name, path), ...statResult(item) })); },
     async read(path) {
       const { data } = await Filesystem.readFile(location(path));
       if (typeof data !== 'string') return new Uint8Array(await data.arrayBuffer());
@@ -18,12 +34,12 @@ export function createStorage() {
     },
     write: (path, bytes) => Filesystem.writeFile({ ...location(path), data: encode(bytes) }),
     mkdir: path => Filesystem.mkdir(location(path)),
-    move: (from, to) => Filesystem.rename({ directory: Directory.Data, from: location(from).path, to: location(to).path }),
+    move: (from, to) => Filesystem.rename({ directory: volume, from: location(from).path, to: location(to).path }),
     async copy(from, to) {
       if ((await api.stat(from))?.directory) {
         await api.mkdir(to);
         for (const entry of await api.list(from)) await api.copy(entry.path, `${to}/${entry.name}`);
-      } else await Filesystem.copy({ directory: Directory.Data, from: location(from).path, to: location(to).path });
+      } else await Filesystem.copy({ directory: volume, from: location(from).path, to: location(to).path });
     },
     uri: async path => (await Filesystem.getUri(location(path))).uri,
     async loadState(name, fallback) {

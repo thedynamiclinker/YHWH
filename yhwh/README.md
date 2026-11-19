@@ -105,6 +105,10 @@ XDG state for the default app, `YHWH_THREE_DATA_DIR` for Three, and Obsidian's
 plugin `data.json` for plugin settings. Installed defaults and mutable state
 have separate ownership. No profile is installed into the vault root.
 
+Launching from a shell uses its current directory. Desktop menu shortcuts use
+**Settings → Files & editor → Default directory**, with home as the default.
+Rerun `make develop` or `make install` to regenerate an older menu shortcut.
+
 Builds and dependencies are ignored by Git. Obsidian's excluded-file filters
 hide `yhwh/var`, dependencies and Git internals. Each human must also add
 `yhwh/var` and `yhwh/node_modules` to **Sync → Excluded folders**: Obsidian Sync's

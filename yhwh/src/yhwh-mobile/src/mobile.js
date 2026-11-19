@@ -1,6 +1,6 @@
 import { showWorkspaceDialog } from '../../yhwh-default/src/preview-dialog.js';
 import { fileIcons } from '../../yhwh-default/src/file-icons.js';
-import { HOME, normalize } from './bridge.mjs';
+import { HOME, legacyPath, normalize } from './bridge.mjs';
 import { undo, redo } from '@codemirror/commands';
 
 const escape = value => String(value).replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
@@ -30,7 +30,7 @@ export function pickPath(storage, kind, cwd = HOME, name = '') {
         button.onclick = () => Promise.resolve().then(handler).catch(error => { content.querySelector('[role=alert]').textContent = error.message; });
         list.append(button);
       };
-      if (path !== HOME) row('Parent folder', () => render(path.slice(0, path.lastIndexOf('/'))), fileIcons.parent);
+      if (path !== HOME) row('Parent folder', () => render(normalize('..', path)), fileIcons.parent);
       if (kind === 'directory') row('Use this folder', () => { result = path; dialog.close(); });
       for (const item of entries.filter(item => !item.name.startsWith('.')).sort((a,b) => Number(b.directory)-Number(a.directory) || a.name.localeCompare(b.name))) {
         if (kind === 'directory' && !item.directory) continue;
@@ -62,6 +62,7 @@ export function pickPath(storage, kind, cwd = HOME, name = '') {
 
 export function installMobile(app, storage) {
   const body = document.body;
+  for (const id of ['be-root', 'be-yhwh']) app.commands.delete(id);
   const closeDrawer = () => { if (app.active()?.showFiles) app.run('toggle-files'); };
   const closeSheets = () => { for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close(); };
   const command = (id, name, run) => app.addCommand({ id, name, run });
@@ -125,7 +126,7 @@ export function installMobile(app, storage) {
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Import files…', 'mobile-import']]));
   command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Talk to YHWH', 'chat'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
   command('mobile-guide', 'Mobile files and backups', () => {
-    const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p>Your notes are ordinary files in this app’s YHWH folder. Use Import files to copy files from your device, and Export or share file to send them elsewhere. On iOS the folder is also available in Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the workspace’s hidden .Trash folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Folder sync, arbitrary external vault access and OS process shells are not implemented on mobile. Connect YHWH explains the available Codex account workflow.</p>';
+    const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p><code>/</code> opens the app’s storage. Use Import files for documents from shared device storage and Export or share file to send files elsewhere. On iOS, see Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the hidden <code>/.Trash</code> folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Connect YHWH explains the available Codex account workflow.</p>';
   });
   command('open-guide', 'Open the mobile guide', () => app.run('mobile-guide'));
   command('expand-files', 'Open file drawer', () => app.run('toggle-files'));
@@ -189,14 +190,18 @@ export function installMobile(app, storage) {
   // Recover unsaved work after the OS evicts the WebView. Recovery pauses
   // autosave until the draft has been reviewed and explicitly saved.
   let drafts;
-  try { drafts = JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]'); } catch { drafts = []; }
+  const draftKey = 'yhwh:mobile:drafts-v2';
+  try {
+    const saved = localStorage.getItem(draftKey);
+    drafts = saved ? JSON.parse(saved) : JSON.parse(localStorage.getItem('yhwh:mobile:drafts') || '[]').map(draft => ({ ...draft, path: legacyPath(draft.path) }));
+  } catch { drafts = []; }
   const pendingDrafts = new Map(drafts.map(draft => [draft.path, draft]));
   let draftTimer;
   const persistDraft = () => {
     clearTimeout(draftTimer);
     const current = new Map(pendingDrafts);
     for (const tab of app.tabs.filter(tab => tab.dirty && tab.editor)) current.set(tab.file.path, { path: tab.file.path, text: tab.editor.state.doc.toString(), modified: tab.file.modified });
-    try { localStorage.setItem('yhwh:mobile:drafts', JSON.stringify([...current.values()])); } catch { app.notice('Recovery storage is full. Save your changes.'); }
+    try { localStorage.setItem(draftKey, JSON.stringify([...current.values()])); } catch { app.notice('Recovery storage is full. Save your changes.'); }
   };
   app.on('change', () => { clearTimeout(draftTimer); draftTimer = setTimeout(persistDraft, 250); });
   for (const event of ['save', 'open', 'close']) app.on(event, persistDraft);

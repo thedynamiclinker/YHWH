@@ -16,14 +16,15 @@ export function createVerseUI({ call, modal, notice }) {
   const get = reference => call('verse:get', reference).then(unlocked);
   const styled = (verse, key) => display[verse.id]?.[key] ? DOMPurify.sanitize(marked.parseInline(display[verse.id][key])) : escape(verse[key]);
 
-  function block(initial, { commentary = false, compact = false } = {}) {
+  function block(initial, { commentary = false, compact = false, citeCommentary = false } = {}) {
     const element = document.createElement('article');
     element.className = `verse-block${compact ? ' verse-compact' : ''}`;
     function render(verse, expanded = commentary) {
+      const summary = citeCommentary ? ui('commentary-citation', verse.reference) : ui('commentary');
       element.dataset.verseId = verse.id;
       element.innerHTML = `<header class="verse-heading"><button type="button" data-open-verse title="${escape(ui('browse'))}">${escape(verse.reference)}</button></header>
         <div class="verse-columns"><div class="verse-english" lang="en">${styled(verse, 'english')}</div><div class="verse-original" lang="he" dir="rtl">${styled(verse, 'original')}</div></div>
-        <details class="verse-commentary" ${expanded ? 'open' : ''}><summary>${escape(ui('commentary'))}${verse.commentaryEdited ? ` <small>· ${escape(ui('edited'))}</small>` : ''}</summary>
+        <details class="verse-commentary" ${expanded ? 'open' : ''}><summary>${escape(summary)}${verse.commentaryEdited ? ` <small>· ${escape(ui('edited'))}</small>` : ''}</summary>
           <div class="verse-commentary-body"><p class="verse-commentary-text">${escape(verse.commentary || ui('no-commentary'))}</p><button type="button" data-edit-commentary>${escape(ui(verse.commentary ? 'edit-commentary' : 'add-commentary'))}</button>${verse.commentaryEdited ? `<button type="button" data-reset-commentary>${escape(ui('restore'))}</button>` : ''}</div></details>`;
       element.querySelector('[data-open-verse]').onclick = () => browse(verse.id).catch(error => notice(error.message));
       element.querySelector('[data-edit-commentary]').onclick = () => {
@@ -59,9 +60,9 @@ export function createVerseUI({ call, modal, notice }) {
     for (const verse of verses) container.append(block(verse, options));
     return container;
   }
-  async function hydrate(container) {
+  async function hydrate(container, options) {
     for (const slot of container.querySelectorAll('[data-citation]')) {
-      try { slot.replaceChildren(await createCitation(slot.dataset.citation, { compact: true })); }
+      try { slot.replaceChildren(await createCitation(slot.dataset.citation, { compact: true, ...options })); }
       catch (error) { slot.textContent = error.message; }
     }
   }

@@ -31,7 +31,8 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .keyboard-open #mobile-nav { display: none !important; }
 .keyboard-open #mobile-editor-toolbar { padding-bottom: env(safe-area-inset-bottom); }
 #mobile-drawer-backdrop { position: fixed; inset: 0; z-index: 19; background: #0008; border-radius: 0; }
-.is-mobile #navigation-area:not([hidden]) { position: fixed; top: env(safe-area-inset-top); bottom: calc(58px + env(safe-area-inset-bottom)); left: env(safe-area-inset-left); width: min(calc(var(--mobile-layout-width) * .86), 360px); z-index: 20; border-right: 1px solid var(--line); box-shadow: 10px 0 30px #0004; }
+.is-mobile #navigation-area:not([hidden]) { position: fixed; top: env(safe-area-inset-top); bottom: calc(58px + env(safe-area-inset-bottom)); left: env(safe-area-inset-left); width: min(var(--mobile-layout-width), var(--drawer-width, min(calc(var(--mobile-layout-width) * .86), 360px))); z-index: 20; border-right: 1px solid var(--line); box-shadow: 10px 0 30px #0004; }
+.is-mobile #workspace[data-expanded='files'] #navigation-area:not([hidden]) { width: 100%; }
 .is-mobile .file-row { min-height: 44px; }
 .is-mobile .file-manager [data-file-icon] { width: 44px; }
 .is-mobile .file-manager .pane-header { height: 48px; min-height: 48px; }

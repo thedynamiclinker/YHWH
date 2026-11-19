@@ -1,0 +1,8 @@
+{
+  "house": { "title": "A small housing question", "textKey": "letterHouse", "verse": "Genesis 18:3", "note": "A visitor asks Abraham to stay. The directory is my addition." },
+  "bread": { "title": "You saved something", "textKey": "letterBread", "verse": "Genesis 15:5", "note": "The stars become the measure of Abraham’s descendants." },
+  "offering": { "title": "About the rent", "textKey": "letterOffering", "verse": "Genesis 17:1–8", "note": "El Shaddai promises descendants and land. Borrowing money is my addition.", "command": "seed-funding", "action": "Seed funding" },
+  "inspect": { "title": "I came down to look", "textKey": "letterInspect", "verse": "Genesis 18:20–21", "note": "YHWH goes down to investigate the report about Sodom." },
+  "seed": { "title": "An update from the land department", "textKey": "letterSeed", "verse": "Genesis 15:18", "note": "The promise of land to Abraham’s descendants.", "command": "roadmap", "action": "Our very ambitious roadmap" },
+  "covenant": { "title": "Long-term support", "textKey": "letterCovenant", "verse": "Genesis 17:7", "note": "An everlasting covenant. The hundred-year support plan is my addition." }
+}

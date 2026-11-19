@@ -112,3 +112,15 @@ test('a Logos grid round-trips empty squares and runs rows as separate pipelines
   assert.match((await initial.run('~/bin/from-grid', { collectOutput: true })).text, /^\d+\nAbe$/);
   assert.match((await initial.run('~/bin/demos', { collectOutput: true })).text, /Logos Demos/);
 });
+
+test('live previews resolve shell state locally and gate file writes and app actions', async () => {
+  const { initial, files } = await fixture();
+  const preview = { preview: true, collectOutput: true };
+  assert.match((await initial.run('cd notes; pwd', preview)).text, /\/YHWH\/notes$/);
+  assert.equal((await initial.run('pwd')).text, '/YHWH');
+  await initial.saveAlias({ name: 'change', script: 'touch nested.md' });
+  await assert.rejects(initial.run('echo $(change)', preview), /Use Run to execute touch/);
+  await assert.rejects(initial.run('echo text > redirected.md', preview), /Use Run to write/);
+  await assert.rejects(initial.run('save', preview), /Use Run to open/);
+  assert.equal(files.has('/YHWH/nested.md') || files.has('/YHWH/redirected.md'), false);
+});

@@ -1,0 +1,10 @@
+{
+  "terminal_expand": { "label": "Terminal up", "panel": "terminal", "step": 1, "key": "ctrl/up" },
+  "terminal_collapse": { "label": "Terminal down", "panel": "terminal", "step": -1, "key": "ctrl/down" },
+  "files_expand": { "label": "File manager right", "panel": "files", "step": 1, "key": "ctrl/right" },
+  "files_collapse": { "label": "File manager left", "panel": "files", "step": -1, "key": "ctrl/left" },
+  "terminal_grow": { "label": "Resize terminal up", "panel": "terminal", "step": 1, "key": "ctrl/alt/shift/up", "incremental": true },
+  "terminal_shrink": { "label": "Resize terminal down", "panel": "terminal", "step": -1, "key": "ctrl/alt/shift/down", "incremental": true },
+  "files_grow": { "label": "Resize file manager right", "panel": "files", "step": 1, "key": "ctrl/alt/shift/right", "incremental": true },
+  "files_shrink": { "label": "Resize file manager left", "panel": "files", "step": -1, "key": "ctrl/alt/shift/left", "incremental": true }
+}

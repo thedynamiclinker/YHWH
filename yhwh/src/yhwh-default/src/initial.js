@@ -160,7 +160,7 @@ export function installInitial(app, { home, mobile, call }) {
     if (dialog?.open) dialog.close();
     return action();
   }
-  async function runInWorkbench(source, { preview, full, item, renderOutput }) {
+  async function runInWorkbench(source, { preview, full, item, renderOutput, automatic }) {
     let displayed = false;
     const showFile = async path => {
       const file = await host.read(path);
@@ -230,8 +230,8 @@ export function installInitial(app, { home, mobile, call }) {
       });
       return;
     }
-    const result = await library.run(source, { collectOutput: true, display });
-    await app.refresh();
+    const result = await library.run(source, { collectOutput: true, display, preview: automatic });
+    if (!automatic) await app.refresh();
     if (!displayed || result.text) return result;
   }
 

@@ -16,14 +16,6 @@ from .config import atomic_write
 
 
 SENDER = "yhwh@thedynamiclinker.com"
-LETTERS = {
-    "house": ("A small housing question", "letterHouse"),
-    "bread": ("You saved something", "letterBread"),
-    "offering": ("About the rent", "letterOffering"),
-    "inspect": ("I came down to look", "letterInspect"),
-    "seed": ("An update from the land department", "letterSeed"),
-    "covenant": ("Long-term support", "letterCovenant"),
-}
 WALK = {
     "house": "Open a file", "bread": "Save a file", "seed": "Visit another world",
     "inspect": "Open the terminal", "covenant": "Open another tab", "navigate": "Explore a directory",
@@ -50,6 +42,10 @@ class Services:
     @property
     def words(self):
         return self.config.library.json("default/words.json")
+
+    @cached_property
+    def letters(self):
+        return self.config.library.json("default/action-letters.json") if self.config.library.etc else {}
 
     @cached_property
     def levels(self):
@@ -172,12 +168,12 @@ class Services:
             state["letters"][key]["read"] = True
             return True
 
-        title, word = LETTERS[key]
-        body = self.address(self.words[word])
+        letter = self.letters[key]
+        body = self.address(self.words[letter["textKey"]])
         message = self.state("inbox")["letters"][key]
         self.update("inbox", mark_read)
         date = datetime.fromtimestamp(message["at"]).astimezone().isoformat(timespec="minutes")
-        return title, f"From: {SENDER}\nTo: {self.address('Abe')}\nDate: {date}\n\n{body}"
+        return f"From: {SENDER}\nTo: {self.address('Abe')}\nDate: {date}\n\n{body}"
 
     def block(self, blocked):
         def change(state):
@@ -199,6 +195,18 @@ class Services:
 
     def commentary(self, verse):
         return self.state("verse-commentary").get("commentaries", {}).get(verse["id"], {}).get("text", verse["commentary"])
+
+    def cited_verses(self, reference):
+        match = re.fullmatch(r"(.+) (\d+):(\d+)([a-z]|[-–](\d+))?", reference)
+        if not match:
+            return []
+        book, chapter, first, suffix, last = match.groups()
+        verses = self.verses.get(book, {}).get(chapter, [])
+        exact = [verse for verse in verses if verse["verse"] == first + (suffix or "")]
+        requested = range(int(first), int(last or first) + 1)
+        return exact or [verse for verse in verses if any(
+            number in requested for number in verse["numbers"]
+        )]
 
     def conversation(self, directory):
         return self.state("conversation").get(str(directory), {})

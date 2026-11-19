@@ -5,6 +5,8 @@
   "show_hidden": "false",
   "sidebar_width": "258",
   "terminal_height": "240",
+  "panel_resize_pixels": "24",
+  "default_directory": "",
   "file_manager": "true",
   "terminal": "false",
   "autosave": "true",

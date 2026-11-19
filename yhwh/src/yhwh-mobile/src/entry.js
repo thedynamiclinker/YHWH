@@ -14,7 +14,7 @@ import { createMobileBridge, HOME, normalize } from './bridge.mjs';
 import { installMobile, pickPath } from './mobile.js';
 import './mobile.css';
 
-const storage = createStorage();
+const storage = createStorage(Capacitor.getPlatform());
 await storage.init();
 const verses = createVerseLibrary({
   loadData: async () => { const response = await fetch('./verses.json'); if (!response.ok) throw new Error('The bundled verse library could not load.'); return response.json(); },
@@ -53,7 +53,7 @@ window.yhwh = createMobileBridge({
 });
 if (Capacitor.isNativePlatform()) {
   const rootURI = await storage.uri(HOME);
-  window.yhwh.fileURL = path => Capacitor.convertFileSrc(rootURI + normalize(path).slice(HOME.length).split('/').map(encodeURIComponent).join('/'));
+  window.yhwh.fileURL = path => Capacitor.convertFileSrc(rootURI.replace(/\/$/, '') + normalize(path).split('/').map(encodeURIComponent).join('/'));
 }
 document.body.classList.add('is-mobile');
 window.addEventListener('yhwh:ready', () => {

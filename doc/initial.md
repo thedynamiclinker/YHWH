@@ -26,7 +26,11 @@ tile goes in the top-left square of a 5×5 grid. Subsequent tiles can go in
 any open square. Adjacent commands on a row pass output from left to right
 through a pipe. Rows run from top to bottom as separate commands. Blank squares
 and rows are ignored. Drag existing tiles to move or swap them. Use **＋**
-and select a square to place commands without dragging. **Save Logos** names
+and select a square to place commands without dragging. Select an occupied square
+and choose **Edit tile** to change its arguments or flags. Choose **Remove** or
+drag a tile back to the launcher to remove it. Changes rerun the script preview
+in `/dev/stdout` above the grid. Directory changes in a preview apply within the
+script. Use **Run** to write files or invoke app actions. **Save Logos** names
 the script in `~/bin` and puts it in the launcher. Grid files contain ordinary
 commands and a comment with the tile positions. If text edits change the
 commands, the file opens in the text composer.
@@ -47,8 +51,8 @@ opacity settings.
 This is an in-app namespace. It does not replace Bash startup files, execute
 native programs or load arbitrary JavaScript. Resolution starts with a Letter or one of its search names, then checks
 `~/bin`, Atomics and Builtins. `/bin/pwd`, `/usr/bin/save` and `~/bin/name`
-are also usable. On mobile, `~` is the ordinary app-owned `/YHWH` workspace;
-on desktop it is the user’s home folder.
+are also usable. On mobile, `~` is `/`, the root of the app’s storage. On
+desktop it is the user’s home folder.
 
 The generated rc format is readable, editable text, for example:
 

@@ -51,8 +51,9 @@ async function readableRc(filename) {
   } catch (error) { if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return false; throw error; }
 }
 
-async function configLocations(target, { system = process.env.YHWH_SYSTEM_CONFIG || '/etc/yhwh', user = userDirectory() } = {}) {
+async function configLocations(target, { system = process.env.YHWH_SYSTEM_CONFIG || '/etc/yhwh', user = userDirectory(), globalOnly = false } = {}) {
   const locations = [{ directory: system, base: system }, { directory: user, base: user }];
+  if (globalOnly) return locations;
   const ancestors = [];
   for (let directory = target;; directory = path.dirname(directory)) {
     ancestors.unshift(directory);

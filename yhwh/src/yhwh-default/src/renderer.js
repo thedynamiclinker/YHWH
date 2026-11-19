@@ -7,7 +7,9 @@ import '@xterm/xterm/css/xterm.css';
 import { createEditor, setLanguage, setEditorMode, formatText, renderMarkdown, languageNames } from './editor.js';
 import { linkAt } from './live-markdown.js';
 import { createVerseUI } from './verses.js';
-import { match as matchKey } from '../../../lib/key-names.cjs';
+import verseCopy from '../../../etc/default/text-verses.json';
+import { canonical, fromEvent, match as matchKey } from '../../../lib/key-names.cjs';
+import panelKeys from '../../../etc/default/panel-keys.json';
 import { showHotkeys } from './hotkeys.js';
 import { mountViewer } from './viewers.js';
 import { registerWheelZoom } from './wheel-zoom.js';
@@ -17,6 +19,7 @@ import { showWorkspaceDialog } from './preview-dialog.js';
 import { mountChat } from './chat.js';
 import { yhwhAddress } from '../../../lib/mail-message.cjs';
 import { installInitial } from './initial.js';
+import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
@@ -65,7 +68,15 @@ function keyContext(target = document.activeElement) {
 }
 function bindingFor(event) {
   const context = keyContext(event.target);
-  const binding = matchKey(active()?.config.keys?.bindings || [], event, context);
+  const config = active()?.config;
+  if (!config) return;
+  const combo = fromEvent(event);
+  const binding = matchKey(config.keys?.bindings || [], combo, context);
+  if (combo) for (const [id, spec] of Object.entries(panelKeys)) {
+    if (boot.interface === 'mobile' && spec.panel === 'terminal') continue;
+    const custom = config.values['key_' + id];
+    if (combo === (custom || spec.key) && (custom || !binding)) return { kind: 'panel', spec };
+  }
   if (!binding?.when && (context === 'terminal' && ['view-mode', 'markdown-source'].includes(binding?.command)
     || context === 'editor' && binding?.command === 'parent')) return;
   return binding;
@@ -151,7 +162,7 @@ async function newTab(directory = active()?.cwd || boot.home) {
   let state;
   try { state = await call('focus:new', id, directory); }
   catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
-  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
+  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', panelSizes: {} };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
@@ -345,6 +356,48 @@ function focusView(view) {
   if (view === 'inbox') renderInbox();
   emit('view', active()); focusCurrent();
 }
+
+function panelSize(panel) {
+  const files = panel === 'files';
+  const element = $(files ? '#navigation-area' : '#terminal-panel');
+  const minimum = files ? 180 : 90;
+  const mobileDrawer = files && boot.interface === 'mobile' && matchMedia('(max-width: 799px)').matches;
+  const maximum = files ? $('#workspace').clientWidth - (mobileDrawer ? 0 : 350) : $('#focus-area').clientHeight - 90;
+  return { element, minimum, maximum: Math.max(minimum, maximum), property: files ? 'sidebar_width' : 'terminal_height', axis: files ? 'width' : 'height' };
+}
+
+async function moveSplit({ panel, step, incremental }) {
+  const tab = active(), files = panel === 'files', visibility = files ? 'showFiles' : 'showTerminal';
+  const current = tab.expanded === panel ? 2 : tab[visibility] ? 1 : 0;
+  const element = $(files ? '#navigation-area' : '#terminal-panel');
+  if (incremental && current === 1 && element.getClientRects().length) {
+    const { minimum, maximum, property, axis } = panelSize(panel);
+    const delta = Math.max(1, Math.min(500, Number(tab.config.values.panel_resize_pixels) || 24));
+    tab.panelSizes[property] = Math.max(minimum, Math.min(maximum, element.getBoundingClientRect()[axis] + step * delta));
+    update();
+    return;
+  }
+  const next = Math.max(0, Math.min(2, current + step));
+  if (next === current) return;
+  const wasFocused = element.contains(document.activeElement);
+  if (files || next > 0) {
+    const dock = files ? 'left' : 'bottom';
+    if (element.dataset.area && element.dataset.area !== dock) movePanel(panel, dock);
+  }
+  if (!files && next > 0 && !tab.terminals.length) await newTerminal(tab);
+  if (next === 2) tab.expanded = panel;
+  else if (tab.expanded === panel || (!files && step > 0)) tab.expanded = '';
+  tab[visibility] = next > 0;
+  if (active() !== tab) return;
+  update();
+  if (document.querySelector('dialog[open]')) return;
+  if (next === 2 || (wasFocused && next === 0)) {
+    if (next === 2) {
+      if (files) $('#file-list').focus(); else focusTerminal(tab);
+    } else if (files) focusCurrent(tab);
+    else restoreAfterTerminal(tab);
+  }
+}
 function update() {
   const tab = active(); if (!tab) return;
   tabTitles(); renderFiles();
@@ -375,7 +428,10 @@ function update() {
 }
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
-  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${Number(values.sidebar_width) || 258}px`, '--terminal-height': `${Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  const sizes = active()?.panelSizes || {};
+  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${sizes.sidebar_width || Number(values.sidebar_width) || 258}px`, '--terminal-height': `${sizes.terminal_height || Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  if (sizes.sidebar_width) style.setProperty('--drawer-width', `${sizes.sidebar_width}px`);
+  else style.removeProperty('--drawer-width');
   for (const tab of tabs) for (const session of tab.terminals) session.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
   const energy = currentEnergy(config), level = levelAt(energy);
   const levelChanged = document.body.dataset.level !== level.id;
@@ -709,17 +765,24 @@ async function trashFiles(paths = selectedPaths()) {
 
 function settings() {
   const tab = active(), values = tab.config.values;
+  const mobile = boot.interface === 'mobile';
+  const keyControls = Object.entries(panelKeys).filter(([, spec]) => !mobile || spec.panel === 'files');
   const row = (label, description, control) => `<label class="setting-row"><span><strong>${label}</strong><small>${description}</small></span>${control}</label>`;
   const number = (key, min, max) => `<input type="number" name="${key}" min="${min}" max="${max}" value="${escape(values[key])}">`;
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
-  const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
+  const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="keys" aria-pressed="false">Keys</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
     <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Dawkins ← Nietzsche → YHWH. Use the title bar to switch preview editions.', `<input type="range" name="energy" min="0" max="100" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
+    <section data-section="keys" hidden><h3>Keys</h3><p class="muted">${mobile ? 'These shortcuts use a hardware keyboard. Open the Initial from the command menu for an in-app shell.' : 'Panel shortcuts work from the terminal, editor, and file manager.'} Enter a combination such as Ctrl+Up, or use off to disable it.</p>
+      ${row('Resize step', 'Pixels per keypress.', number('panel_resize_pixels', 1, 500))}
+      ${keyControls.map(([id, spec]) => row(spec.label, spec.incremental ? 'Adjust the split a little.' : 'Step between hidden, split and maximized.', `<input name="key_${id}" value="${escape((values['key_' + id] || spec.key).replaceAll('/', '+'))}" autocomplete="off" spellcheck="false">`)).join('')}
+    </section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}${boot.interface === 'mobile' ? '' :
       row('Your email address', 'The sender address and where YHWH sends mail to you.', `<input type="email" name="mail_self" value="${escape(values.mail_self || '')}">`) +
       row('Outgoing mail command', 'A configured sendmail-compatible executable, such as /usr/sbin/sendmail.', `<input name="mail_transport" value="${escape(values.mail_transport || '')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
+  dialog.querySelector('[data-section="files"] h3').insertAdjacentHTML('afterend', row('Default directory', mobile ? 'Opens from the app icon. Leave blank to open the app’s storage root (/).' : 'Opens from the app launcher. Leave blank to open your home directory.', `<input name="default_directory" value="${escape(boot.defaultDirectory)}" autocomplete="off" spellcheck="false">`));
   if (boot.interface === 'mobile') {
     dialog.querySelector('[name="terminal_font_size"]').closest('label').hidden = true;
     dialog.querySelector('[name="pdf_open"]').closest('label').querySelector('small').textContent = 'Preview here, or export/share through your device. Choose once for all PDFs or ask each time.';
@@ -739,15 +802,36 @@ function settings() {
     event.preventDefault();
     try {
       const data = Object.fromEntries(new FormData(event.target)), scope = data._scope; delete data._scope;
+      const startDirectory = data.default_directory.trim();
+      delete data.default_directory;
+      if (startDirectory !== (boot.defaultDirectory || '') && startDirectory) {
+        const destination = startDirectory === '~' ? boot.home : join(boot.home, startDirectory.replace(/^~\//, ''));
+        if (!(await call('path:stat', destination)).directory) throw new Error('Choose an existing default directory.');
+      }
+      const assignedKeys = new Set();
+      for (const [id, { key }] of keyControls) {
+        const name = 'key_' + id, value = data[name].trim();
+        const combo = value.toLowerCase() === 'off' ? 'off' : value ? canonical(value.replace(/\s+/g, '').replaceAll('+', '/')) : key;
+        if (combo !== 'off' && assignedKeys.has(combo)) throw new Error(`Choose a different panel shortcut for ${combo.replaceAll('/', '+')}.`);
+        if (combo !== 'off') assignedKeys.add(combo);
+        if (combo === (values[name] || key)) delete data[name];
+        else data[name] = combo === key ? '' : combo;
+      }
       for (const key of ['show_hidden', 'autosave', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
       if (event.target.elements.spatial_effects) { data.spatial_effects = String(event.target.elements.spatial_effects.checked); data.motion = event.target.elements.spatial_effects.checked ? '1' : '0'; }
       data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
       if (data.layout) JSON.parse(data.layout);
       if (data.energy && !(Number(data.energy) >= 0 && Number(data.energy) <= 100)) throw new Error(ui("yhwh-ness-must-be-between-0-and-100-"));
-      for (const [key, min, max] of [['ui_font_size',14,24], ['font_size',12,36], ['terminal_font_size',12,28]]) if (!Number.isFinite(Number(data[key])) || Number(data[key]) < min || Number(data[key]) > max) throw new Error(`${key} must be between ${min} and ${max}.`);
+      for (const [key, min, max] of [['ui_font_size',14,24], ['font_size',12,36], ['terminal_font_size',12,28], ['panel_resize_pixels',1,500]]) if (!Number.isFinite(Number(data[key])) || Number(data[key]) < min || Number(data[key]) > max) throw new Error(`${key} must be between ${min} and ${max}.`);
       temporaryEnergy = undefined;
-      await call('settings:save', data, scope); presence.enabled = data.narrative === 'true'; savePresence(); await refresh(); for (const item of tabs) scheduleAutosave(item); dialog.close();
+      if (startDirectory !== (boot.defaultDirectory || '')) {
+        if (scope === '/') data.default_directory = startDirectory;
+        else await call('settings:save', { default_directory: startDirectory }, '/');
+      }
+      await call('settings:save', data, scope);
+      boot.defaultDirectory = startDirectory;
+      presence.enabled = data.narrative === 'true'; savePresence(); await Promise.all(tabs.map(tab => refresh(tab))); for (const item of tabs) scheduleAutosave(item); dialog.close();
     } catch (error) { notice(error.message); }
   };
 }
@@ -990,6 +1074,7 @@ async function setEnergy(value) {
   }
 }
 function higherHelp() {
+  if (boot.interface === 'mobile') return run('mobile-guide');
   modal(words.helpTitle, `<div class="higher-choices"><button data-command="be-yhwh">${escape(words.god)}</button><button data-command="be-root">${escape(words.man)}</button></div>`);
 }
 async function enterWorld(name) {
@@ -1185,12 +1270,7 @@ function readPresence() {
 }
 let presence = { letters: [], steps: [], enabled: false, ...readPresence() };
 const letters = [
-  { id: 'house', title: 'A small housing question', textKey: 'letterHouse', verse: 'Genesis 18:3', note: 'A visitor asks Abraham to stay. The directory is my addition.' },
-  { id: 'bread', title: 'You saved something', textKey: 'letterBread', verse: 'Genesis 15:5', note: 'The stars become the measure of Abraham’s descendants.' },
-  { id: 'offering', title: 'About the rent', textKey: 'letterOffering', verse: 'Genesis 17:1–8', note: 'El Shaddai promises descendants and land. Borrowing money is my addition.', command: 'seed-funding', action: 'Seed funding' },
-  { id: 'inspect', title: 'I came down to look', textKey: 'letterInspect', verse: 'Genesis 18:20–21', note: 'YHWH goes down to investigate the report about Sodom.' },
-  { id: 'seed', title: 'An update from the land department', textKey: 'letterSeed', verse: 'Genesis 15:18', note: 'The promise of land to Abraham’s descendants.', command: 'roadmap', action: 'Our very ambitious roadmap' },
-  { id: 'covenant', title: 'Long-term support', textKey: 'letterCovenant', verse: 'Genesis 17:7', note: 'An everlasting covenant. The hundred-year support plan is my addition.' },
+  ...Object.entries(actionLetters).map(([id, letter]) => ({ id, ...letter })),
   ...nightLetters,
   ...startupLetters,
 ];
@@ -1260,13 +1340,13 @@ function renderInbox() {
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
-    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`;
+    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`;
     host.querySelector('[data-mail-back]').onclick = () => {
       tab.mailId = null;
       renderInbox();
       host.querySelector(`[data-mail="${CSS.escape(letter.id)}"]`)?.focus();
     };
-    verseUI.hydrate(host);
+    verseUI.hydrate(host, { citeCommentary: true });
   } else {
     const rows = available.map(({ letter, state }) => {
       const text = words[letter.textKey] || '';
@@ -1374,6 +1454,7 @@ bridge.on('app-changed', ({ reloadPlugins }) => {
 bridge.on('command', run);
 bridge.on('open', opening => openRequest(opening).catch(error => notice(error.message)));
 async function openRequest(opening) {
+  if (opening.warning) notice(opening.warning);
   let tab = tabs.find(item => item.id === opening.tab);
   if (tab) activate(tab.id);
   const info = await call('path:stat', opening.path);
@@ -1548,12 +1629,18 @@ document.addEventListener('focusin', event => {
 });
 document.addEventListener('keydown', event => {
   document.body.classList.toggle('mod-follow', event.ctrlKey || event.metaKey);
-  if (event.isComposing || document.querySelector('dialog[open]') || event.target.closest('.initial-workbench input')) return;
+  if (event.isComposing) return;
+  const binding = bindingFor(event);
+  if (binding?.kind === 'panel') {
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (!event.repeat || binding.spec.incremental) moveSplit(binding.spec).catch(error => notice(error.message));
+    return;
+  }
+  if (document.querySelector('dialog[open]') || event.target.closest('.initial-workbench input')) return;
   if (event.key === 'Enter' && event.target.closest('#yhwh-chat-form textarea')) return;
   if (event.key === 'Escape' && event.target.closest('[data-panel="yhwh-chat"]')) {
     event.preventDefault(); focusView('document'); return;
   }
-  const binding = bindingFor(event);
   if (binding && binding.kind !== 'disabled') {
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.repeat) executeBinding(binding).catch(error => notice(error.message));
@@ -1570,16 +1657,24 @@ document.addEventListener('keydown', event => {
 document.addEventListener('keyup', event => document.body.classList.toggle('mod-follow', event.ctrlKey || event.metaKey));
 window.addEventListener('blur', () => document.body.classList.remove('mod-follow'));
 
-function resizer(selector, property, position, minimum, maximum) {
+function resizer(selector, panel, position) {
   $(selector).onpointerdown = event => {
-    const start = position(event), initial = parseInt(getComputedStyle(document.documentElement).getPropertyValue(property));
-    event.target.setPointerCapture(event.pointerId);
-    event.target.onpointermove = current => { const size = Math.max(minimum, Math.min(maximum(), initial + position(current) - start)); document.documentElement.style.setProperty(property, `${size}px`); fitTerminal(); };
-    event.target.onpointerup = () => { event.target.onpointermove = null; active().config.values[property === '--sidebar-width' ? 'sidebar_width' : 'terminal_height'] = parseInt(getComputedStyle(document.documentElement).getPropertyValue(property)); };
+    const tab = active(), handle = event.currentTarget;
+    if (tab.expanded === panel) return;
+    const { element, minimum, maximum, property, axis } = panelSize(panel);
+    const start = position(event), initial = element.getBoundingClientRect()[axis];
+    handle.setPointerCapture(event.pointerId);
+    handle.onpointermove = current => {
+      if (active() !== tab) return;
+      const size = Math.max(minimum, Math.min(maximum, initial + position(current) - start));
+      tab.panelSizes[property] = size;
+      document.documentElement.style.setProperty(`--${property.replace('_', '-')}`, `${size}px`);
+    };
+    handle.onlostpointercapture = () => { handle.onpointermove = null; };
   };
 }
-resizer('.sidebar-resize', '--sidebar-width', event => event.clientX, 180, () => innerWidth - 350);
-resizer('.terminal-resize', '--terminal-height', event => -event.clientY, 90, () => innerHeight - 180);
+resizer('.sidebar-resize', 'files', event => event.clientX);
+resizer('.terminal-resize', 'terminal', event => -event.clientY);
 new ResizeObserver(() => fitTerminal()).observe($('#terminal-panel'));
 for (const [selector, id] of [['#files > header', 'files'], ['#terminal-panel > header', 'terminal'], ['#document > header', 'document']]) draggable($(selector), id);
 for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 'right'], ['#center-panels', 'center'], ['#terminal-panel', 'bottom']]) {

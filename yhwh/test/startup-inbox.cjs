@@ -17,6 +17,11 @@ module.exports = async function checkStartupInbox(page, screenshots) {
   await run('inbox');
   await page.locator('[data-mail="house"]').click();
   assert.ok((await page.locator('.mail-envelope').innerText()).includes(primarySender));
+  const sources = page.locator('.mail-source');
+  const commentary = sources.locator('.verse-commentary');
+  const color = selector => sources.locator(selector).first().evaluate(node => getComputedStyle(node).color);
+  await sources.locator('.verse-english').waitFor();
+  assert.equal(await color('.verse-english .source-j'), 'rgb(148, 192, 145)');
   await page.locator('[data-mail-back]').click();
 
   const night = letters.filter(letter => letter.afterMinutes !== undefined);
@@ -32,6 +37,25 @@ module.exports = async function checkStartupInbox(page, screenshots) {
     assert.equal(await page.locator('.mail-envelope time').getAttribute('datetime'), new Date(at).toISOString());
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     if (letter.id === 'night-milk') await page.screenshot({ path: screenshots.night });
+    if (letter.id === 'night-runway') {
+      const citation = commentary.locator('summary');
+      const commentaryText = commentary.locator('.verse-commentary-text');
+      await citation.waitFor();
+      assert.equal(await sources.locator(':scope > summary').textContent(), 'In the Margins, Literary sources');
+      assert.equal(await sources.evaluate(node => node.open), true);
+      assert.equal(await citation.textContent(), 'From We The Nameless: Genesis 17:8');
+      assert.equal(await commentaryText.isVisible(), false);
+      assert.equal(await color('.verse-english .source-p'), 'rgb(109, 136, 174)');
+      await citation.click();
+      assert.equal(await commentaryText.isVisible(), true);
+      await citation.click();
+      assert.equal(await commentaryText.isVisible(), false);
+      await sources.locator(':scope > summary').click();
+      assert.equal(await citation.isVisible(), false);
+      await sources.locator(':scope > summary').click();
+      assert.equal(await citation.isVisible(), true);
+      assert.equal(await commentaryText.isVisible(), false);
+    }
     if (letter.id === 'night-keyboard') await page.screenshot({ path: screenshots.keyboard });
     await page.locator('[data-mail-back]').click();
   }

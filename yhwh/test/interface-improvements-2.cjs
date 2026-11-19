@@ -59,7 +59,8 @@ exports.pdf = async function ({ page, artifacts }) {
 };
 
 exports.moves = async function ({ page, directory, artifacts, touch = false }) {
-  const root = directory + '/drag-test', source = root + '/source', destination = root + '/destination';
+  const root = directory.replace(/\/$/, '') + '/drag-test', source = root + '/source', destination = root + '/destination';
+  const movedNote = directory.replace(/\/$/, '') + '/source/child/nested.txt';
   await page.evaluate(async ({ root, source, destination }) => {
     for (const filename of [root, source, destination, source + '/child']) await window.yhwh.call('file:create', filename, true);
     for (const [filename, text] of [[source + '/note.md', 'Original\n'], [source + '/two.txt', 'Second'], [source + '/child/nested.txt', 'Nested'], [destination + '/two.txt', 'Do not overwrite']]) {
@@ -125,11 +126,11 @@ exports.moves = async function ({ page, directory, artifacts, touch = false }) {
   await page.waitForFunction(({ id, filename }) => {
     const tab = window.YHWH.tabs.find(tab => tab.id === id);
     return tab.file.path === filename && tab.cwd === filename.slice(0, filename.lastIndexOf('/'));
-  }, { id: secondId, filename: directory + '/source/child/nested.txt' });
+  }, { id: secondId, filename: movedNote });
   await page.evaluate(id => document.querySelector(`#tabs [data-tab="${id}"]`).click(), secondId);
   assert.equal(await page.evaluate(() => window.YHWH.active().editor.state.doc.toString()), 'Nested draft');
   await page.evaluate(() => window.YHWH.run('save'));
-  assert.equal(await page.evaluate(async filename => (await window.yhwh.call('file:read', filename)).content, directory + '/source/child/nested.txt'), 'Nested draft');
+  assert.equal(await page.evaluate(async filename => (await window.yhwh.call('file:read', filename)).content, movedNote), 'Nested draft');
   await page.evaluate(() => window.YHWH.run('close-tab'));
   await page.evaluate(id => document.querySelector(`#tabs [data-tab="${id}"]`).click(), originalId);
   await drag(row('note.md'), page.locator('#file-list'));
