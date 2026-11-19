@@ -18,9 +18,15 @@ marked.use({ extensions: [{
   tokenizer(text) { const match = wikiPattern.exec(text); if (match) { const [href, label] = match[1].split('|'); return { type: 'wikilink', raw: match[0], href, label: label || href }; } },
   renderer(token) { return `<a class="internal-link" href="${escapeAttribute(token.href)}">${escapeAttribute(token.label)}</a>`; },
 }] });
-export function renderMarkdown(text, filename) {
+export function renderMarkdown(text, filename, context) {
   const template = document.createElement('template');
-  template.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: ['style', 'input', 'form'], FORBID_ATTR: ['style'] });
+  const forbidden = ['style', 'input', 'form'], attributes = ['style'];
+  if (context === 'chat') {
+    forbidden.push('button', 'img', 'picture', 'video', 'audio', 'source', 'svg', 'math');
+    attributes.push('id', 'name', 'class', 'autofocus', 'tabindex', 'contenteditable', 'download', 'ping', 'target');
+  }
+  template.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: forbidden, FORBID_ATTR: attributes, ALLOW_DATA_ATTR: context !== 'chat' });
+  if (context === 'chat') return template.innerHTML;
   const ids = new Set();
   for (const heading of template.content.querySelectorAll('h1,h2,h3,h4,h5,h6')) {
     const base = heading.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s+/g, '-');

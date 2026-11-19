@@ -10,6 +10,9 @@ const files = require('../../../lib/files.cjs');
 const { resolveConfig, configLocations, userDirectory, saveSettings } = require('./config.cjs');
 const keys = require('../../../lib/keys.cjs');
 const { freeEnergy, levelAt } = require('../../../lib/levels.cjs');
+const { mail } = require('./mail.cjs');
+const { chat } = require('./chat.cjs');
+const paths = require('../../../lib/paths.cjs');
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
@@ -30,6 +33,7 @@ const focuses = new Map();
 const terminals = new Map();
 const pendingOpens = [];
 const configCache = new Map();
+const conversations = new Map();
 function send(channel, message) { if (window && !window.isDestroyed()) window.webContents.send(channel, message); }
 function command(name) { send('command', name); }
 function flag(argv, name) { const inline = argv.find(arg => arg.startsWith(`${name}=`)); if (inline) return inline.slice(name.length + 1); const index = argv.indexOf(name); return index < 0 ? null : argv[index + 1]; }
@@ -84,6 +88,47 @@ async function configFor(target) {
   }
   configCache.set(target, { signature: await stamp(config.values), config });
   return config;
+}
+
+function refreshApp(reloadPlugins = false) {
+  configCache.clear();
+  send('app-changed', { reloadPlugins });
+  return { refreshing: true };
+}
+
+async function agentAction(focus, tabId, directory, action, args) {
+  if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('Provide an app action with a JSON object.');
+  if (action === 'app.refresh') return refreshApp(true);
+  if (action === 'app.open') {
+    if (typeof args.path !== 'string' || !args.path) throw new Error('Provide a path.');
+    const filename = path.resolve(directory, args.path);
+    await fs.stat(filename);
+    send('open', { path: filename, tab: focuses.get(tabId)?.worldRoot ? undefined : tabId });
+    return { opening: filename };
+  }
+  if (action === 'settings.set') {
+    const { values, scope = focus.cwd } = args;
+    if (!values || typeof values !== 'object' || Array.isArray(values) || !Object.keys(values).length ||
+        Object.values(values).some(value => !['string', 'number', 'boolean'].includes(typeof value)) ||
+        typeof scope !== 'string' || !path.isAbsolute(scope)) throw new Error('Provide settings values and an absolute scope.');
+    if (Object.hasOwn(values, 'plugins')) {
+      const plugins = JSON.parse(values.plugins);
+      if (!Array.isArray(plugins) || plugins.some(item => typeof item !== 'string')) throw new Error('Plugins must be a JSON array of paths.');
+    }
+    await saveSettings(values, scope, configOptions);
+    refreshApp();
+    return { saved: Object.keys(values), scope };
+  }
+  const config = await configFor(focus.cwd);
+  if (action === 'settings.get') {
+    const keys = args.keys;
+    if (keys !== undefined && (!Array.isArray(keys) || keys.some(key => typeof key !== 'string'))) throw new Error('Provide an array of setting names.');
+    return { directory: focus.cwd, configDirectory: config.userDirectory, files: config.files,
+      ...(keys ? { values: Object.fromEntries(keys.map(key => [key, Object.hasOwn(config.values, key) ? config.values[key] : null])) } : { keys: Object.keys(config.values).sort() }) };
+  }
+  if (action === 'mail.status') return { selfAddressConfigured: Boolean(config.values.mail_self), transportConfigured: Boolean(config.values.mail_transport) };
+  if (action === 'mail.send' || action === 'mail.draft') return mail(action.slice(5), args, { config, directory, openExternal: url => shell.openExternal(url) });
+  throw new Error('Unknown app action.');
 }
 
 async function watchDirectory(focus) {
@@ -206,17 +251,33 @@ async function launch() {
     const config = await configFor(cwd);
     return worlds.list({ ...focus, cwd }, config.values.show_hidden === 'true');
   });
-  const conversations = new Set();
-  handle('chat', async (id, messages, selectedEnergy) => {
-    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
-    if (conversations.has(id)) throw new Error('Already waiting for a reply.');
-    conversations.add(id);
+  handle('chat', async (tabId, thread, messages, attachments, selectedEnergy) => {
+    if (!focuses.has(tabId)) throw new Error('Closed tab.');
+    if (!thread || !/^[a-f\d-]{36}$/.test(thread.id) || typeof thread.directory !== 'string' || !path.isAbsolute(thread.directory)) throw new Error('Invalid conversation directory.');
+    if (conversations.has(thread.id)) throw new Error('Already waiting for a reply.');
+    const controller = new AbortController();
+    conversations.set(thread.id, controller);
     try {
+      // A resumed conversation keeps its original directory, regardless of
+      // which file or tab is currently open.
+      const focus = { cwd: path.resolve(thread.directory) };
+      if (thread.worldRoot) {
+        const world = await worlds.enter(path.basename(thread.worldRoot));
+        if (thread.worldRoot !== world || worlds.directory({ ...focus, worldRoot: world }, focus.cwd) !== focus.cwd) throw new Error('Invalid conversation world.');
+        focus.worldRoot = world;
+      }
+      const physical = await worlds.physical(focus);
+      if (!await fs.stat(physical).then(stat => stat.isDirectory(), () => false)) throw new Error('This conversation’s directory is unavailable. Start a new chat to work in another directory.');
+      const directory = await fs.realpath(physical);
       const config = await configFor(focus.cwd);
       const energy = Number.isInteger(selectedEnergy) && selectedEnergy >= 0 && selectedEnergy <= levelAt(Infinity).energy
         ? selectedEnergy : freeEnergy(config.values);
-      return await require('./chat.cjs').chat({ directory: await worlds.physical(focus), energy, messages });
-    } finally { conversations.delete(id); }
+      const environment = { ...config.environment, YHWH_TAB: tabId, YHWH_INTERFACE: three ? 'three' : 'default',
+        PATH: [path.join(paths.root, 'bin'), config.environment.PATH || process.env.PATH].filter(Boolean).join(path.delimiter) };
+      const app = { configDirectory: await fs.realpath(userDirectory()), environment,
+        dispatch: (action, args) => agentAction(focus, tabId, directory, action, args) };
+      return await chat({ directory, energy, messages, attachments, app }, { signal: controller.signal });
+    } finally { conversations.delete(thread.id); refreshApp(); }
   });
   // Resolve shortcuts before choosing a language, preview base, or link directory.
   handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
@@ -239,6 +300,11 @@ async function launch() {
   handle('choose:save', async (directory, name) => { const result = await dialog.showSaveDialog(window, { defaultPath: path.join(directory, name) }); return result.canceled ? null : result.filePath; });
   handle('settings:save', async (values, scope) => { await saveSettings(values, scope, configOptions); configCache.clear(); });
   handle('config:reload', () => configCache.clear());
+  handle('words:read', async () => JSON.parse(await fs.readFile(paths.etc('default', 'words.json'), 'utf8')));
+  handle('mail', async (id, action, fields) => {
+    const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
+    return mail(action, fields, { config: await configFor(focus.cwd), directory: await worlds.physical(focus), openExternal: url => shell.openExternal(url) });
+  });
   handle('keys:save', async (id, value, action, command, expected, when) => {
     const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
     await keys.save(await configFor(focus.cwd), value, action, command, expected, when);
@@ -315,6 +381,7 @@ async function launch() {
 }
 app.on('will-quit', () => {
   quitting = true;
+  for (const controller of conversations.values()) controller.abort();
   for (const focus of focuses.values()) { focus.watcher?.close(); clearTimeout(focus.watchTimer); }
   host?.disconnect();
 });

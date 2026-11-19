@@ -96,7 +96,7 @@ test('directory-scoped settings and character overrides survive relaunch and pre
 });
 test('unsupported platform services and future unknown operations fail explicitly', async () => {
   const { call } = await fixture();
-  for (const operation of ['chat', 'world:books', 'config:open', 'a-new-desktop-feature']) await assert.rejects(call(operation), /desktop|mobile/i);
+  for (const operation of ['world:books', 'config:open', 'a-new-desktop-feature']) await assert.rejects(call(operation), /desktop|mobile/i);
   await assert.rejects(call('external', 'javascript:alert(1)'), /Unsupported/);
 });
 test('every shared desktop bridge operation has an explicit mobile implementation or limitation', async () => {

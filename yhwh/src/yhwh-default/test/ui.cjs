@@ -25,15 +25,35 @@ const root = path.resolve(__dirname, variant === 'three' ? '../../yhwh-three' : 
   const sourceWords = await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8');
   const wordsFile = path.join(temp, 'words.json'); await fs.writeFile(wordsFile, sourceWords);
   const env = { ...process.env, YHWH_INTERFACE: variant, YHWH_DATA_DIR: path.join(temp, 'profile'), YHWH_THREE_DATA_DIR: path.join(temp, 'profile-three'), YHWH_CONFIG_HOME: config, YHWH_SYSTEM_CONFIG: path.join(temp, 'system'), YHWH_NODE: process.execPath, YHWH_SHELL: require('node:child_process').execFileSync('which', ['bash'], { encoding: 'utf8' }).trim(), YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' };
+  const mailFile = path.join(temp, 'mail.eml'), mailFixture = path.join(temp, 'sendmail-fixture');
+  await fs.writeFile(mailFixture, `#!/usr/bin/env node\nprocess.stdin.pipe(require('node:fs').createWriteStream(${JSON.stringify(mailFile)}));\n`, { mode: 0o755 });
   const chatFixture = path.join(temp, 'codex-fixture');
   await fs.writeFile(chatFixture, `#!/usr/bin/env node
 const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const app = (action, args) => JSON.parse(execFileSync(process.execPath, [process.env.YHWH_APP_CONTROL, action, JSON.stringify(args)], { encoding: 'utf8' }));
 let input = ''; process.stdin.on('data', data => input += data);
 process.stdin.on('end', () => {
-  if (input.includes('FAIL_CHAT_TEST')) { process.stderr.write('fixture refused'); process.exitCode = 1; return; }
+  const [transcript, uploads] = input.split('CONVERSATION (JSON)\\n')[1].split('\\nATTACHMENTS (JSON, turn is the zero-based message index)\\n');
+  const last = JSON.parse(transcript).at(-1).content;
+  if (last === 'FAIL_CHAT_TEST') { process.exitCode = 1; return; }
   const args = process.argv.slice(2);
-  if (!input.includes('SOURCE 23.tex') || !args.includes('read-only')) { process.exitCode = 2; return; }
-  fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], 'I came down. The files are here.');
+  if (!input.includes('You are YHWH') || !args.includes('workspace-write')) { process.exitCode = 2; return; }
+  let reply = 'I came down. The files are here.';
+  if (last.startsWith('APP_ACTION_TEST')) {
+    const [file] = JSON.parse(uploads);
+    if (file.name !== 'seed.txt' || fs.readFileSync(file.path, 'utf8') !== 'seed content') throw new Error('Attachment missing');
+    const plugin = path.join(process.env.YHWH_CONFIG_HOME, 'chat-test-plugin');
+    fs.mkdirSync(plugin);
+    fs.writeFileSync(path.join(plugin, 'main.js'), 'export default ({ addCommand }) => addCommand({ id: "chat-test-plugin", name: "Chat test plugin", run() {} });');
+    fs.writeFileSync('chat-test-output.txt', 'YHWH wrote this');
+    app('settings.set', { values: { title: 'YHWH was here', plugins: JSON.stringify([plugin]), mail_self: 'abe@example.test', mail_transport: ${JSON.stringify(mailFixture)} } });
+    if (app('settings.get', { keys: ['title'] }).values.title !== 'YHWH was here') throw new Error('Setting missing');
+    if (!app('mail.send', { to: 'self', subject: 'YHWH test', body: 'The mail works, Abe.' }).accepted) throw new Error('Mail not accepted');
+    reply = '**Done.** Check the land registry, Abe.';
+  }
+  fs.writeFileSync(args[args.indexOf('--output-last-message') + 1], reply);
 });
 `, { mode: 0o755 });
   env.YHWH_CODEX = chatFixture;
@@ -474,8 +494,19 @@ process.stdin.on('end', () => {
     await run('narrative');
     assert.equal(await page.locator('#dialog [data-command="open-file"]').count(), 1);
     await page.locator('#dialog [data-close]').click();
+    await page.evaluate(directory => {
+      const key = 'yhwh:chat:v1:' + directory;
+      localStorage.setItem(key, JSON.stringify([{ role: 'user', content: 'Old work' }, { role: 'assistant', content: 'Your old answer' }]));
+      localStorage.setItem(key + ':draft', 'Unsent from the old app');
+    }, nested);
     await run('chat');
     assert.equal(await page.locator('#yhwh-chat-form textarea').isVisible(), true);
+    const history = page.getByRole('navigation', { name: 'Chat history' });
+    await history.getByRole('button', { name: 'Old work' }).click();
+    assert.equal(await page.locator('[data-chat-directory]').textContent(), nested);
+    assert.equal(await page.locator('#yhwh-chat-form textarea').inputValue(), 'Unsent from the old app');
+    assert.match(await page.locator('.conversation-log').innerText(), /Your old answer/);
+    await page.getByRole('button', { name: /New chat/ }).click();
     await page.locator('#yhwh-chat-form textarea').fill('A draft survives closing');
     await run('chat'); await run('chat');
     assert.equal(await page.locator('#yhwh-chat-form textarea').inputValue(), 'A draft survives closing');
@@ -484,10 +515,29 @@ process.stdin.on('end', () => {
     await page.locator('.chat-error').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#yhwh-chat-form textarea').inputValue(), 'FAIL_CHAT_TEST');
     await page.locator('#yhwh-chat-form textarea').fill('Tell me where you are');
-    await page.locator('#yhwh-chat-form button.primary').click();
+    await page.locator('#yhwh-chat-form textarea').press('Enter');
     await page.waitForFunction(() => document.querySelector('.conversation-log').textContent.includes('I came down.'));
     await run('chat'); await run('chat');
     assert.match(await page.locator('.conversation-log').innerText(), /Tell me where you are/);
+    await page.getByRole('button', { name: /New chat/ }).click();
+    assert.doesNotMatch(await page.locator('.conversation-log').innerText(), /Tell me where you are/);
+    const composer = page.locator('#yhwh-chat-form textarea');
+    await composer.fill('APP_ACTION_TEST');
+    await composer.press('Shift+Enter');
+    await composer.press('A');
+    assert.match(await composer.inputValue(), /APP_ACTION_TEST\n[Aa]/);
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: /Attach files/ }).click();
+    await (await chooser).setFiles([{ name: 'seed.txt', mimeType: 'text/plain', buffer: Buffer.from('seed content') }]);
+    await page.getByRole('button', { name: 'Remove seed.txt' }).waitFor();
+    await composer.press('Control+Enter');
+    await page.locator('.conversation-log strong').getByText('Done.').waitFor();
+    await page.waitForFunction(() => window.YHWH.commands.has('chat-test-plugin') && document.title === 'YHWH was here');
+    assert.match(await fs.readFile(mailFile, 'utf8'), /To: abe@example\.test\r?\n/);
+    assert.equal(await fs.readFile(path.join(directory, 'chat-test-output.txt'), 'utf8'), 'YHWH wrote this');
+    assert.match(await page.locator('.conversation-log').innerText(), /seed\.txt/);
+    await page.getByRole('navigation', { name: 'Chat history' }).getByRole('button', { name: 'Tell me where you are' }).click();
+    assert.match(await page.locator('.conversation-log').innerText(), /I came down/);
     await page.screenshot({ path: path.join(artifacts, '09-conversation.png') });
     await run('chat');
     await run('settings');
@@ -521,6 +571,8 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('.verse-selection .verse-commentary-text').textContent(), commentary);
     await page.locator('#dialog [data-close]').click();
     await run('chat');
+    if (await page.getByRole('navigation', { name: 'Chat history' }).isHidden()) await page.getByRole('button', { name: 'History', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Chat history' }).getByRole('button', { name: 'Tell me where you are' }).click();
     assert.match(await page.locator('.conversation-log').innerText(), /I came down/);
     await require('../../../test/night-inbox.cjs')(page, path.join(artifacts, '14-night-name.png'));
     console.log('✓ ordered night letters, exact character copy, clickable source, spacing and persisted read state');

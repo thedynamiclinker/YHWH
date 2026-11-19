@@ -178,7 +178,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
 | Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Tiles run into an inline workspace and drag into a 5×5 script grid. The center dot fades in when pressed and fades out on release. The text composer supports pipes, redirects and substitutions. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
-| Talk to YHWH | Offline workspace help in character. Connect Codex opens the account and remote-workflow guide. Live Codex chat uses the desktop service. |
+| Talk to YHWH | Shared composer and local left-side History for offline workspace help. Live chat setup opens the desktop connection guide. Live agent writes, chat attachments, and direct mail delivery require the desktop host. Electronic Mail can open a draft in the device’s mail app. |
 | Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Nietzsche Family Circus | Available in Nietzsche mode. The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |

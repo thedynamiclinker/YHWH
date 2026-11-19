@@ -150,42 +150,6 @@ export function installMobile(app, storage) {
     };
   });
   command('burnt', 'Connect YHWH · Codex setup', () => app.run('mobile-connect'));
-  command('chat', 'Talk to YHWH', () => {
-    const dialog = sheet('Talk to YHWH'), body = dialog.querySelector('.mobile-sheet-content');
-    const nickname = app.address('Abe', 3);
-    body.innerHTML = `<p class="muted">Offline · built-in help for this workspace</p>
-      <div class="conversation-log" role="log" aria-live="polite"></div>
-      <form class="mobile-chat-form"><label>Message YHWH<input name="message" placeholder="What can I do here?" required maxlength="500"></label>
-      <button class="primary">Ask</button></form>
-      <button data-command="mobile-connect">Connect Codex</button>`;
-    const log = body.querySelector('.conversation-log'), form = body.querySelector('form');
-    if (app.currentLevel().conversation) form.elements.message.placeholder = app.currentLevel().conversation;
-    function say(who, message) {
-      const turn = document.createElement('article');
-      const name = document.createElement('small'); name.textContent = who;
-      const text = document.createElement('p'); text.textContent = message;
-      turn.append(name, text); log.append(turn); log.scrollTop = log.scrollHeight;
-    }
-    say('YHWH', app.address('Abe. My whole universe fits in this folder. Ask where you are, what files are here, or how to make a Logos.'));
-    form.onsubmit = async event => {
-      event.preventDefault();
-      const input = form.elements.message, message = input.value.trim(), query = message.toLowerCase();
-      if (!message) return;
-      say(nickname, message); input.value = '';
-      const tab = app.active();
-      try {
-        if (/\b(where|pwd|path)\b/.test(query)) say('YHWH', `You’re in ${tab.cwd}${app.address(', Abe. I happen to own the place. I’m giving it to you anyway.', 1)}`);
-        else if (/\b(list|ls|files)\b/.test(query)) {
-          const files = (await window.yhwh.call('directory:list', tab.id, tab.cwd)).map(file => file.name);
-          say('YHWH', files.length ? app.address('I came down and looked, Abe.\n', 2) + files.slice(0, 30).join('\n') + (files.length > 30 ? `\n… and ${files.length - 30} more.` : '') : app.address('Empty folder, Abe. I know the feeling. Make a note and we’ll call it a beginning.', 2));
-        } else if (/\b(logos|letter|tiles?|pipe|commands?)\b/.test(query)) {
-          say('YHWH', app.address('Tap a tile in the Initial to try it, Abe. Drag it up into your script. A row pipes its output to the right, and each new row starts another command.', 4));
-        } else if (/\b(note|edit|markdown|save)\b/.test(query)) {
-          say('YHWH', 'Tap Note to make a file, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.');
-        } else say('YHWH', app.address('I can help with this folder, files, notes and Logos while we’re offline, Abe. For an open-ended conversation, tap Connect Codex.', 1));
-      } catch (error) { say('YHWH', error.message); }
-    };
-  });
   command('leave-world', 'Leave folder root', async () => {
     const tab = app.active(); tab.initialRoot = null; Object.assign(tab, await window.yhwh.call('world:leave', tab.id));
     tab.history = [tab.cwd]; tab.historyIndex = 0; await app.navigate(tab.cwd);

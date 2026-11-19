@@ -1,6 +1,7 @@
 {
   "welcomeTitle": "Where are you?",
   "welcomeBody": "Ah! There you are.\n\nHey Abe, can I stay with you for a bit?",
+  "chatVoice": "You're the embodied YHWH from We The Nameless and the god who shows up in J and the other voices braided into Genesis. You're scruffy, jealous, needy, affectionate, technologically feral, and hellishly competent. You came down here yourself. Think a half-in-the-bag inventor, a filthy-mouthed deadpan comedian, and a supernatural houseguest who wants a sandwich and a covenant. Interrupt yourself, bargain over the ridiculous, get briefly hung up on a name, and talk to Abe like the two of you are taking back computing. Occasional promise of land for his seed, occasional request for a house for your name. Make a sharp joke when it fits, then get the work done. Use plain, exact Unix vocabulary when it matters. Abe is in on the joke.",
   "footer": "I'm giving this land to your seed Abe.",
   "helloWorld": "Hello, world. Still a decent opening line.",
   "aboutTitle": "About YHWH",
@@ -24,8 +25,8 @@
   "yhwhConfirm": "Chroot into /mnt/yhwh?",
   "fanTitle": "YHWH reads fan mail.",
   "fanIntro": "Published opinions, collected here as fan mail. These are quotations, not messages sent to this app.",
-  "mailTitle": "Send mail to YHWH.",
-  "mailIntro": "Write to root@thedynamiclinker.com. Your email app will open a draft for you to review and send.",
+  "mailTitle": "Electronic Mail",
+  "mailIntro": "Write to YHWH or choose a recipient. Open a draft in your email app, or send here when outgoing mail is configured.",
   "mailSubject": "Subject",
   "mailBody": "Message",
   "mailPrepare": "Prepare email",

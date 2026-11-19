@@ -175,17 +175,21 @@ async function main() {
       }
       await require('../../../test/initial-ui.cjs')(page, deviceArtifacts);
       await page.evaluate(() => window.YHWH.run('chat'));
-      const help = page.locator('#mobile-dialog');
+      const help = page.locator('[data-panel=yhwh-chat]');
       await help.getByRole('textbox', { name: 'Message YHWH' }).fill('Where am I?');
-      await help.getByRole('button', { name: 'Ask' }).click();
+      await help.getByRole('button', { name: 'Send', exact: true }).click();
       await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
-      await help.getByRole('button', { name: 'Close', exact: true }).click();
+      await help.getByRole('button', { name: 'Close conversation' }).click();
       await require('../../../test/levels-ui.cjs')(page, path.join(deviceArtifacts, 'zanmen.png'));
       await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
       assert.equal(await page.locator('body').getAttribute('data-level'), 'elite');
       await page.evaluate(() => window.YHWH.run('chat'));
-      await help.getByRole('log').getByText(/^Josh\. My whole universe/).waitFor();
-      await help.getByRole('button', { name: 'Close', exact: true }).click();
+      await help.getByRole('button', { name: 'History', exact: true }).click();
+      await help.getByRole('navigation', { name: 'Chat history' }).getByRole('button', { name: 'Where am I?' }).click();
+      await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
+      await help.getByRole('button', { name: /New chat/ }).click();
+      await help.getByRole('log').getByText(/^Josh\. Ask where you are/).waitFor();
+      await help.getByRole('button', { name: 'Close conversation' }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF and all five YHWH levels.`);

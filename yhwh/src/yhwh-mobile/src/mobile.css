@@ -102,10 +102,9 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile #mobile-editor-toolbar { justify-content: flex-start; }
 .is-mobile #mobile-editor-toolbar > button { flex: 1 0 auto; min-width: 38px; padding-inline: 6px; }
 .is-mobile .cm-line { padding-inline: 16px; }
-.mobile-chat-form { display: flex; gap: 8px; align-items: end; margin: 12px 0; }
-.mobile-chat-form label { flex: 1; min-width: 0; }
-.mobile-chat-form input { width: 100%; font-size: 16px; }
-#mobile-dialog .conversation-log { max-height: min(45dvh, 320px); }
+.is-mobile .chat-workspace { grid-template-columns: minmax(0, 1fr); }
+.is-mobile .chat-controls small { display: inline; }
+.is-mobile #yhwh-chat-form { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
 .is-mobile .file-row [data-expand-folder] {
   width: 44px; min-height: 44px; padding: 0; margin-inline-start: -10px;
 }

@@ -5,7 +5,7 @@ const callChannels = [
   'focus:new', 'focus:close', 'navigate', 'list', 'path:stat', 'file:read', 'file:save', 'file:create',
   'file:move', 'file:copy', 'file:trash', 'file:external', 'file:reveal', 'clipboard:path', 'choose',
   'choose:save', 'settings:save', 'config:open', 'config:reload', 'words:save', 'plugins', 'circus',
-  'external', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
+  'external', 'mail', 'words:read', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
   'verse:random', 'verse:commentary', 'keys:run', 'keys:shell', 'keys:save',
   'terminal:open', 'terminal:close',
 ];

@@ -1,11 +1,12 @@
 import { fileType } from '../../../lib/file-type.cjs';
+import { addressCopy, levelAt } from '../../../lib/levels.cjs';
+import { draft, message } from '../../../lib/mail-message.cjs';
 
 export const HOME = '/YHWH';
 export const unavailable = {
   'keys:run': 'Custom executable and JavaScript key files require the desktop host. Bundled commands work here.',
   'keys:shell': 'Shell pipelines and modifier-directory commands require desktop process APIs. Text, wildcard and regex search work here.',
   'keys:save': 'Editing prefix key files requires the desktop filesystem. Bundled keyboard bindings work here.',
-  chat: 'Open Connect YHWH for account sign-in and a Codex setup guide. In-app mobile chat is not connected yet.',
   'world:books': 'The desktop world libraries are not bundled on mobile.',
   'config:open': 'Mobile settings use JSON rather than shell rc files. Use Settings to edit them.',
   'offering:piece': 'Use Export or share file to attach a document on mobile.',
@@ -157,6 +158,32 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     async 'words:save'(values) {
       for (const [key, value] of Object.entries(values)) if (!(key in words) || typeof value !== 'string') throw new Error('Unknown text entry.');
       const next = { ...customWords, ...values }; await storage.saveState('words', next); customWords = next; return { ...words, ...next };
+    },
+    'words:read': () => ({ ...words, ...customWords }),
+    async mail(id, action, fields) {
+      focus(id);
+      if (action !== 'draft') throw new Error('Direct Electronic Mail delivery requires the desktop host. Open a draft in your mail app here.');
+      const letter = message(fields);
+      await external(draft(letter));
+      return { drafted: true, to: letter.to };
+    },
+    async chat(id, thread, messages, attachments, energy) {
+      focus(id);
+      if (attachments?.length) throw new Error('Chat attachments and the live agent require the desktop host.');
+      const directory = normalize(thread.directory);
+      const query = messages.at(-1)?.content?.toLowerCase();
+      if (!query?.trim()) throw new Error('Write a message to YHWH.');
+      const level = levelAt(energy);
+      const say = (text, index) => addressCopy(text, level, index);
+      if (/\b(where|pwd|path)\b/.test(query)) return `You’re in ${directory}${say(', Abe. I happen to own the place. I’m giving it to you anyway.', 1)}`;
+      if (/\b(list|ls|files)\b/.test(query)) {
+        const entries = await storage.list(directory);
+        return entries.length ? say('I came down and looked, Abe.\n\n', 2) + entries.slice(0, 30).map(file => file.name).join('\n\n') + (entries.length > 30 ? `\n\n… and ${entries.length - 30} more.` : '')
+          : say('Empty folder, Abe. I know the feeling. Make a note and we’ll call it a beginning.', 2);
+      }
+      if (/\b(logos|letter|tiles?|pipe|commands?)\b/.test(query)) return say('Tap a tile in the Initial to try it, Abe. Drag it up into your script. A row pipes its output to the right, and each new row starts another command.', 4);
+      if (/\b(note|edit|markdown|save)\b/.test(query)) return 'Tap Note to make a file, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.';
+      return say('I can help with this folder, files, notes and Logos while we’re offline, Abe. Tap Live chat setup for the desktop connection guide.', 1);
     },
     plugins: async configuration => { if (configuration && configuration !== '[]') throw new Error('Mobile currently supports bundled plugins only.'); return builtinPlugins; },
     circus: async () => {

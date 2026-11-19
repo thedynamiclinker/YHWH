@@ -14,6 +14,8 @@ import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
 import { fileIcons } from './file-icons.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
+import { mountChat } from './chat.js';
+import { yhwhAddress } from '../../../lib/mail-message.cjs';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
@@ -329,7 +331,7 @@ function restoreAfterTerminal(tab) {
 }
 function focusCurrent(tab = active()) {
   if (!tab || active() !== tab || document.querySelector('dialog[open]')) return;
-  if (tab.focusView === 'chat') { chatPanel?.element.querySelector('textarea')?.focus(); return; }
+  if (tab.focusView === 'chat') { if (boot.interface !== 'mobile') chatPanel?.element.querySelector('textarea')?.focus(); return; }
   if (tab.focusView === 'inbox') { $('#inbox-view').querySelector('button')?.focus(); return; }
   if (tab.focusView !== 'document') return;
   if (tab.file?.mode === 'reading') tab.document.querySelector('.reading-view').focus({ preventScroll: true });
@@ -700,7 +702,9 @@ function settings() {
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
     <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Dawkins ← Nietzsche → YHWH. Use the title bar to switch preview editions.', `<input type="range" name="energy" min="0" max="100" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
-    <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
+    <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}${boot.interface === 'mobile' ? '' :
+      row('Your email address', 'The sender address and where YHWH sends mail to you.', `<input type="email" name="mail_self" value="${escape(values.mail_self || '')}">`) +
+      row('Outgoing mail command', 'A configured sendmail-compatible executable, such as /usr/sbin/sendmail.', `<input name="mail_transport" value="${escape(values.mail_transport || '')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
   if (boot.interface === 'mobile') {
     dialog.querySelector('[name="terminal_font_size"]').closest('label').hidden = true;
@@ -988,12 +992,21 @@ async function fanMail() {
   modal(words.fanTitle, word('fanTitle', 'h3') + word('fanIntro') + quotes.map(item => `<blockquote><p>“${escape(item.quote)}”</p><footer>${escape(item.author)} · <a href="${escape(item.url)}">${escape(item.work)}</a></footer></blockquote>`).join('') + `<button data-command="edit-fan-mail">${escape(ui('edit-feature-copy'))}</button>`);
 }
 function sendMail() {
-  modal(words.mailTitle, word('mailTitle', 'h3') + word('mailIntro') + ui('mail-form', escape(words.mailSubject), escape(words.mailBody), escape(words.mailPrepare)), dialog => {
+  const tab = active(), direct = boot.interface !== 'mobile' && tab.config.values.mail_transport && tab.config.values.mail_self;
+  const form = ui('mail-form', escape(words.mailSubject), escape(words.mailBody), escape(words.mailPrepare), escape(yhwhAddress),
+    direct ? '<button class="primary" type="submit" value="send">Send email</button>' : '');
+  modal(words.mailTitle, word('mailTitle', 'h3') + word('mailIntro') + form, dialog => {
     dialog.querySelector('form').onsubmit = async event => {
       event.preventDefault();
-      const data = new FormData(event.target);
-      try { await call('external', `mailto:root@thedynamiclinker.com?subject=${encodeURIComponent(data.get('subject'))}&body=${encodeURIComponent(data.get('body'))}`); }
-      catch (error) { notice(error.message); }
+      const form = event.target, buttons = [...form.querySelectorAll('button')];
+      const fields = Object.fromEntries(new FormData(form));
+      const action = event.submitter?.value || 'draft';
+      for (const button of buttons) button.disabled = true;
+      try {
+        const result = await call('mail', tab.id, action, fields);
+        if (result.accepted) { dialog.close(); notice(`Electronic Mail accepted the message to ${result.to}.`); }
+      } catch (error) { notice(error.message); }
+      finally { for (const button of buttons) button.disabled = false; }
     };
   });
 }
@@ -1275,43 +1288,29 @@ function progressWalk(id) {
   if (!(presence.enabled || active()?.config.values.narrative === 'true')) return;
   if (walk.find(item => !presence.steps.includes(item.id))?.id === id) { presence.steps.push(id); savePresence(); }
 }
-let chatPanel;
-function showChat() {
-  if (chatPanel) { focusView(active().focusView === 'chat' ? 'document' : 'chat'); renderChat(); return; }
-  chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'center', render(element) {
-    element.innerHTML = '<div class="conversation-log" role="log" aria-live="polite" aria-label="Conversation with YHWH"></div><form id="yhwh-chat-form"><textarea aria-label="Message YHWH" placeholder="Where are you?" rows="3" required maxlength="30000"></textarea><div class="chat-controls"><small>Codex · conversation · read only</small><button class="primary">Send</button></div><p class="chat-error" role="alert" hidden></p></form><button type="button" data-command="chat">Close conversation</button>';
-    const form = element.querySelector('form');
-    form.querySelector('textarea').oninput = event => localStorage.setItem(chatStorageKey() + ':draft', event.target.value);
-    form.onsubmit = async event => {
-      event.preventDefault(); const tab = active(), key = chatStorageKey(), message = form.querySelector('textarea').value.trim();
-      if (!message || chatPending.has(key)) return;
-      const messages = readChat(key), conversation = [...messages, { role: 'user', content: message }].slice(-79);
-      chatPending.add(key); chatErrors.delete(key); renderChat();
-      try {
-        const answer = await call('chat', tab.id, conversation, currentEnergy(tab.config));
-        localStorage.setItem(key, JSON.stringify([...conversation, { role: 'assistant', content: answer }].slice(-80)));
-        localStorage.removeItem(key + ':draft');
-      } catch (error) { chatErrors.set(key, error.message); }
-      finally { chatPending.delete(key); renderChat(); }
-    };
-  }});
-  focusView('chat'); renderChat();
+let chatPanel, chatView;
+async function showChat() {
+  if (active().focusView === 'chat') { focusView('document'); return; }
+  if (!chatPanel) {
+    chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'center', render(element) {
+      chatView = mountChat(element, { active, address, level: currentLevel, energy: currentEnergy, call, notice,
+        mobile: boot.interface === 'mobile',
+        workspaceRoot(directory) {
+          if (boot.interface === 'mobile') return null;
+          const mount = join(parent(parent(parent(boot.root))), 'mnt');
+          return ['root', 'yhwh'].map(name => join(mount, name))
+            .find(root => directory === root || directory.startsWith(root + '/')) || null;
+        },
+      });
+    }});
+    draggable(chatPanel.element.querySelector('.chat-header'), 'yhwh-chat');
+    chatPanel.element.hidden = true;
+  }
+  const tab = active();
+  await chatView.ready();
+  if (active() === tab) { focusView('chat'); renderChat(); focusCurrent(); }
 }
-const chatPending = new Set(), chatErrors = new Map();
-function chatStorageKey() { return 'yhwh:chat:v1:' + active().cwd; }
-function readChat(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
-function renderChat() {
-  if (!chatPanel || !active()) return;
-  const key = chatStorageKey(), element = chatPanel.element, log = element.querySelector('.conversation-log');
-  const divine = document.body.dataset.theme === 'yhwh';
-  log.innerHTML = readChat(key).map(message => `<article><small>${message.role === 'user' ? escape(address('Abe', 3)) : divine ? 'YHWH' : 'Assistant'}</small><p>${escape(message.content)}</p></article>`).join('') || `<p class="muted">${escape(address(divine ? 'Abe. Show me what you’re making. I’ll come down and look. We’re gonna spread your seed everywhere.' : 'Ask about this directory or your work, Abe.', 3))}</p>`;
-  if (chatPending.has(key)) log.insertAdjacentHTML('beforeend', '<p role="status">Waiting for Codex…</p>');
-  const form = element.querySelector('form'); form.querySelector('textarea').value = localStorage.getItem(key + ':draft') || '';
-  form.querySelector('textarea').placeholder = currentLevel().conversation || 'Where are you?';
-  form.querySelector('button').disabled = chatPending.has(key); form.querySelector('textarea').disabled = chatPending.has(key);
-  const error = form.querySelector('.chat-error'); error.hidden = !chatErrors.has(key); error.textContent = chatErrors.get(key) || '';
-  log.scrollTop = log.scrollHeight;
-}
+function renderChat() { chatView?.render(); }
 addCommand({ id: 'focus-document', name: 'Focus document', run: () => focusView('document') });
 addCommand({ id: 'margins', name: 'In the margins · Genesis', run: () => focusView(active().focusView === 'margins' ? 'document' : 'margins') });
 addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
@@ -1349,6 +1348,15 @@ bridge.on('navigation', state => {
 });
 bridge.on('directory-changed', ({ id }) => { const tab = tabs.find(item => item.id === id); if (tab && !movingFiles) refresh(tab).catch(error => notice(error.message)); });
 bridge.on('error', notice);
+let appRefresh = Promise.resolve();
+bridge.on('app-changed', ({ reloadPlugins }) => {
+  appRefresh = appRefresh.then(async () => {
+    Object.assign(words, await call('words:read'));
+    if (reloadPlugins) pluginKey = '';
+    for (const tab of tabs) if (!tab.file) tab.welcomeLevel = null;
+    await Promise.all(tabs.map(tab => refresh(tab)));
+  }).catch(error => notice(error.message));
+});
 bridge.on('command', run);
 bridge.on('open', opening => openRequest(opening).catch(error => notice(error.message)));
 async function openRequest(opening) {
@@ -1370,9 +1378,10 @@ function followLink({ href, wiki, newTab, anchor }) {
     const decode = value => { try { return decodeURIComponent(value); } catch { return value; } };
     const name = decode(hash < 0 ? href : href.slice(0, hash));
     const heading = hash < 0 ? '' : decode(href.slice(hash + 1));
+    const chatDirectory = anchor?.closest('.conversation-log') && tab.chatThread?.directory;
     let destination = tab;
     if (name) {
-      let filename = join(parent(tab.file?.path || join(tab.cwd, '_')), name);
+      let filename = join(chatDirectory || parent(tab.file?.path || join(tab.cwd, '_')), name);
       let info;
       try { info = await call('path:stat', filename); }
       catch (error) {
@@ -1385,7 +1394,7 @@ function followLink({ href, wiki, newTab, anchor }) {
       if (!await openFile(info.path, destination)) return;
       if (readNext && active() === destination && destination.file?.language === 'markdown') readingView();
     }
-    if (heading && active() === destination) {
+    if (heading && active() === destination && (name || !chatDirectory)) {
       const mail = anchor?.closest('.mail-message');
       if (!mail) readingView();
       const container = mail || destination.document;
@@ -1402,7 +1411,7 @@ document.addEventListener('click', event => {
   const anchor = event.target.closest('a');
   if (anchor) {
     event.preventDefault();
-    followLink({ href: anchor.getAttribute('href'), wiki: anchor.classList.contains('internal-link'), newTab: event.ctrlKey || event.metaKey, anchor });
+    followLink({ href: anchor.getAttribute('href'), wiki: anchor.classList.contains('internal-link') || !!anchor.closest('.conversation-log'), newTab: event.ctrlKey || event.metaKey, anchor });
     return;
   }
   const button = event.target.closest('[data-command]'); if (button) { run(button.dataset.command); return; }
@@ -1526,6 +1535,10 @@ document.addEventListener('focusin', event => {
 document.addEventListener('keydown', event => {
   document.body.classList.toggle('mod-follow', event.ctrlKey || event.metaKey);
   if (event.isComposing || document.querySelector('dialog[open]') || event.target.closest('.initial-workbench input')) return;
+  if (event.key === 'Enter' && event.target.closest('#yhwh-chat-form textarea')) return;
+  if (event.key === 'Escape' && event.target.closest('[data-panel="yhwh-chat"]')) {
+    event.preventDefault(); focusView('document'); return;
+  }
   const binding = bindingFor(event);
   if (binding && binding.kind !== 'disabled') {
     event.preventDefault(); event.stopImmediatePropagation();
