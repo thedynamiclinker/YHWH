@@ -150,6 +150,11 @@ export function createVerseUI({ call, modal, notice }) {
     } catch (error) {
       if (current !== generation) return;
       content.replaceChildren(Object.assign(document.createElement('p'), { className: 'muted', textContent: error.message }));
+      if (mode === 'nietzsche') {
+        content.append(Object.assign(document.createElement('a'), {
+          href: 'https://nietzschefamilycircus.com/', textContent: 'Open the original site ↗',
+        }));
+      }
     }
   }
   return { createCitation, hydrate, browse,

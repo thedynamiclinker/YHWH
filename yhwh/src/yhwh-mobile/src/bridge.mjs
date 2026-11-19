@@ -7,7 +7,6 @@ export const unavailable = {
   'keys:save': 'Editing prefix key files requires the desktop filesystem. Bundled keyboard bindings work here.',
   chat: 'Open Connect YHWH for account sign-in and a Codex setup guide. In-app mobile chat is not connected yet.',
   'world:books': 'The desktop world libraries are not bundled on mobile.',
-  circus: 'The circus network service is currently available on desktop.',
   'config:open': 'Mobile settings use JSON rather than shell rc files. Use Settings to edit them.',
   'offering:piece': 'Use Export or share file to attach a document on mobile.',
   'window:close': 'Use your device’s app switcher to leave YHWH. Save any edits first.',
@@ -37,7 +36,7 @@ function version(stat, bytes) {
 
 // The same window.yhwh contract as Electron's preload. Only device I/O lives
 // here: the renderer, CodeMirror, Markdown, commands and verse model are shared.
-export function createMobileBridge({ storage, defaults, words, verses, builtinPlugins = [], external, clipboard, share, choose, platform }) {
+export function createMobileBridge({ storage, defaults, words, verses, builtinPlugins = [], external, clipboard, share, choose, platform, circus }) {
   const focuses = new Map(), events = new Map();
   let settings = {}, customWords = {}, writing = Promise.resolve();
   const emit = (name, value) => { for (const fn of events.get(name) || []) fn(value); };
@@ -160,6 +159,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       const next = { ...customWords, ...values }; await storage.saveState('words', next); customWords = next; return { ...words, ...next };
     },
     plugins: async configuration => { if (configuration && configuration !== '[]') throw new Error('Mobile currently supports bundled plugins only.'); return builtinPlugins; },
+    circus: async () => {
+      if (!circus) throw new Error('Open the original site to see a pairing in this browser preview.');
+      return circus();
+    },
     external: url => { if (!/^(https?:|mailto:)/i.test(url)) throw new Error('Unsupported link.'); return external(url); },
     'world:quotes': async () => { throw new Error('Fan mail is currently available on desktop.'); },
     'verse:catalog': () => verses.catalog(), 'verse:chapter': (...args) => verses.chapter(...args),

@@ -885,11 +885,11 @@ function upgrades() {
 }
 async function circus() {
   const dialog = modal(ui("nietzsche-family-circus"), ui("fetching-a-cartoon-and-a-wildly-inappropriate-ph"));
+  const body = dialog.querySelector('.dialog-body');
   try {
     const pair = await call('circus');
-    if (!dialog.open || dialog.querySelector('h2')?.textContent !== ui("nietzsche-family-circus")) return;
-    dialog.querySelector('.dialog-body').innerHTML = ui("cartoon-and-pairing-from-nietzsche-family-circus", pair.image, escape(pair.quote), escape(pair.permalink));
-  } catch (error) { if (dialog.open) dialog.querySelector(ui("-dialog-body-p")).textContent = error.message; }
+    if (dialog.open && body.isConnected) body.innerHTML = ui("cartoon-and-pairing-from-nietzsche-family-circus", escape(pair.image), escape(pair.quote), escape(pair.permalink));
+  } catch (error) { if (dialog.open && body.isConnected) body.querySelector('p').textContent = error.message; }
 }
 function modes() {
   const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);

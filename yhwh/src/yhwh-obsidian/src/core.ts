@@ -1,9 +1,11 @@
 import defaults from '../../../etc/obsidian/defaults.json';
 import copy from '../../../etc/obsidian/copy.json';
+import { editionState, type EditionState } from '../../../lib/levels.cjs';
 export const COPY = copy;
 export type CopyKey = keyof typeof COPY;
 export interface Settings {
   energy: number;
+  edition: EditionState;
   accent: string;
   title: string;
   bg: string;
@@ -12,9 +14,9 @@ export interface Settings {
   folder: string;
   copy: Record<CopyKey, string>;
 }
-export const DEFAULTS: Settings = { ...defaults, copy: { ...COPY } };
+export const DEFAULTS: Settings = { ...defaults, edition: editionState(), copy: { ...COPY } };
 export function settings(data: Partial<Settings> | null): Settings {
-  return { ...DEFAULTS, ...data, energy: energy(data?.energy ?? 100),
+  return { ...DEFAULTS, ...data, energy: energy(data?.energy ?? 100), edition: editionState(data?.edition),
     copy: Object.fromEntries(Object.entries(COPY).map(([k, v]) =>
       [k, typeof data?.copy?.[k as CopyKey] === 'string' ? data.copy[k as CopyKey] : v])) as Settings['copy'] };
 }

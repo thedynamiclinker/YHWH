@@ -1,4 +1,5 @@
 @font-face { font-family: Phoenician; src: url('../assets/Phoenician.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: "YHWH Han"; src: url('fonts/yhwh-han.woff2') format('woff2'); font-display: swap; unicode-range: U+4E00, U+4E09, U+4E2B, U+4E8C, U+5152, U+5011, U+54B1, U+5C71, U+611B, U+6211, U+65E5, U+66F0, U+6708, U+6709, U+723E, U+8033, U+808F, U+9670; }
 :root {
   color-scheme: dark;
   --bg: #1b1b20; --panel: #202026; --sidebar: #17171c; --rail: #131317;
@@ -34,6 +35,8 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .personality { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: .875rem; }
 .personality input { width: 100px; padding: 0; height: 4px; accent-color: var(--purple); }
 #mode-name { font-size: .8125rem; padding: 3px 6px; min-width: 65px; color: var(--purple); }
+.edition-glyph, body:is([data-level='pro'], [data-level='elite']) #mode-name { font-family: "YHWH Han", system-ui, sans-serif; }
+.edition-glyph { min-width: 32px; padding: 3px 6px; color: var(--purple); }
 .tab-strip { height: 39px; min-height: 39px; display: flex; align-items: center; background: var(--sidebar); border-bottom: 1px solid var(--line); padding: 0 8px 0 48px; gap: 6px; }
 #tabs { display: flex; min-width: 0; overflow: auto; scrollbar-width: none; gap: 3px; }
 .tab { display: flex; align-items: center; gap: 12px; border: 1px solid transparent; padding: 4px 8px 4px 12px; min-width: 130px; max-width: 230px; border-radius: 6px 6px 0 0; color: var(--muted); }
@@ -125,6 +128,19 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .eyebrow { color: var(--purple); font-size: .8125rem; letter-spacing: .16em; text-transform: uppercase; margin-top: 22px; }
 .welcome h1 { font-weight: 550; font-size: 32px; letter-spacing: -.8px; margin: 8px 0 12px; }
 .welcome p { color: var(--muted); max-width: 450px; line-height: 1.85; }
+.welcome .level-greeting { color: var(--text); font-weight: 550; margin-bottom: 0; }
+body:is([data-level='pro'], [data-level='elite']) .welcome h1,
+body[data-level='elite'] :is(.window-title, #file-filter) { font-family: "YHWH Han", Inter, 'Segoe UI', system-ui, sans-serif; }
+.level-copy { min-width: 0; }
+.level-copy p { margin: .25em 0; }
+.level-poem {
+  margin: 16px 0; padding: 12px 14px;
+  max-width: 100%; overflow-x: auto; white-space: pre;
+  border-inline-start: 2px solid var(--purple); background: var(--panel); color: var(--text);
+  font: .9rem/1.5 ui-monospace, "YHWH Han", "WTN Egyptian", Phoenician, monospace;
+  unicode-bidi: isolate;
+}
+body:is([data-level='pro'], [data-level='elite']) .character-copy { font-family: "YHWH Han", Phoenician, system-ui, sans-serif; }
 .inline-edit { opacity: .3; font-size: .8125rem; padding: 2px 5px; color: var(--muted); vertical-align: middle; }
 .inline-edit:hover { opacity: 1; }
 .welcome-actions { display: flex; gap: 10px; margin: 26px 0 32px; }
@@ -198,6 +214,14 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .dialog-body .field > span { color: var(--muted); font-size: .9375rem; }
 .dialog-body textarea { min-height: 130px; width: 100%; resize: vertical; line-height: 1.6; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.edition-menu button[aria-pressed='true'] { background: var(--purple-bg); color: var(--purple); }
+.edition-menu button { font-family: "YHWH Han", system-ui, sans-serif; }
+.edition-offer p { margin: 0 0 8px; }
+.edition-offer .offer-lead { color: var(--text); font-size: 1.35rem; }
+.edition-offer .primary { margin: 12px 0 6px; }
+.stripe-setup { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.stripe-setup summary { cursor: pointer; }
+.stripe-setup li { margin-block: 8px; }
 .menu-list { display: flex; flex-direction: column; gap: 5px; }
 .menu-list button { text-align: left; padding: 9px 11px; display: flex; justify-content: space-between; }
 .menu-list button:hover, .menu-list button:focus { background: var(--purple-bg); color: var(--purple); }

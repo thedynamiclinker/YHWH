@@ -1182,7 +1182,40 @@ class Workspace:
 
     def authored(self, title, *keys):
         words = self.services.words
-        self.show(title, "\n\n".join(words[key] for key in keys))
+        self.show(title, "\n\n".join(self.services.address(words[key], 2) for key in keys))
+
+    def levels(self):
+        current = self.services.current_level()
+        options = self.services.level_options()
+        commands = {
+            level["label"] + (f" · {level['edition']}" if level.get("edition") else ""):
+                partial(self.choose_level, level) for level in options
+        }
+        target = next((level for level in self.services.levels["levels"] if level not in options), None)
+        if target:
+            commands[f"{target.get('glyph', target['label'])} · {target['offer']['title']}"] = partial(self.upgrade, target)
+        self.pick(f"YHWH-ness · {current['label']}", commands)
+
+    def choose_level(self, level, *, unlock=False):
+        self.services.select_level(level, unlock=unlock)
+        lines = [level.get("welcome"), *level.get("lines", []), level.get("welcomePoem"), level.get("poem")]
+        asides = level.get("asides", [])
+        if asides:
+            lines.append(choice([None, *asides]))
+        if level.get("names"):
+            lines.insert(1, self.services.address("Hey Abe, take a look around."))
+        links = {"Nietzsche Family Circus": "https://nietzschefamilycircus.com/"} if level["id"] == "nietzsche" else None
+        self.show(f"YHWH level {level['label']}", "\n\n".join(filter(None, lines)), links)
+
+    def upgrade(self, target):
+        guide = self.services.levels["stripe"]
+        offer = target["offer"]
+        self.show(offer["title"], "\n".join([*offer["lines"], "", guide["status"]]))
+        self.pick(offer["title"], {
+            "Steal Upgrade": partial(self.choose_level, target, unlock=True),
+            guide["title"]: lambda: self.show(guide["title"], "\n\n".join(guide["steps"]), guide["links"],
+                                              back=partial(self.upgrade, target)),
+        })
 
     def offerings(self):
         self.pick("Offerings", {
@@ -1195,7 +1228,7 @@ class Workspace:
         url = self.config.yhwh.values.get("stripe_payment_link", "")
         words = self.services.words
         links = {"Open payment page": url} if url.startswith("https://buy.stripe.com/") else {}
-        self.show(words["seedTitle"], "\n\n".join(words[key] for key in ("seedBody", "seedQuote", "seedAttribution")), links)
+        self.show(words["seedTitle"], "\n\n".join(self.services.address(words[key], 1) for key in ("seedBody", "seedQuote", "seedAttribution")), links)
 
     def verses(self):
         books = self.services.verses
@@ -1239,7 +1272,7 @@ class Workspace:
         state = self.services.conversation(directory)
         settings = self.config["agent"].copy()
         env = self.config.yhwh.environment.copy()
-        energy = self.services.energy(self.config.yhwh.values)
+        energy = self.services.current_level().get("energy", self.services.energy(self.config.yhwh.values))
         self.chat_pending.add(directory)
         self.message = "Waiting for Codex. You can keep working."
 
@@ -1405,6 +1438,7 @@ class Workspace:
             (None, "Books · Horeb", partial(self.books, "Horeb"), True),
             (None, "Fan mail", self.fan_mail, True),
             (None, "Offerings", self.offerings, True),
+            (None, "YHWH-ness · levels and upgrades", self.levels, True),
             (None, "Take a walk", self.walk, True),
             (None, "Piece offering · compose email", self.piece_offering, True),
             (None, "Seed funding", self.seed_funding, True),

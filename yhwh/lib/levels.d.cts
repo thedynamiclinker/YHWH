@@ -1,0 +1,22 @@
+export type Level = {
+  id: 'dawkins' | 'nietzsche' | 'yhwh' | 'pro' | 'elite';
+  energy: number;
+  label: string;
+  edition?: string;
+  glyph?: string;
+  lines?: string[];
+  asides?: string[];
+  names?: string[];
+  welcome?: string;
+  poem?: string;
+  welcomePoem?: string;
+  filter?: string;
+  offer?: { title: string; lines: string[] };
+};
+export type EditionState = { unlocked: number; selected?: number };
+export const stripe: { title: string; status: string; steps: string[]; links: Record<string, string> };
+export function levelAt(energy: number): Level;
+export function unlockedLevels(energy: number): Level[];
+export function editionState(value?: unknown): EditionState;
+export function nextUpgrade(unlocked: number): (Level & { offer: NonNullable<Level['offer']> }) | undefined;
+export function addressCopy(text: string, level: Level, nameIndex?: number): string;

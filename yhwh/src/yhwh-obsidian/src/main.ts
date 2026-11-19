@@ -2,7 +2,8 @@ import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-main.json';
 const ui = interfaceText(interfaceCopy);
 import { FileView, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
-import { ancestors, circusPair, config, COPY, CopyKey, isText, mode, parent, resolvePath, Settings, settings } from './core';
+import { ancestors, circusPair, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
+import { addressCopy, levelAt, nextUpgrade, stripe, unlockedLevels } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
 
@@ -13,6 +14,7 @@ export default class YHWH extends Plugin {
   circus?: { image: string; quote: string; permalink: string };
   circusBusy = false;
   circusError = '';
+  private dawkinsAside = Math.floor(Math.random() * 3);
   configErrors: string[] = [];
   listeners = new Set<() => void>();
   private navigation = 0;
@@ -46,6 +48,7 @@ export default class YHWH extends Plugin {
       ['reload-config', ui("reload-folder-configuration"), () => this.go(this.folder)],
       ['hello-world', ui("hello-world"), () => new Notice(this.current.energy ? this.settings.copy.hello : ui("hello-world-"))],
       ['offerings', ui("offerings"), () => this.offerings()],
+      ['upgrades', 'Upgrade YHWH', () => this.upgrades()],
       ['help', ui("help-and-about"), () => this.help()],
     ];
     for (const [id, name, callback, key] of commands) this.addCommand({ id, name,
@@ -87,7 +90,8 @@ export default class YHWH extends Plugin {
     return () => this.listeners.delete(callback);
   }
   changed() {
-    this.status?.setText(`${this.current.energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh")} · /${this.folder} · ${mode(this.current.energy)}`);
+    const level = this.level();
+    this.status?.setText(`${level.energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh")} · /${this.folder} · ${level.label}`);
     this.listeners.forEach(callback => callback());
   }
   async save() {
@@ -195,7 +199,8 @@ export default class YHWH extends Plugin {
   }
   decorate(el: HTMLElement) {
     el.addClass('yhwh');
-    el.dataset.mode = mode(this.current.energy);
+    const level = this.level();
+    el.dataset.mode = level.id;
     el.style.setProperty('--yhwh-accent', this.current.accent);
     el.style.removeProperty('--yhwh-background');
     if (this.current.bg) {
@@ -204,28 +209,86 @@ export default class YHWH extends Plugin {
         el.style.setProperty('--yhwh-background', `url("${this.app.vault.getResourcePath(file).replace(/["\\\n\r]/g, encodeURIComponent)}")`);
     }
   }
+  level() { return levelAt(this.settings.edition.selected ?? this.current.energy); }
+  async selectLevel(value: number) {
+    if (value > this.settings.edition.unlocked) return;
+    this.settings.edition.selected = value > 100 ? value : undefined;
+    if (value <= 100) this.settings.energy = value;
+    await this.go(this.folder);
+  }
+  updateLevelControls(el: HTMLElement) {
+    const level = this.level(), choices = unlockedLevels(this.settings.edition.unlocked);
+    const slider = el.querySelector<HTMLInputElement>('.yhwh-energy input');
+    if (slider) {
+      slider.max = String(choices.length - 1);
+      slider.value = String(choices.findIndex(choice => choice.id === level.id));
+      slider.setAttribute('aria-valuetext', level.label);
+    }
+    el.querySelector('.yhwh-level-name')?.setText(level.glyph || level.label);
+    const target = nextUpgrade(this.settings.edition.unlocked);
+    const upgrade = el.querySelector<HTMLButtonElement>('.yhwh-upgrade');
+    if (upgrade) {
+      upgrade.hidden = !target;
+      upgrade.textContent = target?.glyph || target?.label || '';
+      if (target) {
+        upgrade.title = target.offer.title;
+        upgrade.setAttribute('aria-label', target.offer.title);
+      }
+    }
+  }
   heading(el: HTMLElement, title: string) {
     this.decorate(el);
     const head = el.createDiv('yhwh-heading');
-    head.createEl('bdi', { text: this.current.energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh"), cls: 'yhwh-wordmark', attr: { dir: 'ltr' } });
+    head.createEl('bdi', { text: this.level().energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh"), cls: 'yhwh-wordmark', attr: { dir: 'ltr' } });
     head.createEl('span', { text: this.current.title || title, cls: 'yhwh-title' });
     button(head, '?', ui("help-and-about"), () => this.help());
+    button(head, '', 'Upgrade YHWH', () => this.upgrades()).addClass('yhwh-upgrade');
     const label = el.createEl('label', { cls: 'yhwh-energy' });
-    label.createSpan({ text: ui("amount-of-yhwh-ness-", mode(this.current.energy)) });
-    const slider = label.createEl('input', { type: 'range', attr: { min: '0', max: '100', step: '50', 'aria-label': ui("amount-of-yhwh-ness") } });
-    slider.value = String(this.current.energy);
-    slider.addEventListener('change', () => this.run(async () => {
-      this.settings.energy = Number(slider.value);
-      await this.save();
-      await this.go(this.folder);
-    }));
+    label.createSpan({ text: 'YHWH-ness' });
+    const slider = label.createEl('input', { type: 'range', attr: { min: '0', step: '1', 'aria-label': 'YHWH-ness' } });
+    label.createSpan({ cls: 'yhwh-level-name' });
+    slider.addEventListener('change', () => this.run(() => this.selectLevel(unlockedLevels(this.settings.edition.unlocked)[Number(slider.value)].energy)));
+    this.updateLevelControls(el);
     if (this.configErrors.length) button(el, ui("configuration-issue-s-", this.configErrors.length), ui("show-configuration-errors"), () => this.help());
   }
+  levelCopy(el: HTMLElement) {
+    const level = this.level();
+    el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
+    const lines = [level.welcome, ...(level.lines || []), level.asides?.[this.dawkinsAside]];
+    for (const line of lines) if (line) el.createEl('p', { text: line });
+    if (level.names) el.createEl('p', { text: addressCopy('Hey Abe, take a look around.', level) });
+    for (const text of [level.welcomePoem, level.poem]) if (text) el.createEl('pre', { text, cls: 'yhwh-level-poem', attr: { dir: 'ltr', tabindex: '0' } });
+  }
+  upgrades() {
+    const target = nextUpgrade(this.settings.edition.unlocked);
+    if (!target) return;
+    const modal = new Modal(this.app);
+    modal.titleEl.setText(target.offer.title);
+    const el = modal.contentEl; this.decorate(el);
+    for (const text of target.offer.lines) el.createEl('p', { text });
+    button(el, 'Steal Upgrade', 'Steal Upgrade', () => this.run(async () => {
+      if (nextUpgrade(this.settings.edition.unlocked) !== target) return;
+      const previous = this.settings.edition;
+      this.settings.edition = { unlocked: target.energy, selected: target.energy };
+      try { await this.save(); }
+      catch (error) { this.settings.edition = previous; throw error; }
+      this.changed(); modal.close();
+    })).addClass('mod-cta');
+    el.createEl('p', { text: stripe.status });
+    const setup = el.createEl('details');
+    setup.createEl('summary', { text: stripe.title });
+    const steps = setup.createEl('ol');
+    for (const text of stripe.steps) steps.createEl('li', { text });
+    for (const [label, url] of Object.entries(stripe.links)) this.external(setup.createEl('p'), label, url);
+    modal.open();
+  }
   copyBlock(el: HTMLElement, key: CopyKey) {
-    if (this.current.energy === 0) return;
+    const level = this.level();
+    if (level.id === 'dawkins') return;
     const block = el.createDiv('yhwh-copy');
-    const text = block.createEl('p', { text: this.settings.copy[key] });
-    button(block, ui("edit"), ui("edit-text", key), () => this.editCopy(key, () => text.setText(this.settings.copy[key])));
+    const render = () => addressCopy(this.settings.copy[key], this.level(), 2);
+    const text = block.createEl('p', { text: render() });
+    button(block, ui("edit"), ui("edit-text", key), () => this.editCopy(key, () => text.setText(render())));
   }
   editCopy(key: CopyKey, updated?: () => void) {
     const modal = new Modal(this.app);

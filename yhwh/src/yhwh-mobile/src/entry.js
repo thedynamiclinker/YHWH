@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { AppLauncher } from '@capacitor/app-launcher';
@@ -6,6 +6,7 @@ import { Clipboard } from '@capacitor/clipboard';
 import { Share } from '@capacitor/share';
 import { Keyboard } from '@capacitor/keyboard';
 import { createVerseLibrary } from '../../../lib/verse-library.cjs';
+import { ORIGIN, parsePair, withCartoon } from '../../../lib/circus.cjs';
 import defaults from '../../../etc/default/defaults.json';
 import words from '../../../etc/default/words.json';
 import { createStorage } from './storage.mjs';
@@ -20,8 +21,20 @@ const verses = createVerseLibrary({
   loadEdits: () => storage.loadState('commentaries', {}),
   persistEdits: edits => storage.saveState('commentaries', edits),
 });
+async function circus() {
+  const timeouts = { readTimeout: 12000, connectTimeout: 12000 };
+  const page = await CapacitorHttp.get({ url: `${ORIGIN}/?yhwh=${Date.now()}`, ...timeouts, responseType: 'text' });
+  if (page.status !== 200 || typeof page.data !== 'string') throw new Error('The Circus is unavailable. Try again or open the original site.');
+  const pair = parsePair(page.data);
+  const asset = await CapacitorHttp.get({ url: ORIGIN + pair.image, ...timeouts, responseType: 'arraybuffer' });
+  if (asset.status !== 200 || typeof asset.data !== 'string') throw new Error('The cartoon could not be loaded.');
+  const encoded = asset.data.replace(/\s/g, '');
+  if (!encoded || encoded.length > 4_000_000 || !/^[a-z\d+/]+={0,2}$/i.test(encoded)) throw new Error('The cartoon could not be displayed.');
+  return withCartoon(pair, encoded);
+}
 window.yhwh = createMobileBridge({
   platform: Capacitor.getPlatform(), storage, defaults, words, verses,
+  circus: Capacitor.isNativePlatform() ? circus : undefined,
   builtinPlugins: [{ directory: 'hello-world', source: await (await fetch('./hello-world.js')).text() }],
   clipboard: string => Clipboard.write({ string }),
   external: async url => {

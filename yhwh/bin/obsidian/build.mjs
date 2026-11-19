@@ -8,5 +8,8 @@ await build({ absWorkingDir: root, entryPoints: ['src/main.ts'], outfile: join(o
 const font = await readFile(paths.etc('assets/Phoenician.ttf'));
 const css = await readFile(paths.etc('obsidian/styles.css'), 'utf8');
 const license = await readFile(paths.etc('assets/OFL.txt'), 'utf8');
-await writeFile(join(out, 'styles.css'), `/* ${license.replaceAll('*/','* /')} */\n@font-face{font-family:YHWH-Phoenician;src:url(data:font/ttf;base64,${font.toString('base64')}) format('truetype');font-display:swap}\n${css}`);
+const han = await readFile(paths.etc('default/fonts/yhwh-han.woff2'));
+const hanLicense = await readFile(paths.etc('default/fonts/OFL-yhwh-han.txt'), 'utf8');
+await writeFile(join(out, 'styles.css'), `/* ${license.replaceAll('*/','* /')} */\n@font-face{font-family:YHWH-Phoenician;src:url(data:font/ttf;base64,${font.toString('base64')}) format('truetype');font-display:swap}
+/* ${hanLicense.replaceAll('*/','* /')} */\n@font-face{font-family:"YHWH Han";src:url(data:font/woff2;base64,${han.toString('base64')}) format('woff2');font-display:swap}\n${css}`);
 console.log('Built Obsidian plugin:', out);

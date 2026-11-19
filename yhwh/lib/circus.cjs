@@ -27,7 +27,12 @@ async function nextPair(fetcher = fetch) {
   if (!asset.ok) throw new Error("The cartoon could not be loaded. Try Next again.");
   const buffer = Buffer.from(await asset.arrayBuffer());
   if (buffer.length > 3_000_000) throw new Error("The cartoon is too large.");
-  const type = pair.image.endsWith(".gif") ? "image/gif" : pair.image.endsWith(".png") ? "image/png" : "image/jpeg";
-  return { ...pair, image: `data:${type};base64,${buffer.toString("base64")}` };
+  return withCartoon(pair, buffer.toString("base64"));
 }
-module.exports = { parsePair, nextPair };
+
+function withCartoon(pair, encoded) {
+  const type = pair.image.endsWith(".gif") ? "image/gif" : pair.image.endsWith(".png") ? "image/png" : "image/jpeg";
+  return { ...pair, image: `data:${type};base64,${encoded}` };
+}
+
+module.exports = { ORIGIN, parsePair, nextPair, withCartoon };

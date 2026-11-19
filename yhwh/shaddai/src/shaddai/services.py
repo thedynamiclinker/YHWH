@@ -51,6 +51,47 @@ class Services:
     def words(self):
         return self.config.library.json("default/words.json")
 
+    @cached_property
+    def levels(self):
+        return self.config.library.json("default/levels.json")
+
+    def level_options(self):
+        unlocked = self.state("edition").get("unlocked", 100)
+        paid = [level["energy"] for level in self.levels["levels"] if "offer" in level]
+        return [level for level in self.levels["levels"] if level["energy"] <= (unlocked if unlocked in paid else 100)]
+
+    def current_level(self):
+        try:
+            choices = self.level_options()
+        except FileNotFoundError:
+            return {}
+        selected = self.state("edition").get("selected")
+        for level in choices:
+            if level["energy"] == selected:
+                return level
+        values = self.config.yhwh.values
+        amount = self.energy(values)
+        return choices[0] if values.get("theme") == "dawkins" or amount == 0 else (
+            choices[1] if values.get("theme") == "nietzsche" or amount < 100 else choices[2])
+
+    def select_level(self, level, *, unlock=False):
+        def select(state):
+            energy = level["energy"]
+            edition = next((item for item in self.levels["levels"] if item["energy"] > state.get("unlocked", 100)), None)
+            if unlock:
+                if edition != level:
+                    raise ValueError("Reopen the upgrade preview to see the current offer.")
+                state["unlocked"] = energy
+            elif energy > state.get("unlocked", 100):
+                raise ValueError("That edition is locked.")
+            state["selected"] = energy
+            return True
+        self.update("edition", select)
+
+    def address(self, text, name_index=0):
+        names = self.current_level().get("names")
+        return re.sub(r"\bAbe\b", lambda _: names[name_index % len(names)], text, flags=re.I) if names else text
+
     def state(self, name):
         return read_json(self.config.state / f"{name}.json", {})
 
@@ -76,9 +117,10 @@ class Services:
         if not self.config["agent"]["mail"] or not self.config.library.etc or not self.config.yhwh.active:
             return
         values = self.config.yhwh.values
-        if self.energy(values) == 0 or values.get("theme") == "dawkins":
+        energy = self.current_level().get("energy", self.energy(values))
+        if energy == 0:
             return
-        if values.get("theme") == "nietzsche" and key != "inspect":
+        if energy < 100 and key != "inspect":
             return
 
         def deliver(state):
@@ -113,11 +155,11 @@ class Services:
             return True
 
         title, word = LETTERS[key]
-        body = self.words[word]
+        body = self.address(self.words[word])
         message = self.state("inbox")["letters"][key]
         self.update("inbox", mark_read)
         date = datetime.fromtimestamp(message["at"]).astimezone().isoformat(timespec="minutes")
-        return title, f"From: {SENDER}\nTo: Abe\nDate: {date}\n\n{body}"
+        return title, f"From: {SENDER}\nTo: {self.address('Abe')}\nDate: {date}\n\n{body}"
 
     def block(self, blocked):
         def change(state):
@@ -166,6 +208,11 @@ class Services:
             "You are YHWH, the fictional character from We The Nameless. Address the user as Abe. "
             "Stay precise and restrained while helping with Unix work."
         )
+        level = self.current_level()
+        if level.get("names"):
+            names = "; ".join(level["names"])
+            instruction = ("You are YHWH, the fictional character from We The Nameless. "
+                           f"Address the user using these names: {names}. Keep Unix instructions precise.")
         conversation = messages[-77:] + [{"role": "user", "content": prompt}]
         request = (instruction + "\nThis is a read-only conversation. Do not change files or send messages.\n"
                    + json.dumps(conversation, ensure_ascii=True)).encode()

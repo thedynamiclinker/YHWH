@@ -3,7 +3,7 @@ import interfaceCopy from '../../../etc/obsidian/text-views.json';
 const ui = interfaceText(interfaceCopy);
 import { App, FileSystemAdapter, ItemView, MarkdownRenderer, Menu, Modal, TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import type YHWH from './main';
-import { mode, parent, resolvePath, words } from './core';
+import { parent, resolvePath, words } from './core';
 import { ATLAS } from './atlas';
 
 export const NAV = 'yhwh-navigator', CONSOLE = 'yhwh-console', TEXT = 'yhwh-text';
@@ -149,7 +149,8 @@ export class Navigator extends ItemView {
     filter.addEventListener('keydown', event => { if (event.key === ui("arrowdown") || event.key === ui("enter")) { event.preventDefault(); this.focusRow(); } });
     fill();
     const footer = el.createDiv('yhwh-footer');
-    if (p.current.energy === 50) {
+    p.levelCopy(footer.createDiv('yhwh-level-copy'));
+    if (p.level().id === 'nietzsche') {
       p.copyBlock(footer, 'obituary');
       if (p.circus) {
         footer.createEl('img', { cls: 'yhwh-circus-image', attr: { src: p.circus.image, alt: ui("family-circus-cartoon-paired-with-a-nietzsche-qu") } });
@@ -195,9 +196,7 @@ export class ConsoleView extends ItemView {
     form.createEl('button', { type: 'submit', text: ui("run") });
     const update = () => {
       this.plugin.decorate(el); this.cwd.setText(`/${this.plugin.folder} >`);
-      const slider = el.querySelector<HTMLInputElement>(ui("-yhwh-energy-input"));
-      if (slider) slider.value = String(this.plugin.current.energy);
-      el.querySelector(ui("-yhwh-energy-span"))?.setText(ui("amount-of-yhwh-ness-", mode(this.plugin.current.energy)));
+      this.plugin.updateLevelControls(el);
     };
     this.unsubscribe = this.plugin.watch(update); update();
     form.addEventListener('submit', event => {
@@ -279,8 +278,8 @@ export class ConsoleView extends ItemView {
       if (files.length > 200) this.write(ui("matches-showing-the-first-200-", files.length));
     } else if (command === 'mode') {
       arity(1); if (!['yhwh', 'nietzsche', 'dawkins'].includes(args[0])) throw new Error(ui("choose-yhwh-nietzsche-or-dawkins-"));
-      p.settings.energy = args[0] === 'yhwh' ? 100 : args[0] === 'nietzsche' ? 50 : 0;
-      await p.save(); await p.go(p.folder); this.write(ui("current-mode-folder-configuration-may-override-t", mode(p.current.energy)));
+      await p.selectLevel(args[0] === 'yhwh' ? 100 : args[0] === 'nietzsche' ? 50 : 0);
+      this.write(ui("current-mode-folder-configuration-may-override-t", p.level().id));
     } else if (command === 'three') { arity(0); await p.show(ATLAS); }
     else if (command === 'hello') { arity(0); this.write(p.current.energy ? p.settings.copy.hello : ui("hello-world-")); }
     else throw new Error(ui("unknown-vault-command-type-help-", command));
