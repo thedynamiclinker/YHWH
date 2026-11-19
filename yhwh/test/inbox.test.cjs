@@ -75,9 +75,9 @@ test('all authored mail has editable text; the breakdown and Yahoo acquisition r
   assert.match(words.letterBlockedYahoo, /nous, 二.*YAHWOOO!/s);
 });
 
-test('the nine emails arrive separately in source order and respect presence controls', () => {
+test('both batches of emails arrive separately in source order and respect presence controls', () => {
   let state = { letters: [{ id: 'house', read: true, at: at(12) }], lastLetter: at(12) };
-  assert.equal(emailLetters.length, 9);
+  assert.equal(emailLetters.length, 28);
   for (const [index, expected] of emailLetters.entries()) {
     const now = at(12) + (index + 1) * letterInterval;
     assert.equal(nextEmailLetter(state, { now: now - 1 }), undefined);

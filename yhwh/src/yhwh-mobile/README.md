@@ -161,7 +161,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
-| YHWH Emails | Nine separate local Inbox messages, delivered in order as you work, with the shared presence controls and links that open in the native browser |
+| YHWH Emails | One local Inbox message per section of `YHWH Emails.md` and `YHWH Emails Next.md`, delivered in order as you work, with shared presence controls and links that open in the native browser |
 | YHWH-ness and upgrade preview | Shared free levels, reversible Pro and Elite preview unlocks, Stripe setup guide and character names. Preview state persists on this installation. |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |

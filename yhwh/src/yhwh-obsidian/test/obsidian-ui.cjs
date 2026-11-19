@@ -47,13 +47,16 @@ const { spawnSync } = require('node:child_process');
     await evaluate(() => app.commands.executeCommandById('yhwh:emails'));
     const emailModal = page.locator('.modal:visible');
     await emailModal.getByRole('button', { name: 'Q--- ohelet', exact: true }).waitFor();
-    assert.equal(await emailModal.getByRole('listitem').count(), 9);
+    assert.equal(await emailModal.getByRole('listitem').count(), 28);
     await emailModal.getByRole('button', { name: 'Q--- ohelet', exact: true }).click();
     await emailModal.getByText('oh hell', { exact: false }).waitFor();
     assert.equal(await emailModal.getByRole('link').getAttribute('href'), 'https://youtu.be/tH2w6Oxx0kQ');
     await emailModal.getByRole('button', { name: 'Back to YHWH emails' }).click();
     await emailModal.getByRole('button', { name: 'For got to send the song', exact: true }).click();
     assert.equal(await emailModal.locator('a').filter({ hasText: '丫' }).getAttribute('href'), 'https://youtu.be/RKsBl_HMKTY?is=urHug_dAXqHPU98G');
+    await emailModal.getByRole('button', { name: 'Back to YHWH emails' }).click();
+    await emailModal.getByRole('button', { name: '2:22 Mo, start it at 2:22', exact: true }).click();
+    assert.equal(await emailModal.getByRole('link').getAttribute('href'), 'https://youtu.be/NieC8KA0EvI?si=3_JMt1cNt0PCWy8G&t=142');
     await page.keyboard.press('Escape');
     await evaluate(async () => {
       const p = app.plugins.plugins.yhwh;

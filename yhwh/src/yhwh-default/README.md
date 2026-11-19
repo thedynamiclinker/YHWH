@@ -236,9 +236,10 @@ launcher files are preserved on update/removal.
 
 Inbox uses a newest-first message list. Click a letter to read it, then return with **← Inbox**. Opening the list leaves unread letters unread. Inbox and conversation occupy the central reading area, alongside file-manager and terminal navigation; **Focus document** returns to the preserved editor buffer.
 
-During work, the nine sections of `YHWH Emails.md` arrive as separate letters
-in source order. They share the five-minute limit and respect the inbox switch,
-sender block and subdued modes. Each Markdown body is editable in `words.json`.
+During work, each section of `YHWH Emails.md` and then `YHWH Emails Next.md`
+arrives as a separate letter in source order. They share the five-minute limit
+and respect the inbox switch, sender block and subdued modes. Each Markdown body
+is editable in `words.json`.
 
 Between 22:00 and 06:00 on the device’s clock, actual use advances four letters
 about 曰: the linked explanation, “Get it?”, “LOOK AT IT!”, and the drunken
