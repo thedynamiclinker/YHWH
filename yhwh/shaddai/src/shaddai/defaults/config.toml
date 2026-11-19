@@ -11,6 +11,8 @@ mouse = true
 theme = "dark"
 
 [editor]
+# Auto recognizes vi, Vim, Neovim, Emacs, and nano from $EDITOR.
+mode = "auto"
 wrap = true
 line_numbers = true
 autosave = false

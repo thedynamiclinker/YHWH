@@ -15,11 +15,14 @@ from urllib.parse import unquote, urlencode, urlsplit
 from uuid import uuid4
 
 from prompt_toolkit.application import Application, get_app, run_in_terminal, set_app
+from prompt_toolkit.clipboard import ClipboardData
+from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from prompt_toolkit.data_structures import Point
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.input.ansi_escape_sequences import ANSI_SEQUENCES
 from prompt_toolkit.key_binding import DynamicKeyBindings, KeyBindings
+from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import (
     ConditionalContainer, Dimension, DynamicContainer, Float, FloatContainer,
@@ -35,7 +38,7 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.util import ClassNotFound
 
 from .browser import Browser, clickable, label
-from .config import Config
+from .config import Config, EDITOR_MODES
 from .files import BinaryFile, Document, fuzzy
 from .fonts import ConsoleFonts
 from .navigation import serve_paths
@@ -294,9 +297,14 @@ class Workspace:
                     shell.close()
             self.fonts.close()
 
+    def sync_editor_keys(self, app):
+        document_focused = self.layout.current_control is self.tab.editor.control
+        app.editing_mode = EditingMode.VI if document_focused and self.config.preferred_editor == "vim" else EditingMode.EMACS
+
     def before_render(self, app):
         self.rows, self.columns = app.output.get_size()
         self.terminal.size = None
+        self.sync_editor_keys(app)
         if self.layout.current_control is self.tab.editor.control and self.pane != "editor":
             self.pane = self.upper_pane = "editor"
             self.quoted = False
@@ -428,7 +436,13 @@ class Workspace:
                        else f"{self.hint('new_shell')} New shell   Shift+PgUp Scrollback")
         else:
             cursor = self.tab.editor.document
-            details = f"Ln {cursor.cursor_position_row + 1}, Col {cursor.cursor_position_col + 1}"
+            mode = self.config.preferred_editor or "emacs"
+            label_mode = mode.capitalize()
+            if mode == "vim":
+                label_mode = "Vim " + get_app().vi_state.input_mode.name.lower()
+            if mode == "nano":
+                label_mode = "Nano   Ctrl+O Write Out   Ctrl+W Where Is   Ctrl+X Close"
+            details = f"Ln {cursor.cursor_position_row + 1}, Col {cursor.cursor_position_col + 1}   {label_mode}"
         return (f" {details}   │   {self.hint('toggle_terminal')} Terminal   │   "
                 f"{self.hint('maximize')} Maximize   │   {self.hint('palette')} Commands")
 
@@ -669,7 +683,7 @@ class Workspace:
             if physical is not None and doc.target and doc.target.is_relative_to(physical):
                 doc.target = destination.resolve() / doc.target.relative_to(physical)
 
-    def save(self, as_new=False):
+    def save(self, as_new=False, after=None):
         tab = self.tab
 
         def write(path=None):
@@ -681,6 +695,8 @@ class Workspace:
             self.browser.tree.reveal(tab.document.path)
             self.message = f"Saved {tab.document.name}"
             self.letter("bread")
+            if after:
+                after()
 
         if as_new or tab.document.path is None:
             def named(name):
@@ -780,6 +796,7 @@ class Workspace:
         self.answer.buffer.cursor_position = len(initial)
         self.answer_action, self.answer_change = action, on_change
         self.layout.focus(self.answer)
+        self.sync_editor_keys(get_app())
         if choices:
             self.answer.buffer.start_completion(select_first=False)
 
@@ -790,6 +807,7 @@ class Workspace:
     def finish_answer(self):
         self.answer_action = self.answer_change = None
         self.layout.focus(self.return_focus)
+        self.sync_editor_keys(get_app())
 
     def accept_answer(self, buffer):
         action = self.answer_action
@@ -1061,6 +1079,7 @@ class Workspace:
                 "Show hidden files": partial(self.shared_setting, "show_hidden", "Show hidden files", "false", booleans),
                 "Show file manager": partial(self.shared_setting, "file_manager", "Show file manager", "true", booleans),
                 "Autosave": partial(self.shared_setting, "autosave", "Autosave", "true", booleans),
+                "Editor keys": self.editor_modes,
             }),
             "Terminal": lambda: self.shared_setting("terminal", "Show terminal at startup", "false", booleans),
             "Presence": lambda: self.pick("Presence", {
@@ -1072,6 +1091,14 @@ class Workspace:
             "Configuration paths": self.configuration_paths,
             "Edit YHWH rc": self.edit_rc,
         })
+
+    def editor_modes(self):
+        def set_mode(mode):
+            self.config.save("editor", "mode", mode)
+            get_app().vi_state.reset()
+            self.message = f"Editor keys: {mode}"
+
+        self.pick("Editor keys", {mode: partial(set_mode, mode) for mode in EDITOR_MODES})
 
     def help_worlds(self):
         self.pick("Need Some Help?", {name: partial(self.enter_world, name) for name in ("God", "Man")})
@@ -1342,6 +1369,7 @@ class Workspace:
             ("save_as", "Save document as", lambda: self.save(as_new=True), False),
             ("close", "Close document tab", self.close_document, False),
             ("find", "Find in document", self.find, False),
+            (None, "Editor keys (Vim, Emacs, Nano)", self.editor_modes, False),
             ("undo", "Undo", lambda: self.tab.editor.buffer.undo(), False),
             ("redo", "Redo", lambda: self.tab.editor.buffer.redo(), False),
             ("toggle_tree", "Toggle files", self.toggle_files, True),
@@ -1404,6 +1432,10 @@ class Workspace:
         answering = Condition(lambda: self.answer_action is not None)
         terminal = Condition(lambda: self.layout.current_control is self.terminal)
         reading = Condition(lambda: self.reading and self.layout.current_control is self.reader.control)
+        editing = Condition(lambda: self.layout.current_control is self.tab.editor.control)
+        emacs = editing & Condition(lambda: self.config.preferred_editor == "emacs")
+        nano = editing & Condition(lambda: self.config.preferred_editor == "nano")
+        vim = editing & Condition(lambda: self.config.preferred_editor == "vim")
 
         @keys.add("escape", filter=answering, eager=True)
         def cancel(event):
@@ -1414,7 +1446,7 @@ class Workspace:
         def close_reader(event):
             self.close_reader()
 
-        @keys.add("escape", filter=~answering & ~terminal & ~reading & Condition(lambda: self.zoom is not None))
+        @keys.add("escape", filter=~answering & ~terminal & ~reading & ~vim & Condition(lambda: self.zoom is not None))
         def restore(event):
             self.zoom = None
 
@@ -1449,8 +1481,14 @@ class Workspace:
             if not available_in_shell:
                 active &= ~terminal
             for key in self.config["keys"][action]:
+                if key in {"c-b", "c-d", "c-f", "c-n", "c-p", "c-w", "c-y", "c-o", "c-r"}:
+                    key_active = active & ~emacs
+                else:
+                    key_active = active
+                if key == "c-r":
+                    key_active &= ~vim
                 keys.add(*({"c-tab": "f20", "s-c-tab": "f21"}.get(part, part) for part in key.split()),
-                         filter=active)(handler)
+                         filter=key_active)(handler)
 
         for action, _, run, in_shell in self.commands:
             if action:
@@ -1482,7 +1520,53 @@ class Workspace:
                 if binding.when:
                     active &= Condition(lambda pane=binding.when: self.pane == pane)
                 try:
+                    if stroke in {("c-b",), ("c-d",), ("c-f",), ("c-n",), ("c-p",), ("c-w",), ("c-y",), ("c-o",), ("c-r",)}:
+                        active &= ~emacs
+                    if stroke == ("c-r",):
+                        active &= ~vim
                     keys.add(*stroke, filter=active)(lambda event, handler=handler: self.attempt(handler))
                 except ValueError:
                     continue  # The outer terminal has no prompt-toolkit key for this chord.
+        def cut_line(event):
+            buffer = self.tab.editor.buffer
+            document = buffer.document
+            buffer.cursor_position += document.get_start_of_line_position()
+            count = len(document.current_line) + int(document.cursor_position_row < document.line_count - 1)
+            if count:
+                data = buffer.delete(count=count)
+                if event.is_repeat:
+                    data = event.app.clipboard.get_data().text + data
+                event.app.clipboard.set_data(ClipboardData(data))
+
+        nano_actions = {
+            ("c-o",): self.save, ("c-x",): self.close_document, ("c-w",): self.find,
+            ("c-g",): lambda: self.show("Nano keys", "Ctrl+O Write Out   Ctrl+W Where Is   Ctrl+X Close\n"
+                                      "Ctrl+K Cut line   Ctrl+U Paste   Alt+U Undo   Alt+E Redo"),
+            ("escape", "u"): lambda: self.tab.editor.buffer.undo(),
+            ("escape", "e"): lambda: self.tab.editor.buffer.redo(),
+        }
+        for stroke, handler in nano_actions.items():
+            keys.add(*stroke, filter=nano)(lambda event, handler=handler: self.attempt(handler))
+        keys.add("c-k", filter=nano)(cut_line)
+
+        @keys.add("c-u", filter=nano)
+        def paste(event):
+            self.tab.editor.buffer.insert_text(event.app.clipboard.get_data().text)
+
+        @keys.add("c-x", "c-s", filter=emacs)
+        def emacs_save(event):
+            self.attempt(self.save)
+
+        @keys.add(":", filter=vim & Condition(lambda: get_app().vi_state.input_mode == InputMode.NAVIGATION))
+        def vim_command(event):
+            def execute(command):
+                action = {"w": self.save, "q": self.close_document,
+                          "wq": lambda: self.save(after=self.close_document)}.get(command.strip())
+                if action:
+                    self.attempt(action)
+                else:
+                    self.message = "Vim commands: w, q, wq. Use F1 for all workspace actions."
+
+            self.ask("Vim", execute)
+
         return keys

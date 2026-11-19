@@ -31,6 +31,7 @@ class WorkspaceTTY:
             os.execve(launch, [launch, *(args if args is not None else [root])], {
                 **os.environ,
                 "ENV": "/dev/null",
+                "EDITOR": "",
                 "PROMPT_TOOLKIT_NO_CPR": "1",
                 "SHELL": "/bin/sh",
                 "SHADDAI_PYTHON": sys.executable,
@@ -103,16 +104,48 @@ class WorkspaceTTY:
 
 
 class WorkspaceTests(unittest.TestCase):
-    def start(self, terminal_type="xterm-256color"):
+    def start(self, terminal_type="xterm-256color", *, editor=""):
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         root = Path(directory.name)
         (root / "Notes").mkdir()
         (root / "Notes/alpha.md").write_text("# Alpha\nAn Obsidian-style note\n")
         (root / "readme.txt").write_text("Plain text document\n")
-        tty = WorkspaceTTY(root, terminal_type)
+        tty = WorkspaceTTY(root, terminal_type, env={'EDITOR': editor})
         self.addCleanup(tty.close)
         return root, tty
+
+    def test_vim_respects_editor_and_leaves_workspace_shortcuts_available(self):
+        root, tty = self.start(editor="/usr/bin/nvim -f")
+        tty.shows("Shell 1")
+        tty.send(b"j\r")
+        tty.shows("Vim insert")
+        tty.send(b"\x1b")
+        tty.shows("Vim navigation")
+        tty.send(b"0cwVim \x1b")
+        tty.shows("Vim text document")
+        tty.send(b":w\r")
+        tty.shows("Saved readme.txt")
+        self.assertEqual((root / "readme.txt").read_text(), "Vim text document\n")
+
+    def test_nano_write_out_and_emacs_control_motion(self):
+        root, tty = self.start(editor="nano")
+        tty.shows("Shell 1")
+        tty.send(b"j\r")
+        tty.shows("Ctrl+O Write Out")
+        tty.send(b"Nano: \x0f")
+        tty.shows("Saved readme.txt")
+        self.assertEqual((root / "readme.txt").read_text(), "Nano: Plain text document\n")
+
+        root, tty = self.start(editor="env emacsclient -t")
+        tty.shows("Shell 1")
+        tty.send(b"j\r")
+        tty.shows("Emacs")
+        tty.send(b"\x05\x02!")
+        tty.shows("Plain text documen!t")
+        tty.send(b"\x18\x13")
+        tty.shows("Saved readme.txt")
+        self.assertEqual((root / "readme.txt").read_text(), "Plain text documen!t\n")
 
     def test_hidden_shell_keeps_state_and_maximizing_resizes_the_pty(self):
         _, tty = self.start()

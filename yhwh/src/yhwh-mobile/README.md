@@ -13,10 +13,9 @@ sheet, tab counter and switcher, ribbon actions in a menu, and an editing
 toolbar above the keyboard. Tablets retain a wider layout and visible tab strip.
 Safe areas, portrait/landscape layouts and keyboard viewport changes are handled.
 
-The [Initial](../../../../doc/initial.md) adds a programmable touch shell: optional
-gestures, Unicode aliases, reusable Words, a command shelf, tap-to-compose
-pipelines, versioned rc/script files and live or fixed graphical file tabs.
-The same runtime/UI is available in the desktop and Three command palettes.
+The [Initial](../../../../doc/initial.md) adds a programmable touch shell: on-screen gestures, Unicode Letters, reusable Logos, a draggable 5×5 script grid,
+versioned rc/script files and live or fixed graphical file tabs. Desktop and
+Three share the shell and can switch to it from the terminal header.
 
 ## Feature inheritance is required
 
@@ -160,7 +159,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 
 | Feature | Android and iOS behavior |
 | --- | --- |
-| Editor, syntax, Markdown source/preview, formatting, themes | Shared desktop renderer and editor |
+| Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
@@ -172,13 +171,13 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Attachments and PDF | Attachments use the native export/share sheet; browser preview downloads. The shared PDF preference offers Ask / Preview here / System app with a remember-for-all choice; “System app” uses export/share on mobile because this adapter cannot launch a workspace file directly in a default app. Optional read-only PDF preview scrolls continuously with touch and has page and zoom controls. When the WebView delivers Ctrl+wheel from a keyboard and mouse, it zooms the PDF under the pointer or scales the interface elsewhere. PDF input is limited to 64 MiB and text to 16 MiB. Larger PDFs use export/share. |
 | Copy paths | Full logical workspace path and path relative to the current directory; native private storage paths are not exposed |
 | Local Markdown images | Native WebView URLs into the app's workspace; remote images stay blocked by CSP |
-| Background / resume | Refreshes directory listings on resume; unsaved buffers remain; recovery drafts survive WebView eviction where local storage is available |
+| Background / resume | Refreshes directory listings on resume. unsaved buffers remain; recovery drafts survive WebView eviction where local storage is available |
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
 | Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Initial · in-app shell | Shared interpreter and UI: Initials in `~/.initialrc`, Words in `~/bin`, Atomics and registered Builtins; pipes, sequence, redirection, substitution, help, optional trained gestures and editable Latin/Greek/Hebrew/Paleo tiles |
+| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Tiles run into an inline workspace and drag into a 5×5 script grid. The text composer supports pipes, redirects and substitutions. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
-| Codex connection | Connect YHWH opens a guided account/device-login and remote workflow; browser sign-in stays external; direct in-app mobile conversation is not connected |
+| Talk to YHWH | Offline workspace help in character. Connect Codex opens the account and remote-workflow guide. Live Codex chat uses the desktop service. |
 | Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Circus, desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |

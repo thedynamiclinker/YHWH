@@ -1,3 +1,4 @@
+import { showWorkspaceDialog } from '../../yhwh-default/src/preview-dialog.js';
 import { HOME, normalize } from './bridge.mjs';
 import { undo, redo } from '@codemirror/commands';
 
@@ -8,7 +9,7 @@ function sheet(title) {
   if (dialog.open) dialog.close();
   dialog.innerHTML = `<header><h2>${escape(title)}</h2><button type="button" aria-label="Close">×</button></header><div class="mobile-sheet-content"></div>`;
   dialog.querySelector('header button').onclick = () => dialog.close();
-  dialog.showModal(); return dialog;
+  showWorkspaceDialog(dialog); return dialog;
 }
 export function pickPath(storage, kind, cwd = HOME, name = '') {
   return new Promise(resolve => {
@@ -54,13 +55,13 @@ export function pickPath(storage, kind, cwd = HOME, name = '') {
 
 export function installMobile(app, storage) {
   const body = document.body;
-  const closeDrawer = () => { if (app.active().showFiles) app.run('toggle-files'); };
+  const closeDrawer = () => { if (app.active()?.showFiles) app.run('toggle-files'); };
   const closeSheets = () => { for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close(); };
   const command = (id, name, run) => app.addCommand({ id, name, run });
   const nav = document.createElement('nav'); nav.id = 'mobile-nav'; nav.setAttribute('aria-label', 'Mobile navigation');
   nav.innerHTML = '<button data-command="toggle-files" aria-label="Files">▤<small>Files</small></button><button data-command="mobile-back" aria-label="Back">←<small>Back</small></button><button data-command="mobile-create" aria-label="Create or find note">⊕<small>Note</small></button><button data-command="mobile-tabs" aria-label="Manage tabs"><span id="mobile-tab-count">1</span><small>Tabs</small></button><button data-command="mobile-actions" aria-label="Open menu">☰<small>Menu</small></button>';
   const toolbar = document.createElement('nav'); toolbar.id = 'mobile-editor-toolbar'; toolbar.setAttribute('aria-label', 'Editing tools');
-  toolbar.innerHTML = '<button data-command="mobile-undo" aria-label="Undo">↶</button><button data-command="mobile-redo" aria-label="Redo">↷</button><button data-command="mobile-bold" aria-label="Bold"><b>B</b></button><button data-command="mobile-link" aria-label="Insert link">[[ ]]</button><button data-command="view-mode" aria-label="Change view">◫</button><button data-command="save" aria-label="Save file">Save</button><button data-command="mobile-hide-keyboard" aria-label="Hide keyboard">⌄</button>';
+  toolbar.innerHTML = '<button data-command="mobile-undo" aria-label="Undo">↶</button><button data-command="mobile-redo" aria-label="Redo">↷</button><button data-command="mobile-bold" aria-label="Bold"><b>B</b></button><button data-command="mobile-link" aria-label="Insert link">[[ ]]</button><button data-command="follow-editor-link" aria-label="Open link at cursor">↗</button><button data-command="choose-view-mode" aria-label="Choose document view">◫</button><button data-command="save" aria-label="Save file">Save</button><button data-command="mobile-hide-keyboard" aria-label="Hide keyboard">⌄</button>';
   // Retain the editor selection when tapping the toolbar.
   toolbar.onpointerdown = event => event.preventDefault();
   body.append(toolbar, nav);
@@ -69,19 +70,14 @@ export function installMobile(app, storage) {
     document.querySelector('#mobile-tab-count').textContent = app.tabs.length;
     const visible = !document.querySelector('#navigation-area').hidden;
     backdrop.hidden = !visible; nav.querySelector('[data-command="toggle-files"]').setAttribute('aria-expanded', String(visible));
-    toolbar.hidden = !app.active()?.editor;
+    const tab = app.active();
+    const reading = tab?.file?.mode === 'reading';
+    toolbar.hidden = !tab?.editor || tab.focusView !== 'document';
+    for (const button of toolbar.querySelectorAll('button')) button.hidden = reading && button.dataset.command !== 'choose-view-mode';
   };
   new MutationObserver(sync).observe(document.querySelector('#navigation-area'), { attributes: true, attributeFilter: ['hidden'] });
-  for (const event of ['focus', 'tab', 'navigate', 'change', 'save']) app.on(event, sync);
+  for (const event of ['focus', 'tab', 'navigate', 'change', 'save', 'view']) app.on(event, sync);
   app.on('open', () => { closeDrawer(); closeSheets(); sync(); });
-  // File rows are touch targets. Desktop click/double-click behavior stays in
-  // the shared renderer; a touch tap opens the row once, without double-tap.
-  document.querySelector('#file-list').addEventListener('pointerup', event => {
-    if (event.pointerType !== 'touch') return;
-    const row = event.target.closest('[data-path]'); if (!row) return;
-    event.preventDefault();
-    (row.dataset.directory === 'true' ? app.navigate(row.dataset.path) : app.openFile(row.dataset.path)).catch(error => app.notice(error.message));
-  });
   let start;
   body.addEventListener('touchstart', event => {
     const touch = event.touches[0];
@@ -119,7 +115,7 @@ export function installMobile(app, storage) {
     for (const [label, id] of entries) { const button = document.createElement('button'); button.textContent = label; button.onclick = () => { dialog.close(); app.run(id); }; content.append(button); }
   }
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Import files…', 'mobile-import']]));
-  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Connect YHWH', 'mobile-connect'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
+  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Talk to YHWH', 'chat'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
   command('mobile-guide', 'Mobile files and backups', () => {
     const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p>Your notes are ordinary files in this app’s YHWH folder. Use Import files to copy files from your device, and Export or share file to send them elsewhere. On iOS the folder is also available in Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the workspace’s hidden .Trash folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Folder sync, arbitrary external vault access and OS process shells are not implemented on mobile. Connect YHWH explains the available Codex account workflow.</p>';
   });
@@ -145,7 +141,40 @@ export function installMobile(app, storage) {
     };
   });
   command('burnt', 'Connect YHWH · Codex setup', () => app.run('mobile-connect'));
-  command('chat', 'Talk to YHWH · connect Codex', () => app.run('mobile-connect'));
+  command('chat', 'Talk to YHWH', () => {
+    const dialog = sheet('Talk to YHWH'), body = dialog.querySelector('.mobile-sheet-content');
+    body.innerHTML = `<p class="muted">Offline · built-in help for this workspace</p>
+      <div class="conversation-log" role="log" aria-live="polite"></div>
+      <form class="mobile-chat-form"><label>Message YHWH<input name="message" placeholder="What can I do here?" required maxlength="500"></label>
+      <button class="primary">Ask</button></form>
+      <button data-command="mobile-connect">Connect Codex</button>`;
+    const log = body.querySelector('.conversation-log'), form = body.querySelector('form');
+    function say(who, message) {
+      const turn = document.createElement('article');
+      const name = document.createElement('small'); name.textContent = who;
+      const text = document.createElement('p'); text.textContent = message;
+      turn.append(name, text); log.append(turn); log.scrollTop = log.scrollHeight;
+    }
+    say('YHWH', 'Abe. My whole universe fits in this folder. Ask where you are, what files are here, or how to make a Logos.');
+    form.onsubmit = async event => {
+      event.preventDefault();
+      const input = form.elements.message, message = input.value.trim(), query = message.toLowerCase();
+      if (!message) return;
+      say('Abe', message); input.value = '';
+      const tab = app.active();
+      try {
+        if (/\b(where|pwd|path)\b/.test(query)) say('YHWH', `You’re in ${tab.cwd}, Abe. I happen to own the place. I’m giving it to you anyway.`);
+        else if (/\b(list|ls|files)\b/.test(query)) {
+          const files = (await window.yhwh.call('directory:list', tab.id, tab.cwd)).map(file => file.name);
+          say('YHWH', files.length ? 'I came down and looked, Abe.\n' + files.slice(0, 30).join('\n') + (files.length > 30 ? `\n… and ${files.length - 30} more.` : '') : 'Empty folder, Abe. I know the feeling. Make a note and we’ll call it a beginning.');
+        } else if (/\b(logos|letter|tiles?|pipe|commands?)\b/.test(query)) {
+          say('YHWH', 'Tap a tile in the Initial to try it, Abe. Drag it up into your script. A row pipes its output to the right, and each new row starts another command.');
+        } else if (/\b(note|edit|markdown|save)\b/.test(query)) {
+          say('YHWH', 'Tap Note to make a file, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.');
+        } else say('YHWH', 'I can help with this folder, files, notes and Logos while we’re offline, Abe. For an open-ended conversation, tap Connect Codex.');
+      } catch (error) { say('YHWH', error.message); }
+    };
+  });
   command('leave-world', 'Leave folder root', async () => {
     const tab = app.active(); tab.initialRoot = null; Object.assign(tab, await window.yhwh.call('world:leave', tab.id));
     tab.history = [tab.cwd]; tab.historyIndex = 0; await app.navigate(tab.cwd);

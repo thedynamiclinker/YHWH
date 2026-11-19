@@ -25,7 +25,7 @@ module.exports = async function ({ app, page, run, open, directory, artifacts })
   assert.match(await fs.readFile(note, 'utf8'), /\r\nAuto saved\./);
   await run('view-mode'); await run('view-mode');
   assert.equal(await page.evaluate(() => window.YHWH.active().editor.state.selection.main.head), cursor);
-  assert.equal(await page.evaluate(() => window.YHWH.active().file.mode), 'source');
+  assert.equal(await page.evaluate(() => window.YHWH.active().file.mode), 'live');
   // Preserve even an external write with the same size and timestamp.
   const stat = await fs.stat(note), original = await fs.readFile(note, 'utf8');
   const external = original.replace('Original', 'External'); await fs.writeFile(note, external); await fs.utimes(note, stat.atime, stat.mtime);

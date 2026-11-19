@@ -46,7 +46,7 @@
     <main class="focus-area workspace-split" id="focus-area">
       <div id="center-panels" class="center-panels">
         <section class="document workspace-leaf" id="document" aria-label="Document">
-          <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="view-mode" title="Toggle source / preview (Ctrl+R)">Source</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
+          <header class="document-toolbar"><span id="document-path"></span><div><button data-command="reload-file" title="Reload from disk" aria-label="Reload file">↻</button><button id="view-mode" data-command="choose-view-mode" title="Choose view (Ctrl+E source, Ctrl+R reading)">Source</button><button data-command="file-menu" title="File actions" aria-label="File actions">…</button></div></header>
           <div class="document-title" id="title-row" hidden><input id="file-title" aria-label="Filename" spellcheck="false"><span id="dirty-indicator"></span><button data-command="save" title="Save (Ctrl+S)" aria-label="Save file">Save</button></div>
           <div id="documents"></div>
 
@@ -56,8 +56,8 @@
       </div>
       <section id="terminal-panel" class="terminal-panel workspace-leaf" aria-label="Terminal" hidden>
         <div class="resize-handle terminal-resize" role="separator" aria-label="Resize terminal"></div>
-        <header class="pane-header"><span>Terminal <small id="terminal-cwd"></small></span><div><span class="sync-label" id="shell-state">↔ Files</span><button data-command="terminal-bottom" title="Dock terminal below document">Dock below</button><button data-command="expand-terminal" title="Expand terminal (Ctrl+Shift+B)" aria-label="Expand terminal">⛶</button><button data-command="toggle-terminal" title="Hide terminal" aria-label="Hide terminal">×</button></div></header>
-        <div id="terminals"></div>
+        <header class="pane-header"><span><button data-command="terminal-interface" aria-label="Choose terminal interface">Terminal ▾</button> <small id="terminal-cwd"></small></span><div><span class="sync-label" id="shell-state">↔ Files</span><button data-command="terminal-bottom" title="Dock terminal below document">Dock below</button><button data-command="expand-terminal" title="Expand terminal (Ctrl+Shift+B)" aria-label="Expand terminal">⛶</button><button data-command="toggle-terminal" title="Hide terminal" aria-label="Hide terminal">×</button></div></header>
+        <div id="terminals"></div><div id="terminal-initial" hidden></div>
       </section>
     </main>
     <aside id="right-panels" class="right-panels"></aside>

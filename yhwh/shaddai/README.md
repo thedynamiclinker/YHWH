@@ -30,6 +30,19 @@ YHWH profiles and keys from its shared prefixes. Shaddai-specific settings
 live in `~/.config/shaddai/etc/config.toml` by default. Use **Configuration
 paths** in Settings to see which paths the workspace reads.
 
+## Editor keys
+
+Open **Settings → Files and editor → Editor keys** to select Vim, Emacs or
+Nano. The default, **auto**, reads `$EDITOR` and recognizes paths and
+arguments such as `nvim -f` or `emacsclient -t`. An unset or unrecognized
+editor uses the usual Shaddai bindings.
+
+Vim uses modal editing and supports `:w`, `:q` and `:wq`. Emacs uses its
+line-editing keys and Ctrl+X Ctrl+S to save.
+Nano adds Write Out (Ctrl+O), Where Is (Ctrl+W), Close (Ctrl+X), Cut Line
+(Ctrl+K), Paste (Ctrl+U), Undo (Alt+U) and Redo (Alt+E). F1 still opens
+workspace commands.
+
 ## PyPI releases
 
 `make dist` builds the wheel and source archive in `dist/`. Upload them with

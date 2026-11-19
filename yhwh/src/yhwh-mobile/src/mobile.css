@@ -80,3 +80,20 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .mobile-connection-state { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
 .mobile-connect-hero > span { display: block; color: var(--purple); font-size: 48px; }
 .mobile-connection-state { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+
+.is-mobile .file-row { touch-action: pan-y; }
+.is-mobile .file-row [data-row-menu] {
+  min-width: 44px; min-height: 44px; padding: 0; flex-shrink: 0;
+  color: var(--muted); font-size: 1.1rem;
+}
+.is-mobile #mobile-editor-toolbar { justify-content: flex-start; }
+.is-mobile #mobile-editor-toolbar > button { flex: 1 0 auto; min-width: 38px; padding-inline: 6px; }
+.is-mobile .cm-line { padding-inline: 16px; }
+.mobile-chat-form { display: flex; gap: 8px; align-items: end; margin: 12px 0; }
+.mobile-chat-form label { flex: 1; min-width: 0; }
+.mobile-chat-form input { width: 100%; font-size: 16px; }
+#mobile-dialog .conversation-log { max-height: min(45dvh, 320px); }
+.is-mobile .file-row [data-expand-folder] {
+  min-width: 38px; min-height: 44px; padding: 0; margin-inline-start: -7px; border: 0;
+  text-align: center; font-size: .95rem;
+}

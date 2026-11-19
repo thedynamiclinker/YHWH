@@ -18,7 +18,7 @@ test('Initials retain Unicode, shell quoting, search names and gesture metadata 
   const {parseRC,printRC,quote}=await modulePromise;
   const aliases=[{name:'愛',names:['ai','love','amor'],script:"echo 'Abe’s $HOME'",gesture:[[0,0],[1,0],[1,1],[0,1]]}];
   assert.deepEqual(parseRC(printRC(aliases)),aliases);
-  assert.equal((await fixture()).initial.help('alpha').includes('ls | view'),true);
+  assert.match((await fixture()).initial.help('gamma'), /\/bin\/ls/);
   assert.match(quote("can't"),/\\'/);
   assert.throws(()=>parseRC("alias A 'pwd'\nnames A 'same'\nalias B 'pwd'\nnames B 'same'"),/already used/);
 });
@@ -94,4 +94,21 @@ test('default aliases can be removed before rc exists; explicit /bin bypasses us
   await initial.saveAlias({name:'pwd',names:['where'],script:'echo mine'});
   assert.equal((await initial.run('pwd')).text,'mine');assert.equal((await initial.run('/bin/pwd')).text,'/YHWH');
   await initial.saveWord('native','#!/bin/sh\nmkdir unsafe');await assert.rejects(initial.run('native'),/native interpreter/);
+});
+
+test('a Logos grid round-trips empty squares and runs rows as separate pipelines', async () => {
+  const { gridSource, readGrid, serializeGrid } = await import('../lib/initial-grid.mjs');
+  const { firstLogo } = await modulePromise;
+  const { initial } = await fixture();
+  assert.equal(initial.catalog().filter(item => item.kind === 'Initials').length, 4);
+  assert.equal(initial.catalog().filter(item => item.kind === 'Words').length, 1);
+  assert.equal(gridSource(firstLogo.cells), firstLogo.source);
+  const cells = { 0: 'ls', 2: 'wc', 10: "echo 'Abe'" };
+  const script = serializeGrid(cells);
+  assert.equal(gridSource(cells), "ls | wc\necho 'Abe'");
+  assert.deepEqual(readGrid(script), cells);
+  assert.equal(readGrid(script + 'pwd'), null);
+  await initial.saveWord('from-grid', script);
+  assert.match((await initial.run('~/bin/from-grid', { collectOutput: true })).text, /^\d+\nAbe$/);
+  assert.match((await initial.run('~/bin/demos', { collectOutput: true })).text, /Logos Demos/);
 });

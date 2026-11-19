@@ -5,11 +5,52 @@ module.exports=async function initialUI(page,artifacts) {
   const press=async action=>{await dialog.locator(`[data-initial="${action}"]`).click();};
   await page.locator('#initial-commands').click();
   await page.waitForSelector('#initial-dialog[open] .initial-shelf');
-  assert.equal(await dialog.locator('.initial-tile').count(),6);
+  assert.deepEqual(await dialog.locator('[data-kind]').allTextContents(), ['Atomics/bin', 'Builtins/usr/bin', 'Letters~/.bashrc', 'Logos~/bin']);
+  await dialog.locator('.initial-tile').filter({ has: page.locator('b', { hasText: /^ls$/ }) }).tap();
+  await dialog.locator('.initial-preview-files').waitFor();
+  assert.match(await dialog.locator('[data-screen-path]').textContent(), /stdout/);
+  await dialog.locator('[data-kind="Builtins"]').tap();
+  await dialog.locator('[data-search]').fill('settings');
+  await dialog.locator('.initial-tile').filter({ has: page.locator('b', { hasText: /^settings$/ }) }).tap();
+  await page.locator('#dialog.initial-pane-dialog[open]').waitFor();
+  const preview = await dialog.locator('.initial-preview').boundingBox();
+  const menu = await page.locator('#dialog').boundingBox();
+  assert.ok(menu.height <= preview.height + 2);
+  await page.locator('#dialog [data-close]').tap();
+  await dialog.locator('[data-kind="Initials"]').tap();
+  assert.equal(await dialog.locator('.initial-tile').count(),4);
+  await dialog.locator('[data-kind="Words"]').tap();
+  assert.equal(await dialog.locator('.initial-tile').count(),1);
+  await dialog.locator('[data-tool="tutorial"]').tap();
+  await press('load');
+  await dialog.locator('[data-cell="24"]').waitFor();
+  assert.equal(await dialog.locator('[data-cell]').count(),25);
+  assert.equal(await dialog.locator('[data-cell="0"]').textContent(),'Γ');
+  await dialog.locator('.initial-grid-tools button', { hasText: /^Run$/ }).tap();
+  await dialog.getByText('Logos Demos', { exact: false }).last().waitFor();
+  await dialog.locator('[data-kind="Atomics"]').tap();
+  const pwd = await dialog.locator('.initial-tile').filter({ has: page.locator('b', { hasText: /^pwd$/ }) }).boundingBox();
+  const output = await dialog.locator('.initial-screen').boundingBox();
+  const cdp = await page.context().newCDPSession(page);
+  async function stroke(points, during) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: points[0][0], y: points[0][1] }] });
+    for (const [x, y] of points.slice(1)) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
+    if (during) await during();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  }
+  const x = pwd.x + pwd.width / 2, y = pwd.y + pwd.height / 2;
+  await stroke([[x, y], [x, y - 22], [output.x + output.width / 2, output.y + output.height / 2]]);
+  await dialog.locator('[data-cell="2"].has-tile').waitFor();
+  await dialog.getByRole('button', { name: 'Save Logos', exact: true }).click();
+  await dialog.locator('[data-word-name]').fill('tutorial-grid');
+  await dialog.getByRole('button', { name: 'Save Logos', exact: true }).click();
+  await dialog.locator('.initial-tile', { hasText: 'tutorial-grid' }).waitFor();
+  assert.match(await page.evaluate(() => window.YHWH.initial.readWord('tutorial-grid').then(file => file.content)), /Γ \| Ꞁ \| pwd/);
   assert.equal(await dialog.locator('[data-composer]').count(),0);
   await page.screenshot({path:path.join(artifacts,'initial-shelf.png')});
   // Create an alias using only glyph and action pickers, then train a mark.
-  await press('alias');await press('glyph');
+  await dialog.locator('[data-options] summary').click();
+  await dialog.locator('[data-tool="alias"]').click(); await press('glyph');
   await dialog.locator('[data-alphabet="Greek"]').click();
   await dialog.locator('[data-glyph="1"]').click();
   await dialog.locator('summary').click();
@@ -25,9 +66,8 @@ module.exports=async function initialUI(page,artifacts) {
   await dialog.locator('[data-search]').fill('beta');
   assert.equal(await dialog.locator('.initial-tile b').textContent(),'Β');
   await dialog.locator('.initial-tile').click();
-  await page.waitForSelector('#initial-dialog[open] .initial-output');
-  assert.match(await dialog.locator('.initial-output').textContent(),/YHWH/);
-  await press('back');await press('draw');
+  await dialog.locator('.initial-output', { hasText: '/YHWH' }).waitFor();
+  await dialog.locator('[data-options] summary').click(); await dialog.locator('[data-tool="draw"]').click();
   const drawBox=await dialog.locator('canvas').boundingBox();
   await page.mouse.move(drawBox.x+45,drawBox.y+30);await page.mouse.down();
   await page.mouse.move(drawBox.x+45,drawBox.y+140,{steps:12});await page.mouse.move(drawBox.x+140,drawBox.y+140,{steps:12});await page.mouse.up();
@@ -36,13 +76,14 @@ module.exports=async function initialUI(page,artifacts) {
   await press('back');await dialog.locator('[data-search]').fill('');
   // Running a tile cannot replace an unfinished command, and the advanced
   // tools can build a substitution without typing shell punctuation.
-  await press('compose');
+  await dialog.locator('[data-options] summary').click(); await dialog.locator('[data-tool="compose"]').click();
   await dialog.locator('[data-composer]').fill('echo');
   await press('back');
   await dialog.getByRole('button', { name: 'Details for Β', exact: true }).click();
   await press('run');
   await page.waitForSelector('#initial-dialog[open] .initial-output');
-  await press('back');await press('back');await press('compose');
+  await press('back');await press('back');
+  await dialog.locator('[data-options] summary').click(); await dialog.locator('[data-tool="compose"]').click();
   assert.equal(await dialog.locator('[data-composer]').inputValue(),'echo');
   await dialog.locator('summary').click();
   await press('sub');await dialog.locator('[data-find]').fill('pwd');
@@ -61,7 +102,7 @@ module.exports=async function initialUI(page,artifacts) {
   await page.screenshot({path:path.join(artifacts,'initial-composer.png')});
   await press('save-word');
   const filename=await dialog.locator('[data-word-name]').inputValue();
-  await dialog.getByRole('button',{name:'Save Word',exact:true}).click();
+  await dialog.getByRole('button',{name:'Save Logos',exact:true}).click();
   await page.waitForSelector('#initial-dialog[open] .initial-shelf');
   await page.screenshot({path:path.join(artifacts,'initial-words.png')});
   await dialog.getByRole('button', { name: 'Details for ' + filename, exact: true }).click();
@@ -70,8 +111,9 @@ module.exports=async function initialUI(page,artifacts) {
   await dialog.locator('[data-composer]').fill("'ls' | 'view'\n# My file list");
   await press('save-word');
   assert.equal(await dialog.locator('[data-word-name]').inputValue(),filename);
-  await dialog.getByRole('button',{name:'Save Word',exact:true}).click();
+  await dialog.getByRole('button',{name:'Save Logos',exact:true}).click();
   await dialog.locator('.initial-tile').filter({has:page.locator('b',{hasText:filename})}).click();
+  await dialog.getByRole('button', { name: 'Open in workspace', exact: true }).click();
   await page.waitForSelector('.document-content:not([hidden]) .initial-file-view');
   assert.match(await page.locator('.document-content:not([hidden]) .initial-file-view > header').textContent(),/Fixed list/);
   // A fixed result stays fixed while a live fm tab follows mutations.
@@ -110,4 +152,15 @@ module.exports=async function initialUI(page,artifacts) {
   await dialog.locator('[data-search]').fill('beta');assert.equal(await dialog.locator('.initial-tile b').textContent(),'Β');
   assert.equal(await page.evaluate(async name=>(await window.YHWH.initial.readWord(name)).content,filename),"'ls' | 'view'\n# My file list");
   await dialog.locator('[data-close]').click();
+  const dot = await page.locator('#initial-dot').boundingBox();
+  const dx = dot.x + dot.width / 2, dy = dot.y + dot.height / 2;
+  assert.ok(Math.abs(dy - (await page.evaluate(() => visualViewport.height)) / 2) < 30);
+  await stroke([[dx, dy], [dx, dy + 35], [dx, dy + 95], [dx, dy + 110], [dx + 40, dy + 110], [dx + 95, dy + 110]], async () => {
+    await page.locator('#initial-trace:visible').waitFor();
+    assert.equal(await dialog.isVisible(), false);
+  });
+  await page.locator('#initial-gesture-result button', { hasText: /^Run$/ }).click();
+  await dialog.locator('.initial-output', { hasText: '/YHWH' }).waitFor();
+  await dialog.locator('[data-close]').click();
+  await cdp.detach();
 };

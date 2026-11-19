@@ -1,9 +1,13 @@
-import { EditorView } from '@codemirror/view';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, dropCursor, rectangularSelection } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
+import { minimalSetup } from 'codemirror';
 import { LanguageDescription, HighlightStyle, defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { indentWithTab, moveLineUp, moveLineDown } from '@codemirror/commands';
+import { foldGutter, foldKeymap } from '@codemirror/language';
+import { searchKeymap } from '@codemirror/search';
+import { liveMarkdown, wikiLinks, wikiPattern } from './live-markdown.js';
 import { tags } from '@lezer/highlight';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -11,12 +15,19 @@ import DOMPurify from 'dompurify';
 const escapeAttribute = value => value.replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 marked.use({ extensions: [{
   name: 'wikilink', level: 'inline', start: text => text.indexOf('[['),
-  tokenizer(text) { const match = /^\[\[([^\]\n]+)\]\]/.exec(text); if (match) { const [href, label] = match[1].split('|'); return { type: 'wikilink', raw: match[0], href, label: label || href }; } },
+  tokenizer(text) { const match = wikiPattern.exec(text); if (match) { const [href, label] = match[1].split('|'); return { type: 'wikilink', raw: match[0], href, label: label || href }; } },
   renderer(token) { return `<a class="internal-link" href="${escapeAttribute(token.href)}">${escapeAttribute(token.label)}</a>`; },
 }] });
 export function renderMarkdown(text, filename) {
   const template = document.createElement('template');
   template.innerHTML = DOMPurify.sanitize(marked.parse(text), { FORBID_TAGS: ['style', 'input', 'form'], FORBID_ATTR: ['style'] });
+  const ids = new Set();
+  for (const heading of template.content.querySelectorAll('h1,h2,h3,h4,h5,h6')) {
+    const base = heading.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s+/g, '-');
+    let id = base, index = 1;
+    while (ids.has(id)) id = base + '-' + index++;
+    if (id) { heading.id = id; ids.add(id); }
+  }
   for (const video of template.content.querySelectorAll('video')) video.tabIndex = 0;
   if (filename) {
     const normalized = filename.replace(/\\/g, '/');
@@ -28,7 +39,7 @@ export function renderMarkdown(text, filename) {
   }
   return template.innerHTML;
 }
-const language = new Compartment();
+const language = new Compartment(), presentation = new Compartment();
 const markdownHeadings = HighlightStyle.define([
   { tag: tags.heading2, class: 'cm-header-2' },
   { tag: tags.heading3, class: 'cm-header-3' },
@@ -47,30 +58,36 @@ const editorTheme = EditorView.theme({
   '.cm-tooltip': { background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--line)' },
 }, { dark: true });
 
-export async function createEditor(parent, file, changed, cursor) {
+export async function createEditor(parent, file, changed, cursor, follow) {
   const view = new EditorView({
     parent,
     state: EditorState.create({ doc: file.content.replace(/\r\n/g, '\n'), extensions: [
-      basicSetup, editorTheme, EditorView.lineWrapping,
-      language.of([]),
+      minimalSetup, editorTheme, EditorView.lineWrapping, EditorState.allowMultipleSelections.of(true),
+      rectangularSelection(), dropCursor(), highlightActiveLine(), EditorView.contentAttributes.of({ spellcheck: 'false', autocorrect: 'off', 'aria-label': 'Document editor' }),
+      keymap.of([indentWithTab, { key: 'Alt-ArrowUp', run: moveLineUp }, { key: 'Alt-ArrowDown', run: moveLineDown }, ...searchKeymap, ...foldKeymap]),
+      language.of([]), presentation.of([]),
       EditorView.updateListener.of(update => {
         if (update.docChanged) changed(view.state.doc.toString());
         if (update.selectionSet || update.docChanged) { const pos = view.state.selection.main.head; const line = view.state.doc.lineAt(pos); cursor(line.number, pos - line.from + 1); }
       }),
     ] }),
   });
-  await setLanguage(view, file.language);
+  await setLanguage(view, file.language, file.mode, follow);
   return view;
 }
 
-export async function setLanguage(view, name) {
+export function setEditorMode(view, name, mode, follow) {
+  const extension = name === 'markdown' ? mode === 'live' ? liveMarkdown(follow) : [] : [lineNumbers(), foldGutter()];
+  view.dispatch({ effects: presentation.reconfigure(extension) });
+}
+
+export async function setLanguage(view, name, mode, follow) {
   const description = LanguageDescription.matchLanguageName(languages, name, true);
-  const support = name === 'markdown' ? markdown({ codeLanguages: languages }) : description ? await description.load() : [];
+  const support = name === 'markdown' ? markdown({ base: markdownLanguage, codeLanguages: languages, extensions: wikiLinks }) : description ? await description.load() : [];
   if (!view.dom.isConnected) return;
-  // A custom highlighter replaces basicSetup's fallback; retain its existing
-  // styles for inline Markdown and fenced code alongside the heading classes.
   const highlighting = name === 'markdown' ? [syntaxHighlighting(defaultHighlightStyle), syntaxHighlighting(markdownHeadings)] : [];
-  view.dispatch({ effects: [language.reconfigure([support, highlighting])] });
+  view.dispatch({ effects: language.reconfigure([support, highlighting]) });
+  setEditorMode(view, name, mode, follow);
 }
 
 export async function formatText(text, name) {

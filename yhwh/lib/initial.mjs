@@ -31,7 +31,18 @@ export const atomics = [
   ['chroot', 'Make this folder /', 'chroot [folder]', 'Limit this tab’s file navigation to a folder. chroot --leave restores the workspace. This is a view, not OS security.'],
   ['help', 'Command guide', 'help [command]', 'Read a command’s manual. man is the same command.'],
 ];
-export const defaultRC = `# Your Initials. Ordinary text; reload after editing.\n# alias NAME 'command'; names NAME 'search name'…; gesture NAME '[[x,y],…]'\nalias F 'fm .'\nnames F 'f' 'files'\nalias N 'new-file'\nnames N 'n' 'note'\nalias S 'save'\nnames S 's' 'save-note'\nalias Α 'ls | view'\nnames Α 'alpha' 'snapshot'\nalias א 'home'\nnames א 'aleph' 'home-folder'\nalias 𐤀 'inbox'\nnames 𐤀 'paleo-aleph' 'letters'\n`;
+export const defaultRC = `# Your Letters. Ordinary text; reload after editing.
+# alias NAME 'command'; names NAME 'search name'…; gesture NAME '[[x,y],…]'
+alias Γ '/bin/ls'
+names Γ 'gamma'
+alias Ꞁ '/bin/sort'
+names Ꞁ 'dalet'
+alias L "/bin/echo 'Logos Demos'"
+names L 'ell'
+alias ᒧ '/bin/cat'
+names ᒧ 'mo' '⅃'
+`;
+export const firstLogo = { name: 'demos', source: 'Γ | Ꞁ\nL | ⅃', cells: { 0: 'Γ', 1: 'Ꞁ', 5: 'L', 6: '⅃' } };
 
 // Tokens preserve quotes/substitutions until argument expansion. Syntax is deliberately small.
 export function tokenize(source) {
@@ -88,7 +99,7 @@ export function parseRC(source) {
   return aliases;
 }
 export function printRC(aliases) {
-  return '# Your Initials · reload after editing this ordinary text file.\n' + aliases.map(alias => `alias ${quote(alias.name)} ${quote(alias.script)}\nnames ${quote(alias.name)} ${alias.names.map(quote).join(' ')}\n${alias.gesture ? `gesture ${quote(alias.name)} ${quote(JSON.stringify(alias.gesture))}\n` : ''}`).join('');
+  return '# Your Letters · reload after editing this ordinary text file.\n' + aliases.map(alias => `alias ${quote(alias.name)} ${quote(alias.script)}\nnames ${quote(alias.name)} ${alias.names.map(quote).join(' ')}\n${alias.gesture ? `gesture ${quote(alias.name)} ${quote(JSON.stringify(alias.gesture))}\n` : ''}`).join('');
 }
 export function resolvePath(input, cwd, home, root) {
   input = input === '~' ? home : input.startsWith('~/') ? home + input.slice(1) : input;
@@ -118,7 +129,7 @@ export function createInitial(host) {
       if (!initialized) await reload();
       if (!nameOK(alias.name)) throw new Error('Choose a name without spaces, slashes or command punctuation.');
       const next = aliases.filter(item => item.name !== previous);
-      if (next.some(item => item.name === alias.name)) throw new Error('That Initial already exists.');
+      if (next.some(item => item.name === alias.name)) throw new Error('That Letter already exists.');
       next.push({ ...alias, names: alias.names?.filter(Boolean) || [transliteration(alias.name)] });
       const content = printRC(next); parseRC(content);
       if (rcVersion == null) { await host.create(rcPath, false); const file = await host.read(rcPath); rcVersion = file.modified; }
@@ -129,7 +140,7 @@ export function createInitial(host) {
     return mutation(async () => { if(rcVersion == null) { await host.create(rcPath,false);rcVersion=(await host.read(rcPath)).modified; } const next = aliases.filter(alias => alias.name !== name); const result = await host.save(rcPath, printRC(next), rcVersion); rcVersion = result.modified; aliases = next; });
   }
   async function saveWord(name, script, modified) {
-    if (!nameOK(name)) throw new Error('A Word’s name is its file basename. Choose one without spaces or slashes.');
+    if (!nameOK(name)) throw new Error('A Logos name is its file basename. Choose one without spaces or slashes.');
     tokenize(script);
     return mutation(async () => {
       try { const stat = await host.stat(bin); if (!stat.directory) throw new Error('~/bin must be a folder.'); }
@@ -142,13 +153,14 @@ export function createInitial(host) {
   function catalog() {
     return [...aliases.map(alias => ({ ...alias, kind: 'Initials', label: alias.names.join(' · '), detail: alias.script })),
       ...words.map(word => ({ name: word.name, kind: 'Words', label: '~/bin/' + word.name, detail: 'Your reusable script', path: word.path })),
+      ...(!words.some(word => word.name === firstLogo.name) ? [{ name: firstLogo.name, kind: 'Words', label: '~/bin/' + firstLogo.name, detail: 'Let there be Logos', sample: true }] : []),
       ...atomics.map(([name, label, usage, detail]) => ({ name, label, usage, detail, kind: 'Atomics' })),
       ...host.builtins().map(item => ({ name: item.id, label: item.name, detail: 'An action already in YHWH', kind: 'Builtins' }))];
   }
   function help(name) {
     const item = catalog().find(item => item.name === name || item.names?.includes(name));
     if (!item) throw new Error(`No command named ${name}. Browse the command shelf.`);
-    return `${item.name} · ${item.label}\n${item.usage || item.script || item.path || item.name}\n\n${item.detail}\n${item.kind === 'Initials' ? 'Initial · ~/.initialrc' : item.kind === 'Words' ? 'Word · ~/bin' : item.kind === 'Atomics' ? 'Atomic · /bin' : 'Builtin · /usr/bin'}`;
+    return `${item.name} · ${item.label}\n${item.usage || item.script || item.path || item.name}\n\n${item.detail}\n${item.kind === 'Initials' ? 'Letter · ~/.initialrc' : item.kind === 'Words' ? 'Logos · ~/bin' : item.kind === 'Atomics' ? 'Atomic · /bin' : 'Builtin · /usr/bin'}`;
   }
   async function run(source, options = {}) {
     if (!initialized) await reload();
@@ -188,10 +200,11 @@ export function createInitial(host) {
     if (stage.length) finishStage(); else if (pipeline.length) throw new Error('Choose a command after |.');
     if (pipeline.length) pipelines.push(pipeline);
     let result=text('');
+    const output = [];
     for (const chain of pipelines) {
       let input=incoming;
       for (const stage of chain) {
-        if (--context.budget.remaining < 0) throw new Error('This Word ran more than 200 commands. Check for a loop.');
+        if (--context.budget.remaining < 0) throw new Error('This Logos ran more than 200 commands. Check for a loop.');
         let outputPath, append=false; const argv=[];
         for (let i=0; i<stage.length; i++) {
           const token=stage[i];
@@ -212,8 +225,10 @@ export function createInitial(host) {
         }
       }
       result=input;
+      if (context.collectOutput && asText(input)) output.push(input);
     }
-    return result;
+    if (output.length > 1) return text(output.map(asText).join('\n'));
+    return output[0] || result;
   }
   async function command([name, ...args], input, context) {
     const atomicPath=name.startsWith('/bin/');
@@ -221,15 +236,19 @@ export function createInitial(host) {
     if (name === 'man') name='help';
     if (args.includes('--help')) return text(help(name));
     const path = value => resolvePath(value, context.cwd, home, context.root);
-    const alias = !atomicPath && aliases.find(alias => alias.name === name || alias.names.includes(name));
-    const word = !atomicPath && words.find(word => word.name === name || name === `~/bin/${word.name}` || name === `${bin}/${word.name}`);
-    if (alias || word) {
-      if (context.stack.includes(name) || context.stack.length >= 16) throw new Error(`Recursive Word or Initial: ${[...context.stack, name].join(' → ')}`);
+    const matchesAlias = alias => alias.name === name || alias.names.includes(name);
+    const alias = !atomicPath && (aliases.find(matchesAlias) || context.tutorialLetters?.find(matchesAlias));
+    const namedWord = word => word.name === name || name === `~/bin/${word.name}` || name === `${bin}/${word.name}`;
+    const word = !atomicPath && words.find(namedWord);
+    const sample = !atomicPath && !word && namedWord(firstLogo);
+    if (alias || word || sample) {
+      if (context.stack.includes(name) || context.stack.length >= 16) throw new Error(`Recursive Logos or Letter: ${[...context.stack, name].join(' → ')}`);
       const file = word && !alias ? await host.read(word.path) : null;
-      const script = alias ? alias.script : file?.content;
-      if (typeof script !== 'string') throw new Error('Words must contain UTF-8 text.');
-      if (/^#!(?!initial(?:\s|$))/.test(script)) throw new Error('This file names a native interpreter. Run it in the desktop terminal; Words use #!initial or plain in-app commands.');
+      const script = alias ? alias.script : sample ? firstLogo.source : file?.content;
+      if (typeof script !== 'string') throw new Error('Logos must contain UTF-8 text.');
+      if (/^#!(?!initial(?:\s|$))/.test(script)) throw new Error('This file names a native interpreter. Run it in the desktop terminal; Logos use #!initial or plain in-app commands.');
       const nested = { ...context, args, stack: [...context.stack,name] };
+      if (sample && !alias) nested.tutorialLetters = parseRC(defaultRC);
       const result = await execute(script + (alias && args.length ? ' ' + args.map(quote).join(' ') : ''), nested, input);
       context.cwd=nested.cwd; context.root=nested.root; return result;
     }
@@ -250,13 +269,13 @@ export function createInitial(host) {
       return text(filter(asText(input).split('\n')).join('\n'));
     }
     if (name==='wc') return text(input.kind==='entries' ? input.entries.length : asText(input).split('\n').filter(Boolean).length);
-    if (name==='view' || name==='fm') { if (context.capture) throw new Error('Choose a command with output inside $(), such as pwd or cat.'); const target=path(args[0] || '.'); if (name==='fm' && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await host.view(name==='fm' ? { kind:'live', path:target, root:context.root } : { ...input, kind:input.kind==='entries'?'snapshot':'text', root:context.root }); return {kind:'displayed',text:''}; }
-    if (name==='open') { requireArgs(1); if (context.capture) throw new Error('open displays a document; use cat inside $().'); await host.open(path(args[0])); return text(''); }
+    if (name==='view' || name==='fm') { if (context.capture) throw new Error('Choose a command with output inside $(), such as pwd or cat.'); const target=path(args[0] || '.'); if (name==='fm' && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await (context.display?.view || host.view)(name==='fm' ? { kind:'live', path:target, root:context.root } : { ...input, kind:input.kind==='entries'?'snapshot':'text', root:context.root }); return {kind:'displayed',text:''}; }
+    if (name==='open') { requireArgs(1); if (context.capture) throw new Error('open displays a document; use cat inside $().'); await (context.display?.open || host.open)(path(args[0])); return text(''); }
     if (name==='chroot') { if (context.capture) throw new Error('Change the folder root outside $().'); const target=args[0]==='--leave'?null:path(args[0] || '.'); if (target && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await host.chroot(target); context.root=target; context.cwd=target || home; return text(target ? 'This folder is now /. Use chroot --leave to return.' : 'Returned to the workspace.'); }
-    if (name==='help') return text(args[0] ? help(args[0]) : 'The Initial · a terminal for fingers.\nTap tiles, type names, or draw your own gestures.\nInitials live in ~/.initialrc; Words are files in ~/bin.\nPATH: ~/bin → /bin Atomics → /usr/bin Builtins.\nUse | to pass output, a new line to do the next thing, > to save output, and $() to use output as an argument.\n\n' + atomics.map(([name,label])=>`${name} — ${label}`).join('\n'));
+    if (name==='help') return text(args[0] ? help(args[0]) : 'The Initial · a terminal for fingers.\nTap tiles, type names, or draw your own gestures.\nLetters live in ~/.initialrc. Logos are files in ~/bin.\nPATH: ~/bin → /bin Atomics → /usr/bin Builtins.\nUse | to pass output, a new line to do the next thing, > to save output, and $() to use output as an argument.\n\n' + atomics.map(([name,label])=>`${name} — ${label}`).join('\n'));
     const builtin=host.builtins().find(item=>item.id===name || `/usr/bin/${item.id}`===name);
-    if (builtin) { if (context.capture) throw new Error('App actions do not produce text for $().'); await builtin.run(); return text(''); }
-    throw new Error(`No command named “${name}”. Browse Initials, Words, Atomics or Builtins.`);
+    if (builtin) { if (context.capture) throw new Error('App actions do not produce text for $().'); await (context.display?.builtin ? context.display.builtin(builtin) : builtin.run()); return text(''); }
+    throw new Error(`No command named “${name}”. Browse Atomics, Builtins, Letters or Logos.`);
   }
   return { reload, catalog, run, saveAlias, removeAlias, saveWord, help, home, rcPath, bin, readWord: name => host.read(`${bin}/${name}`) };
 }

@@ -371,3 +371,19 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 }
 
 #center-panels > [data-panel='yhwh-chat'] { width: auto; max-width: none; }
+
+.markdown-rendered p { white-space: pre-wrap; tab-size: 4; }
+.markdown-rendered a, .live-link { color: var(--purple); text-decoration: underline; text-underline-offset: .15em; }
+.live-heading { font-weight: 650; letter-spacing: -.025em; }
+.live-heading.live-h1 { font-size: 1.75em; }
+.live-heading.live-h2 { font-size: 1.45em; color: var(--h2-color); }
+.live-heading.live-h3 { font-size: 1.22em; color: var(--h3-color); }
+.live-emphasis { font-style: italic; }
+.live-strong { font-weight: 700; }
+.live-strike { text-decoration: line-through; }
+.live-code, .live-fence { font-family: 'Noto Sans Mono', monospace; background: var(--sidebar); }
+.live-code { border-radius: 4px; }
+.live-quote { color: var(--muted); }
+.live-marker { color: var(--purple); }
+body.mod-follow .live-link { cursor: pointer; }
+.reading-view:focus-visible, .document-content:focus-visible { outline: 1px solid var(--purple); outline-offset: -2px; }

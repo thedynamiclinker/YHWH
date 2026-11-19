@@ -74,12 +74,8 @@ exports.moves = async function ({ page, directory, artifacts, touch = false }) {
   }, { root, source, destination });
   const row = filename => page.locator('#file-list [data-path]').filter({ has: page.locator('.file-name', { hasText: new RegExp('^' + filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') }) });
   // Expand the source to make nested rows available without entering it.
-  if (touch) {
-    await page.evaluate(source => {
-      const row = [...document.querySelectorAll('#file-list [data-path]')].find(el => el.dataset.path === source);
-      row.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-    }, source);
-  } else await row('source').click();
+  if (touch) await row('source').locator('[data-expand-folder]').tap();
+  else await row('source').click();
   await row('note.md').waitFor();
   let cdp;
   if (touch) cdp = await page.context().newCDPSession(page);
@@ -121,7 +117,7 @@ exports.moves = async function ({ page, directory, artifacts, touch = false }) {
     return tab.id;
   }, destination + '/source/child/nested.txt');
   await page.evaluate(id => document.querySelector(`#tabs [data-tab="${id}"]`).click(), originalId);
-  if (touch) await page.evaluate(destination => [...document.querySelectorAll('#file-list [data-path]')].find(el => el.dataset.path === destination).dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 })), destination);
+  if (touch) await row('destination').locator('[data-expand-folder]').tap();
   else await row('destination').click();
   await row('source').waitFor();
   await page.evaluate(source => { window.YHWH.active().selected = new Set([source, source + '/child']); }, destination + '/source');

@@ -47,7 +47,7 @@ test('executable bits win over suffixes; symlinks execute with stdin, stdout, en
 });
 test('line listings support filters, regexes, pipelines and namespace browsing', async t => {
   const base = await fixture(t), bindings = await keys.scan(keys.defaults);
-  assert.equal(bindings.some(item => item.combo === 'ctrl/e'), false);
+  assert.equal(bindings.find(item => item.combo === 'ctrl/e')?.command, 'markdown-source');
   assert.ok(names.filter(bindings, 'ctrl').length > 20); assert.ok(names.filter(bindings, '/ctrl.*shift/').length > 4);
   assert.ok(names.filter(bindings, 'ctrl/*/k').some(item => item.command === 'hotkeys'));
   const result = await keys.program('/bin/sh', ['-c', 'grep ctrl | grep -v alt'], { cwd: base, env: process.env, input: names.listing(bindings) });

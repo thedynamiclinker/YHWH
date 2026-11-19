@@ -4,13 +4,15 @@ const ui = interfaceText(interfaceCopy);
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { createEditor, setLanguage, formatText, renderMarkdown, languageNames } from './editor.js';
+import { createEditor, setLanguage, setEditorMode, formatText, renderMarkdown, languageNames } from './editor.js';
+import { linkAt } from './live-markdown.js';
 import { createVerseUI } from './verses.js';
 import { match as matchKey } from '../../../lib/key-names.cjs';
 import { showHotkeys } from './hotkeys.js';
 import { mountViewer } from './viewers.js';
 import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
+import { showWorkspaceDialog } from './preview-dialog.js';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
@@ -38,10 +40,14 @@ const active = () => tabs.find(tab => tab.id === activeId);
 const closedTabs = [];
 const keyModules = new Map();
 function keyContext(target = document.activeElement) {
-  return $('#file-list').contains(target) ? 'files' : $('#terminals').contains(target) ? 'terminal' : target.closest('.cm-editor') ? 'editor' : '';
+  return $('#file-list').contains(target) ? 'files' : $('#terminals').contains(target) ? 'terminal' : target?.closest?.('.cm-editor') ? 'editor' : '';
 }
 function bindingFor(event) {
-  return matchKey(active()?.config.keys?.bindings || [], event, keyContext(event.target));
+  const context = keyContext(event.target);
+  const binding = matchKey(active()?.config.keys?.bindings || [], event, context);
+  if (!binding?.when && (context === 'terminal' && ['view-mode', 'markdown-source'].includes(binding?.command)
+    || context === 'editor' && binding?.command === 'parent')) return;
+  return binding;
 }
 async function executeBinding(binding) {
   if (binding.kind === 'disabled') return;
@@ -77,7 +83,7 @@ function modal(title, content, setup) {
   if (dialog.open) dialog.close();
   dialog.innerHTML = ui("--2", escape(title), content);
   dialog.querySelector('[data-close]').onclick = () => dialog.close();
-  dialog.showModal();
+  showWorkspaceDialog(dialog);
   setup?.(dialog);
   return dialog;
 }
@@ -119,8 +125,8 @@ async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   startingTerminals.add(id);
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
-  tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.dataset.tab = id;
+  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
+  tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
@@ -169,13 +175,14 @@ async function startTerminal(tab) {
 }
 function focusTerminal(tab = active()) {
   requestAnimationFrame(() => {
-    if (active() !== tab || $('#terminal-panel').hidden || $('#dialog').open) return;
+    if (active() !== tab || $('#terminal-panel').hidden || document.querySelector('dialog[open]')) return;
+    if (window.YHWH?.initial?.focusTerminal()) return;
     fitTerminal(); tab.terminal?.focus();
   });
 }
 async function revealTerminal(tab = active()) {
   if (!tab.terminals.length) await newTerminal(tab);
-  tab.showTerminal = tab.terminals.length > 0; update(); focusTerminal(tab);
+  tab.showTerminal = tab.terminals.length > 0; update(); fitTerminal(); focusTerminal(tab);
 }
 async function closeTerminal(id = active()?.terminalId, exited = false) {
   const tab = tabs.find(item => item.terminals.some(session => session.id === id)); if (!tab) return;
@@ -183,33 +190,58 @@ async function closeTerminal(id = active()?.terminalId, exited = false) {
   if (!exited) await call('terminal:close', tab.id, id);
   session.terminal.dispose(); session.element.remove(); tab.terminals.splice(index, 1);
   tab.terminalId = null; tab.terminal = null; tab.fit = null;
+  if ($('#terminals').hidden && active() === tab) return;
   tab.showTerminal = false; if (tab.expanded === 'terminal') tab.expanded = '';
-  if (active() === tab) { update(); tab.editor?.focus(); }
+  if (active() === tab) { update(); if (tab.lastFocus === 'terminal') restoreAfterTerminal(tab); }
 }
 function welcome(tab) {
   if (tab.initialView) return;
   tab.document.innerHTML = ui("-a-little-room-for-creation-open-a-file-ctrl-o-n", word('welcomeTitle', 'h1'), word('welcomeBody'));
 }
 function activate(id) {
+  const tab = tabs.find(item => item.id === id);
+  if (!tab) return;
+  const previous = active();
+  if (previous && previous !== tab) {
+    previous.filesScroll = $('#file-list').scrollTop;
+    previous.filesFilter = $('#file-filter').value;
+    if (document.activeElement === $('#file-title')) $('#file-title').blur();
+  }
   activeId = id;
   for (const tab of tabs) { tab.document.hidden = tab.id !== id; tab.terminalElement.hidden = tab.id !== id; }
-  $('#file-filter').value = '';
+  $('#file-filter').value = tab.filesFilter || '';
   update();
+  if (previous !== tab) $('#file-list').scrollTop = tab.filesScroll || 0;
   requestAnimationFrame(() => fitTerminal());
   if (active().focusView === 'inbox') renderInbox();
   emit('focus', active());
-  requestAnimationFrame(() => { if ($('#dialog').open) return; if (active()?.lastFocus === 'terminal' && !$('#terminal-panel').hidden) active().terminal.focus(); else if (active()?.lastFocus === 'files' && !$('#navigation-area').hidden) $('#file-list').focus(); else active()?.editor?.focus(); });
+  requestAnimationFrame(() => {
+    if (active() !== tab || document.querySelector('dialog[open]')) return;
+    if (tab.lastFocus === 'terminal' && !$('#terminal-panel').hidden) focusTerminal(tab);
+    else if (tab.lastFocus === 'files' && !$('#navigation-area').hidden) $('#file-list').focus();
+    else if (boot.interface !== 'mobile') focusCurrent(tab);
+  });
 }
 function tabTitles() {
   const label = tab => tab.customTitle || ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
   $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(label(tab)), tab.id, escape(label(tab)))).join('');
   for (const element of $('#tabs').querySelectorAll('[data-tab]')) element.draggable = true;
 }
+let renderedFileRows;
 function renderFiles() {
   const tab = active(); if (!tab) return;
   const filter = $('#file-filter').value.toLocaleLowerCase();
   const rows = [{ name: '..', path: tab.cwd === tab.worldRoot ? tab.cwd : parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
-  $('#file-list').innerHTML = rows.map(entry => fileRow(tab, entry)).join('');
+  const list = $('#file-list');
+  const oldControl = list.contains(document.activeElement) && document.activeElement !== list ? document.activeElement : null;
+  const html = rows.map(entry => fileRow(tab, entry)).join('');
+  if (renderedFileRows !== html) {
+    const path = oldControl?.closest('[data-path]')?.dataset.path;
+    const attribute = oldControl?.hasAttribute('data-row-menu') ? 'data-row-menu' : 'data-expand-folder';
+    list.innerHTML = html;
+    renderedFileRows = html;
+    if (path) (list.querySelector(`[data-path="${CSS.escape(path)}"] [${attribute}]`) || list).focus({ preventScroll: true });
+  }
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.cwd;
@@ -218,7 +250,13 @@ function renderFiles() {
 function fileRow(tab, entry, depth = 0) {
   const folder = entry.parent ? undefined : tab.folders.get(entry.path);
   const expanded = !!folder?.open;
-  const row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
+  let row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
+  if (boot.interface === 'mobile' && !entry.parent) {
+    if (entry.directory) {
+      row = row.replace(/<span class="file-icon">[^<]*<\/span>/, `<button type="button" class="file-icon" data-expand-folder draggable="false" aria-label="Toggle contents of ${escape(entry.name)}">${expanded ? '▾' : '▸'}</button>`);
+    }
+    row = row.replace(/<\/[^>]+>$/, match => `<button type="button" draggable="false" data-row-menu aria-label="Actions for ${escape(entry.name)}">⋯</button>${match}`);
+  }
   return row.replace('role="option"', `draggable="${!entry.parent}" style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
 }
 async function toggleFolder(row, expand) {
@@ -231,6 +269,7 @@ async function toggleFolder(row, expand) {
     if (active() !== tab || !row.isConnected) return;
     folder = { open: true, entries }; tab.folders.set(path, folder);
   } else if (folder) folder.open = false;
+  renderedFileRows = null;
   if (row.nextElementSibling?.dataset.children === path) row.nextElementSibling.remove();
   row.setAttribute('aria-expanded', String(open));
   row.querySelector('.file-icon').textContent = open ? '▾' : '▸';
@@ -240,9 +279,23 @@ async function toggleFolder(row, expand) {
     row.after(group);
   }
 }
+function restoreAfterTerminal(tab) {
+  if (tab.lastNonTerminalFocus === 'files' && !$('#navigation-area').hidden) $('#file-list').focus();
+  else focusCurrent(tab);
+}
+function focusCurrent(tab = active()) {
+  if (!tab || active() !== tab || document.querySelector('dialog[open]')) return;
+  if (tab.focusView === 'chat') { chatPanel?.element.querySelector('textarea')?.focus(); return; }
+  if (tab.focusView === 'inbox') { $('#inbox-view').querySelector('button')?.focus(); return; }
+  if (tab.focusView !== 'document') return;
+  if (tab.file?.mode === 'reading') tab.document.querySelector('.reading-view').focus({ preventScroll: true });
+  else if (tab.editor && boot.interface !== 'mobile') tab.editor.focus();
+  else tab.document.focus({ preventScroll: true });
+}
 function focusView(view) {
   active().focusView = view; update();
   if (view === 'inbox') renderInbox();
+  emit('view', active()); focusCurrent();
 }
 function update() {
   const tab = active(); if (!tab) return;
@@ -258,18 +311,16 @@ function update() {
   terminalPanel.hidden = !tab.showTerminal && tab.expanded !== 'terminal';
   if (terminalWasHidden && !terminalPanel.hidden) { progressWalk('shell'); receive('inspect'); }
   if (terminalWasHidden && !terminalPanel.hidden) requestAnimationFrame(() => {
-    if (active() !== tab || terminalPanel.hidden || $('#dialog').open) return;
-    fitTerminal();
-    tab.terminal?.focus();
+    if (active() === tab && !terminalPanel.hidden) fitTerminal();
   });
   $('#workspace').dataset.expanded = tab.expanded;
   $('#title-row').hidden = !tab.file;
-  $('#file-title').value = tab.file?.name || '';
+  if (document.activeElement !== $('#file-title')) $('#file-title').value = tab.file?.name || '';
   $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : '';
   $('#document-path').textContent = tab.file ? parent(tab.file.path) : tab.cwd;
   $('#language-button').textContent = tab.file?.language || ui("plain-text");
   $('#file-encoding').textContent = tab.file?.kind === 'text' ? ui("utf-8-", tab.file.newline === '\r\n' ? 'CRLF' : 'LF') : '';
-  $('#view-mode').textContent = tab.file?.language === 'markdown' ? tab.file.mode === 'source' ? ui("source") : 'Preview' : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
+  $('#view-mode').textContent = tab.file?.language === 'markdown' ? ({ live: 'Live Preview', source: 'Source', reading: 'Reading' })[tab.file.mode] : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
   $('#view-mode').disabled = tab.file?.kind !== 'text';
   $('#title-row [data-command="save"]').disabled = !tab.editor;
   applyConfig(tab.config);
@@ -296,7 +347,7 @@ function applyConfig(config) {
   emit('config', config);
 }
 function fitTerminal() {
-  const tab = active(); if (!tab || $('#terminal-panel').hidden) return;
+  const tab = active(); if (!tab || $('#terminal-panel').hidden || $('#terminals').hidden) return;
   const session = tab.terminals.find(item => item.id === tab.terminalId); if (!session) return;
   // A panel can be hidden by an ancestor (for example expanded Files). Fitting
   // that zero-size box sends a 2x1 resize to the running shell.
@@ -321,7 +372,7 @@ async function refresh(tab = active()) {
 async function navigate(directory, tab = active(), history = true, focusFiles = false) {
   if (tab.initialRoot && directory !== tab.initialRoot && !directory.startsWith(tab.initialRoot + '/')) directory = tab.initialRoot;
   const state = await call('navigate', tab.id, directory);
-  Object.assign(tab, state); tab.selected.clear();
+  Object.assign(tab, state); tab.selected.clear(); tab.filesFilter = ''; tab.filesScroll = 0;
   const session = tab.terminals.find(item => item.id === tab.terminalId); if (session) session.cwd = tab.cwd;
   if (focusFiles && tab.entries.length) tab.selected.add(tab.entries[0].path);
   if (history && tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
@@ -359,25 +410,39 @@ async function pdfAction(file) {
 }
 async function openFile(filename, tab = active(), options = {}) {
   if (options.external) { await call('file:external', filename); return true; }
+  const generation = tab.openGeneration = (tab.openGeneration || 0) + 1;
+  const current = () => tab.openGeneration === generation && tabs.includes(tab);
   const file = await call('file:read', filename);
+  if (!current()) return false;
+  if (tab.file?.path === file.path && !options.reload) {
+    tab.focusView = 'document'; tab.expanded = '';
+    if (tab === active()) { update(); focusCurrent(tab); }
+    emit('open', tab.file); return true;
+  }
   const action = file.kind === 'text' ? 'preview' : file.kind === 'pdf' ? await pdfAction(file) : 'external';
   if (action === 'cancel') return false;
   if (action === 'external') { await call('file:external', file.path); return true; }
-  if (!await mayReplace(tab)) return false;
-  await navigate(parent(file.path), tab);
+  if (!current() || !await mayReplace(tab) || !current()) return false;
+  if (options.reload) Object.assign(file, await call('file:read', filename));
+  if (!current()) return false;
+  const filenameParent = parent(file.path);
+  if (filenameParent !== tab.cwd) await navigate(filenameParent, tab);
+  if (!current()) return false;
   clearDocument(tab); tab.focusView = 'document';
-  file.mode = 'source';
+  file.mode = file.language === 'markdown' ? tab.markdownEditMode : 'source';
   tab.file = file; tab.config = file.config; tab.dirty = false; tab.autosaveError = null;
   tab.selected = new Set([file.path]);
   tab.document.dataset.filename = file.path;
   tab.document.innerHTML = ui("template-3");
   if (file.kind === 'text') {
-    tab.editor = await createEditor(tab.document.querySelector('.editor-host'), file, content => {
+    const editor = await createEditor(tab.document.querySelector('.editor-host'), file, content => {
       tab.dirty = content !== tab.file.content.replace(/\r\n/g, '\n');
       if (tab.id === activeId) { $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : ''; tabTitles(); }
       emit('change', { path: file.path, content });
       scheduleAutosave(tab);
-    }, (line, column) => { if (tab.id === activeId) $('#cursor-position').textContent = ui("ln-col", line, column); });
+    }, (line, column) => { if (tab.id === activeId) $('#cursor-position').textContent = ui("ln-col", line, column); }, followLink);
+    if (tab.file !== file || !tabs.includes(tab)) { editor.destroy(); return false; }
+    tab.editor = editor;
   } else if (file.kind === 'pdf') {
     tab.document.replaceChildren();
     tab.viewerCleanup = await mountViewer(tab.document, file);
@@ -391,7 +456,11 @@ async function openFile(filename, tab = active(), options = {}) {
   }
   tab.expanded = '';
   tab.document.dataset.language = file.language; tab.document.dataset.mode = file.mode;
-  if (tab.id === activeId) { update(); tab.editor?.focus(); }
+  if (tab.id === activeId) {
+    update();
+    if (options.edit) tab.editor?.focus();
+    else focusCurrent(tab);
+  }
   emit('open', file); return true;
 }
 function scheduleAutosave(tab) {
@@ -457,7 +526,7 @@ async function newFile(directory = false) {
   if (!name) return;
   const filename = await call('file:create', join(tab.cwd, name), directory);
   await refresh(tab);
-  if (!directory) await openFile(filename, tab);
+  if (!directory) await openFile(filename, tab, { edit: true });
 }
 async function renameFile(filename = active()?.file?.path) {
   if (!filename) return;
@@ -608,35 +677,69 @@ function languageMenu() {
         await call('settings:save', { file_types: JSON.stringify(rules) }, data.remember === 'directory' ? tab.cwd : '/');
       }
       tab.file.language = data.language; tab.document.dataset.language = data.language;
-      await setLanguage(tab.editor, data.language, tab.file.mode !== 'source');
-      dialog.close(); update();
+      changeMarkdownMode(tab, data.language === 'markdown' ? tab.markdownEditMode : 'source');
+      await setLanguage(tab.editor, data.language, tab.file.mode, followLink);
+      dialog.close(); update(); focusCurrent(tab);
     } catch (error) { notice(error.message); }
   };
 }
 async function viewMode() {
-  const tab = active(); if (!tab?.editor) return;
+  const tab = active(); if (!tab?.editor || tab.focusView !== 'document') return;
   if (tab.file.language === 'markdown') {
-    if (tab.file.mode === 'source') return readingView();
-    tab.file.mode = 'source';
-    tab.document.querySelector('.editor-host').hidden = false;
-    tab.document.querySelector('.reading-view').hidden = true;
-  } else {
-    const text = await formatText(tab.editor.state.doc.toString(), tab.file.language);
-    tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: text } });
+    if (tab.file.mode === 'reading') return changeMarkdownMode(tab, tab.markdownEditMode);
+    return readingView();
   }
-  tab.document.dataset.mode = tab.file.mode;
-  update(); tab.editor.focus();
+  const text = await formatText(tab.editor.state.doc.toString(), tab.file.language);
+  tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: text } });
+  focusCurrent(tab);
 }
-async function readingView() {
-  const tab = active(); if (!tab?.editor || tab.file.language !== 'markdown') return;
+function toggleMarkdownSource() {
+  const tab = active(); if (tab?.file?.language !== 'markdown' || !tab.editor || tab.focusView !== 'document') return;
+  const mode = tab.file.mode === 'source' ? 'live' : 'source';
+  changeMarkdownMode(tab, mode);
+}
+function changeMarkdownMode(tab, mode) {
+  const editor = tab.document.querySelector('.editor-host');
   const reading = tab.document.querySelector('.reading-view');
-  if (tab.file.mode === 'reading') return;
-  tab.viewerCleanup?.(); tab.viewerCleanup = null; reading.replaceChildren();
-  reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
-  reading.hidden = false; tab.document.querySelector('.editor-host').hidden = true; tab.file.mode = 'reading'; tab.document.dataset.mode = 'reading'; update();
+  const leavingReading = !reading.hidden;
+  if (mode === 'reading') {
+    const ratio = tab.editor.scrollDOM.scrollTop / Math.max(1, tab.editor.scrollDOM.scrollHeight - tab.editor.scrollDOM.clientHeight);
+    reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
+    reading.tabIndex = 0; reading.setAttribute('aria-label', 'Reading view');
+    reading.hidden = false;
+    reading.scrollTop = ratio * (reading.scrollHeight - reading.clientHeight);
+  } else {
+    tab.markdownEditMode = tab.file.language === 'markdown' ? mode : tab.markdownEditMode;
+    setEditorMode(tab.editor, tab.file.language, mode, followLink);
+    reading.hidden = true;
+  }
+  editor.hidden = mode === 'reading';
+  tab.document.dataset.mode = tab.file.mode = mode;
+  update(); emit('view', tab);
+  if (active() === tab) {
+    if (leavingReading && mode !== 'reading') tab.editor.requestMeasure();
+    focusCurrent(tab);
+  }
+}
+function readingView() {
+  const tab = active(); if (!tab?.editor || tab.file.language !== 'markdown' || tab.file.mode === 'reading') return;
+  tab.focusView = 'document';
+  changeMarkdownMode(tab, 'reading');
+}
+function chooseViewMode() {
+  const tab = active();
+  if (!tab?.editor || tab.file.language !== 'markdown') return viewMode();
+  const dialog = modal('Markdown view', '<div class="menu-list"><button data-mode="live">Live Preview</button><button data-mode="source">Source</button><button data-mode="reading">Reading</button></div>');
+  for (const button of dialog.querySelectorAll('[data-mode]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.mode === tab.file.mode));
+    button.onclick = () => { dialog.close(); changeMarkdownMode(tab, button.dataset.mode); };
+  }
 }
 function fileMenu(filename = active()?.file?.path) {
   if (!filename) return;
+  const mobile = boot.interface === 'mobile';
+  const folder = active()?.entries.some(entry => entry.path === filename && entry.directory)
+    || [...$('#file-list').querySelectorAll('[data-directory="true"]')].some(row => row.dataset.path === filename);
   const items = [
     [ui("open-in-a-new-app-tab"), () => openRequest({ path: filename })],
     [ui("rename-"), () => renameFile(filename)],
@@ -645,8 +748,10 @@ function fileMenu(filename = active()?.file?.path) {
     [ui("cut"), () => { clipboardFiles = { paths: [filename], cut: true }; }],
     ['Copy Full Path', () => call('clipboard:path', filename)],
     ['Copy Relative Path', () => call('clipboard:path', filename, active().worldRoot || active().cwd)],
-    [ui("open-in-desktop-application"), () => call('file:external', filename)],
-    [ui("show-in-desktop-file-manager"), () => call('file:reveal', filename)],
+    ...(mobile
+      ? folder ? [] : [['Export or share…', () => call('file:external', filename)]]
+      : [[ui("open-in-desktop-application"), () => call('file:external', filename)],
+        [ui("show-in-desktop-file-manager"), () => call('file:reveal', filename)]]),
     [ui("reading-view-markdown-"), readingView],
     [ui("overwrite-file-with-editor-contents-"), async () => { if (await choose(ui("overwrite-file"), ui("replace-the-on-disk-contents-with-this-editor-s-"), [ui("overwrite"), ui("cancel")]) === 0) await save(active(), true); }],
     [ui("move-to-trash-"), () => trashFiles([filename])],
@@ -756,6 +861,7 @@ function movePanel(id, area) {
   if (!destination || element.contains(destination)) throw new Error(ui("invalid-panel-position-"));
   if (area === 'left') destination.insertBefore(element, $('#focus-area')); else destination.append(element);
   element.dataset.area = area;
+  fitTerminal();
   requestAnimationFrame(fitTerminal);
 }
 function addPanel({ id, title, area = 'right', render }) {
@@ -842,26 +948,36 @@ const definitions = [
     const content = tab.editor.state.doc.toString();
     await call('file:save', filename, content, null, true); tab.dirty = false; await openFile(filename, tab);
   }],
-  ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
+  ['toggle-files', ui("toggle-file-manager"), "Ctrl+Shift+E", () => { const tab = active(); tab.showFiles = !tab.showFiles; tab.expanded = ''; update(); if (tab.showFiles) $('#file-list').focus(); else focusCurrent(tab); requestAnimationFrame(fitTerminal); }],
   ['expand-files', ui("expand-file-manager"), ui("ctrl-d"), () => { const tab = active(); tab.expanded = tab.expanded === 'files' ? '' : 'files'; tab.showFiles = true; update(); $('#file-list').focus(); requestAnimationFrame(fitTerminal); }],
-  ['toggle-terminal', ui("toggle-terminal"), 'Ctrl+B / Ctrl+` / Ctrl+Shift+`', async () => { const tab = active(); tab.expanded = ''; if (!tab.showTerminal) await revealTerminal(tab); else { tab.showTerminal = false; update(); tab.editor?.focus(); } }],
+  ['toggle-terminal', ui("toggle-terminal"), 'Ctrl+B / Ctrl+` / Ctrl+Shift+`', async () => { const tab = active(); tab.expanded = ''; if (!tab.showTerminal) await revealTerminal(tab); else { tab.showTerminal = false; update(); restoreAfterTerminal(tab); } }],
   ['close-terminal', 'Close terminal', '', () => closeTerminal()],
-  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), async () => { const tab = active(), expanded = tab.expanded; movePanel('terminal', 'bottom'); await revealTerminal(tab); tab.expanded = expanded === 'terminal' ? '' : 'terminal'; update(); focusTerminal(tab); }],
+  ['expand-terminal', ui("expand-terminal"), ui("ctrl-shift-b"), async () => { const tab = active(), expanded = tab.expanded; movePanel('terminal', 'bottom'); await revealTerminal(tab); tab.expanded = expanded === 'terminal' ? '' : 'terminal'; update(); fitTerminal(); focusTerminal(tab); }],
   ['terminal-bottom', 'Dock terminal below document', '', async () => { movePanel('terminal', 'bottom'); active().expanded = ''; await revealTerminal(); }],
-  ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), async () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); if (show && boot.capabilities?.terminal !== false && !tab.terminals.length) await newTerminal(tab); tab.showFiles = show; tab.showTerminal = show && boot.capabilities?.terminal !== false; tab.expanded = ''; update(); requestAnimationFrame(fitTerminal); }],
-  ['focus-editor', ui("focus-editor"), 'Ctrl+Alt+1', () => { active().expanded = ''; focusView('document'); active().editor?.focus(); requestAnimationFrame(fitTerminal); }],
+  ['toggle-navigation', ui("toggle-files-and-terminal-together"), ui("ctrl-shift-d"), async () => { const tab = active(); const show = !(tab.showFiles || tab.showTerminal); if (show && boot.capabilities?.terminal !== false && !tab.terminals.length) await newTerminal(tab); tab.showFiles = show; tab.showTerminal = show && boot.capabilities?.terminal !== false; tab.expanded = ''; update(); if (tab.showTerminal) focusTerminal(tab); else focusCurrent(tab); requestAnimationFrame(fitTerminal); }],
+  ['focus-editor', ui("focus-editor"), 'Ctrl+Alt+1', () => { active().expanded = ''; focusView('document'); requestAnimationFrame(fitTerminal); }],
   ['focus-files', ui("focus-file-manager"), 'Ctrl+Alt+2', () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
   ['focus-terminal', ui("focus-terminal"), 'Ctrl+Alt+3', () => { active().expanded = ''; return revealTerminal(); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
-  ['location', 'Clear visible terminal / edit location', ui("ctrl-l"), () => { if (!$('#terminal-panel').hidden) { active().terminal?.clear(); active().terminal?.focus(); bridge.terminal('write', { id: active().terminalId, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
+  ['location', 'Clear focused terminal / edit location', ui("ctrl-l"), () => { if (keyContext() === 'terminal' && !$('#terminal-panel').hidden && !$('#terminals').hidden && active().terminalId) { active().terminal?.clear(); active().terminal?.focus(); bridge.terminal('write', { id: active().terminalId, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
   ['refresh', ui("refresh-directory-and-configuration"), ui("f5"), () => refresh()],
   ['toggle-hidden', ui("toggle-hidden-files"), ui("ctrl-h-in-files-"), async () => { const tab = active(); await call('settings:save', { show_hidden: tab.config.values.show_hidden === 'true' ? 'false' : 'true' }, tab.cwd); await refresh(); }],
-  ['view-mode', ui("toggle-source-pretty-view"), 'Ctrl+R', viewMode],
+  ['view-mode', 'Toggle Reading / editing or format code', 'Ctrl/Alt+R', viewMode],
+  ['markdown-source', 'Toggle Markdown Source / Live Preview', 'Ctrl/Alt+E', toggleMarkdownSource],
+  ['choose-view-mode', 'Choose document view', '', chooseViewMode],
+  ['follow-editor-link', 'Open link at cursor', 'Ctrl+Enter', () => {
+    const state = active()?.editor?.state;
+    if (state) {
+      const link = linkAt(state, state.selection.main.head);
+      if (link) return followLink(link);
+      notice('Place the cursor on a Markdown link, Abe.');
+    }
+  }],
   ['reading-view', ui("markdown-reading-view"), '', readingView],
-  ['reload-file', ui("reload-file-from-disk"), '', async () => { if (active().file) await openFile(active().file.path); }],
+  ['reload-file', ui("reload-file-from-disk"), '', async () => { if (active().file) await openFile(active().file.path, active(), { reload: true }); }],
   ['file-menu', ui("file-actions"), '', () => fileMenu()],
   ['open-external', ui("open-current-file-externally"), '', () => active().file && call('file:external', active().file.path)],
   ['palette', ui("command-palette"), ui("ctrl-p-ctrl-shift-p"), palette],
@@ -1061,7 +1177,10 @@ bridge.on('navigation', state => {
   const tab = tabs.find(item => item.id === state.id); if (!tab) return;
   const changedDirectory = tab.cwd !== state.cwd;
   Object.assign(tab, state);
-  if (changedDirectory) tab.selected.clear();
+  if (changedDirectory) {
+    tab.selected.clear(); tab.filesFilter = ''; tab.filesScroll = 0;
+    if (tab === active()) { $('#file-filter').value = ''; $('#file-list').scrollTop = 0; }
+  }
   if (tab.history[tab.historyIndex] !== tab.cwd) { tab.history.splice(tab.historyIndex + 1); tab.history.push(tab.cwd); tab.historyIndex = tab.history.length - 1; }
   if (tab.id === activeId) update(); emit('navigate', { id: tab.id, cwd: tab.cwd });
 });
@@ -1078,19 +1197,49 @@ async function openRequest(opening) {
   if (opening.theme) { temporaryEnergy = opening.theme === 'dawkins' ? 0 : opening.theme === 'nietzsche' ? 50 : 100; applyConfig(active().config); }
 }
 
+function followLink({ href, wiki, newTab, anchor }) {
+  const tab = active();
+  if (!href || !tab) return;
+  const follow = async () => {
+    if (/^(https?:|mailto:)/i.test(href)) { await call('external', href); return; }
+    if (/^[a-z][\w+.-]*:/i.test(href) && !/^[a-z]:[/\\]/i.test(href)) return;
+    const hash = href.indexOf('#');
+    const decode = value => { try { return decodeURIComponent(value); } catch { return value; } };
+    const name = decode(hash < 0 ? href : href.slice(0, hash));
+    const heading = hash < 0 ? '' : decode(href.slice(hash + 1));
+    let destination = tab;
+    if (name) {
+      let filename = join(parent(tab.file?.path || join(tab.cwd, '_')), name);
+      let info;
+      try { info = await call('path:stat', filename); }
+      catch (error) {
+        if (!wiki || !/ENOENT|not found|does not exist/i.test(error.message) || /\.md$/i.test(filename)) throw error;
+        filename += '.md'; info = await call('path:stat', filename);
+      }
+      if (newTab) destination = await newTab(info.directory ? info.path : parent(info.path));
+      if (info.directory) { if (!newTab) await navigateFiles(info.path, tab); return; }
+      const readNext = !!anchor?.closest('.reading-view');
+      if (!await openFile(info.path, destination)) return;
+      if (readNext && active() === destination && destination.file?.language === 'markdown') readingView();
+    }
+    if (heading && active() === destination) {
+      const mail = anchor?.closest('.mail-message');
+      if (!mail) readingView();
+      const container = mail || destination.document;
+      const slug = heading.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s+/g, '-');
+      const target = [heading, slug].filter(Boolean).map(id => container.querySelector('#' + CSS.escape(id))).find(Boolean);
+      target?.scrollIntoView({ block: 'start' });
+    }
+  };
+  return follow().catch(error => notice(error.message));
+}
 document.addEventListener('click', event => {
   const edit = event.target.closest('[data-edit-word]'); if (edit) { editWords(edit.dataset.editWord); return; }
   const external = event.target.closest('[data-url]'); if (external) { call('external', external.dataset.url).catch(error => notice(error.message)); return; }
   const anchor = event.target.closest('a');
   if (anchor) {
-    event.preventDefault(); const href = anchor.getAttribute('href'); if (!href) return;
-    if (/^(https?:|mailto:)/.test(href)) call('external', href).catch(error => notice(error.message));
-    else if (href.startsWith('#')) (anchor.closest('.mail-message') || active()?.document)?.querySelector(`[id="${CSS.escape(href.slice(1))}"]`)?.scrollIntoView();
-    else {
-      let decoded = href; try { decoded = decodeURIComponent(href); } catch {}
-      const filename = join(parent(active().file?.path || join(active().cwd, '_')), decoded);
-      openFile(filename).catch(error => { if (/ENOENT/.test(error.message) && anchor.classList.contains('internal-link')) return openFile(`${filename}.md`); throw error; }).catch(error => notice(error.message));
-    }
+    event.preventDefault();
+    followLink({ href: anchor.getAttribute('href'), wiki: anchor.classList.contains('internal-link'), newTab: event.ctrlKey || event.metaKey, anchor });
     return;
   }
   const button = event.target.closest('[data-command]'); if (button) { run(button.dataset.command); return; }
@@ -1117,6 +1266,12 @@ $('#file-list').onclick = event => {
   clearTimeout(pdfClickTimer);
   const row = event.target.closest('[data-path]'); if (!row) return;
   const tab = active();
+  if (event.target.closest('[data-expand-folder]')) { toggleFolder(row).catch(error => notice(error.message)); return; }
+  if (event.target.closest('[data-row-menu]')) { fileMenu(row.dataset.path); return; }
+  if (boot.interface === 'mobile' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    const openRow = row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path);
+    openRow.catch(error => notice(error.message)); return;
+  }
   if (event.ctrlKey || event.metaKey) { if (tab.selected.has(row.dataset.path)) tab.selected.delete(row.dataset.path); else tab.selected.add(row.dataset.path); }
   else if (event.shiftKey && tab.selected.size) {
     const rows = [...$('#file-list').querySelectorAll('[data-path]')], first = rows.findIndex(item => tab.selected.has(item.dataset.path)), last = rows.indexOf(row);
@@ -1134,10 +1289,12 @@ $('#file-list').onclick = event => {
     item.setAttribute('aria-selected', String(selected));
   }
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
-  $('#file-list').focus();
+  renderedFileRows = null;
+  $('#file-list').focus({ preventScroll: true });
   if (event.detail === 1 && !event.ctrlKey && !event.metaKey && !event.shiftKey) toggleFolder(row).catch(error => notice(error.message));
 };
 $('#file-list').ondblclick = event => {
+  if (boot.interface === 'mobile') return;
   clearTimeout(pdfClickTimer);
   const row = event.target.closest('[data-path]'); if (!row) return;
   (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path, active(), { external: /\.pdf$/i.test(row.dataset.path) })).catch(error => notice(error.message));
@@ -1161,6 +1318,7 @@ installFileDrag({
       item.classList.toggle('selected', tab.selected.has(item.dataset.path));
       item.setAttribute('aria-selected', String(tab.selected.has(item.dataset.path)));
     }
+    renderedFileRows = null;
     return selectedPaths();
   },
 });
@@ -1191,13 +1349,18 @@ $('#energy').oninput = event => { temporaryEnergy = Number(event.target.value); 
 $('#energy').onchange = event => setEnergy(Number(event.target.value)).catch(error => notice(error.message));
 
 document.addEventListener('focusin', event => {
-  if (!active()) return;
-  if ($('#terminals').contains(event.target)) active().lastFocus = 'terminal';
-  else if ($('#files').contains(event.target)) active().lastFocus = 'files';
-  else if (event.target.closest('.cm-editor')) active().lastFocus = 'editor';
+  const tab = active();
+  if (!tab) return;
+  const target = event.target;
+  if ($('#terminals').contains(target) || $('#terminal-initial').contains(target)) tab.lastFocus = 'terminal';
+  else if ($('#files').contains(target)) tab.lastNonTerminalFocus = tab.lastFocus = 'files';
+  else if (target.closest('.document-content, #inbox-view, [data-panel="yhwh-chat"]')) {
+    tab.lastNonTerminalFocus = tab.lastFocus = 'document';
+  }
 });
 document.addEventListener('keydown', event => {
-  if ($('#dialog').open) return;
+  document.body.classList.toggle('mod-follow', event.ctrlKey || event.metaKey);
+  if (event.isComposing || document.querySelector('dialog[open]') || event.target.closest('.initial-workbench input')) return;
   const binding = bindingFor(event);
   if (binding && binding.kind !== 'disabled') {
     event.preventDefault(); event.stopImmediatePropagation();
@@ -1206,6 +1369,9 @@ document.addEventListener('keydown', event => {
   }
   if (event.key === 'Escape' && active()?.expanded) { active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }
 }, true);
+
+document.addEventListener('keyup', event => document.body.classList.toggle('mod-follow', event.ctrlKey || event.metaKey));
+window.addEventListener('blur', () => document.body.classList.remove('mod-follow'));
 
 function resizer(selector, property, position, minimum, maximum) {
   $(selector).onpointerdown = event => {

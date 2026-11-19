@@ -1,13 +1,18 @@
-import { createInitial, alphabets, transliteration, quote, asText, normalizeGesture, matchGesture, defaultRC } from '../../../lib/initial.mjs';
+import { createInitial, alphabets, transliteration, quote, asText, normalizeGesture, matchGesture, defaultRC, firstLogo } from '../../../lib/initial.mjs';
 import './initial.css';
+import { createWorkbench } from './initial-workbench.js';
+import { readGrid, serializeGrid } from '../../../lib/initial-grid.mjs';
+import { inInitialPreview } from './preview-dialog.js';
+import { renderMarkdown } from './editor.js';
+import logosTutorial from '../../../../LOGOS.md';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 const draftKey = 'yhwh:initial:draft';
-const categories = ['Initials', 'Words', 'Atomics', 'Builtins'];
 const locations = { Initials: '~/.initialrc', Words: '~/bin', Atomics: '/bin', Builtins: '/usr/bin' };
+const gridDraftKey = 'yhwh:initial:grid';
 
 export function installInitial(app, { home, mobile, call }) {
-  let dialog, category = 'Initials', query = '', liveTimer;
+  let dialog, liveTimer, docked = false;
   const scratch = { source: '' };
   try { scratch.source = localStorage.getItem(draftKey) || ''; } catch {}
 
@@ -29,6 +34,7 @@ export function installInitial(app, { home, mobile, call }) {
       dialog.setAttribute('aria-labelledby', 'initial-title');
       document.body.append(dialog);
     }
+    dialog.classList.remove('initial-shell-dialog');
     dialog.classList.toggle('initial-drawing', drawing);
     dialog.innerHTML = `<header>
       ${back ? '<button type="button" data-initial="back" aria-label="Back">←</button>' : ''}
@@ -56,7 +62,7 @@ export function installInitial(app, { home, mobile, call }) {
     list: path => call('directory:list', app.active().id, path),
     copy: (...args) => call('file:copy', ...args), move: (...args) => call('file:move', ...args), trash: path => call('file:trash', path),
     navigate: path => app.navigate(path), open: path => app.openFile(path), view: showView,
-    builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc'].includes(item.id)),
+    builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface'].includes(item.id)),
     chroot: async path => {
       const tab = app.active();
       tab.initialRoot = mobile ? null : path;
@@ -71,12 +77,12 @@ export function installInitial(app, { home, mobile, call }) {
 
   function commandToken(item) {
     const first = library.catalog().find(entry => entry.name === item.name || entry.names?.includes(item.name));
-    const name = !first || first.kind === item.kind ? item.name : locations[item.kind] + '/' + item.name;
+    const name = !first || first.kind === item.kind || item.kind === 'Initials' ? item.name : locations[item.kind] + '/' + item.name;
     return /^[\p{L}\p{N}_.\/~\-]+$/u.test(name) ? name : quote(name);
   }
   async function execute(source, back = shelf) {
     if (!source.trim()) return;
-    if (dialog.open) dialog.close();
+    if (dialog?.open) dialog.close();
     let result;
     try {
       result = await library.run(source);
@@ -97,67 +103,179 @@ export function installInitial(app, { home, mobile, call }) {
     }
   }
 
+  const workbench = createWorkbench({
+    catalog: () => library.catalog(), token: commandToken, run: runInWorkbench, details: manual, save: saveGrid,
+    actions: { compose: () => compose(scratch), alias: () => aliasEditor(), draw: () => draw(), guide, tutorial },
+    report: showError,
+    readDraft: () => {
+      try {
+        const draft = JSON.parse(localStorage.getItem(gridDraftKey) || '{}');
+        return { cells: readGrid(draft.source || '') || {}, file: draft.file };
+      } catch { return {}; }
+    },
+    writeDraft: (cells, file) => {
+      try { localStorage.setItem(gridDraftKey, JSON.stringify({ source: serializeGrid(cells), file })); } catch {}
+    },
+  });
+  const embedded = document.querySelector('#terminal-initial');
+  const terminal = document.querySelector('#terminals');
+  const toggle = document.querySelector('[data-command="terminal-interface"]');
+
   async function shelf() {
     await library.reload();
-    modal('The Initial', `<p class="initial-intro">Tap a command to run it, Abe.</p>
-      <input type="search" data-search aria-label="Find a command" placeholder="Find a command" value="${escape(query)}" autocomplete="off">
-      <nav class="initial-categories" aria-label="Command locations">
-        ${categories.map(kind => `<button type="button" data-kind="${kind}" aria-pressed="${kind === category}">${kind}</button>`).join('')}
-      </nav>
-      <div class="initial-shelf" aria-label="Commands"></div>
-      <div class="initial-tools initial-footer">
-        ${button('~ $ Compose', 'compose', true)}${buttons([['+ Initial', 'alias'], ['Draw', 'draw'], ['Guide', 'guide']])}
-      </div>`);
-    const search = dialog.querySelector('[data-search]');
-    search.oninput = () => { query = search.value; renderCatalog(); };
-    for (const tab of dialog.querySelectorAll('[data-kind]')) tab.onclick = () => {
-      category = tab.dataset.kind;
-      query = search.value = '';
-      renderCatalog();
+    workbench.renderCatalog();
+    if (docked) {
+      if (document.querySelector('#terminal-panel').hidden) await app.run('focus-terminal');
+      embedded.append(workbench.shell);
+      if (dialog?.open) dialog.close();
+      return;
+    }
+    modal('The Initial', '');
+    dialog.classList.add('initial-shell-dialog');
+    dialog.insertBefore(workbench.shell, dialog.querySelector('[data-error]'));
+  }
+
+  function switchInterface() {
+    if (!embedded) return;
+    modal('Terminal interface', `<div class="initial-tools">${buttons([['Terminal', 'terminal'], ['Initial · tiles and scripts', 'initial']])}</div>`);
+    const select = async next => {
+      if (next) await library.reload();
+      dialog.close();
+      docked = next;
+      terminal.hidden = next;
+      embedded.hidden = !next;
+      toggle.textContent = next ? 'Initial ▾' : 'Terminal ▾';
+      if (next) {
+        await shelf();
+        workbench.focus();
+      } else {
+        await app.run('focus-terminal');
+      }
     };
-    bind({ alias: () => aliasEditor(), compose: () => compose(scratch), draw: () => draw(), guide });
-    renderCatalog();
+    bind({ terminal: () => select(false), initial: () => select(true) });
+  }
+
+  function launchFull(action) {
+    if (dialog?.open) dialog.close();
+    return action();
+  }
+  async function runInWorkbench(source, { preview, full, item, renderOutput }) {
+    let displayed = false;
+    const showFile = async path => {
+      const file = await host.read(path);
+      displayed = true;
+      const panel = renderOutput(file.kind === 'text' ? { text: file.content } : { text: file.mime || file.kind }, { title: file.name });
+      appendAction(panel, 'Open in workspace', () => launchFull(() => app.openFile(file.path)));
+    };
+    const showDirectory = async path => {
+      displayed = true;
+      const entries = await host.list(path);
+      const panel = renderOutput({ entries }, { title: path, open: entry => entry.directory ? showDirectory(entry.path) : showFile(entry.path) });
+      appendAction(panel, 'Open in workspace', () => launchFull(() => showView({ kind: 'live', path, root: root() })));
+    };
+    const previewDisplay = {
+      open: showFile,
+      view: async value => {
+        displayed = true;
+        if (value.kind === 'live') return showDirectory(value.path);
+        const panel = renderOutput(value, { open: entry => entry.directory ? showDirectory(entry.path) : showFile(entry.path) });
+        appendAction(panel, 'Open in workspace', () => launchFull(() => showView(value)));
+      },
+      builtin: async command => {
+        const invoke = () => command.run();
+        if (command.id === 'open-file' || command.id === 'focus-files') return showDirectory(host.cwd());
+        if (['settings', 'new-file', 'new-directory', 'about', 'help', 'about-us', 'palette', 'choose-view-mode', 'verses', 'hotkeys', 'file-menu', ...(mobile ? ['chat', 'mobile-create', 'mobile-connect', 'mobile-actions', 'mobile-tabs'] : [])].includes(command.id)) {
+          displayed = true;
+          const panel = renderOutput({ text: command.name }, { title: command.id });
+          appendAction(panel, 'Reopen here', () => inInitialPreview(preview, invoke));
+          appendAction(panel, 'Open in workspace', () => launchFull(invoke));
+          await inInitialPreview(preview, invoke);
+          return;
+        }
+        if (['save', 'refresh', 'toggle-hidden', 'files-copy', 'files-cut'].includes(command.id)) return invoke();
+        displayed = true;
+        const panel = renderOutput({ text: command.name }, { title: command.id });
+        appendAction(panel, 'Run in workspace', () => launchFull(invoke));
+      },
+    };
+    const display = full ? {
+      open: path => launchFull(() => host.open(path)),
+      view: value => launchFull(() => host.view(value)),
+      builtin: command => launchFull(() => command.run()),
+    } : previewDisplay;
+    const commandArgs = { mkdir: 'New-folder', touch: 'Note.md', cat: '', open: '', cp: '', mv: '', trash: '', grep: '', echo: 'Abe' };
+    if (item?.kind === 'Atomics' && Object.hasOwn(commandArgs, item.name)) {
+      displayed = true;
+      const panel = renderOutput({ text: item.usage }, { title: item.label });
+      const form = document.createElement('form'); form.className = 'initial-inline-form';
+      const inputCount = ['cp', 'mv'].includes(item.name) ? 2 : 1;
+      for (let index = 0; index < inputCount; index++) {
+        const input = document.createElement('input');
+        input.setAttribute('aria-label', inputCount === 2 ? index ? 'Destination' : 'Source' : 'Argument');
+        input.value = index ? '' : commandArgs[item.name]; form.append(input);
+      }
+      const submit = document.createElement('button'); submit.textContent = 'Run'; form.append(submit);
+      panel.append(form);
+      form.onsubmit = guarded(async event => {
+        event.preventDefault();
+        submit.disabled = true;
+        try {
+          displayed = false;
+          const result = await library.run([source, ...Array.from(form.querySelectorAll('input'), node => quote(node.value))].join(' '), { collectOutput: true, display });
+          if (!displayed || result.text) renderOutput(result);
+          await app.refresh();
+        }
+        catch (error) { renderOutput({ text: error.message }, { title: '/dev/stderr' }); }
+      });
+      return;
+    }
+    const result = await library.run(source, { collectOutput: true, display });
+    await app.refresh();
+    if (!displayed || result.text) return result;
+  }
+
+  function appendAction(panel, label, run) {
+    const control = document.createElement('button');
+    control.type = 'button'; control.textContent = label; control.onclick = guarded(run);
+    panel.append(control);
+  }
+
+  function tutorial() {
+    modal('Let there be Logos', `<div class="initial-guide markdown-rendered">${renderMarkdown(logosTutorial)}</div>
+      <div class="initial-tools initial-footer">${button('Try the four tiles', 'load', true)}</div>`, { back: shelf });
+    bind({ load: async () => {
+      await shelf();
+      workbench.select('Initials');
+      workbench.editGrid(firstLogo.cells, { name: firstLogo.name });
+    } });
+  }
+
+  function saveGrid(cells, editing) {
+    saveWord({ source: serializeGrid(cells), originalName: editing?.name, version: editing?.version, grid: cells }, shelf);
   }
 
   function matches(item, search) {
     return [item.name, item.label, item.detail].join(' ').toLocaleLowerCase().includes(search);
   }
-  function renderCatalog() {
-    const container = dialog.querySelector('.initial-shelf');
-    const search = query.trim().toLocaleLowerCase();
-    container.classList.toggle('as-list', Boolean(search) || category !== 'Initials');
-    for (const tab of dialog.querySelectorAll('[data-kind]')) {
-      tab.setAttribute('aria-pressed', String(!search && tab.dataset.kind === category));
-    }
-    const items = library.catalog().filter(item => search ? matches(item, search) : item.kind === category);
-    container.innerHTML = items.map((item, index) => `<article class="initial-command ${item.kind === 'Initials' ? '' : 'is-command'}">
-      <button type="button" class="initial-tile" data-run="${index}" title="Run ${escape(item.name)}">
-        <b dir="auto">${escape(item.name)}</b><span>${escape(item.kind === 'Words' ? 'Saved Word' : item.label)}</span>
-      </button>
-      <button type="button" class="initial-details" data-details="${index}" aria-label="Details for ${escape(item.name)}" title="Command details">⋯</button>
-    </article>`).join('') || `<p class="initial-empty">${search ? 'No matching commands.' : 'Nothing here yet.'}</p>`;
-    for (const [index, item] of items.entries()) {
-      container.querySelector(`[data-run="${index}"]`).onclick = guarded(() => runItem(item));
-      container.querySelector(`[data-details="${index}"]`).onclick = guarded(() => manual(item));
-    }
-  }
 
   async function manual(item) {
     const editable = item.kind === 'Initials' || item.kind === 'Words';
-    const file = item.kind === 'Words' ? await library.readWord(item.name) : null;
+    const file = item.kind === 'Words' ? item.sample ? { content: firstLogo.source } : await library.readWord(item.name) : null;
     const instruction = item.usage || item.script || file?.content || item.name;
     modal(item.name, `<p class="initial-intro">${escape(item.kind === 'Initials' ? item.label : item.detail)}</p>
       <pre class="initial-output">${escape(instruction)}</pre>
       <p class="initial-path">${escape(locations[item.kind])}</p>
       <div class="initial-tools initial-footer">${button('~ $ Run', 'run', true)}
-        ${buttons([['Add to composer', 'use'], ...(editable ? [['Edit', 'edit']] : []), ['Make an Initial', 'alias']])}</div>`, { back: shelf });
+        ${buttons([['Add to composer', 'use'], ...(editable ? [['Edit', 'edit']] : []), ['Make a Letter', 'alias']])}</div>`, { back: shelf });
     bind({
       run: () => runItem(item, () => manual(item)),
       use: () => { addCommand(scratch, item); compose(scratch); },
       alias: () => aliasEditor({ script: commandToken(item) }, () => manual(item)),
       edit: () => {
         if (!file) return aliasEditor(item, () => manual(item));
-        if (typeof file.content !== 'string') throw new Error('Words must contain UTF-8 text.');
+        if (typeof file.content !== 'string') throw new Error('Logos must contain UTF-8 text.');
+        const cells = item.sample ? firstLogo.cells : readGrid(file.content);
+        if (cells) return shelf().then(() => workbench.editGrid(cells, { name: item.name, version: file.modified }));
         compose({ originalName: item.name, version: file.modified, source: file.content });
       },
     });
@@ -167,13 +285,13 @@ export function installInitial(app, { home, mobile, call }) {
     modal('Start here, Abe', `<div class="initial-guide">
       <p>Terminal → Initial. Same joy, different fingers.</p>
       <ul>
-        <li><strong>Initials</strong> are your short names in <code>~/.initialrc</code>. Tap a tile, search for its name, or train a mark and hold the dot to draw it.</li>
-        <li><strong>Words</strong> are saved commands in <code>~/bin</code>. Compose one with <strong>Then</strong> for the next command or <strong>Pipe</strong> to pass output along. Open <strong>More tools</strong> for <code>$()</code> and saving output.</li>
+        <li><strong>Letters</strong> are aliases in <code>~/.initialrc</code>, the Initial’s equivalent of <code>~/.bashrc</code>. Draw from the dot to use a trained mark.</li>
+        <li><strong>Logos</strong> are saved commands in <code>~/bin</code>. Run a tile below and read <code>/dev/stdout</code> above. Drag tiles up to make a script. Tiles across a row pipe output. Rows run in order. Use <strong>＋</strong> to place tiles by tapping, or type a command.</li>
         <li><strong>Atomics</strong> (<code>/bin</code>) work with files and text. <strong>Builtins</strong> (<code>/usr/bin</code>) are actions already in YHWH. Tap <strong>⋯</strong> on a command for help and options.</li>
       </ul>
       <p><code>ls | view</code> keeps a fixed list. <code>fm .</code> follows a folder as it changes. <code>chroot</code> makes a folder appear as <code>/</code> in this tab.</p>
-      </div><div class="initial-tools">${buttons([['Edit ~/.initialrc', 'rc'], ['Gesture dot settings', 'dot']])}</div>`, { back: shelf });
-    bind({ rc: openRC, dot: dotSettings });
+      </div><div class="initial-tools">${buttons([['Edit ~/.initialrc', 'rc'], ['Gesture dot settings', 'dot'], ['Let there be Logos', 'tutorial']])}</div>`, { back: shelf });
+    bind({ rc: openRC, dot: dotSettings, tutorial });
   }
   async function openRC() {
     if (dialog?.open) dialog.close();
@@ -221,20 +339,20 @@ export function installInitial(app, { home, mobile, call }) {
     const alias = { name, script: item.script || 'fm .', names: item.names || [transliteration(name)], gesture: item.gesture };
     let options = false;
     function render() {
-      modal(item.name ? 'Edit Initial' : 'A name of your own', `<form data-alias-form>
+      modal(item.name ? 'Edit Letter' : 'A name of your own', `<form data-alias-form>
         <div class="initial-alias-heading">
           <button type="button" class="initial-big-glyph" data-initial="glyph" aria-label="Choose a letter"><b dir="auto">${escape(alias.name)}</b><small>Choose letter</small></button>
-          <label>Tile name<input name="name" aria-label="Initial name" value="${escape(alias.name)}" required autocapitalize="off"></label>
+          <label>Tile name<input name="name" aria-label="Letter name" value="${escape(alias.name)}" required autocapitalize="off"></label>
         </div>
         <label>Action <code dir="auto">${escape(alias.script)}</code></label>
         ${button('Choose action', 'action')}
         <details class="initial-options"${options ? ' open' : ''}><summary>Search names, script and gesture</summary>
           <label>Search names <small>Separate with commas</small><input name="names" aria-label="Search names" value="${escape(alias.names.join(', '))}"></label>
           ${button('Reset transliteration', 'reset')}
-          <label>Script<textarea name="script" aria-label="Initial action" rows="3" spellcheck="false">${escape(alias.script)}</textarea></label>
-          <div class="initial-tools">${buttons([[alias.gesture ? 'Retrain gesture' : 'Train gesture', 'train'], ...(alias.gesture ? [['Clear gesture', 'clear-gesture']] : []), ...(item.name ? [['Remove Initial', 'remove']] : [])])}</div>
+          <label>Script<textarea name="script" aria-label="Letter action" rows="3" spellcheck="false">${escape(alias.script)}</textarea></label>
+          <div class="initial-tools">${buttons([[alias.gesture ? 'Retrain gesture' : 'Train gesture', 'train'], ...(alias.gesture ? [['Clear gesture', 'clear-gesture']] : []), ...(item.name ? [['Remove Letter', 'remove']] : [])])}</div>
         </details>
-        <div class="initial-tools initial-footer"><button class="primary">Save Initial</button></div>
+        <div class="initial-tools initial-footer"><button class="primary">Save Letter</button></div>
       </form>`, { back });
       const form = dialog.querySelector('form');
       const details = form.querySelector('details');
@@ -260,9 +378,8 @@ export function installInitial(app, { home, mobile, call }) {
           throw new Error('Choose an action or enter a script.');
         }
         await library.saveAlias(alias, item.name);
-        category = 'Initials';
-        query = '';
         await shelf();
+        workbench.select('Initials');
       });
       const pickLetter = () => {
         collect();
@@ -287,7 +404,7 @@ export function installInitial(app, { home, mobile, call }) {
     const container = dialog.querySelector('.initial-choices');
     function render() {
       const list = entries.filter(item => matches(item, search.value.trim().toLocaleLowerCase()));
-      container.innerHTML = list.map((item, index) => `<button type="button" data-choice="${index}"><b dir="auto">${escape(item.name)}</b><span>${escape(item.kind === 'Words' ? 'Saved Word' : item.label)}<small>${item.kind}</small></span></button>`).join('') || '<p class="initial-empty">No matching commands.</p>';
+      container.innerHTML = list.map((item, index) => `<button type="button" data-choice="${index}"><b dir="auto">${escape(item.name)}</b><span>${escape(item.kind === 'Words' ? 'Saved Logos' : item.label)}<small>${item.kind}</small></span></button>`).join('') || '<p class="initial-empty">No matching commands.</p>';
       for (const choice of container.querySelectorAll('button')) choice.onclick = guarded(() => done(list[Number(choice.dataset.choice)]));
     }
     search.oninput = render;
@@ -318,7 +435,7 @@ export function installInitial(app, { home, mobile, call }) {
       <details class="initial-options"${program.more ? ' open' : ''}><summary>More tools</summary>
         <div class="initial-tools">${buttons([['$()', 'sub'], ['> Save output', 'redirect'], ['Undo', 'undo'], ['Clear', 'clear']])}</div>
       </details>
-      <div class="initial-tools initial-footer">${button('~ $ Run', 'run', true)}${button('#! Save Word', 'save-word')}</div>`, { back: shelf });
+      <div class="initial-tools initial-footer">${button('~ $ Run', 'run', true)}${button('#! Save Logos', 'save-word')}</div>`, { back: shelf });
     const input = dialog.querySelector('[data-composer]');
     const details = dialog.querySelector('details');
     function updateButtons() {
@@ -353,10 +470,11 @@ export function installInitial(app, { home, mobile, call }) {
     const names = new Set(library.catalog().flatMap(item => [item.name, ...(item.names || [])]));
     while (names.has('word-' + index)) index++;
     const suggested = program.originalName || 'word-' + index;
-    modal('Save Word', `<form>
-      <label>Name in <code>~/bin</code><input data-word-name aria-label="Word name" value="${escape(suggested)}" required autocapitalize="off"></label>
+    const label = 'Save Logos';
+    modal(label, `<form>
+      <label>Name in <code>~/bin</code><input data-word-name aria-label="Logos name" value="${escape(suggested)}" required autocapitalize="off"></label>
       ${program.originalName ? '<p class="initial-intro">Change the name to save a copy.</p>' : ''}
-      <div class="initial-tools initial-footer"><button class="primary">Save Word</button></div>
+      <div class="initial-tools initial-footer"><button class="primary">${label}</button></div>
       </form>`, { back });
     dialog.querySelector('form').onsubmit = guarded(async event => {
       event.preventDefault();
@@ -366,9 +484,12 @@ export function installInitial(app, { home, mobile, call }) {
         setSource(scratch, '');
         scratch.previous = undefined;
       }
-      category = 'Words';
-      query = '';
       await shelf();
+      workbench.select('Words');
+      if (program.grid) {
+        const file = await library.readWord(name);
+        workbench.editGrid(program.grid, { name, version: file.modified });
+      }
       app.notice('Saved ~/bin/' + name);
     });
   }
@@ -536,7 +657,7 @@ export function installInitial(app, { home, mobile, call }) {
   const dot = document.createElement('button');
   dot.id = 'initial-dot';
   dot.type = 'button';
-  dot.title = 'Initial · tap for commands, hold to draw';
+  dot.title = 'Initial · tap for commands or draw from here';
   dot.setAttribute('aria-label', 'Open Initial');
   const commandButton = document.createElement('button');
   commandButton.id = 'initial-commands';
@@ -552,18 +673,63 @@ export function installInitial(app, { home, mobile, call }) {
   }
   try { applyDot(JSON.parse(localStorage.getItem('yhwh:initial:dot') || '{}')); }
   catch { applyDot(); }
-  let held = false, holdTimer;
+  const trace = document.createElement('canvas');
+  trace.id = 'initial-trace'; trace.hidden = true; trace.setAttribute('aria-hidden', 'true');
+  const gestureResult = document.createElement('div');
+  gestureResult.id = 'initial-gesture-result'; gestureResult.hidden = true; gestureResult.setAttribute('role', 'status');
+  document.body.append(trace, gestureResult);
+  let stroke, drew = false;
+  const clearTrace = () => { trace.hidden = true; gestureResult.hidden = true; gestureResult.replaceChildren(); };
   dot.onpointerdown = event => {
-    held = false;
-    holdTimer = setTimeout(() => { held = true; guarded(draw)(undefined, shelf, event); }, 230);
+    if (!event.isPrimary || event.button !== 0) return;
+    clearTrace(); drew = false;
+    stroke = { pointer: event.pointerId, points: [[event.clientX, event.clientY]] };
+    dot.setPointerCapture(event.pointerId);
   };
-  for (const event of ['pointerup', 'pointercancel']) dot.addEventListener(event, () => clearTimeout(holdTimer));
-  dot.onclick = guarded(() => held ? undefined : shelf());
-  commandButton.onclick = guarded(shelf);
+  dot.onpointermove = event => {
+    if (!stroke || stroke.pointer !== event.pointerId) return;
+    const point = [event.clientX, event.clientY], first = stroke.points[0];
+    if (!drew && Math.hypot(point[0] - first[0], point[1] - first[1]) < 8) return;
+    const context = trace.getContext('2d');
+    if (!drew) {
+      drew = true; trace.hidden = false;
+      const dpr = window.devicePixelRatio || 1;
+      trace.width = trace.clientWidth * dpr; trace.height = trace.clientHeight * dpr;
+      context.scale(dpr, dpr); context.strokeStyle = getComputedStyle(dot).getPropertyValue('--purple');
+      context.lineWidth = 4; context.lineCap = 'round'; context.lineJoin = 'round';
+    }
+    context.beginPath(); context.moveTo(...stroke.points.at(-1)); context.lineTo(...point); context.stroke();
+    stroke.points.push(point);
+  };
+  dot.onpointerup = guarded(async event => {
+    if (!stroke || stroke.pointer !== event.pointerId) return;
+    const { points } = stroke; stroke = null;
+    if (!drew) return;
+    gestureResult.hidden = false;
+    const label = document.createElement('span');
+    gestureResult.append(label);
+    appendAction(gestureResult, 'Dismiss', clearTrace);
+    try {
+      await library.reload();
+      if (!label.isConnected) return;
+      const match = matchGesture(points, library.catalog().filter(item => item.kind === 'Initials'));
+      if (!match || match.ambiguous) {
+        label.textContent = match ? 'Two Letters match. Try again.' : 'No Letter matches that mark.';
+        return;
+      }
+      label.textContent = match.alias.name + ' · ' + match.alias.label;
+      appendAction(gestureResult, 'Run', async () => { clearTrace(); await shelf(); await workbench.execute(quote(match.alias.name)); });
+    } catch (error) { label.textContent = error.message; }
+  });
+  dot.onpointercancel = () => { stroke = null; clearTrace(); };
+  dot.onclick = guarded(event => (event.detail && drew) ? undefined : shelf());
+  commandButton.onclick = guarded(async () => { await shelf(); if (docked) workbench.focus(); });
+  document.addEventListener('pointerdown', event => { if (!event.target.closest('#initial-dot, #initial-gesture-result')) clearTrace(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') clearTrace(); });
 
-  async function draw(done, back = shelf, initialEvent) {
+  async function draw(done, back = shelf) {
     if (!done) await library.reload();
-    modal(done ? 'Teach me your mark' : 'Draw an Initial', `
+    modal(done ? 'Teach me your mark' : 'Draw a Letter', `
       <p>${done ? 'Draw one continuous mark.' : 'Draw a mark you trained, then tap its match to run it.'}</p>
       <canvas aria-label="Gesture sketch pad"></canvas><p data-match role="status"></p>
       <div class="initial-tools">${button(done ? 'Use this gesture' : 'Match gesture', 'match', true)}${button('Clear', 'clear')}</div>`, { back, drawing: true });
@@ -606,15 +772,11 @@ export function installInitial(app, { home, mobile, call }) {
     };
     canvas.onpointerup = () => { drawing = false; };
     canvas.onpointercancel = () => { drawing = false; clear(); };
-    // A pointer released while opening the pad can start a fresh stroke there.
-    if (initialEvent) {
-      try { start(initialEvent); } catch {}
-    }
     bind({ clear, match: () => {
       if (done) return done(points);
       const result = matchGesture(points, library.catalog().filter(item => item.kind === 'Initials'));
       if (!result) {
-        match.textContent = 'No familiar mark yet. Edit an Initial to train its gesture.';
+        match.textContent = 'No familiar mark yet. Edit a Letter to train its gesture.';
       } else if (result.ambiguous) {
         match.textContent = 'Two marks look alike. Choose from Commands, or retrain one.';
       } else {
@@ -624,9 +786,13 @@ export function installInitial(app, { home, mobile, call }) {
     } });
   }
 
-  app.addCommand({ id: 'initial', name: 'Initial · your mobile shell', run: shelf });
-  app.addCommand({ id: 'initial-draw', name: 'Draw an Initial', run: () => draw() });
-  app.addCommand({ id: 'initial-new', name: 'New Initial alias', run: async () => { await library.reload(); aliasEditor(); } });
+  app.addCommand({ id: 'initial', name: 'Initial · tiles and scripts', run: shelf });
+  if (!mobile) app.addCommand({ id: 'terminal-interface', name: 'Choose Terminal or Initial', run: switchInterface });
+  app.addCommand({ id: 'initial-draw', name: 'Draw a Letter', run: () => draw() });
+  app.addCommand({ id: 'initial-new', name: 'New Letter', run: async () => { await library.reload(); aliasEditor(); } });
   app.addCommand({ id: 'initial-rc', name: 'Initial · edit aliases file', run: openRC });
-  return { ...library, open: shelf, draw: () => draw() };
+  return { ...library, open: shelf, draw: () => draw(), focusTerminal() {
+    if (!docked || !embedded?.contains(workbench.shell)) return false;
+    workbench.focus(); return true;
+  } };
 }

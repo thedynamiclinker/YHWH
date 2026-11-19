@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 from pathlib import Path
 import tempfile
 import tomllib
@@ -10,6 +11,26 @@ import tomllib
 from .yhwh import Library, Prefixes
 
 DEFAULTS = Path(__file__).parent / "defaults"
+EDITOR_MODES = ("auto", "vim", "emacs", "nano")
+
+
+def editor_from_environment(value):
+    try:
+        argv = shlex.split(value)
+    except ValueError:
+        return None
+    if argv and Path(argv[0]).name == "env":
+        argv = [part for part in argv[1:] if "=" not in part and not part.startswith("-")]
+    if not argv:
+        return None
+    command = Path(argv[0]).name.lower()
+    if command in {"vi", "vim", "nvim", "vim.basic", "vim.tiny", "view", "gvim"}:
+        return "vim"
+    if command.startswith("emacs"):
+        return "emacs"
+    if command in {"nano", "pico"}:
+        return "nano"
+    return None
 
 
 def atomic_write(path: Path, data: bytes, mode: int = 0o600, *, replace=True) -> None:
@@ -84,6 +105,8 @@ class Config:
         for (section, key), (low, high) in limits.items():
             if not low <= data[section][key] <= high:
                 raise ValueError(f"{section}.{key} must be between {low} and {high}")
+        if data["editor"]["mode"] not in EDITOR_MODES:
+            raise ValueError("editor.mode must be auto, vim, emacs, or nano")
         if data["agent"]["backend"] not in ("codex", "command", "offline"):
             raise ValueError("agent.backend must be codex, command, or offline")
         if data["agent"]["sandbox"] not in ("read-only", "workspace-write"):
@@ -114,6 +137,11 @@ class Config:
 
     def __getitem__(self, section):
         return self.data[section]
+
+    @property
+    def preferred_editor(self):
+        mode = self.data["editor"]["mode"]
+        return editor_from_environment(os.environ.get("EDITOR", "")) if mode == "auto" else mode
 
     @property
     def state(self):

@@ -1,37 +1,52 @@
 # The Initial
 
-The Initial is YHWH’s phone shell: a place to name, discover and combine the
-things the app can already do. The Android and iOS apps retain the shared
-editor, Markdown, tabs, settings, themes, inbox and character. A live file
-manager adds list/tile layouts, selection, copy/cut/paste, rename, Trash, folder
-navigation and creation. Existing import/share and conflict handling still apply.
+The Initial is YHWH’s tile shell on Android, iOS, and desktop. On a phone, tap
+the command button or the floating dot. On desktop, the regular terminal opens
+first. Use **Terminal ▾ → Initial** in the terminal header to switch, or open
+**Initial** from the command palette. The desktop shell keeps running while the
+tile surface is visible.
 
-Tap the small command-shelf button, or tap the configurable floating dot.
-Tap a tile to run it. Use its **⋯** button for help, editing, or adding the
-command to your composer. Search matches commands across all four locations.
-Holding the dot opens a sketch pad. Gestures are optional, user-trained,
-continuous strokes, with a visible match to tap before execution. Similar or
-unknown marks do not run an arbitrary command. Position and opacity are editable
-under Initial → Guide → Gesture dot settings.
+The launcher shows four locations in order:
 
-## Names and files
+| Section | Unix equivalent | Contents |
+| --- | --- | --- |
+| Atomics | `/bin` | Small commands for files and text |
+| Builtins | `/usr/bin` | Commands registered by YHWH |
+| Letters | `~/.bashrc` | Short names and optional gestures. YHWH stores these in `~/.initialrc`. |
+| Logos | `~/bin` | Reusable scripts saved as ordinary UTF-8 files |
 
-- **Initials** are aliases in `~/.initialrc`. Choose a Latin, Greek, Hebrew or
-  Paleo tile. Paleo uses the bundled Phoenician Unicode font. Any other Unicode
-  name may be entered too. Transliteration starts from the chosen letter;
-  **Search names, script and gesture** holds the editable names and optional
-  gesture. Reset restores the default transliteration. `愛` can have `ai`,
-  `love` and `amor` as names for the same action.
-- **Words** are ordinary UTF-8 files in `~/bin`. The basename is the command.
-  The builder proposes an unused filename, so a keyboard is optional. Editing
-  an existing Word retains its version and refuses concurrent overwrites.
-- **Atomics**, presented as `/bin`, are the small in-app file/data commands.
-- **Builtins**, presented as `/usr/bin`, are the app’s registered action IDs,
-  discovered from the same command registry as the palette.
+Tap a tile to try it. The upper pane shows `/dev/stdout`, file listings, or
+an app menu. **Open in workspace** opens a result as a regular tab or dialog.
+The shell options menu can open app actions in the workspace by default.
+Switch between icons and a list beside the command search. Type to find
+commands, or press Enter to run a typed command with arguments.
+
+Drag a tile from the launcher into the upper pane to start a script. The first
+tile goes in the top-left square of a 5×5 grid. Subsequent tiles can go in
+any open square. Adjacent commands on a row pass output from left to right
+through a pipe. Rows run from top to bottom as separate commands. Blank squares
+and rows are ignored. Drag existing tiles to move or swap them. Use **＋**
+and select a square to place commands without dragging. **Save Logos** names
+the script in `~/bin` and puts it in the launcher. Grid files contain ordinary
+commands and a comment with the tile positions. If text edits change the
+commands, the file opens in the text composer.
+
+**Let there be Logos** opens the tutorial with the exact text of
+[LOGOS.md](../LOGOS.md) and loads its two pipelines onto the grid.
+Fresh setups get Γ, Ꞁ, L, ᒧ and the bundled `demos` Logos. The ᒧ tile can also
+be called by the name ⅃ used in the example. The first row sorts a directory
+listing. The second writes “Logos Demos.” Existing `~/.initialrc` files keep
+their Letters. Saving a Logos creates a real file and refuses stale edits.
+
+Draw directly from the floating dot at mid-screen. The trace stays over the
+workspace. The Initial asks you to confirm a matching Letter before running it.
+To train a gesture, open a Letter’s details, choose **Edit**, and use **Train
+gesture** under its advanced options. The Guide includes dot position and
+opacity settings.
 
 This is an in-app namespace. It does not replace Bash startup files, execute
-native programs or load arbitrary JavaScript. Resolution is Initial/search name,
-then `~/bin`, Atomics and Builtins. `/bin/pwd`, `/usr/bin/save` and `~/bin/name`
+native programs or load arbitrary JavaScript. Resolution starts with a Letter or one of its search names, then checks
+`~/bin`, Atomics and Builtins. `/bin/pwd`, `/usr/bin/save` and `~/bin/name`
 are also usable. On mobile, `~` is the ordinary app-owned `/YHWH` workspace;
 on desktop it is the user’s home folder.
 
@@ -42,15 +57,15 @@ alias '愛' 'ls | view'
 names '愛' 'ai' 'love' 'amor'
 ```
 
-The UI regenerates this small rc file when saving an Initial; comments and
+The UI regenerates this small rc file when saving a Letter. comments and
 formatting are not preserved. Gesture templates are optional `gesture NAME
 '[[x,y],…]'` lines. Reload by reopening the shelf after editing. Malformed rc
 files produce an error, and can be repaired with the ordinary editor; failed
 parsing never silently replaces them with defaults.
 
-## Composition
+## Text composer
 
-Open **~ $ Compose**, then use **+ Command**, **Argument**, **| Pipe** and
+Open **Text composer** from the shell options, then use **+ Command**, **Argument**, **| Pipe** and
 **Then** to build a command. **More tools** holds **$()** and **> Save output**.
 Run the draft directly or use **#! Save Word** to save it in `~/bin`.
 Path pickers, glyph pickers, command pickers and suggested new names make the basic workflow
@@ -93,34 +108,18 @@ out of this view. This is a navigation convention, not OS confinement or new
 permissions. Mobile Man/God choices create ordinary `Worlds/Man` and
 `Worlds/God` folders; desktop mount overlays are not copied to phones.
 
-**Connect YHWH** replaces the desktop-only Codex setup dead end with an
-account guide, browser sign-in, a copyable device-login command and official
-mobile/remote workflow instructions. It does not collect credentials, pretend
-to finish OAuth, connect in-app chat, or sync files. The official guides are
+On mobile, **Talk to YHWH** provides offline help about the current folder,
+notes, files and Logos. **Connect Codex** opens the sign-in and remote workflow
+guide. Desktop uses its existing Codex conversation. The official guides are
 [authentication](https://learn.chatgpt.com/docs/auth) and
 [mobile Codex](https://developers.openai.com/blog/mastering-codex-remote-for-engineering).
 
 ## Invariants
 
-The runtime is shared in `yhwh/lib/initial.mjs`; the shared renderer installs
-the UI for desktop, Three, Android and iOS. Device I/O crosses existing bridge
-operations. Never evaluate a Word with JavaScript `eval`, a native process,
-or Bash merely because its notation resembles shell. Names belong to the user;
-gestures, transliterations and keyboard input are alternate ways to find the
-same action. The touch shelf is not installed in the TTY or Obsidian plugin;
-those hosts retain their existing interfaces and can edit the same ordinary
-text files. They do not yet execute this in-app dialect.
+Desktop, Three, Android and iOS share the Initial runtime and UI. Device I/O
+uses the filesystem bridge. The Initial interpreter runs in-app commands.
+The separate desktop terminal runs native programs. Shaddai and the Obsidian
+plugin can edit the same scripts as ordinary text.
 
-Native releases still need a rebuild and installation. Browser touch tests
-cover phone/tablet layouts, alias/gesture training, no-keyboard Word composition,
-versioned persistence, live/fixed views, folder roots and the connection guide.
-Native keyboard/safe-area/OS lifecycle behavior still needs device verification;
-iOS compilation requires macOS/Xcode.
-
-Validation for this implementation: 88 shared/core tests; `make mobile-check`
-including Android-phone, iPhone and iPad browser workflows; the full default
-and Three Electron UI suites; and focused Initial smoke tests in both desktop
-interfaces. The Android debug APK compiled successfully, its ZIP integrity was
-checked, and all bundled web assets matched the shared build. The iOS project’s
-copied web assets also matched. No adb device was connected; native iOS build
-and physical-device tests were not performed on this Linux host.
+Android and iOS source changes ship with a new native build. The browser
+suite exercises the touch interactions at phone and tablet sizes.

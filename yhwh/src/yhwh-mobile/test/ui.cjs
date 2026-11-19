@@ -66,8 +66,13 @@ async function main() {
       await page.locator('#mobile-editor-toolbar [data-command="save"]').tap();
       await page.waitForFunction(() => !window.YHWH.active().dirty);
       assert.match(await page.evaluate(async () => (await window.yhwh.call('file:read', '/YHWH/notes.md')).content), /Saved from a phone/);
-      await page.locator('#mobile-editor-toolbar [data-command="view-mode"]').tap();
+      await page.locator('#mobile-editor-toolbar [data-command="choose-view-mode"]').tap();
+      await page.locator('#dialog [data-mode="reading"]').tap();
+      await page.locator('.reading-view:visible').waitFor();
       await page.screenshot({ path: path.join(artifacts, `${device.name}-editor.png`) });
+      await page.locator('#mobile-editor-toolbar [data-command="choose-view-mode"]').tap();
+      await page.locator('#dialog [data-mode="live"]').tap();
+      await page.locator('.cm-content:visible').waitFor();
       // New features registered in the shared command palette remain reachable.
       await page.locator('#mobile-nav [data-command="mobile-tabs"]').tap();
       await page.locator('#mobile-dialog button', { hasText: '+ New tab' }).tap();
@@ -144,6 +149,12 @@ async function main() {
         await page.screenshot({ path: path.join(deviceArtifacts, 'failure.png') }); throw error;
       }
       await require('../../../test/initial-ui.cjs')(page, deviceArtifacts);
+      await page.evaluate(() => window.YHWH.run('chat'));
+      const help = page.locator('#mobile-dialog');
+      await help.getByRole('textbox', { name: 'Message YHWH' }).fill('Where am I?');
+      await help.getByRole('button', { name: 'Ask' }).click();
+      await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
+      await help.getByRole('button', { name: 'Close', exact: true }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery, scrolling PDF and touch file moves.`);
