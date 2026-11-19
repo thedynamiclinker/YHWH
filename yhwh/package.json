@@ -10,9 +10,7 @@
     "yhwh": "bin/yhwh",
     "yhwh-default": "bin/yhwh-default",
     "yhwh-three": "bin/yhwh-three",
-    "yhwh-obsidian": "bin/yhwh-obsidian",
-    "yhwh-tty": "bin/yhwh-tty",
-    "el-shaddai": "bin/el-shaddai"
+    "yhwh-obsidian": "bin/yhwh-obsidian"
   },
   "files": [
     "bin",

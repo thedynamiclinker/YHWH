@@ -730,7 +730,7 @@ class Workspace:
         config = self.config["terminal"]
         command = config["shell"] or os.environ.get("SHELL") or "/bin/bash"
         env = {**self.config.yhwh.environment,
-               "YHWH_TAB": self.tab.identifier, "YHWH_TTY_SOCKET": self.open_socket}
+               "YHWH_TAB": self.tab.identifier, "YHWH_INTERFACE": "tty", "YHWH_TTY_SOCKET": self.open_socket}
         if (yhwh := self.config.library.command) and Path(yhwh).name == "yhwh" and Path(yhwh).is_absolute():
             env["PATH"] = os.pathsep.join((str(Path(yhwh).parent), env.get("PATH", os.defpath)))
         self.shell_number += 1

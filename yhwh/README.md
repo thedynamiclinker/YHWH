@@ -1,7 +1,7 @@
 # YHWH application
 
 `make` here or at the vault root builds and opens the default app without
-installing. `make tty` opens **Shaddai**, the Python terminal client.
+installing.
 `make build` builds the graphical interfaces, including the shared Android/iOS UI.
 `make help` lists targets.
 
@@ -12,7 +12,6 @@ lib/                 shared file operations, Electron runtime, workflow and mode
 src/yhwh-default/    desktop files, editor and shell
 src/yhwh-three/      spatial desktop interface
 src/yhwh-obsidian/   Obsidian plugin
-src/shaddai/         Python terminal client, editor and shells
 src/yhwh-mobile/     Android and iOS native shells using the shared editor/UI
 src/company/         preserved company and paired-review rehearsal interface
 var/tmp/yhwh/        disposable builds, packages and test screenshots
@@ -33,11 +32,9 @@ toolchain. Electron needs a desktop; headless checks need Xvfb. On NixOS the
 runtime helpers obtain native Electron and Xvfb through nixpkgs; explicit
 `YHWH_ELECTRON` and `YHWH_XVFB` paths override this. The Obsidian interface
 requires an installed Obsidian application and an enabled YHWH plugin.
-Shaddai uses Python 3.11 or newer. `make tty-deps` prepares its local environment.
-See the [Shaddai guide](src/shaddai/README.md) for terminal dependencies and settings.
 
 `make check` runs core and isolated workflow tests, plugin type checks and
-publication tests against a fake GitHub command, Shaddai PTY tests, mobile Chromium workflows,
+publication tests against a fake GitHub command, mobile Chromium workflows,
 and real headless Electron workflows. Mobile checks use system Chrome/Chromium
 or Playwright's Chromium (`YHWH_CHROMIUM` overrides the executable).
 It never invokes the prefix installer or uninstaller. Run
@@ -65,15 +62,10 @@ yhwh                       # Unix help and discovered commands
 yhwh open default          # also: yhwh open
 yhwh open three
 yhwh open obsidian          # opens Obsidian's registered URI handler
-yhwh open tty [PATH]        # Shaddai, in your terminal
-yhwh tty [PATH]             # also: el-shaddai [PATH]
 yhwh-default [PATH]
 yhwh-three [PATH]
 yhwh-obsidian install VAULT # install plugin; enable it in Obsidian
 ```
-
-For an installed Shaddai launcher, put `prompt_toolkit`, `pyte`, and `Pygments`
-in your Python 3 environment or set `SHADDAI_PYTHON` to its interpreter.
 
 Put the chosen prefix's `bin` on PATH. Source
 `PREFIX/etc/yhwh/completions/yhwh.bash` or `yhwh.zsh` after zsh's `compinit`.

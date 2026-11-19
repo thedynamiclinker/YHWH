@@ -12,6 +12,8 @@ dependencies = [
 
 [project.scripts]
 shaddai = "shaddai.__main__:main"
+el-shaddai = "shaddai.__main__:main"
+yhwh-tty = "shaddai.__main__:main"
 
 [tool.setuptools]
 script-files = ["bin/shaddai-fonts"]

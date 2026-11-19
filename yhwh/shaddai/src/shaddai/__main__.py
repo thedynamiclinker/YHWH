@@ -11,25 +11,29 @@ from .navigation import send_path
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv == ["--help"] and os.environ.get("YHWH_INTROSPECTION") == "1":
+        print("yhwh-tty — Shaddai, the terminal workspace")
+        return 0
+
     parser = argparse.ArgumentParser(prog="shaddai", description="A terminal workspace for text files.")
-    parser.add_argument("path", nargs="?", type=Path,
+    parser.add_argument("path", nargs="?", type=Path, default=Path.cwd(),
                         help="directory or text file to open")
-    parser.add_argument("--open", "--cwd", dest="target", type=Path, help=argparse.SUPPRESS)
-    parser.add_argument("--tab", help=argparse.SUPPRESS)
     parser.add_argument("--prefix", type=Path, help="directory for configuration and state")
     parser.add_argument("--doctor", action="store_true", help="check startup without opening the workspace")
     parser.add_argument("--version", action="version", version=f"Shaddai {__version__}")
     args = parser.parse_args(argv)
 
     try:
-        path = (args.target or args.path or Path.cwd()).expanduser().absolute()
+        path = args.path.expanduser().absolute()
         directory = path.is_dir()
         if not directory and not path.is_file():
             parser.error(f"expected a directory or regular file: {path}")
         root = path if directory else path.parent
         address = os.environ.get("YHWH_TTY_SOCKET")
         if address and not args.doctor and args.prefix is None:
-            send_path(address, path, args.tab or os.environ.get("YHWH_TAB"))
+            send_path(address, path, os.environ.get("YHWH_TAB"))
             return 0
 
         from .workspace import Workspace
@@ -38,8 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     except ModuleNotFoundError as error:
         if error.name not in ("prompt_toolkit", "pyte", "pygments"):
             raise
-        parser.exit(1, f"shaddai: {error.name} is missing from {sys.executable}. "
-                       "Use make tty-deps or set SHADDAI_PYTHON to a Python with Shaddai's dependencies.\n")
+        parser.exit(1, f"shaddai: {error.name} is missing from {sys.executable}\n")
     except (OSError, ValueError, RuntimeError) as error:
         parser.exit(1, f"shaddai: {error}\n")
 

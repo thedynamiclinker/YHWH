@@ -156,11 +156,10 @@ class YhwhTTYTests(unittest.TestCase):
                 self.skipTest(f"Unix socket bind is restricted: {error}")
         put(self.user / "rc", '/\n    terminal=true\n')
         note = put(self.work / "a note.md", "# Opened through the socket\n")
-        yhwh = LAUNCHER.parents[3] / "bin/yhwh"
-        tty = self.launch(launch=yhwh, args=["open", "tty", self.work])
+        tty = self.launch()
         self.command(tty, "Focus terminal")
         tty.shows("Shell 1")
-        tty.send(shlex.join(["yhwh", "open", "--", str(note)]).encode() + b"\r")
+        tty.send(shlex.join([str(LAUNCHER), str(note)]).encode() + b"\r")
         tty.shows("# Opened through the socket")
         tty.shows("Shell 1")
         tty.send(b"\x1b]")  # one workspace tab still exists

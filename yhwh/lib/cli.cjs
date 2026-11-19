@@ -4,7 +4,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const paths = require('./paths.cjs');
 const workflows = ['begin','review','run','add','commit'];
 const files = ['create','read','append','prepend','list','search','move','rename','config'];
-const interfaces = ['default','three','obsidian','tty'];
+const interfaces = ['default','three','obsidian'];
 function commands(additional=[]) {
   const found = new Map();
   for (const directory of [...additional, path.join(paths.root,'bin'), ...(process.env.PATH || '').split(path.delimiter)]) {

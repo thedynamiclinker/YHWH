@@ -55,7 +55,18 @@ async function install(mode,prefix){
  await fs.mkdir(path.join(prefix,'bin'),{recursive:true});await fs.mkdir(path.join(prefix,'lib/node_modules'),{recursive:true});await fs.mkdir(path.join(prefix,'etc'),{recursive:true});
  const prepared=packagePath+'.new-'+process.pid;
  if(mode==='install')await fs.cp(path.join(staged,'lib/node_modules',manifest.name),prepared,{recursive:true,dereference:false});
- if(existing){for(const name of names)await fs.rm(path.join(prefix,'bin',name),{force:true});await fs.rm(path.join(prefix,'etc/yhwh'),{force:true});await fs.rm(packagePath,{recursive:true,force:true});}
+ if(existing){
+  const launchers=new Set(names);
+  const packageBin=path.join(packagePath,'bin')+path.sep;
+  for(const [file,entry] of Object.entries(existing.entries)){
+   if(path.dirname(file)==='bin'&&entry.link&&path.resolve(prefix,'bin',entry.link).startsWith(packageBin)){
+    launchers.add(path.basename(file));
+   }
+  }
+  for(const name of launchers)await fs.rm(path.join(prefix,'bin',name),{force:true});
+  await fs.rm(path.join(prefix,'etc/yhwh'),{force:true});
+  await fs.rm(packagePath,{recursive:true,force:true});
+ }
  // Publish npm's installed package with ordinary relative executable links.
  if(mode==='develop')await fs.symlink(root,packagePath,'dir');
  else {await fs.rename(prepared,packagePath);await fs.rm(staged,{recursive:true,force:true});}

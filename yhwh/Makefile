@@ -1,10 +1,9 @@
 .DEFAULT_GOAL := yhwh
 APP_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-SHADDAI := $(APP_DIR)/$(if $(wildcard $(APP_DIR)/../shaddai/bin/shaddai),../shaddai,src/shaddai)
 WORKSPACE ?= $(CURDIR)
 NODE ?= node
 export YHWH_NODE := $(shell command -v $(NODE))
-.PHONY: yhwh help deps build run tty tty-deps tty-build tty-check develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell
+.PHONY: yhwh help deps build run develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell
 help:
 	@cat "$(APP_DIR)/etc/make-help.txt"
 node_modules/.package-lock.json: package.json package-lock.json
@@ -19,15 +18,6 @@ yhwh: deps
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default $(if $(THEME),--theme "$(THEME)",)
 run:
 	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh" open default
-tty-deps: $(if $(SHADDAI_PYTHON),,$(SHADDAI)/.venv/bin/shaddai)
-$(SHADDAI)/.venv/bin/shaddai: $(SHADDAI)/pyproject.toml
-	$(MAKE) -C "$(SHADDAI)" deps
-tty-build: tty-deps
-	$(MAKE) -C "$(SHADDAI)" build
-tty: tty-deps
-	cd "$(WORKSPACE)" && "$(APP_DIR)/bin/yhwh-tty" $(if $(OPEN),-- "$(OPEN)",)
-tty-check: tty-deps
-	$(MAKE) -C "$(SHADDAI)" check $(if $(SHADDAI_PYTHON),TEST_PYTHON="$(SHADDAI_PYTHON)")
 develop install: build
 	$(NODE) bin/prefix.cjs $@ $(if $(PREFIX),"$(PREFIX)",)
 	$(NODE) bin/desktop.cjs $@ "$(if $(PREFIX),$(PREFIX),$(HOME)/world$(if $(filter install,$@),/mnt/sinai,))" "$(WORKSPACE)"
@@ -37,7 +27,6 @@ uninstall:
 check: verify-deps
 	$(NODE) bin/build.cjs
 	$(MAKE) test
-	$(MAKE) tty-check
 	$(NODE) src/yhwh-mobile/test/ui.cjs
 	$(NODE) bin/default/headless.cjs src/yhwh-default/test/ui.cjs src/yhwh-default/test/keys-ui.cjs src/yhwh-three/test/ui.cjs src/yhwh-default/test/initial-ui.cjs
 test: verify-deps
