@@ -129,6 +129,7 @@ export function createVerseUI({ call, modal, notice }) {
     if (box.hidden) { box.replaceChildren(); return; }
     const current = ++generation, mode = theme;
     const title = mode === 'nietzsche' ? ui('circus') : ui('margin');
+    box.setAttribute('aria-label', title);
     box.innerHTML = `<header class="margin-header"><span>${escape(title)}</span><div>${mode === 'yhwh' ? `<button type="button" data-browse-verses>${escape(ui('browse'))}</button>` : ''}<button type="button" data-another-margin aria-label="${escape(ui(mode === 'yhwh' ? 'another-verse' : 'another-pair'))}">↻</button><button type="button" data-collapse-margin aria-label="${escape(ui('toggle-margin'))}" aria-expanded="${!collapsed}">${collapsed ? '＋' : '−'}</button></div></header><div class="margin-content" aria-live="polite" ${collapsed ? 'hidden' : ''}><p role="status">${escape(ui('loading'))}</p></div>`;
     box.querySelector('[data-browse-verses]')?.addEventListener('click', () => browse(randomVerse?.id).catch(error => notice(error.message)));
     const next = box.querySelector('[data-another-margin]');

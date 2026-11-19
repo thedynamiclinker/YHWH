@@ -12,9 +12,9 @@ function decode(text) {
 function parsePair(html) {
   // PageSpeed can inject a script between the comic container and its image.
   html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
-  const image = html.match(/class=["']comic["'][^>]*>\s*<img\b[^>]*\ssrc=["'](?:https?:\/\/(?:www\.)?nietzschefamilycircus\.com)?\/?(img\/\d+\.(?:gif|png|jpe?g))["']/i)?.[1];
+  const image = html.match(/\sclass=["']comic["'][^>]*>\s*<img\b[^>]*\ssrc=["'](?:https?:\/\/(?:www\.)?nietzschefamilycircus\.com\/|\/?)(img\/\d+\.(?:gif|png|jpe?g))["']/i)?.[1];
   const quote = decode(html.match(/class=["']quote["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || "");
-  const link = html.match(/\shref=["'](?:https?:\/\/(?:www\.)?nietzschefamilycircus\.com)?\/?perm\.php\?c=(\d+)(?:&amp;|&)q=(\d+)["']/i);
+  const link = html.match(/\shref=["'](?:https?:\/\/(?:www\.)?nietzschefamilycircus\.com\/|\/?)perm\.php\?c=(\d+)(?:&amp;|&)q=(\d+)["']/i);
   if (!image || !quote) throw new Error("The Circus changed its page format. Open the original site or try again.");
   return { image: "/" + image, quote, permalink: link ? ORIGIN + "/perm.php?c=" + link[1] + "&q=" + link[2] : null };
 }
