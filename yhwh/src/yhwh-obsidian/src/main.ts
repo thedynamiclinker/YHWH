@@ -3,7 +3,7 @@ import interfaceCopy from '../../../etc/obsidian/text-main.json';
 const ui = interfaceText(interfaceCopy);
 import { FileView, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { ancestors, circusPair, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
-import { addressCopy, levelAt, nextUpgrade, stripe, unlockedLevels } from '../../../lib/levels.cjs';
+import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
 
@@ -14,11 +14,14 @@ export default class YHWH extends Plugin {
   circus?: { image: string; quote: string; permalink: string };
   circusBusy = false;
   circusError = '';
-  private dawkinsAside = Math.floor(Math.random() * 3);
+  private nextLevelAside = createLevelAsides();
+  private welcomeLevel?: string;
+  private welcomeAside?: string | null;
   configErrors: string[] = [];
   listeners = new Set<() => void>();
   private navigation = 0;
   private saving: Promise<void> = Promise.resolve();
+  private savingUpgrade = false;
   private status!: HTMLElement;
   private editor?: WorkspaceLeaf;
   private closed = false;
@@ -212,7 +215,7 @@ export default class YHWH extends Plugin {
   level() { return levelAt(this.settings.edition.selected ?? this.current.energy); }
   async selectLevel(value: number) {
     if (value > this.settings.edition.unlocked) return;
-    this.settings.edition.selected = value > 100 ? value : undefined;
+    this.settings.edition = { ...this.settings.edition, selected: value > 100 ? value : undefined };
     if (value <= 100) this.settings.energy = value;
     await this.go(this.folder);
   }
@@ -228,12 +231,10 @@ export default class YHWH extends Plugin {
     const target = nextUpgrade(this.settings.edition.unlocked);
     const upgrade = el.querySelector<HTMLButtonElement>('.yhwh-upgrade');
     if (upgrade) {
-      upgrade.hidden = !target;
-      upgrade.textContent = target?.glyph || target?.label || '';
-      if (target) {
-        upgrade.title = target.offer.title;
-        upgrade.setAttribute('aria-label', target.offer.title);
-      }
+      const shown = target ?? choices.at(-1);
+      upgrade.textContent = shown?.glyph || shown?.label || '';
+      upgrade.title = target?.offer.title ?? 'Manage preview upgrades';
+      upgrade.setAttribute('aria-label', upgrade.title);
     }
   }
   heading(el: HTMLElement, title: string) {
@@ -253,33 +254,53 @@ export default class YHWH extends Plugin {
   }
   levelCopy(el: HTMLElement) {
     const level = this.level();
-    el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
-    const lines = [level.welcome, ...(level.lines || []), level.asides?.[this.dawkinsAside]];
+    if (this.welcomeLevel !== level.id) {
+      this.welcomeLevel = level.id;
+      this.welcomeAside = this.nextLevelAside(level);
+    }
+    if (level.id !== 'yhwh') el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
+    const lines = [level.welcome, ...(level.lines || []), this.welcomeAside];
     for (const line of lines) if (line) el.createEl('p', { text: line });
     if (level.names) el.createEl('p', { text: addressCopy('Hey Abe, take a look around.', level) });
-    for (const text of [level.welcomePoem, level.poem]) if (text) el.createEl('pre', { text, cls: 'yhwh-level-poem', attr: { dir: 'ltr', tabindex: '0' } });
+    for (const text of [level.welcomePoem, level.poem]) {
+      if (text) el.createEl('pre', { cls: 'yhwh-level-poem', attr: { dir: 'ltr', tabindex: '0' } }).createEl('code', { text });
+    }
   }
   upgrades() {
-    const target = nextUpgrade(this.settings.edition.unlocked);
-    if (!target) return;
+    const unlocked = this.settings.edition.unlocked;
+    const target = nextUpgrade(unlocked);
     const modal = new Modal(this.app);
-    modal.titleEl.setText(target.offer.title);
+    modal.titleEl.setText(target?.offer.title ?? 'Manage preview upgrades');
     const el = modal.contentEl; this.decorate(el);
-    for (const text of target.offer.lines) el.createEl('p', { text });
-    button(el, 'Steal Upgrade', 'Steal Upgrade', () => this.run(async () => {
-      if (nextUpgrade(this.settings.edition.unlocked) !== target) return;
+    const changeEdition = (transition: (edition: EditionState) => EditionState | undefined) => this.run(async () => {
       const previous = this.settings.edition;
-      this.settings.edition = { unlocked: target.energy, selected: target.energy };
+      if (this.savingUpgrade || previous.unlocked !== unlocked) return;
+      const next = transition(previous);
+      if (!next) return;
+      this.savingUpgrade = true;
+      this.settings.edition = next;
       try { await this.save(); }
-      catch (error) { this.settings.edition = previous; throw error; }
+      catch (error) {
+        if (this.settings.edition === next) this.settings.edition = previous;
+        throw error;
+      } finally { this.savingUpgrade = false; }
       this.changed(); modal.close();
-    })).addClass('mod-cta');
-    el.createEl('p', { text: stripe.status });
-    const setup = el.createEl('details');
-    setup.createEl('summary', { text: stripe.title });
-    const steps = setup.createEl('ol');
-    for (const text of stripe.steps) steps.createEl('li', { text });
-    for (const [label, url] of Object.entries(stripe.links)) this.external(setup.createEl('p'), label, url);
+    });
+    if (target) {
+      for (const text of target.offer.lines) el.createEl('p', { text });
+      button(el, 'Steal Upgrade', 'Steal Upgrade', () => changeEdition(() => ({ unlocked: target.energy, selected: target.energy }))).addClass('mod-cta');
+    }
+    if (unstealUpgrade(this.settings.edition)) {
+      button(el, 'Unsteal Upgrade', 'Unsteal Upgrade', () => changeEdition(unstealUpgrade));
+    }
+    if (target) {
+      el.createEl('p', { text: stripe.status });
+      const setup = el.createEl('details');
+      setup.createEl('summary', { text: stripe.title });
+      const steps = setup.createEl('ol');
+      for (const text of stripe.steps) steps.createEl('li', { text });
+      for (const [label, url] of Object.entries(stripe.links)) this.external(setup.createEl('p'), label, url);
+    }
     modal.open();
   }
   copyBlock(el: HTMLElement, key: CopyKey) {

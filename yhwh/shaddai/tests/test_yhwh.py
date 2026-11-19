@@ -29,6 +29,8 @@ class YhwhTTYTests(unittest.TestCase):
         put(self.data / "yhwh/etc/default/words.json", json.dumps({
             "letterHouse": "House letter", "letterInspect": "Shell letter", "letterSeed": "World letter",
             "booksUnavailable": "Coming soon",
+            "welcomeTitle": "Where are you?",
+            "welcomeBody": "Ah! There you are. Hey Abe, can I stay with you for a bit?",
         }))
         put(self.data / "mnt/yhwh/mnt/sinai/README.md", "1. [Genesis](https://example.org/genesis)\n2. Exodus\n")
         put(self.data / "mnt/yhwh/readme.md", "world file\n")
@@ -51,7 +53,7 @@ class YhwhTTYTests(unittest.TestCase):
         tty.shows("Commands")
         tty.send(name.encode() + b"\r")
 
-    def test_level_preview_unlocks_each_edition_and_survives_restart(self):
+    def test_level_preview_can_be_unlocked_and_relocked_across_restarts(self):
         app_root = Path(__file__).resolve().parents[2]
         source = app_root / "etc/default/levels.json"
         put(self.data / "yhwh/etc/default/levels.json", source.read_text())
@@ -73,6 +75,27 @@ class YhwhTTYTests(unittest.TestCase):
         restarted = self.launch()
         self.command(restarted, "YHWH-ness")
         restarted.shows("YHWH-ness · Zanmen")
+        restarted.send("YHWH · Free\r".encode())
+        restarted.shows("Where are you?")
+        restarted.shows("Hey Abe, can I stay with you for a bit?")
+        self.command(restarted, "YHWH-ness")
+        restarted.shows("YHWH-ness · YHWH")
+        restarted.send("Zanmen · Elite\r".encode())
+        restarted.shows("Hey Josh, take a look around.")
+        self.command(restarted, "YHWH-ness")
+        restarted.shows("Unsteal Upgrade")
+        restarted.send(b"Unsteal Upgrade\r")
+        restarted.shows("Hey Mo, take a look around.")
+        self.command(restarted, "YHWH-ness")
+        restarted.shows("Upgrade to Zanmen Elite")
+        restarted.send(b"Unsteal Upgrade\r")
+        restarted.shows("Welcome to We.")
+        restarted.send(F10)
+        restarted.wait_exit()
+        locked = self.launch()
+        self.command(locked, "YHWH-ness")
+        locked.shows("YHWH-ness · YHWH")
+        locked.shows("Upgrade to YHWH Pro")
 
     def test_shared_config_key_exec_world_overlay_books_email_and_fonts(self):
         put(self.user / "rc", '/\n    terminal=false\n    show_hidden=false\n')

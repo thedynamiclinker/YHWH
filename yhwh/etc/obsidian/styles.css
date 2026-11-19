@@ -20,7 +20,12 @@
 .yhwh-energy input { flex: 1; min-width: 0; margin: 0; accent-color: var(--yhwh-accent); }
 .yhwh-upgrade, .yhwh-level-name, .yhwh-level-copy { font-family: var(--font-interface), "YHWH Han", sans-serif; }
 .yhwh-level-copy p { margin: .25em 0; }
-.yhwh-level-poem { max-width: 100%; overflow: auto; font-family: var(--font-monospace), "YHWH Han", YHWH-Phoenician, monospace; }
+.yhwh-level-poem {
+  max-width: 100%; overflow: auto; white-space: pre; tab-size: 4;
+  font-family: "Mono for YHWH", var(--font-monospace), "YHWH Han", YHWH-Phoenician, monospace;
+  font-variant-ligatures: none; unicode-bidi: isolate;
+}
+.yhwh-level-poem code { font: inherit; white-space: inherit; }
 .yhwh-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
 .yhwh-tools button, .yhwh-footer > button { font-size: var(--font-ui-smaller); padding: 4px 8px; height: 27px; }
 .yhwh-tools code { flex: 1; overflow-wrap: anywhere; }

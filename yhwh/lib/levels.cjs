@@ -27,9 +27,28 @@ function nextUpgrade(unlocked) {
   return levels.find(level => level.energy > unlocked);
 }
 
+function unstealUpgrade(value) {
+  const { unlocked, selected } = editionState(value);
+  const options = unlockedLevels(unlocked);
+  if (!options.at(-1)?.offer) return;
+  const previous = options.at(-2).energy;
+  return editionState({ unlocked: previous, selected: selected > previous ? previous : selected });
+}
+
+function createLevelAsides() {
+  const positions = new Map();
+  return level => {
+    const asides = level.asides;
+    if (!asides?.length) return;
+    const position = positions.get(level.id) ?? Math.floor(Math.random() * asides.length);
+    positions.set(level.id, (position + 1) % asides.length);
+    return asides[position];
+  };
+}
+
 function addressCopy(text, level, nameIndex = 0) {
   const names = level.names;
   return names ? text?.replace(/\bAbe\b/gi, () => names[nameIndex % names.length]) : text;
 }
 
-module.exports = { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, addressCopy };
+module.exports = { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy };

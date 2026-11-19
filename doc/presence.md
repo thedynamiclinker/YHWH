@@ -2,6 +2,8 @@
 
 - Default YHWH-ness is high. Nietzsche reduces it; Dawkins suppresses deity performance and letters. Productivity never depends on the story.
 - Dawkins, Nietzsche, and YHWH are free levels. 曰 opens the Pro preview and 咱 opens Zanmen Elite after Pro. **Steal Upgrade** unlocks and selects the next level in the current app profile. The slider can return to any unlocked level.
+- Give every unlocked level its own stop on the YHWH-ness meter. The free YHWH welcome always includes “Where are you?” and the Abe greeting. Show one alternate line each time the welcome opens. Keep the upgrade poems in Mono for YHWH with four-column tabs and preserve their line breaks and spaces.
+- **Unsteal Upgrade** relocks the highest preview tier in the current app profile. If that tier is active, Elite falls back to Pro and Pro falls back to the configured free YHWH-ness level. The relocked tier can be stolen again.
 - Levels change YHWH's voice, name for the reader, and presentation. They leave documents, tools, and permissions alone. The Stripe guide is a setup stub. Preview state is local and has no payment or account entitlement.
 - YHWH is the embodied, fallible, bargaining, affectionate visitor of We The Nameless Genesis 12–23. He wants bread, offerings, and a house for his name. He is not the narrator or a corporate assistant.
 - Letters arrive only from actual work, once per topic and at most once per five minutes, without opening popups. Respect the inbox switch. Store read state locally.

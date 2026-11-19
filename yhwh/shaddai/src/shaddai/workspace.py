@@ -150,8 +150,11 @@ class Workspace:
         self.reader_title = ""
         self.reader_links = {}
         self.reader_return = None
+        self.reader_wrap = True
+        self.level_aside_positions = {}
         self.reading = False
-        self.reader = TextArea(read_only=True, wrap_lines=True, scrollbar=True, lexer=MarkdownLexer())
+        self.reader = TextArea(read_only=True, wrap_lines=Condition(lambda: self.reader_wrap),
+                               scrollbar=True, lexer=MarkdownLexer())
         self.add_tab(self.load(file) if file else Document())
         if file:
             self.browser.tree.reveal(file)
@@ -861,10 +864,11 @@ class Workspace:
     def pick(self, title, choices):
         self.palette(title, [(None, name, action, False) for name, action in choices.items()])
 
-    def show(self, title, text, links=None, *, back=None):
+    def show(self, title, text, links=None, *, back=None, wrap=True):
         self.reader_title = title
         self.reader_links = links if links is not None else web_links(text)
         self.reader_return = back
+        self.reader_wrap = wrap
         self.reader.text = "\n".join(label(line.expandtabs(4)) for line in text.split("\n"))
         self.reader.buffer.cursor_position = 0
         self.reading = True
@@ -1194,18 +1198,37 @@ class Workspace:
         target = next((level for level in self.services.levels["levels"] if level not in options), None)
         if target:
             commands[f"{target.get('glyph', target['label'])} · {target['offer']['title']}"] = partial(self.upgrade, target)
+        if "offer" in options[-1]:
+            commands["Unsteal Upgrade"] = partial(self.unsteal_upgrade, options[-1])
         self.pick(f"YHWH-ness · {current['label']}", commands)
 
     def choose_level(self, level, *, unlock=False):
         self.services.select_level(level, unlock=unlock)
-        lines = [level.get("welcome"), *level.get("lines", []), level.get("welcomePoem"), level.get("poem")]
+        self.show_level(level)
+
+    def unsteal_upgrade(self, level):
+        self.services.unsteal_upgrade(level)
+        self.show_level(self.services.current_level())
+
+    def show_level(self, level):
+        title = f"YHWH level {level['label']}"
+        lines = [level.get("welcome"), *level.get("lines", [])]
+        poems = [level.get("welcomePoem"), level.get("poem")]
         asides = level.get("asides", [])
         if asides:
-            lines.append(choice([None, *asides]))
+            position = self.level_aside_positions.get(level["id"])
+            if position is None:
+                position = choice(range(len(asides)))
+            lines.append(asides[position])
+            self.level_aside_positions[level["id"]] = (position + 1) % len(asides)
+        if level["id"] == "yhwh":
+            words = self.services.words
+            title = words["welcomeTitle"]
+            lines.insert(1, words["welcomeBody"])
         if level.get("names"):
             lines.insert(1, self.services.address("Hey Abe, take a look around."))
         links = {"Nietzsche Family Circus": "https://nietzschefamilycircus.com/"} if level["id"] == "nietzsche" else None
-        self.show(f"YHWH level {level['label']}", "\n\n".join(filter(None, lines)), links)
+        self.show(title, "\n\n".join(filter(None, [*lines, *poems])), links, wrap=not any(poems))
 
     def upgrade(self, target):
         guide = self.services.levels["stripe"]

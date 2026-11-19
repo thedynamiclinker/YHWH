@@ -6,6 +6,18 @@ module.exports = async function checkLevels(page, screenshot) {
   const level = id => page.waitForFunction(id => document.body.dataset.level === id, id);
   const welcome = page.locator('.document-content:visible .welcome');
   const upgrade = page.locator('#upgrade-button'), dialog = page.locator('#dialog');
+  const slider = page.locator('#energy');
+  const unsteal = dialog.getByRole('button', { name: 'Unsteal Upgrade' });
+  const steal = dialog.getByRole('button', { name: 'Steal Upgrade' });
+  const fourLetterLines = ['God is a four letter word.', 'LD is a four letter word.'];
+  const defaultWelcome = async () => {
+    const text = await welcome.innerText();
+    assert.match(text, /Welcome to We\.[\s\S]*Where are you\?[\s\S]*Hey Abe, can I stay with you for a bit\?/);
+    assert.doesNotMatch(text, /YHWH level YHWH/i);
+    const visibleLines = fourLetterLines.filter(line => text.includes(line));
+    assert.equal(visibleLines.length, 1);
+    return visibleLines[0];
+  };
   const choose = async (energy, id) => {
     await page.locator('#mode-name').click();
     await dialog.locator(`[data-energy="${energy}"]`).click();
@@ -19,9 +31,12 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™[\s\S]*Lord is a four letter word\./);
   assert.match(await page.locator('#margin-box').innerText(), /Nietzsche Family Circus/i);
   await choose(100, 'yhwh');
-  assert.match(await welcome.innerText(), /Welcome to We\.[\s\S]*God is a four letter word\.[\s\S]*LD is a four letter word\./);
+  const firstLine = await defaultWelcome();
+  await run('new-tab'); await run('focus-document');
+  assert.notEqual(await defaultWelcome(), firstLine);
   await page.locator('#mode-name').click();
   assert.equal(await dialog.locator('[data-energy="120"], [data-energy="140"]').count(), 0);
+  assert.equal(await unsteal.count(), 0);
   await dialog.getByRole('button', { name: 'Close dialog' }).click();
 
   assert.equal(await upgrade.innerText(), '曰');
@@ -37,7 +52,12 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.match(await welcome.innerText(), /Welcome to 山三[\s\S]*Hey Mo/);
   assert.equal(await welcome.locator('pre').textContent(), levelAt(120).poem);
   assert.equal(await upgrade.innerText(), '咱');
-  assert.equal(await page.locator('#energy').getAttribute('max'), '120');
+  assert.equal(await slider.getAttribute('max'), '3');
+  await slider.press('ArrowLeft');
+  await level('yhwh');
+  await defaultWelcome();
+  await slider.press('ArrowRight');
+  await level('pro');
   await upgrade.click();
   await dialog.getByRole('heading', { name: 'Upgrade to Zanmen Elite!' }).waitFor();
   await dialog.getByRole('button', { name: 'Steal Upgrade' }).click();
@@ -46,12 +66,56 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.match(await welcome.innerText(), /YHWH level Zanmen[\s\S]*Hey Josh/i);
   assert.deepEqual(await welcome.locator('pre').allTextContents(), [levelAt(140).welcomePoem, levelAt(140).poem]);
   assert.equal(await page.locator('#file-filter').getAttribute('placeholder'), levelAt(140).filter);
-  assert.equal(await page.locator('#energy').getAttribute('max'), '140');
-  await page.locator('#energy').press('Home');
+  assert.equal(await slider.getAttribute('max'), '4');
+  const poemStyles = await welcome.locator('pre code').evaluateAll(async blocks => {
+    const font = '16px "Mono for YHWH"';
+    const faces = await document.fonts.load(font);
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = font;
+    const width = ctx.measureText(' ').width;
+    const glyphs = new Set(blocks.flatMap(block => [...block.textContent]).filter(char => char.trim()));
+    return {
+      loaded: faces.length > 0,
+      fixedWidth: [...glyphs].every(char => Math.abs(ctx.measureText(char).width - width) < .01),
+      styles: blocks.map(block => {
+        const { fontFamily, tabSize, whiteSpace } = getComputedStyle(block);
+        return { mono: fontFamily.startsWith('"Mono for YHWH"'), tabSize, whiteSpace };
+      }),
+    };
+  });
+  assert.equal(poemStyles.loaded, true);
+  assert.equal(poemStyles.fixedWidth, true);
+  assert.deepEqual(poemStyles.styles, Array(2).fill({ mono: true, tabSize: '4', whiteSpace: 'pre' }));
+  await slider.press('Home');
   await level('dawkins');
-  await page.locator('#energy').press('End');
+  await slider.press('End');
   await level('elite');
-  await page.locator('#energy').press('ArrowLeft');
-  assert.equal(await page.locator('#energy').inputValue(), '139');
+  await slider.press('ArrowLeft');
+  await level('pro');
+  await slider.press('ArrowLeft');
+  await level('yhwh');
+  assert.equal(await slider.inputValue(), '2');
+  await defaultWelcome();
+  await slider.press('End');
+  await level('elite');
   if (screenshot) await page.screenshot({ path: screenshot });
+
+  await page.locator('#mode-name').click();
+  await unsteal.click();
+  await level('pro');
+  assert.equal(await slider.getAttribute('max'), '3');
+  assert.equal(await upgrade.innerText(), '咱');
+  await page.locator('#mode-name').click();
+  assert.equal(await dialog.locator('[data-energy="140"]').count(), 0);
+  await unsteal.click();
+  await level('yhwh');
+  assert.equal(await slider.getAttribute('max'), '2');
+  assert.equal(await upgrade.innerText(), '曰');
+  await page.locator('#mode-name').click();
+  assert.equal(await dialog.locator('[data-energy="120"], [data-energy="140"]').count(), 0);
+  assert.equal(await unsteal.count(), 0);
+  await dialog.getByRole('button', { name: 'Close dialog' }).click();
+
+  await upgrade.click(); await steal.click(); await level('pro');
+  await upgrade.click(); await steal.click(); await level('elite');
 };

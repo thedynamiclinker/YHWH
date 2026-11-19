@@ -521,13 +521,15 @@ process.stdin.on('end', () => {
     await open(tierNote);
     const beforeSwitch = await page.evaluate(() => window.YHWH.getEditor().state.doc.toString());
     await page.locator('#mode-name').click(); await page.locator('#dialog [data-energy="120"]').click();
+    await page.locator('#mode-name').click();
+    await page.locator('#dialog').getByRole('button', { name: 'Unsteal Upgrade' }).click();
     assert.equal(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), beforeSwitch);
     assert.match(await page.locator('#divine-footnote').textContent(), /Mo/);
     await quit();
     await launch();
     assert.equal(await page.locator('body').getAttribute('data-level'), 'pro');
-    assert.equal(await page.locator('#upgrade-button').isVisible(), false);
-    console.log('✓ all five levels, Stripe guide, simulated upgrades, keyboard slider, open document and persisted unlocks');
+    assert.equal(await page.locator('#upgrade-button').innerText(), '咱');
+    console.log('✓ all five levels, Stripe guide, reversible preview upgrades, keyboard slider, open document and persisted preview state');
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);

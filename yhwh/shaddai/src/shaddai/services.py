@@ -55,17 +55,20 @@ class Services:
     def levels(self):
         return self.config.library.json("default/levels.json")
 
-    def level_options(self):
-        unlocked = self.state("edition").get("unlocked", 100)
+    def level_options(self, state=None):
+        if state is None:
+            state = self.state("edition")
+        unlocked = state.get("unlocked", 100)
         paid = [level["energy"] for level in self.levels["levels"] if "offer" in level]
         return [level for level in self.levels["levels"] if level["energy"] <= (unlocked if unlocked in paid else 100)]
 
     def current_level(self):
+        state = self.state("edition")
         try:
-            choices = self.level_options()
+            choices = self.level_options(state)
         except FileNotFoundError:
             return {}
-        selected = self.state("edition").get("selected")
+        selected = state.get("selected")
         for level in choices:
             if level["energy"] == selected:
                 return level
@@ -87,6 +90,21 @@ class Services:
             state["selected"] = energy
             return True
         self.update("edition", select)
+
+    def unsteal_upgrade(self, level):
+        def relock(state):
+            options = self.level_options(state)
+            if options[-1] != level or "offer" not in level:
+                raise ValueError("Reopen YHWH-ness to see the unlocked upgrades.")
+            previous = options[-2]
+            state["unlocked"] = previous["energy"]
+            if state.get("selected") == level["energy"]:
+                if "offer" in previous:
+                    state["selected"] = previous["energy"]
+                else:
+                    state.pop("selected")
+            return True
+        self.update("edition", relock)
 
     def address(self, text, name_index=0):
         names = self.current_level().get("names")

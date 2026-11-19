@@ -159,10 +159,10 @@ const { spawnSync } = require('node:child_process');
     assert.match(await page.locator('.modal-content').innerText(), /Nothing is uploaded/);
     await page.keyboard.press('Escape');
     await explorer.getByRole('button', { name: 'Upgrade to YHWH Pro!' }).click();
-    await page.getByRole('button', { name: 'Steal Upgrade' }).click();
+    await page.getByRole('button', { name: 'Steal Upgrade', exact: true }).click();
     await explorer.getByText('Welcome to 山三', { exact: true }).waitFor();
     await explorer.getByRole('button', { name: 'Upgrade to Zanmen Elite!' }).click();
-    await page.getByRole('button', { name: 'Steal Upgrade' }).click();
+    await page.getByRole('button', { name: 'Steal Upgrade', exact: true }).click();
     await explorer.getByText(/YHWH level Zanmen/).waitFor();
     await evaluate(async () => {
       await app.plugins.disablePlugin('yhwh');
@@ -170,7 +170,19 @@ const { spawnSync } = require('node:child_process');
     });
     await page.waitForFunction(() => app.plugins.plugins.yhwh?.settings.copy.welcome.includes('apparently'));
     assert.equal(await evaluate(() => app.plugins.plugins.yhwh.level().id), 'elite');
-    console.log('✓ Editable wording, free levels, paid previews, offerings and persistence across reload');
+    await explorer.getByRole('button', { name: 'Manage preview upgrades' }).click();
+    await page.getByRole('button', { name: 'Unsteal Upgrade' }).click();
+    await explorer.getByText('Welcome to 山三', { exact: true }).waitFor();
+    await explorer.getByRole('button', { name: 'Upgrade to Zanmen Elite!' }).click();
+    await page.getByRole('button', { name: 'Unsteal Upgrade' }).click();
+    await explorer.getByRole('button', { name: 'Upgrade to YHWH Pro!' }).waitFor();
+    await evaluate(async () => {
+      await app.plugins.disablePlugin('yhwh');
+      await app.plugins.enablePlugin('yhwh');
+    });
+    await explorer.getByRole('button', { name: 'Upgrade to YHWH Pro!' }).waitFor();
+    assert.equal(await evaluate(() => app.plugins.plugins.yhwh.level().id), 'nietzsche');
+    console.log('✓ Editable wording, free levels, reversible previews, offerings and persistence across reload');
     assert.deepEqual(errors.filter(error => !/ResizeObserver loop/.test(error)), []);
     console.log(`Screenshots: ${screenshots}`);
   } catch (error) {

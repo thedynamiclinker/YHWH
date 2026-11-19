@@ -161,7 +161,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
-| YHWH-ness and upgrade preview | Shared free levels, Pro and Elite preview unlocks, Stripe setup guide and character names. Unlocks persist on this installation. |
+| YHWH-ness and upgrade preview | Shared free levels, reversible Pro and Elite preview unlocks, Stripe setup guide and character names. Preview state persists on this installation. |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |

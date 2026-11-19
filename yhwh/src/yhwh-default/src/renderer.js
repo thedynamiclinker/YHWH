@@ -15,7 +15,7 @@ import { installFileDrag } from './file-drag.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
-import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, addressCopy } from '../../../lib/levels.cjs';
+import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
@@ -51,6 +51,7 @@ function saveEdition(value) {
 let temporaryEnergy, energySave = Promise.resolve(), energyRevision = 0;
 const currentEnergy = (config = active()?.config) => temporaryEnergy ?? edition.selected ?? freeEnergy(config?.values || {});
 const currentLevel = () => levelAt(currentEnergy());
+const nextLevelAside = createLevelAsides();
 const address = (value, nameIndex = 0) => addressCopy(value, currentLevel(), nameIndex);
 const closedTabs = [];
 const keyModules = new Map();
@@ -143,7 +144,7 @@ async function newTab(directory = active()?.cwd || boot.home) {
   const id = crypto.randomUUID();
   startingTerminals.add(id);
   const state = await call('focus:new', id, directory);
-  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', dawkinsAside: Math.floor(Math.random() * 3) };
+  const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '' };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
   $('#documents').append(tab.document);
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
@@ -215,23 +216,23 @@ async function closeTerminal(id = active()?.terminalId, exited = false) {
 function levelLabel(level) {
   return `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}`;
 }
-function levelLines(level, tab = active()) {
-  return [...(level.lines || []), level.asides?.[tab?.dawkinsAside]].filter(Boolean);
-}
 function levelPoem(text) {
-  return text ? `<pre class="level-poem" dir="ltr" tabindex="0">${escape(text)}</pre>` : '';
+  return text ? `<pre class="level-poem" dir="ltr" tabindex="0"><code>${escape(text)}</code></pre>` : '';
 }
 function welcome(tab, level = levelAt(currentEnergy(tab.config))) {
   if (tab.initialView) return;
+  if (tab.welcomeLevel !== level.id) tab.welcomeAside = nextLevelAside(level);
   tab.welcomeLevel = level.id;
-  const [headline, ...lines] = level.welcome ? [level.welcome, ...levelLines(level, tab)] : levelLines(level, tab);
+  const [headline, ...lines] = [level.welcome, ...(level.lines || [])].filter(Boolean);
+  const eyebrow = level.id === 'yhwh' ? '' : `<div class="eyebrow">${escape(levelLabel(level))}</div>`;
   const heading = level.id === 'yhwh'
     ? `<p class="level-greeting">${escape(headline)}</p>${word('welcomeTitle', 'h1', level)}`
     : `<h1>${escape(headline)}</h1>`;
   const greeting = level.welcome ? word('welcomeBody', 'p', level) : '';
+  const aside = tab.welcomeAside ? `<p class="level-aside">${escape(tab.welcomeAside)}</p>` : '';
   const copy = lines.map(line => `<p>${escape(line)}</p>`).join('');
-  tab.document.innerHTML = ui('welcome-screen', escape(levelLabel(level)), heading,
-    `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${levelPoem(level.poem)}</div>`);
+  tab.document.innerHTML = ui('welcome-screen', eyebrow, heading,
+    `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${aside}${levelPoem(level.poem)}</div>`);
 }
 function activate(id) {
   const tab = tabs.find(item => item.id === id);
@@ -374,8 +375,9 @@ function applyConfig(config) {
   verseUI.setVisible(view === 'margins' || (view === 'document' && document.body.dataset.theme === 'nietzsche'));
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
   const slider = $('#energy');
-  slider.max = String(edition.unlocked);
-  slider.value = energy;
+  const stops = unlockedLevels(edition.unlocked);
+  slider.max = String(stops.length - 1);
+  slider.value = String(stops.indexOf(level));
   slider.setAttribute('aria-valuetext', levelLabel(level));
   $('#mode-name').textContent = level.glyph || level.label;
   $('#mode-name').setAttribute('aria-label', `${levelLabel(level)}. Choose level`);
@@ -447,7 +449,7 @@ async function mayReplace(tab) {
   if (choice === 0) { await save(tab); return true; }
   return choice === 1;
 }
-function clearDocument(tab) { tab.initialView = null; tab.customTitle = null; clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
+function clearDocument(tab) { tab.initialView = null; tab.customTitle = null; tab.welcomeLevel = undefined; clearTimeout(tab.autosaveTimer); tab.viewerCleanup?.(); tab.viewerCleanup = null; tab.editor?.destroy(); tab.editor = null; tab.document.innerHTML = ''; }
 async function pdfAction(file) {
   const preference = file.config.values.pdf_open;
   if (['preview', 'external'].includes(preference)) return preference;
@@ -893,12 +895,27 @@ async function circus() {
 }
 function modes() {
   const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);
+  const canUnsteal = Boolean(unstealUpgrade(edition));
   const choices = unlockedLevels(edition.unlocked).map(level => `<button data-energy="${level.energy}" aria-pressed="${level === current}">${escape(level.label)} ${level.edition ? `<span>${escape(level.edition)}</span>` : ''}</button>`).join('');
   const dialog = modal(ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
-    <p class="muted">${escape([current.welcome, ...levelLines(current)].filter(Boolean).join(' '))}</p>
-    <div class="dialog-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>${upgrade ? `<button data-command="upgrade">${escape(upgrade.offer.title)}</button>` : ''}</div>`);
+    <p class="muted">${escape([current.welcome, ...(current.lines || [])].filter(Boolean).join(' '))}</p>
+    <div class="dialog-actions edition-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>
+      ${upgrade ? `<button data-command="upgrade">${escape(upgrade.offer.title)}</button>` : ''}
+      ${canUnsteal ? '<button type="button" data-unsteal-upgrade>Unsteal Upgrade</button>' : ''}</div>`);
   for (const button of dialog.querySelectorAll('[data-energy]')) button.onclick = () => {
     dialog.close(); setEnergy(Number(button.dataset.energy)).catch(error => notice(error.message));
+  };
+  if (canUnsteal) dialog.querySelector('[data-unsteal-upgrade]').onclick = () => {
+    const previous = unstealUpgrade(edition);
+    if (!previous) return;
+    const locked = levelAt(edition.unlocked);
+    try {
+      saveEdition(previous);
+      applyConfig(active().config);
+      dialog.close();
+      $('#mode-name').focus();
+      notice(`${locked.edition} locked on this device.`);
+    } catch (error) { notice(error.message); }
   };
 }
 async function setEnergy(value) {
@@ -913,7 +930,7 @@ async function setEnergy(value) {
   const saved = energySave.then(async () => {
     await call('settings:save', { theme: level.id, energy: String(value) });
     if (edition.selected && revision === energyRevision) saveEdition({ ...edition, selected: undefined });
-    await refresh();
+    await Promise.all(tabs.map(tab => refresh(tab)));
   });
   energySave = saved.catch(() => {});
   try { await saved; }
@@ -1453,11 +1470,9 @@ $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };
 $('#energy').oninput = event => {
-  energyRevision++;
-  temporaryEnergy = Number(event.target.value);
-  applyConfig(active().config);
+  const level = unlockedLevels(edition.unlocked)[Number(event.target.value)];
+  setEnergy(level.energy).catch(error => notice(error.message));
 };
-$('#energy').onchange = event => setEnergy(Number(event.target.value)).catch(error => notice(error.message));
 
 document.addEventListener('focusin', event => {
   const tab = active();

@@ -5,7 +5,7 @@ export type Level = {
   edition?: string;
   glyph?: string;
   lines?: string[];
-  asides?: string[];
+  asides?: (string | null)[];
   names?: string[];
   welcome?: string;
   poem?: string;
@@ -19,4 +19,6 @@ export function levelAt(energy: number): Level;
 export function unlockedLevels(energy: number): Level[];
 export function editionState(value?: unknown): EditionState;
 export function nextUpgrade(unlocked: number): (Level & { offer: NonNullable<Level['offer']> }) | undefined;
+export function unstealUpgrade(value: EditionState): EditionState | undefined;
+export function createLevelAsides(): (level: Level) => string | null | undefined;
 export function addressCopy(text: string, level: Level, nameIndex?: number): string;
