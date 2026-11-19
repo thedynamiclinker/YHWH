@@ -2,6 +2,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import display from '../../../etc/verses/genesis-display.json';
 import { text } from '../../../lib/text.cjs';
+import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import copy from '../../../etc/default/text-verses.json';
 const ui = text(copy);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -125,12 +126,17 @@ export function createVerseUI({ call, modal, notice }) {
     const box = document.querySelector('#margin-box');
     if (!box || !theme) return;
     box.hidden = !visible || theme === 'dawkins';
-    if (box.hidden) return;
+    if (box.hidden) { box.replaceChildren(); return; }
     const current = ++generation, mode = theme;
     const title = mode === 'nietzsche' ? ui('circus') : ui('margin');
     box.innerHTML = `<header class="margin-header"><span>${escape(title)}</span><div>${mode === 'yhwh' ? `<button type="button" data-browse-verses>${escape(ui('browse'))}</button>` : ''}<button type="button" data-another-margin aria-label="${escape(ui(mode === 'yhwh' ? 'another-verse' : 'another-pair'))}">↻</button><button type="button" data-collapse-margin aria-label="${escape(ui('toggle-margin'))}" aria-expanded="${!collapsed}">${collapsed ? '＋' : '−'}</button></div></header><div class="margin-content" aria-live="polite" ${collapsed ? 'hidden' : ''}><p role="status">${escape(ui('loading'))}</p></div>`;
     box.querySelector('[data-browse-verses]')?.addEventListener('click', () => browse(randomVerse?.id).catch(error => notice(error.message)));
-    box.querySelector('[data-another-margin]').onclick = () => margin(true);
+    const next = box.querySelector('[data-another-margin]');
+    next.onclick = () => {
+      const focus = document.activeElement === next;
+      margin(true);
+      if (focus) box.querySelector('[data-another-margin]')?.focus({ preventScroll: true });
+    };
     const content = box.querySelector('.margin-content');
     box.querySelector('[data-collapse-margin]').onclick = event => {
       collapsed = !collapsed; localStorage.setItem('yhwh:margin:collapsed', String(collapsed));
@@ -145,20 +151,23 @@ export function createVerseUI({ call, modal, notice }) {
         const selected = !refresh && circusPair ? circusPair : await call('circus');
         if (current !== generation) return;
         circusPair = selected;
-        content.innerHTML = `<img class="circus-image" src="${escape(selected.image)}" alt="${escape(ui('cartoon-alt'))}"><p class="circus-quote">${escape(selected.quote)}</p><small><a href="${escape(selected.permalink)}">${escape(ui('original-pair'))} ↗</a></small>`;
+        content.innerHTML = `<img class="circus-image" src="${escape(selected.image)}" alt="${escape(ui('cartoon-alt'))}"><p class="circus-quote">${escape(selected.quote)}</p><small><a href="${escape(selected.permalink || circusOrigin + '/')}">${escape(ui(selected.permalink ? 'original-pair' : 'original-site'))} ↗</a></small>`;
       }
     } catch (error) {
       if (current !== generation) return;
       content.replaceChildren(Object.assign(document.createElement('p'), { className: 'muted', textContent: error.message }));
       if (mode === 'nietzsche') {
         content.append(Object.assign(document.createElement('a'), {
-          href: 'https://nietzschefamilycircus.com/', textContent: 'Open the original site ↗',
+          href: circusOrigin + '/', textContent: ui('original-site') + ' ↗',
         }));
       }
     }
   }
   return { createCitation, hydrate, browse,
-    setVisible(value) { if (visible === value) return; visible = value; generation++; margin().catch(error => notice(error.message)); },
-    setTheme(value) { if (theme === value) return; theme = value; generation++; margin().catch(error => notice(error.message)); },
+    setMargin(mode, show) {
+      if (theme === mode && visible === show) return;
+      theme = mode; visible = show; generation++;
+      margin().catch(error => notice(error.message));
+    },
   };
 }

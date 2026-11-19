@@ -12,9 +12,11 @@ import { showHotkeys } from './hotkeys.js';
 import { mountViewer } from './viewers.js';
 import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
+import { fileIcons } from './file-icons.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { installInitial } from './initial.js';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
+import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
 import { primarySender, letters as startupLetters, startNight, nextStartupLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
@@ -32,6 +34,7 @@ registerWheelZoom(window, direction => {
   else document.documentElement.style.setProperty('--mobile-zoom', factor);
 });
 const $ = selector => document.querySelector(selector);
+for (const button of document.querySelectorAll('#files [data-file-icon]')) button.innerHTML = fileIcons[button.dataset.fileIcon];
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const call = (channel, ...args) => bridge.call(channel, ...args);
 const verseUI = createVerseUI({ call, modal, notice });
@@ -279,6 +282,10 @@ function renderFiles() {
     if (path) (list.querySelector(`[data-path="${CSS.escape(path)}"] [${attribute}]`) || list).focus({ preventScroll: true });
   }
   $('#file-count').textContent = `${tab.entries.length} items${tab.selected.size ? ` · ${tab.selected.size} selected` : ''}`;
+  const hiddenFiles = tab.config.values.show_hidden === 'true';
+  const hiddenToggle = $('#files [data-command="toggle-hidden"]');
+  hiddenToggle.setAttribute('aria-pressed', String(hiddenFiles));
+  hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.cwd;
   $('#shell-state').textContent = ui("-files");
@@ -286,12 +293,13 @@ function renderFiles() {
 function fileRow(tab, entry, depth = 0) {
   const folder = entry.parent ? undefined : tab.folders.get(entry.path);
   const expanded = !!folder?.open;
-  let row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.path), entry.parent ? '↑' : entry.directory ? expanded ? '▾' : '▸' : '≡', escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
+  const icon = fileIcons[entry.parent ? 'parent' : entry.directory ? 'expand' : 'file'];
+  let row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.parent ? ui('parent-directory') : entry.path), icon, escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
   if (boot.interface === 'mobile' && !entry.parent) {
     if (entry.directory) {
-      row = row.replace(/<span class="file-icon">[^<]*<\/span>/, `<button type="button" class="file-icon" data-expand-folder draggable="false" aria-label="Toggle contents of ${escape(entry.name)}">${expanded ? '▾' : '▸'}</button>`);
+      row = row.replace(/<span class="file-icon">.*?<\/span>/, () => `<button type="button" class="file-icon" data-expand-folder draggable="false" aria-label="Toggle contents of ${escape(entry.name)}" aria-expanded="${expanded}">${icon}</button>`);
     }
-    row = row.replace(/<\/[^>]+>$/, match => `<button type="button" draggable="false" data-row-menu aria-label="Actions for ${escape(entry.name)}">⋯</button>${match}`);
+    row = row.replace(/<\/[^>]+>$/, match => `<button type="button" draggable="false" data-row-menu aria-label="Actions for ${escape(entry.name)}">${fileIcons.more}</button>${match}`);
   }
   return row.replace('role="option"', `draggable="${!entry.parent}" style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
 }
@@ -308,7 +316,7 @@ async function toggleFolder(row, expand) {
   renderedFileRows = null;
   if (row.nextElementSibling?.dataset.children === path) row.nextElementSibling.remove();
   row.setAttribute('aria-expanded', String(open));
-  row.querySelector('.file-icon').textContent = open ? '▾' : '▸';
+  row.querySelector('[data-expand-folder]')?.setAttribute('aria-expanded', String(open));
   if (open) {
     const group = document.createElement('div'); group.className = 'folder-children'; group.dataset.children = path;
     group.innerHTML = folder.entries.map(entry => fileRow(tab, entry, Number(row.dataset.depth) + 1)).join('') || '<small class="empty-folder">Empty directory</small>';
@@ -369,10 +377,17 @@ function applyConfig(config) {
   const levelChanged = document.body.dataset.level !== level.id;
   document.body.dataset.level = level.id;
   document.body.dataset.theme = energy < 100 ? level.id : 'yhwh';
-  verseUI.setTheme(document.body.dataset.theme);
+  const isNietzsche = level.id === 'nietzsche';
+  if (levelChanged) {
+    if (isNietzsche) addCommand({ id: 'circus', name: ui('nietzsche-family-circus'), run: circus });
+    else {
+      commands.delete('circus');
+      $('#dialog[open]:has([data-circus-dialog])')?.close();
+    }
+  }
   const view = active()?.focusView || 'document';
   $('#margin-box').classList.toggle('margin-widget', view === 'document');
-  verseUI.setVisible(view === 'margins' || (view === 'document' && document.body.dataset.theme === 'nietzsche'));
+  verseUI.setMargin(document.body.dataset.theme, view === 'margins' || (view === 'document' && isNietzsche));
   document.body.classList.toggle('theme-dark', values.theme !== 'light'); document.body.classList.toggle('theme-light', values.theme === 'light');
   const slider = $('#energy');
   const stops = unlockedLevels(edition.unlocked);
@@ -886,13 +901,30 @@ function upgradeEdition() {
     } catch (error) { notice(error.message); }
   };
 }
-async function circus() {
-  const dialog = modal(ui("nietzsche-family-circus"), ui("fetching-a-cartoon-and-a-wildly-inappropriate-ph"));
-  const body = dialog.querySelector('.dialog-body');
-  try {
-    const pair = await call('circus');
-    if (dialog.open && body.isConnected) body.innerHTML = ui("cartoon-and-pairing-from-nietzsche-family-circus", escape(pair.image), escape(pair.quote), escape(pair.permalink));
-  } catch (error) { if (dialog.open && body.isConnected) body.querySelector('p').textContent = error.message; }
+function circus() {
+  if (currentLevel().id !== 'nietzsche') return;
+  const dialog = modal(ui('nietzsche-family-circus'), `<div data-circus-dialog aria-live="polite"></div>
+    <div class="dialog-actions"><a data-circus-source href="${circusOrigin}/">Original site ↗</a><button class="primary" type="button" data-circus-next>Next pairing</button></div>`);
+  const body = dialog.querySelector('[data-circus-dialog]');
+  const source = dialog.querySelector('[data-circus-source]');
+  const next = dialog.querySelector('[data-circus-next]');
+  async function load() {
+    next.disabled = true;
+    body.innerHTML = ui('fetching-a-cartoon-and-a-wildly-inappropriate-ph');
+    try {
+      const pair = await call('circus');
+      if (!dialog.open || !body.isConnected) return;
+      body.innerHTML = ui('cartoon-and-pairing-from-nietzsche-family-circus', escape(pair.image), escape(pair.quote));
+      source.href = pair.permalink || circusOrigin + '/';
+      source.textContent = pair.permalink ? 'Original pairing ↗' : 'Original site ↗';
+    } catch (error) {
+      body.querySelector('p').textContent = error.message;
+      source.href = circusOrigin + '/';
+      source.textContent = 'Original site ↗';
+    } finally { next.disabled = false; }
+  }
+  next.onclick = load;
+  return load();
 }
 function modes() {
   const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);
@@ -900,7 +932,7 @@ function modes() {
   const choices = unlockedLevels(edition.unlocked).map(level => `<button data-energy="${level.energy}" aria-pressed="${level === current}">${escape(level.label)} ${level.edition ? `<span>${escape(level.edition)}</span>` : ''}</button>`).join('');
   const dialog = modal(ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
     <p class="muted">${escape([current.welcome, ...(current.lines || [])].filter(Boolean).join(' '))}</p>
-    <div class="dialog-actions edition-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>
+    <div class="dialog-actions edition-actions">${current.id === 'nietzsche' ? `<button data-command="circus">${escape(ui('nietzsche-family-circus'))} ↗</button>` : ''}
       ${upgrade ? `<button data-command="upgrade">${escape(upgrade.offer.title)}</button>` : ''}
       ${canUnsteal ? '<button type="button" data-unsteal-upgrade>Unsteal Upgrade</button>' : ''}</div>`);
   for (const button of dialog.querySelectorAll('[data-energy]')) button.onclick = () => {
@@ -1114,7 +1146,7 @@ const definitions = [
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
   ['upgrade', 'Upgrade YHWH · Pro and Elite preview', '', upgradeEdition],
   ['upgrades', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
-  ['modes', ui("yhwh-nietzsche-dawkins"), '', modes], ['circus', ui("nietzsche-family-circus"), '', circus],
+  ['modes', ui("yhwh-nietzsche-dawkins"), '', modes],
   ['edit-footer', ui("edit-status-text"), '', () => editWords(footerKey(currentLevel()))],
   ['quit', ui("quit"), ui("ctrl-q"), async () => { for (const tab of tabs) if (!await mayReplace(tab)) return; await call('window:close'); }],
 ];

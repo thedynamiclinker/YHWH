@@ -1,4 +1,5 @@
 import { showWorkspaceDialog } from '../../yhwh-default/src/preview-dialog.js';
+import { fileIcons } from '../../yhwh-default/src/file-icons.js';
 import { HOME, normalize } from './bridge.mjs';
 import { undo, redo } from '@codemirror/commands';
 
@@ -22,16 +23,22 @@ export function pickPath(storage, kind, cwd = HOME, name = '') {
       const entries = await storage.list(path); if (token !== generation || !dialog.open) return;
       content.innerHTML = `<p class="mobile-picker-path">${escape(path)}</p><div class="mobile-picker-list"></div><form><label>${kind === 'save' ? 'Filename' : 'Path'}<input name="path" aria-label="Path" value="${escape(kind === 'save' ? name : path)}" required></label><button class="primary">${kind === 'save' ? 'Save' : 'Open'}</button><p role="alert"></p></form>`;
       const list = content.querySelector('.mobile-picker-list');
-      const row = (label, handler) => { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.onclick = () => Promise.resolve().then(handler).catch(error => { content.querySelector('[role=alert]').textContent = error.message; }); list.append(button); };
-      if (path !== HOME) row('↑ Parent folder', () => render(path.slice(0, path.lastIndexOf('/'))));
+      const row = (label, handler, icon) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.innerHTML = `${icon || ''}<span>${escape(label)}</span>`;
+        button.onclick = () => Promise.resolve().then(handler).catch(error => { content.querySelector('[role=alert]').textContent = error.message; });
+        list.append(button);
+      };
+      if (path !== HOME) row('Parent folder', () => render(path.slice(0, path.lastIndexOf('/'))), fileIcons.parent);
       if (kind === 'directory') row('Use this folder', () => { result = path; dialog.close(); });
       for (const item of entries.filter(item => !item.name.startsWith('.')).sort((a,b) => Number(b.directory)-Number(a.directory) || a.name.localeCompare(b.name))) {
         if (kind === 'directory' && !item.directory) continue;
-        row(`${item.directory ? '▸ ' : ''}${item.name}`, () => {
+        row(item.name, () => {
           if (item.directory) return render(item.path);
           if (kind === 'save') { content.querySelector('input').value = item.name; return; }
           result = item.path; dialog.close();
-        });
+        }, item.directory ? fileIcons.folder : fileIcons.file);
       }
       content.querySelector('form').onsubmit = async event => {
         event.preventDefault();

@@ -35,12 +35,12 @@
     </nav>
     <div id="navigation-area" class="navigation-area">
       <section id="files" class="file-manager workspace-leaf" aria-label="File manager">
-        <header class="pane-header"><span>Files</span><div><button data-command="new-file" title="New file (Ctrl+N)" aria-label="New file">＋</button><button data-command="new-directory" title="New directory" aria-label="New directory">▱＋</button><button data-command="expand-files" title="Expand file manager (Ctrl+D)" aria-label="Expand file manager">⛶</button></div></header>
-        <div class="navigation-buttons"><button data-command="back" title="Back (Alt+Left)" aria-label="Back">←</button><button data-command="forward" title="Forward (Alt+Right)" aria-label="Forward">→</button><button data-command="home" title="Home directory" aria-label="Home directory">⌂</button><button data-command="open-directory" title="Choose directory" aria-label="Choose directory">…</button></div>
+        <header class="pane-header"><span>Files</span><div><button data-command="new-file" data-file-icon="newFile" title="New file (Ctrl+N)" aria-label="New file"></button><button data-command="new-directory" data-file-icon="newFolder" title="New directory" aria-label="New directory"></button><button data-command="expand-files" data-file-icon="maximize" title="Expand file manager (Ctrl+D)" aria-label="Expand file manager"></button></div></header>
+        <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button><button data-command="home" data-file-icon="home" title="Home directory" aria-label="Home directory"></button><button data-command="open-directory" data-file-icon="openFolder" title="Choose directory" aria-label="Choose directory"></button></div>
         <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
-        <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files">·</button></div>
+        <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>
         <div id="file-list" role="listbox" tabindex="0" aria-label="Directory contents"></div>
-        <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" title="Refresh" aria-label="Refresh directory">↻</button></footer>
+        <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" data-file-icon="refresh" title="Refresh" aria-label="Refresh directory"></button></footer>
       </section>
       <div class="resize-handle sidebar-resize" role="separator" aria-label="Resize file manager"></div>
     </div>

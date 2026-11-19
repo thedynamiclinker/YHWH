@@ -305,9 +305,9 @@ export function installInitial(app, { home, mobile, call }) {
     await app.openFile(library.rcPath, await app.newTab(home));
   }
   function dotSettings() {
-    modal('Your little dot', `<p>Tap for commands. Hold to draw.</p>
+    modal('Your little dot', `<p>Press near the dot to reveal it. Tap for commands or drag to draw.</p>
       <label>Position<select data-position><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></label>
-      <label>Visibility<input type="range" min="0.25" max="1" step="0.05" data-opacity value="${dot.style.opacity || 0.6}"></label>
+      <label>Visibility<input type="range" min="0.25" max="1" step="0.05" data-opacity value="${dotOpacity}"></label>
       ${button('Save', 'save', true)}`, { back: guide });
     dialog.querySelector('[data-position]').value = dot.dataset.position || 'center';
     bind({ save: () => {
@@ -571,17 +571,17 @@ export function installInitial(app, { home, mobile, call }) {
       </div>${live ? button('+ New', 'new', true) : ''}</header>
       ${entries ? `
         <div class="initial-tools initial-file-toolbar">
-          ${live && cwd !== (boundary || home) ? button('↑ Up', 'parent') : ''}
-          ${button(state.grid ? '☷ List' : '▦ Tiles', 'layout')}
+          ${live && cwd !== (boundary || home) ? button(fileIcons.parent + ' Up', 'parent') : ''}
+          ${button(state.grid ? fileIcons.list + ' List' : fileIcons.grid + ' Tiles', 'layout')}
           ${button(state.selecting ? 'Done' : 'Select', 'select')}
-          ${live ? button('Refresh', 'refresh') : ''}
+          ${live ? button(fileIcons.refresh + ' Refresh', 'refresh') : ''}
           ${boundary ? button('Leave /', 'leave-root') : ''}
         </div>
         <input type="search" data-view-search aria-label="Filter files" placeholder="Filter files" value="${escape(state.query)}">
         ${state.selecting ? `<div class="initial-tools initial-file-actions">${buttons([['Copy', 'copy'], ['Cut', 'cut'], ['Paste', 'paste'], ['Rename', 'rename'], ['Trash', 'trash']])}<span role="status"></span></div>` : ''}
         <div class="initial-file-grid ${state.grid ? '' : 'as-list'} ${state.selecting ? 'is-selecting' : ''}">${entries.map((entry, i) => `<article>
           ${state.selecting ? `<input type="checkbox" aria-label="Select ${escape(entry.name)}" data-select="${i}" ${tab.selected.has(entry.path) ? 'checked' : ''}>` : ''}
-          <button type="button" data-open="${i}"><b aria-hidden="true">${entry.directory ? '▱' : '≡'}</b><span>${escape(entry.name)}</span><small>${entry.directory ? 'Folder' : `${entry.size || 0} bytes`}</small></button>
+          <button type="button" data-open="${i}">${entry.directory ? fileIcons.folder : fileIcons.file}<span>${escape(entry.name)}</span><small>${entry.directory ? 'Folder' : `${entry.size || 0} bytes`}</small></button>
         </article>`).join('')}
         <p class="initial-empty" data-empty>${entries.length ? 'No matching files.' : live ? 'An empty bit of universe. Make something.' : 'No files in this output.'}</p></div>`
         : `<pre class="initial-output">${escape(asText(value))}</pre>`}
@@ -667,9 +667,11 @@ export function installInitial(app, { home, mobile, call }) {
   commandButton.title = 'Your Initial commands';
   document.body.append(dot, commandButton);
 
+  let dotOpacity;
   function applyDot(settings = {}) {
     dot.dataset.position = ['center', 'left', 'right'].includes(settings.position) ? settings.position : 'center';
-    dot.style.opacity = Math.max(0.25, Math.min(1, Number(settings.opacity) || 0.6));
+    dotOpacity = Math.max(0.25, Math.min(1, Number(settings.opacity) || 0.6));
+    dot.style.setProperty('--initial-dot-opacity', dotOpacity * 0.55);
   }
   try { applyDot(JSON.parse(localStorage.getItem('yhwh:initial:dot') || '{}')); }
   catch { applyDot(); }
@@ -685,6 +687,7 @@ export function installInitial(app, { home, mobile, call }) {
     clearTrace(); drew = false;
     stroke = { pointer: event.pointerId, points: [[event.clientX, event.clientY]] };
     dot.setPointerCapture(event.pointerId);
+    dot.classList.add('pressing');
   };
   dot.onpointermove = event => {
     if (!stroke || stroke.pointer !== event.pointerId) return;
@@ -704,6 +707,7 @@ export function installInitial(app, { home, mobile, call }) {
   dot.onpointerup = guarded(async event => {
     if (!stroke || stroke.pointer !== event.pointerId) return;
     const { points } = stroke; stroke = null;
+    dot.classList.remove('pressing');
     if (!drew) return;
     gestureResult.hidden = false;
     const label = document.createElement('span');
@@ -721,7 +725,12 @@ export function installInitial(app, { home, mobile, call }) {
       appendAction(gestureResult, 'Run', async () => { clearTrace(); await shelf(); await workbench.execute(quote(match.alias.name)); });
     } catch (error) { label.textContent = error.message; }
   });
-  dot.onpointercancel = () => { stroke = null; clearTrace(); };
+  dot.onpointercancel = dot.onlostpointercapture = event => {
+    if (stroke?.pointer !== event.pointerId) return;
+    stroke = null;
+    dot.classList.remove('pressing');
+    clearTrace();
+  };
   dot.onclick = guarded(event => (event.detail && drew) ? undefined : shelf());
   commandButton.onclick = guarded(async () => { await shelf(); if (docked) workbench.focus(); });
   document.addEventListener('pointerdown', event => { if (!event.target.closest('#initial-dot, #initial-gesture-result')) clearTrace(); });
@@ -796,3 +805,4 @@ export function installInitial(app, { home, mobile, call }) {
     workbench.focus(); return true;
   } };
 }
+import { fileIcons } from './file-icons.js';

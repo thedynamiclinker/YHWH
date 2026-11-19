@@ -23,7 +23,7 @@ const verses = createVerseLibrary({
 });
 async function circus() {
   const timeouts = { readTimeout: 12000, connectTimeout: 12000 };
-  const page = await CapacitorHttp.get({ url: `${ORIGIN}/?yhwh=${Date.now()}`, ...timeouts, responseType: 'text' });
+  const page = await CapacitorHttp.get({ url: ORIGIN + '/', ...timeouts, responseType: 'text', headers: { 'Cache-Control': 'no-cache' } });
   if (page.status !== 200 || typeof page.data !== 'string') throw new Error('The Circus is unavailable. Try again or open the original site.');
   const pair = parsePair(page.data);
   const asset = await CapacitorHttp.get({ url: ORIGIN + pair.image, ...timeouts, responseType: 'arraybuffer' });
