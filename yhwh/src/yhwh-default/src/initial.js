@@ -4,6 +4,7 @@ import { createWorkbench } from './initial-workbench.js';
 import { readGrid, serializeGrid } from '../../../lib/initial-grid.mjs';
 import { inInitialPreview } from './preview-dialog.js';
 import { renderMarkdown } from './editor.js';
+import { fileIcons } from './file-icons.js';
 import logosTutorial from '../../../../LOGOS.md';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
@@ -805,4 +806,3 @@ export function installInitial(app, { home, mobile, call }) {
     workbench.focus(); return true;
   } };
 }
-import { fileIcons } from './file-icons.js';

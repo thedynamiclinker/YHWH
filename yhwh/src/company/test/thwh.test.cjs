@@ -129,16 +129,21 @@ test("A requested change consumes its saved note draft and still needs resolutio
   await assert.rejects(invoke(root, "accept"), /Changes are requested/);
 });
 
-test("The Circus uses the original site's pairing, entity-decoded caption and share permalink", async () => {
-  const html = '<div class="comic"><img src="/img/141.gif" /></div><div class="quote">A &amp; B &#8212; C</div><a href="/perm.php?c=141&amp;q=253">Share</a>';
-  assert.deepEqual(parsePair(html), { image: "/img/141.gif", quote: "A & B — C", permalink: "https://nietzschefamilycircus.com/perm.php?c=141&q=253" });
+test("The Circus extracts the original pairing even with PageSpeed scripts or no share link", async () => {
+  const html = '<div class="comic"><script pagespeed_no_defer>tracking()</script><img src="/img/141.gif" /></div><div class="quote">A &amp; B &#X2014; <em>C</em></div>';
+  const share = '<a href="http://www.nietzschefamilycircus.com/perm.php?c=141&amp;q=253">Share</a>';
+  const parsed = { image: "/img/141.gif", quote: "A & B — C", permalink: null };
+  assert.deepEqual(parsePair(html), parsed);
+  assert.deepEqual(parsePair(html + share), { ...parsed, permalink: "https://www.nietzschefamilycircus.com/perm.php?c=141&q=253" });
   const requests = [];
   const pair = await nextPair(async url => {
     requests.push(url);
     return requests.length === 1 ? { ok: true, text: async () => html } : { ok: true, arrayBuffer: async () => Buffer.from("GIF89a") };
   });
   assert.match(pair.image, /^data:image\/gif;base64,/);
-  assert.equal(requests[1], "https://nietzschefamilycircus.com/img/141.gif");
+  assert.equal(requests[0], "https://www.nietzschefamilycircus.com/");
+  assert.equal(requests[1], "https://www.nietzschefamilycircus.com/img/141.gif");
+  assert.throws(() => parsePair(html.replace('/img/141.gif', 'https://other.example/img/141.gif')), /changed/);
   assert.throws(() => parsePair('<script>changed site</script>'), /changed its page format/);
 });
 

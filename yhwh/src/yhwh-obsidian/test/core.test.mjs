@@ -56,8 +56,3 @@ test('new character wording inherits defaults while saved edits and energy zero 
   assert.equal(result.copy.hello, 'A new hello');
   assert.equal(result.copy.about, core.COPY.about);
 });
-test('Circus parsing preserves the original pairing and discards scripts and markup', () => {
-  const page = '<script>bad()</script><div class="comic"><script pagespeed_no_defer>tracking()</script><img src="/img/96.gif"></div><div class="quote">A &amp; B <em>again</em> &#39;yes&#39;</div><a href="/perm.php?c=96&amp;q=131">Share</a>';
-  assert.deepEqual(core.circusPair(page), { image: 'https://nietzschefamilycircus.com/img/96.gif', quote: "A & B again 'yes'", permalink: 'https://nietzschefamilycircus.com/perm.php?c=96&q=131' });
-  assert.throws(() => core.circusPair('<img src="https://other.example/tracker">'), /changed/);
-});

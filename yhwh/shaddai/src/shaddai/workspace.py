@@ -1232,7 +1232,7 @@ class Workspace:
             lines.insert(1, words["welcomeBody"])
         if level.get("names"):
             lines.insert(1, self.services.address("Hey Abe, take a look around."))
-        links = {"Nietzsche Family Circus": "https://nietzschefamilycircus.com/"} if level["id"] == "nietzsche" else None
+        links = {"Nietzsche Family Circus": "https://www.nietzschefamilycircus.com/"} if level["id"] == "nietzsche" else None
         self.show(title, "\n\n".join(filter(None, [*lines, *poems])), links, wrap=not any(poems))
 
     def upgrade(self, target):

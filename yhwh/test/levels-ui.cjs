@@ -29,11 +29,19 @@ module.exports = async function checkLevels(page, screenshot) {
   await run('new-tab'); await run('focus-document');
   await choose(0, 'dawkins');
   assert.match(await welcome.innerText(), /The old testament god is the most unpleasant character in all fiction\./);
+  assert.equal(await page.evaluate(() => window.YHWH.commands.has('circus')), false);
   await choose(50, 'nietzsche');
   assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™/);
   assert.doesNotMatch(await welcome.innerText(), /four letter word/);
   await checkAbout(['Lord is a four letter word.']);
   assert.match(await page.locator('#margin-box').innerText(), /Nietzsche Family Circus/i);
+  await page.locator('#mode-name').click();
+  assert.equal(await dialog.locator('[data-command="circus"]').isVisible(), true);
+  await dialog.getByRole('button', { name: 'Close dialog' }).click();
+  await run('palette');
+  await dialog.locator('#palette-search').fill('Nietzsche Family Circus');
+  assert.equal(await dialog.locator('[data-palette-command="circus"]').count(), 1);
+  await dialog.getByRole('button', { name: 'Close dialog' }).click();
   await choose(100, 'yhwh');
   await defaultWelcome();
   await checkAbout(['God is a four letter word.', 'LD is a four letter word.']);
@@ -41,7 +49,12 @@ module.exports = async function checkLevels(page, screenshot) {
   await defaultWelcome();
   await page.locator('#mode-name').click();
   assert.equal(await dialog.locator('[data-energy="120"], [data-energy="140"]').count(), 0);
+  assert.equal(await dialog.locator('[data-command="circus"]').count(), 0);
   assert.equal(await unsteal.count(), 0);
+  await dialog.getByRole('button', { name: 'Close dialog' }).click();
+  await run('palette');
+  await dialog.locator('#palette-search').fill('Nietzsche Family Circus');
+  assert.equal(await dialog.locator('[data-palette-command="circus"]').count(), 0);
   await dialog.getByRole('button', { name: 'Close dialog' }).click();
 
   assert.equal(await upgrade.innerText(), '曰');

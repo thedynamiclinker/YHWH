@@ -37,6 +37,9 @@
 .yhwh-file-row { display: flex; align-items: center; min-width: 0; gap: 4px; }
 .yhwh-file-row > button { flex: 1; min-width: 0; justify-content: flex-start; text-align: left; box-shadow: none; background: transparent; border: 0; padding: 5px 7px; height: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-ui-small); }
 .yhwh-file-row > button:hover, .yhwh-file-row > button.is-selected { background: var(--background-modifier-hover); color: var(--yhwh-accent); }
+.yhwh-file-row > button { display: flex; align-items: center; gap: 8px; }
+.yhwh-file-icon { display: inline-flex; align-items: center; flex: none; color: var(--yhwh-accent); }
+.yhwh-file-name { overflow: hidden; text-overflow: ellipsis; }
 .yhwh-extension { color: var(--text-faint); font: 9px var(--font-monospace); max-width: 35px; overflow: hidden; }
 .yhwh-footer { margin-top: 22px; border-top: 1px solid var(--background-modifier-border); padding-top: 12px; }
 .yhwh-copy { display: flex; gap: 10px; align-items: flex-start; color: var(--text-muted); }

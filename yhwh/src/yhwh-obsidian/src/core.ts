@@ -129,20 +129,3 @@ export function isText(name: string, bytes: ArrayBuffer): boolean {
   // Unknown extensions can still contain ordinary text. Don't infer Markdown.
   return !data.some(n => n < 32 && ![9, 10, 12, 13].includes(n));
 }
-
-export function circusPair(html: string): { image: string; quote: string; permalink: string } {
-  // PageSpeed injects a script before the comic for browser user agents.
-  // Removing scripts also keeps them out of extracted quote text.
-  html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
-  const image = html.match(/class="comic"[^>]*>\s*<img[^>]+src="(\/img\/\d+\.(?:gif|png|jpg))"/i)?.[1];
-  const quote = html.match(/class="quote"[^>]*>([\s\S]*?)<\/div>/i)?.[1];
-  const link = html.match(/href="(\/perm\.php\?c=\d+(?:&amp;|&)q=\d+)"/i)?.[1];
-  if (!image || !quote || !link) throw new Error('The Circus changed its page format. Open the original site.');
-  const decode = (text: string) => text.replace(/<[^>]*>/g, '').replace(/&(?:amp|quot|apos|lt|gt|#\d+|#x[\da-f]+);/gi, entity => {
-    const named: Record<string, string> = { '&amp;': '&', '&quot;': '"', '&apos;': "'", '&lt;': '<', '&gt;': '>' };
-    if (named[entity]) return named[entity];
-    const n = entity.startsWith('&#x') ? parseInt(entity.slice(3), 16) : parseInt(entity.slice(2), 10);
-    return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : entity;
-  }).trim();
-  return { image: 'https://nietzschefamilycircus.com' + image, quote: decode(quote), permalink: 'https://nietzschefamilycircus.com' + decode(link) };
-}

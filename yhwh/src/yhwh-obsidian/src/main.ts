@@ -2,7 +2,8 @@ import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-main.json';
 const ui = interfaceText(interfaceCopy);
 import { FileView, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
-import { ancestors, circusPair, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
+import { ancestors, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
+import { ORIGIN as circusOrigin, parsePair, type CircusPair } from '../../../lib/circus.cjs';
 import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
@@ -11,7 +12,7 @@ export default class YHWH extends Plugin {
   settings!: Settings;
   current!: Settings;
   folder = '';
-  circus?: { image: string; quote: string; permalink: string };
+  circus?: CircusPair;
   circusBusy = false;
   circusError = '';
   private nextLevelAside = createLevelAsides();
@@ -327,17 +328,18 @@ export default class YHWH extends Plugin {
     el.createEl('a', { text, href, cls: 'yhwh-link', attr: { target: '_blank', rel: ui("noopener-noreferrer") } });
   }
   async nextCircus() {
-    if (this.circusBusy) return;
+    if (this.circusBusy || this.level().id !== 'nietzsche') return;
     this.circusBusy = true; this.circusError = ''; this.changed();
     try {
       // Fetch only on request. Extract the pairing, never the site's scripts or ads.
-      const page = await requestUrl({ url: `https://nietzschefamilycircus.com/?yhwh=${Date.now()}`, throw: false });
+      const page = await requestUrl({ url: circusOrigin + '/', headers: { 'Cache-Control': 'no-cache' }, throw: false });
       if (page.status !== 200) throw new Error(ui("circus-unavailable-", page.status));
-      const pair = circusPair(page.text);
-      const image = await requestUrl({ url: pair.image, throw: false });
-      if (image.status !== 200 || image.arrayBuffer.byteLength > 3_000_000) throw new Error(ui("the-cartoon-could-not-be-loaded-"));
+      const pair = parsePair(page.text);
+      const image = await requestUrl({ url: circusOrigin + pair.image, throw: false });
+      if (image.status !== 200 || !image.arrayBuffer.byteLength || image.arrayBuffer.byteLength > 3_000_000) throw new Error(ui("the-cartoon-could-not-be-loaded-"));
       if (this.closed) return;
-      const mime = pair.image.endsWith('.gif') ? 'image/gif' : pair.image.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      const suffix = pair.image.toLowerCase();
+      const mime = suffix.endsWith('.gif') ? 'image/gif' : suffix.endsWith('.png') ? 'image/png' : 'image/jpeg';
       if (this.circus) URL.revokeObjectURL(this.circus.image);
       this.circus = { ...pair, image: URL.createObjectURL(new Blob([image.arrayBuffer], { type: mime })) };
     } catch (error) { this.circusError = (error as Error).message; }

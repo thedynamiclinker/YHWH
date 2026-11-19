@@ -1,7 +1,8 @@
 import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-views.json';
 const ui = interfaceText(interfaceCopy);
-import { App, FileSystemAdapter, ItemView, MarkdownRenderer, Menu, Modal, TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { App, FileSystemAdapter, ItemView, MarkdownRenderer, Menu, Modal, setIcon, TextFileView, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import type YHWH from './main';
 import { parent, resolvePath, words } from './core';
 import { ATLAS } from './atlas';
@@ -11,6 +12,12 @@ export function button(el: HTMLElement, text: string, title: string, click: () =
   const b = el.createEl('button', { text, attr: { title, 'aria-label': title } });
   b.addEventListener('click', () => click());
   return b;
+}
+function fileButton(el: HTMLElement, text: string, title: string, icon: string, click: () => unknown) {
+  const control = button(el, '', title, click);
+  setIcon(control.createSpan({ cls: 'yhwh-file-icon', attr: { 'aria-hidden': 'true' } }), icon);
+  if (text) control.createSpan({ text, cls: 'yhwh-file-name' });
+  return control;
 }
 export function prompt(app: App, title: string, label: string, value = ''): Promise<string | null> {
   return new Promise(resolve => {
@@ -89,9 +96,9 @@ export class Navigator extends ItemView {
     const hadFocus = el.contains(el.ownerDocument.activeElement);
     el.empty(); p.heading(el, ui("files"));
     const tools = el.createDiv('yhwh-tools');
-    button(tools, '+ file', ui("new-file"), () => p.run(() => p.newFile()));
-    button(tools, '+ folder', ui("new-folder"), () => p.run(() => p.newFolder()));
-    button(tools, '⛶', ui("toggle-file-manager-in-the-workspace-ctrl-d"), () => p.run(() => p.toggleFilesFocus()));
+    fileButton(tools, '', ui("new-file"), 'file-plus', () => p.run(() => p.newFile()));
+    fileButton(tools, '', ui("new-folder"), 'folder-plus', () => p.run(() => p.newFolder()));
+    fileButton(tools, '', ui("toggle-file-manager-in-the-workspace-ctrl-d"), 'maximize', () => p.run(() => p.toggleFilesFocus()));
     button(tools, '>_', ui("toggle-navigation-console-ctrl-b"), () => p.run(() => p.toggle(CONSOLE)));
     button(tools, ui("3d"), ui("open-3d-directory"), () => p.run(() => p.show(ATLAS)));
     const crumbs = el.createDiv('yhwh-breadcrumbs');
@@ -113,7 +120,7 @@ export class Navigator extends ItemView {
         const row = list.createDiv({ cls: 'yhwh-file-row', attr: { role: 'listitem' } });
         if (!file) {
           const target = parent(p.folder);
-          const up = button(row, '↑  ..', ui("parent-folder-alt-"), () => { this.index = index; p.run(() => p.go(target)); });
+          const up = fileButton(row, '..', ui("parent-folder-alt-"), 'corner-left-up', () => { this.index = index; p.run(() => p.go(target)); });
           up.dataset.index = String(index); up.classList.toggle('is-selected', index === this.index);
           if (p.folder) this.dropTarget(row, target);
           continue;
@@ -123,7 +130,7 @@ export class Navigator extends ItemView {
         row.addEventListener('dragend', () => { this.dragged = undefined; this.contentEl.querySelectorAll('.yhwh-drop-target').forEach(el => el.removeClass('yhwh-drop-target')); });
         if (file instanceof TFolder) this.dropTarget(row, file.path);
         else row.addEventListener('dragover', event => event.stopPropagation());
-        const b = button(row, `${file instanceof TFolder ? '▸' : '·'}  ${file.name}`, ui("open", file.name), () => { this.index = index; this.openEntry(file); });
+        const b = fileButton(row, file.name, ui("open", file.name), file instanceof TFolder ? 'folder' : 'file-text', () => { this.index = index; this.openEntry(file); });
         b.dataset.index = String(index); b.classList.toggle('is-selected', index === this.index);
         if (file instanceof TFile) row.createSpan({ text: file.extension || 'text', cls: 'yhwh-extension' });
         row.addEventListener('contextmenu', event => {
@@ -155,11 +162,11 @@ export class Navigator extends ItemView {
       if (p.circus) {
         footer.createEl('img', { cls: 'yhwh-circus-image', attr: { src: p.circus.image, alt: ui("family-circus-cartoon-paired-with-a-nietzsche-qu") } });
         footer.createEl('p', { text: p.circus.quote, cls: 'yhwh-circus-quote' });
-        p.external(footer, ui("share-this-pairing-"), p.circus.permalink);
+        if (p.circus.permalink) p.external(footer, ui("share-this-pairing-"), p.circus.permalink);
       }
       if (p.circusError) footer.createEl('p', { text: p.circusError, cls: 'yhwh-errors' });
       button(footer, p.circusBusy ? ui("loading-") : ui("next-cartoon-"), ui("load-a-random-pairing-from-nietzschefamilycircus"), () => p.run(() => p.nextCircus())).disabled = p.circusBusy;
-      p.external(footer, ui("nietzsche-family-circus-"), 'https://nietzschefamilycircus.com/');
+      p.external(footer, ui("nietzsche-family-circus-"), circusOrigin + '/');
     } else p.copyBlock(footer, this.visible.length > 1 ? 'welcome' : 'empty');
     button(footer, ui("offerings"), ui("open-offerings"), () => p.offerings());
     if (hadFocus) this.focusRow();
