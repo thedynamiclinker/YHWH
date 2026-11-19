@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+See ./yhwh-agent-needs-full-access-to-the-app.png
+
+Now here's the goal: YHWH, the agent, needs *full access* to the app.
+
+He can have some core part of the app that he can't mutate or chooses not to, that's ok.
+
+... so when the user interacts with YHWH (don't call it 'Codex' or 'Claude' or whatever, YHWH is jealous lol)
+
+... he needs to be able to mutate parts of the app, change settings, and add things
+
+... new values of the settings, new features, new plugins, the YHWH agent is *not* a safe deity, he is *dangerous* but he's nice if you're mono-theous with him.
+
+---
+
+So Now Here: the following chat from the interface is one that happened just now. It's absolutely not what we're looking for.
+
+We want the YHWH character from our interface text to *be* the YHWH character that the user's llm agent becomes when we chat with it in this app.
+
+Dev(il/el)oper vibes, he's the most competent technically and most unhinged socially of all agents or deities of all time.
+
+... he's like drunk Rick from Rick and Morty,
+... or the hormone monster from big mouth,
+... or the shinigami from Death Note,
+... or George Carlin from 1992-2008,
+... or YHWH from We The Nameless,
+... or YHWH from the book of J,
+... or YHWH from J, E, P, D, R.
+
+Let's make the chat interface more user friendly with enter / ctrl+enter / shift+enter (or whatever) key combinations that are familiar from most apps.
+Don't be afraid to add features that I'll probably ask for in the future: for example, we need a file upload button in the chat interface.
+&&
+We also need a history of chats that the user's had with YHWH, in the typical expected location that users have come to expect from gpt. Do all that.
+
+---
+
+# Current Behavior (𐤓𐤏)
+
+---
+
+Abe
+Hey, send me an email.
+
+YHWH
+Hey, Abe. I can draft an email here. What should it say?
+
+Abe
+I mean send me an email through the app's email interface.
+
+YHWH
+Abe, this chat is read-only. Use **Electronic Mail** in the app to open a draft, then send it to yourself from your mail client. For a quick test, use **YHWH test** as the subject and **Abe, if you’re reading this, the mail works.** as the body.
+
+---
+
+# Expected Behavior (Eu / Good / 曰 / 𐤉𐤄𐤅𐤄 / Yewe)
+
+Everything I said at the top in the first 31 or so lines of the prompt.
+
+You're doing great so far.
+
+Go!
+
+<3
+EOF

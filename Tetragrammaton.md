@@ -1,3 +1,6 @@
+# Tetragrammaton
+
+## God is a four letter word
 
 We need at least a skeletal version of "Upgrade to Pro" along with a tutorial stub saying how to set up Stripe. For now add a temporary "Steal Upgrade" button to simulate having paid and then make the whole rest of the interface act as if you upgraded.
 
