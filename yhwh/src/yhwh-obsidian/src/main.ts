@@ -350,6 +350,7 @@ export default class YHWH extends Plugin {
     el.createEl('p', { text: ui("navigate-with-the-left-pane-use-alt-to-go-up-and") });
     el.createEl('p', { text: ui("the-console-understands-help-pwd-ls-cd-open-new-") });
     this.copyBlock(el, 'about');
+    for (const line of this.level().about || []) el.createEl('p', { text: line });
     this.external(el, ui("about-us-"), 'https://thedynamiclinker.com');
     this.external(el, ui("about-yhwh-genesis-by-the-nameless-"), ui("https-www-amazon-com-dp-b0hnq23qkt"));
     button(el, ui("offerings"), ui("open-offerings"), () => { modal.close(); this.offerings(); });

@@ -53,7 +53,14 @@
 
         </section>
         <section id="margin-box" class="margin-box" aria-label="In the margins" hidden></section>
-        <section id="inbox-view" class="inbox-view" aria-label="Inbox" hidden></section>
+        <section id="inbox-view" class="inbox-view" aria-label="Inbox" hidden>
+          <header class="pane-header">
+            <button type="button" class="inbox-home" data-command="focus-document"><span aria-hidden="true">←</span> Back to workspace</button>
+            <span>Inbox <small id="mail-unread"></small></span>
+            <button type="button" data-mail-settings aria-label="Mail settings" title="Mail settings">⚙</button>
+          </header>
+          <div id="mail-content"></div>
+        </section>
       </div>
       <section id="terminal-panel" class="terminal-panel workspace-leaf" aria-label="Terminal" hidden>
         <div class="resize-handle terminal-resize" role="separator" aria-label="Resize terminal"></div>

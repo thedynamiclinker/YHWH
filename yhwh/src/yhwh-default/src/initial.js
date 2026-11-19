@@ -137,7 +137,7 @@ export function installInitial(app, { home, mobile, call }) {
 
   function switchInterface() {
     if (!embedded) return;
-    modal('Terminal interface', `<div class="initial-tools">${buttons([['Terminal', 'terminal'], ['Initial · tiles and scripts', 'initial']])}</div>`);
+    modal('Terminal interface', `<div class="initial-tools">${buttons([['Terminal', 'terminal'], ['Initial', 'initial']])}</div>`);
     const select = async next => {
       if (next) await library.reload();
       dialog.close();

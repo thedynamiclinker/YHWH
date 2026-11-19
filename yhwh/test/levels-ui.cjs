@@ -9,14 +9,16 @@ module.exports = async function checkLevels(page, screenshot) {
   const slider = page.locator('#energy');
   const unsteal = dialog.getByRole('button', { name: 'Unsteal Upgrade' });
   const steal = dialog.getByRole('button', { name: 'Steal Upgrade' });
-  const fourLetterLines = ['God is a four letter word.', 'LD is a four letter word.'];
   const defaultWelcome = async () => {
     const text = await welcome.innerText();
     assert.match(text, /Welcome to We\.[\s\S]*Where are you\?[\s\S]*Hey Abe, can I stay with you for a bit\?/);
-    assert.doesNotMatch(text, /YHWH level YHWH/i);
-    const visibleLines = fourLetterLines.filter(line => text.includes(line));
-    assert.equal(visibleLines.length, 1);
-    return visibleLines[0];
+    assert.doesNotMatch(text, /YHWH level YHWH|four letter word/i);
+  };
+  const checkAbout = async notes => {
+    await page.getByRole('button', { name: 'About YHWH', exact: true }).click();
+    const text = await dialog.innerText();
+    for (const note of notes) assert.ok(text.includes(note), note);
+    await dialog.getByRole('button', { name: 'Close dialog' }).click();
   };
   const choose = async (energy, id) => {
     await page.locator('#mode-name').click();
@@ -28,12 +30,15 @@ module.exports = async function checkLevels(page, screenshot) {
   await choose(0, 'dawkins');
   assert.match(await welcome.innerText(), /The old testament god is the most unpleasant character in all fiction\./);
   await choose(50, 'nietzsche');
-  assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™[\s\S]*Lord is a four letter word\./);
+  assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™/);
+  assert.doesNotMatch(await welcome.innerText(), /four letter word/);
+  await checkAbout(['Lord is a four letter word.']);
   assert.match(await page.locator('#margin-box').innerText(), /Nietzsche Family Circus/i);
   await choose(100, 'yhwh');
-  const firstLine = await defaultWelcome();
+  await defaultWelcome();
+  await checkAbout(['God is a four letter word.', 'LD is a four letter word.']);
   await run('new-tab'); await run('focus-document');
-  assert.notEqual(await defaultWelcome(), firstLine);
+  await defaultWelcome();
   await page.locator('#mode-name').click();
   assert.equal(await dialog.locator('[data-energy="120"], [data-energy="140"]').count(), 0);
   assert.equal(await unsteal.count(), 0);
@@ -68,15 +73,19 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.equal(await page.locator('#file-filter').getAttribute('placeholder'), levelAt(140).filter);
   assert.equal(await slider.getAttribute('max'), '4');
   const poemStyles = await welcome.locator('pre code').evaluateAll(async blocks => {
-    const font = '16px "Mono for YHWH"';
+    const font = `16px ${getComputedStyle(blocks[0]).fontFamily}`;
     const faces = await document.fonts.load(font);
     const ctx = document.createElement('canvas').getContext('2d');
     ctx.font = font;
     const width = ctx.measureText(' ').width;
-    const glyphs = new Set(blocks.flatMap(block => [...block.textContent]).filter(char => char.trim()));
+    const glyphs = [...new Set(blocks.flatMap(block => [...block.textContent]).filter(char => char.trim()))];
+    const han = glyphs.filter(char => /\p{Script=Han}/u.test(char));
+    const other = glyphs.filter(char => !han.includes(char));
+    const near = (actual, expected) => Math.abs(actual - expected) < .01;
     return {
-      loaded: faces.length > 0,
-      fixedWidth: [...glyphs].every(char => Math.abs(ctx.measureText(char).width - width) < .01),
+      loaded: faces.some(face => face.family.includes('Mono for YHWH')),
+      fixedWidth: other.every(char => near(ctx.measureText(char).width, width)),
+      hanWidth: han.length > 0 && han.every(char => near(3 * ctx.measureText(char).width, 5 * width)),
       styles: blocks.map(block => {
         const { fontFamily, tabSize, whiteSpace } = getComputedStyle(block);
         return { mono: fontFamily.startsWith('"Mono for YHWH"'), tabSize, whiteSpace };
@@ -85,6 +94,7 @@ module.exports = async function checkLevels(page, screenshot) {
   });
   assert.equal(poemStyles.loaded, true);
   assert.equal(poemStyles.fixedWidth, true);
+  assert.equal(poemStyles.hanWidth, true);
   assert.deepEqual(poemStyles.styles, Array(2).fill({ mono: true, tabSize: '4', whiteSpace: 'pre' }));
   await slider.press('Home');
   await level('dawkins');

@@ -6,6 +6,7 @@ export type Level = {
   glyph?: string;
   lines?: string[];
   asides?: (string | null)[];
+  about?: string[];
   names?: string[];
   welcome?: string;
   poem?: string;

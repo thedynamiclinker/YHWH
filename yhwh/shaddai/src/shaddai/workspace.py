@@ -1144,7 +1144,7 @@ class Workspace:
     def inbox(self):
         state = self.services.state("inbox")
         letters = state.get("letters", {})
-        commands = {}
+        commands = {"Back to workspace": partial(self.focus, "editor")}
         for key, letter in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
             if key in LETTERS:
                 marker = "* " if not letter["read"] else ""
@@ -1187,6 +1187,11 @@ class Workspace:
     def authored(self, title, *keys):
         words = self.services.words
         self.show(title, "\n\n".join(self.services.address(words[key], 2) for key in keys))
+
+    def about(self):
+        body = self.services.address(self.services.words["aboutBody"], 2)
+        notes = self.services.current_level().get("about", [])
+        self.show("About YHWH", "\n\n".join([body, *notes]))
 
     def levels(self):
         current = self.services.current_level()
@@ -1467,7 +1472,7 @@ class Workspace:
             (None, "Seed funding", self.seed_funding, True),
             (None, "Conversation · Codex", self.conversation, True),
             (None, "Browse We The Nameless", self.verses, True),
-            (None, "About YHWH", partial(self.authored, "About YHWH", "aboutBody"), True),
+            (None, "About YHWH", self.about, True),
             (None, "Our team", partial(self.authored, "Our team", "teamBody"), True),
             (None, "Roadmap", partial(self.authored, "Roadmap", "roadmapBody"), True),
             (None, "Edit character copy", lambda: self.open(self.config.library.data("default/words.json")), True),

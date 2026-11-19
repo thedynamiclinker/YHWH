@@ -15,7 +15,8 @@
       "id": "nietzsche",
       "label": "Nietzsche",
       "energy": 50,
-      "lines": ["God is dead.", "It's Over Man.™", "Lord is a four letter word."]
+      "lines": ["God is dead.", "It's Over Man.™"],
+      "about": ["Lord is a four letter word."]
     },
     {
       "id": "yhwh",
@@ -23,7 +24,7 @@
       "energy": 100,
       "edition": "Free",
       "welcome": "Welcome to We.",
-      "asides": ["God is a four letter word.", "LD is a four letter word."]
+      "about": ["God is a four letter word.", "LD is a four letter word."]
     },
     {
       "id": "pro",

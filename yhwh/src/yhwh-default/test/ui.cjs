@@ -448,6 +448,10 @@ process.stdin.on('end', () => {
     await page.keyboard.press('Escape');
     console.log('✓ hello-world plugin command/panel; panel movement; all personality modes; text edits write source; offering stubs');
 
+    const workspaceBeforeInbox = await page.evaluate(() => {
+      const { id, cwd, file } = window.YHWH.active();
+      return { id, cwd, file: file?.path };
+    });
     await run('inbox');
     assert.equal(await page.locator('#inbox-view .mail-message').count(), 0);
     assert.equal(await page.locator('#document').isVisible(), false);
@@ -458,6 +462,15 @@ process.stdin.on('end', () => {
     await page.screenshot({ path: path.join(artifacts, '13-letter.png') });
     await page.locator('[data-mail-back]').click();
     assert.equal(await page.locator('.mail-row').first().evaluate(el => el.classList.contains('unread')), false);
+    await page.getByRole('button', { name: 'Back to workspace' }).click();
+    assert.equal(await page.locator('#document').isVisible(), true);
+    assert.deepEqual(await page.evaluate(() => {
+      const { id, cwd, file } = window.YHWH.active();
+      return { id, cwd, file: file?.path };
+    }), workspaceBeforeInbox);
+    await run('inbox');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#document').isVisible(), true);
     await run('narrative');
     assert.equal(await page.locator('#dialog [data-command="open-file"]').count(), 1);
     await page.locator('#dialog [data-close]').click();

@@ -843,7 +843,8 @@ function piece() {
   modal(words.pieceTitle, ui("recipient-yhwh-thedynamiclinker-com-no-file-is-u", editButton('pieceTitle'), word('pieceBody')));
 }
 function about() {
-  modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody')));
+  const notes = (currentLevel().about || []).map(line => `<p class="muted">${escape(line)}</p>`).join('');
+  modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes));
 }
 function aboutUs() {
   modal('About Us', `<div class="publisher-signature"><span class="ld-mark" aria-hidden="true"></span><strong>The Dynamic Linker</strong></div><div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
@@ -1182,6 +1183,7 @@ function mailSettings() {
     savePresence(); dialog.close();
   };
 }
+$('[data-mail-settings]').onclick = mailSettings;
 function mailMarkdown(text) {
   // Numbered footnotes are part of this letter's editable Markdown copy.
   const footnotes = String(text).replace(/^\[\^(\d+)\]:\s*(.+)$/gm, (_, number, note) => `<p id="mail-footnote-${number}"><sup>${number}</sup> ${escape(note)}</p>`)
@@ -1189,19 +1191,22 @@ function mailMarkdown(text) {
   return renderMarkdown(footnotes);
 }
 function renderInbox() {
-  const host = $('#inbox-view'), tab = active();
+  const host = $('#mail-content'), tab = active();
   const available = [...presence.letters].sort((a, b) => b.at - a.at).map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
   const selected = available.find(item => item.letter.id === tab.mailId);
-  host.innerHTML = `<header class="pane-header"><span>Inbox <small>· ${available.filter(item => !item.state.read).length} unread</small></span><button type="button" data-mail-settings aria-label="Mail settings" title="Mail settings">⚙</button><button data-command="focus-document" aria-label="Back to document">▱</button></header>`;
-  host.querySelector('[data-mail-settings]').onclick = mailSettings;
+  $('#mail-unread').textContent = `· ${available.filter(item => !item.state.read).length} unread`;
   if (selected) {
     const { letter, state } = selected;
     const source = letter.source;
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
-    host.insertAdjacentHTML('beforeend', `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`);
-    host.querySelector('[data-mail-back]').onclick = () => { tab.mailId = null; renderInbox(); };
+    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}<details class="mail-source"><summary>In the margins · literary adaptation</summary><p>${escape(source?.note || letter.note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details></article>`;
+    host.querySelector('[data-mail-back]').onclick = () => {
+      tab.mailId = null;
+      renderInbox();
+      host.querySelector(`[data-mail="${CSS.escape(letter.id)}"]`)?.focus();
+    };
     verseUI.hydrate(host);
   } else {
     const rows = available.map(({ letter, state }) => {
@@ -1210,11 +1215,13 @@ function renderInbox() {
       const sender = state.sender || primarySender;
       return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH<small title="${escape(sender)}">${escape(sender)}</small></span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time></button>`;
     }).join('');
-    host.insertAdjacentHTML('beforeend', `<div class="mail-list" aria-label="Messages">${rows || `<p class="mail-empty muted">${escape(address('No letters. A quiet miracle, Abe.', 1))}</p>`}</div>`);
+    host.innerHTML = `<div class="mail-list" aria-label="Messages">${rows || `<p class="mail-empty muted">${escape(address('No letters. A quiet miracle, Abe.', 1))}</p>`}</div>`;
     for (const row of host.querySelectorAll('[data-mail]')) row.onclick = () => {
       tab.mailId = row.dataset.mail;
       presence.letters.find(item => item.id === tab.mailId).read = true;
       savePresence(); renderInbox();
+      $('#inbox-view').scrollTop = 0;
+      host.querySelector('[data-mail-back]').focus({ preventScroll: true });
     };
   }
 }
@@ -1491,6 +1498,11 @@ document.addEventListener('keydown', event => {
   if (binding && binding.kind !== 'disabled') {
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.repeat) executeBinding(binding).catch(error => notice(error.message));
+    return;
+  }
+  if (event.key === 'Escape' && event.target.closest('#inbox-view')) {
+    event.preventDefault();
+    focusView('document');
     return;
   }
   if (event.key === 'Escape' && active()?.expanded) { active().expanded = ''; update(); requestAnimationFrame(fitTerminal); }

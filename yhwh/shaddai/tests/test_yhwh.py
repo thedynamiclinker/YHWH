@@ -31,6 +31,7 @@ class YhwhTTYTests(unittest.TestCase):
             "booksUnavailable": "Coming soon",
             "welcomeTitle": "Where are you?",
             "welcomeBody": "Ah! There you are. Hey Abe, can I stay with you for a bit?",
+            "aboutBody": "Abe, I’m with The Nameless.",
         }))
         put(self.data / "mnt/yhwh/mnt/sinai/README.md", "1. [Genesis](https://example.org/genesis)\n2. Exodus\n")
         put(self.data / "mnt/yhwh/readme.md", "world file\n")
@@ -78,6 +79,9 @@ class YhwhTTYTests(unittest.TestCase):
         restarted.send("YHWH · Free\r".encode())
         restarted.shows("Where are you?")
         restarted.shows("Hey Abe, can I stay with you for a bit?")
+        self.command(restarted, "About YHWH")
+        restarted.shows("God is a four letter word.")
+        restarted.shows("LD is a four letter word.")
         self.command(restarted, "YHWH-ness")
         restarted.shows("YHWH-ness · YHWH")
         restarted.send("Zanmen · Elite\r".encode())
@@ -139,6 +143,7 @@ class YhwhTTYTests(unittest.TestCase):
         tty.send(b"Open draft in mail client\r")
         tty.wait_for(lambda _: self.opened.read_text().startswith("mailto:"))
         self.command(tty, "Inbox")
+        tty.shows("Back to workspace")
         tty.shows("I came down to look")
         tty.send(b"I came down to look\r")
         tty.shows("Shell letter")

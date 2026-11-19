@@ -80,6 +80,10 @@ async function main() {
       assert.equal(await page.locator('#mobile-tab-count').textContent(), '2');
       await page.locator('#mobile-nav [data-command="mobile-tabs"]').tap();
       await page.locator('#mobile-dialog .mobile-tab-row button', { hasText: 'notes.md' }).tap();
+      await page.getByRole('button', { name: 'Inbox', exact: true }).tap();
+      await page.locator('#mobile-nav').getByRole('button', { name: 'Back', exact: true }).tap();
+      assert.equal(await page.locator('#document').isVisible(), true);
+      assert.equal(await page.evaluate(() => window.YHWH.active().file.path), '/YHWH/notes.md');
       await page.evaluate(() => window.YHWH.run('settings'));
       await page.locator('#settings-form input[name=font_size]').fill('21');
       await page.locator('#settings-form button[type=submit]').tap();

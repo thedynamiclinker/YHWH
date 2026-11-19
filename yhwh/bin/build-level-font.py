@@ -18,7 +18,8 @@ from fontTools.ttLib import TTFont
 
 FAMILY = "Mono for YHWH"
 UNITS_PER_EM = 1000
-CELL = 600
+LATIN_CELL = 600
+HAN_CELL = 1000
 ETC = Path(__file__).resolve().parents[1] / "etc"
 FONTS = ETC / "default/fonts"
 
@@ -27,6 +28,7 @@ def build(mono, hebrew):
     paths = [mono, hebrew, FONTS / "yhwh-han.woff2", ETC / "assets/Phoenician.ttf",
              FONTS / "egyptian-hieroglyphs-regular-noto-sans.ttf"]
     sources = [TTFont(path) for path in paths]
+    han_characters = sources[2].getBestCmap().keys()
     levels = json.loads((FONTS.parent / "levels.json").read_text())["levels"]
     characters = set(range(32, 127))
     for level in levels:
@@ -44,21 +46,22 @@ def build(mono, hebrew):
 
     cmap = {point: f"uni{point:04X}" for point in sorted(characters)}
     glyphs = {".notdef": TTGlyphPen(None).glyph()}
-    metrics = {".notdef": (CELL, 0)}
+    metrics = {".notdef": (LATIN_CELL, 0)}
     for point, name in cmap.items():
         glyph_set, glyph = outlines[point]
         source_glyph = glyph_set[glyph]
         source_font = glyph_set.font
+        cell = HAN_CELL if point in han_characters else LATIN_CELL
         scale = UNITS_PER_EM / source_font["head"].unitsPerEm
-        x_scale = min(scale, CELL / source_glyph.width) if source_glyph.width else scale
-        x_offset = (CELL - source_glyph.width * x_scale) / 2
+        x_scale = min(scale, cell / source_glyph.width) if source_glyph.width else scale
+        x_offset = (cell - source_glyph.width * x_scale) / 2
         outline = DecomposingRecordingPen(glyph_set)
         source_glyph.draw(outline)
         pen = TTGlyphPen(None)
         outline.replay(TransformPen(pen, (x_scale, 0, 0, scale, x_offset, 0)))
         glyphs[name] = pen.glyph()
         glyphs[name].recalcBounds(None)
-        metrics[name] = (CELL, getattr(glyphs[name], "xMin", 0))
+        metrics[name] = (cell, getattr(glyphs[name], "xMin", 0))
 
     builder = FontBuilder(UNITS_PER_EM)
     builder.font["head"].created = builder.font["head"].modified = -epoch_diff
@@ -76,7 +79,7 @@ def build(mono, hebrew):
         "licenseDescription": "SIL Open Font License, Version 1.1",
         "licenseInfoURL": "https://openfontlicense.org",
     })
-    builder.setupPost(isFixedPitch=1)
+    builder.setupPost()
     builder.font.flavor = "woff2"
     builder.save(FONTS / "mono-for-yhwh.woff2")
 

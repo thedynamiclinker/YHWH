@@ -51,6 +51,16 @@ module.exports = async function checkMidnightInbox(page, screenshot) {
   assert.equal(await page.locator('[data-edit-word=letterSeedis]').count(), 1);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.screenshot({ path: screenshot });
+  const home = page.getByRole('button', { name: 'Back to workspace' });
+  const beforeScroll = await home.boundingBox();
+  const scrollTop = await page.locator('#inbox-view').evaluate(inbox => {
+    inbox.scrollTop = inbox.scrollHeight;
+    return inbox.scrollTop;
+  });
+  assert.ok(scrollTop > 0);
+  assert.equal((await home.boundingBox()).y, beforeScroll.y);
+  await home.click();
+  assert.equal(await page.locator('#document').isVisible(), true);
 
   await page.clock.setFixedTime(next + 13 * 3600000);
   await page.reload(); await ready();

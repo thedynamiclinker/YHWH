@@ -17,7 +17,7 @@ const os=require('node:os');
       await page.locator('#initial-dialog [data-close]').click();
       await page.evaluate(() => window.YHWH.run('focus-terminal'));
       await page.locator('#terminal-panel [data-command="terminal-interface"]').click();
-      await page.locator('#initial-dialog [data-initial="initial"]').click();
+      await page.locator('#initial-dialog').getByRole('button', { name: 'Initial', exact: true }).click();
       await page.locator('#terminal-initial .initial-workbench').waitFor();
       assert.ok(await page.locator('#terminals').isHidden());
       await page.locator('#terminal-initial .initial-tile').filter({ has: page.locator('b', { hasText: /^pwd$/ }) }).click();
