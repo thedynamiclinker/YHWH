@@ -15,7 +15,7 @@ module.exports = async function checkLevels(page, screenshot) {
     assert.doesNotMatch(text, /YHWH level YHWH|four letter word/i);
   };
   const checkAbout = async notes => {
-    await page.getByRole('button', { name: 'About YHWH', exact: true }).click();
+    await page.locator('.titlebar [data-command="about"]').click();
     const text = await dialog.innerText();
     for (const note of notes) assert.ok(text.includes(note), note);
     await dialog.getByRole('button', { name: 'Close dialog' }).click();
