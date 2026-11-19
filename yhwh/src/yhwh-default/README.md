@@ -151,6 +151,8 @@ Each module is loaded from a local source blob; bundle dependencies into that mo
 
 The original Paleo-Hebrew font and purple/charcoal presentation remain. The title bar's YHWH-ness slider sets 100 for YHWH, 1–99 for Nietzsche, and 0 for monochrome Dawkins. **In the margins** starts hidden in YHWH mode. Its left-ribbon widget opens a focused reading surface showing a random Genesis verse, Nietzsche Family Circus in Nietzsche mode, and is hidden in Dawkins mode. The refresh button chooses another verse or pairing; the minus/plus button collapses the box and remembers your choice. Circus fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
 
+Click **曰** beside the slider, then **Steal Upgrade** to preview Pro. **咱** offers Zanmen Elite next. The title bar can return to any unlocked level. The app remembers the unlocks and paid level in this profile. **Set up Stripe** in the upgrade dialog covers sandbox Payment Links, the YHWH promotion code, and verifying payments before granting an upgrade. The preview collects no payment.
+
 Character writing is based on sampled passages of the user's *We The Nameless*, especially Genesis 3 and 18 and Exodus 3: embodied curiosity, interruptions, bargaining, grand promises, and occasional regret. Routine controls keep their ordinary names.
 
 Character copy lives in **`yhwh/etc/default/words.json`**. The small pencil beside each passage edits that configuration file directly; the footer text is itself an edit button. These are source edits, not user-local text overrides. A read-only installed copy reports a write error; use a writable development checkout to edit installed default text. The upgrades advertisement is editable and preserves the requested wording. No subscription, dating service, sync service, or pre-order checkout is implied by it.
@@ -210,8 +212,9 @@ Edit character copy and new feature labels in `yhwh/etc/default/words.json`, usi
 
 ## Abe, seed, and desktop launchers
 
-YHWH calls the user Abe, including in chat. Name corrections are part of his
-fictional forgetful naming bit. The inbox brings occasional seed promises during
+YHWH calls the user Abe in the free levels, Mo in Pro, and Josh, Son, and other
+names in Zanmen Elite. Active character copy and chat use the selected voice.
+The inbox brings occasional seed promises during
 real work, respecting its switch, mode limits, and five-minute delivery interval.
 These letters stay inside the app. Character text, letters, the buried land
 registry, team, roadmap, and donation copy are editable in `words.json`.

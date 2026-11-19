@@ -155,6 +155,12 @@ async function main() {
       await help.getByRole('button', { name: 'Ask' }).click();
       await help.getByRole('log').getByText(/You’re in \/YHWH, Abe/).waitFor();
       await help.getByRole('button', { name: 'Close', exact: true }).click();
+      await require('../../../test/levels-ui.cjs')(page, path.join(deviceArtifacts, 'zanmen.png'));
+      await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
+      assert.equal(await page.locator('body').getAttribute('data-level'), 'elite');
+      await page.evaluate(() => window.YHWH.run('chat'));
+      await help.getByRole('log').getByText(/^Josh\. My whole universe/).waitFor();
+      await help.getByRole('button', { name: 'Close', exact: true }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery, scrolling PDF and touch file moves.`);

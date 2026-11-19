@@ -106,7 +106,7 @@ export function installInitial(app, { home, mobile, call }) {
   const workbench = createWorkbench({
     catalog: () => library.catalog(), token: commandToken, run: runInWorkbench, details: manual, save: saveGrid,
     actions: { compose: () => compose(scratch), alias: () => aliasEditor(), draw: () => draw(), guide, tutorial },
-    report: showError,
+    report: showError, address: app.address,
     readDraft: () => {
       try {
         const draft = JSON.parse(localStorage.getItem(gridDraftKey) || '{}');
@@ -282,7 +282,7 @@ export function installInitial(app, { home, mobile, call }) {
   }
 
   function guide() {
-    modal('Start here, Abe', `<div class="initial-guide">
+    modal(app.address('Start here, Abe', 2), `<div class="initial-guide">
       <p>Terminal → Initial. Same joy, different fingers.</p>
       <ul>
         <li><strong>Letters</strong> are aliases in <code>~/.initialrc</code>, the Initial’s equivalent of <code>~/.bashrc</code>. Draw from the dot to use a trained mark.</li>

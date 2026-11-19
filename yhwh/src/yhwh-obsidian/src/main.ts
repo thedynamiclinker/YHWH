@@ -364,9 +364,10 @@ class YHWHSettings extends PluginSettingTab {
     const { containerEl: el, plugin: p } = this; el.empty();
     el.createEl('h2', { text: ui("yhwh") });
     const update = () => p.run(async () => { await p.save(); await p.go(p.folder); });
-    new Setting(el).setName(ui("amount-of-yhwh-ness")).setDesc(ui("dawkins-plain-nietzsche-existential-yhwh-full-de"))
-      .addDropdown(d => d.addOptions({ '0': ui("dawkins-0-"), '50': ui("nietzsche-50-"), '100': ui("yhwh-100-") })
-        .setValue(String(p.settings.energy)).onChange(v => { p.settings.energy = Number(v); update(); }));
+    new Setting(el).setName('YHWH-ness').setDesc(ui("dawkins-plain-nietzsche-existential-yhwh-full-de"))
+      .addDropdown(d => d.addOptions(Object.fromEntries(unlockedLevels(p.settings.edition.unlocked).map(level =>
+        [level.energy, level.edition ? `${level.label} · ${level.edition}` : level.label])))
+        .setValue(String(p.level().energy)).onChange(v => p.run(() => p.selectLevel(Number(v)))));
     new Setting(el).setName(ui("follow-active-file")).setDesc(ui("keep-the-navigator-console-and-3d-directory-in-t"))
       .addToggle(t => t.setValue(p.settings.followActive).onChange(v => { p.settings.followActive = v; update(); }));
     new Setting(el).setName(ui("open-navigator-at-startup")).addToggle(t => t.setValue(p.settings.autoOpen).onChange(v => { p.settings.autoOpen = v; update(); }));

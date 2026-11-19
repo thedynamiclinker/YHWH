@@ -51,6 +51,29 @@ class YhwhTTYTests(unittest.TestCase):
         tty.shows("Commands")
         tty.send(name.encode() + b"\r")
 
+    def test_level_preview_unlocks_each_edition_and_survives_restart(self):
+        app_root = Path(__file__).resolve().parents[2]
+        source = app_root / "etc/default/levels.json"
+        put(self.data / "yhwh/etc/default/levels.json", source.read_text())
+        tty = self.launch()
+        self.command(tty, "YHWH-ness")
+        tty.shows("Upgrade to YHWH Pro")
+        tty.send("曰 · Upgrade to YHWH Pro!\r".encode())
+        tty.shows("Steal Upgrade")
+        tty.send(b"Steal Upgrade\r")
+        tty.shows("Hey Mo, take a look around.")
+        self.command(tty, "YHWH-ness")
+        tty.shows("Upgrade to Zanmen Elite")
+        tty.send("咱 · Upgrade to Zanmen Elite!\r".encode())
+        tty.shows("Steal Upgrade")
+        tty.send(b"Steal Upgrade\r")
+        tty.shows("Hey Josh, take a look around.")
+        tty.send(F10)
+        tty.wait_exit()
+        restarted = self.launch()
+        self.command(restarted, "YHWH-ness")
+        restarted.shows("YHWH-ness · Zanmen")
+
     def test_shared_config_key_exec_world_overlay_books_email_and_fonts(self):
         put(self.user / "rc", '/\n    terminal=false\n    show_hidden=false\n')
         put(self.user / "etc/profile", "export FROM_PROFILE=shared-profile\n")

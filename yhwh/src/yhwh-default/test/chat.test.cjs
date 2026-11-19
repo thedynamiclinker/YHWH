@@ -14,6 +14,8 @@ test('every Genesis manuscript is available to the character, with Abraham and s
   assert.match(prompt, /George Carlin → Charlie or Charleen/);
   assert.match(prompt, /occasionally promise to spread Abe's seed everywhere/);
   assert.match(await characterPrompt(0), /No deity performance/);
+  assert.match(await characterPrompt(120), /Always address the user as Mo/);
+  assert.match(await characterPrompt(140), /Address the user as Josh, Son[\s\S]*Jesus 𐤇 Christ What Was Ur Name Again[\s\S]*XP[\s\S]*χLD人/);
 });
 
 test('conversation uses stdin, cwd and read-only Codex; cleans output and reports failures', async () => {

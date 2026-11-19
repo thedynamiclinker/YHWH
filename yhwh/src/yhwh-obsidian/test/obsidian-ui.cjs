@@ -158,12 +158,19 @@ const { spawnSync } = require('node:child_process');
     await evaluate(() => app.plugins.plugins.yhwh.offerings());
     assert.match(await page.locator('.modal-content').innerText(), /Nothing is uploaded/);
     await page.keyboard.press('Escape');
+    await explorer.getByRole('button', { name: 'Upgrade to YHWH Pro!' }).click();
+    await page.getByRole('button', { name: 'Steal Upgrade' }).click();
+    await explorer.getByText('Welcome to 山三', { exact: true }).waitFor();
+    await explorer.getByRole('button', { name: 'Upgrade to Zanmen Elite!' }).click();
+    await page.getByRole('button', { name: 'Steal Upgrade' }).click();
+    await explorer.getByText(/YHWH level Zanmen/).waitFor();
     await evaluate(async () => {
       await app.plugins.disablePlugin('yhwh');
       await app.plugins.enablePlugin('yhwh');
     });
     await page.waitForFunction(() => app.plugins.plugins.yhwh?.settings.copy.welcome.includes('apparently'));
-    console.log('✓ Editable wording, all three modes, offerings and persistence across reload');
+    assert.equal(await evaluate(() => app.plugins.plugins.yhwh.level().id), 'elite');
+    console.log('✓ Editable wording, free levels, paid previews, offerings and persistence across reload');
     assert.deepEqual(errors.filter(error => !/ResizeObserver loop/.test(error)), []);
     console.log(`Screenshots: ${screenshots}`);
   } catch (error) {

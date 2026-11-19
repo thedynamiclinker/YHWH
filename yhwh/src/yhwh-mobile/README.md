@@ -161,6 +161,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
+| YHWH-ness and upgrade preview | Shared free levels, Pro and Elite preview unlocks, Stripe setup guide and character names. Unlocks persist on this installation. |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |
@@ -180,7 +181,8 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Talk to YHWH | Offline workspace help in character. Connect Codex opens the account and remote-workflow guide. Live Codex chat uses the desktop service. |
 | Folder roots / Man and God | Per-tab pseudo chroot into ordinary workspace folders; Man/God use local `Worlds/Man` and `Worlds/God`; no privilege changes |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
-| Circus, desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
+| Nietzsche Family Circus | The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |
+| Desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
 | Three / Shaddai / company rehearsal | Separate clients. Shaddai uses a host terminal and Python with local Unix process and filesystem access. |
 
 Mobile paths such as `/YHWH/notes.md` are logical workspace paths. Native files

@@ -12,7 +12,7 @@ const element = (tag, text, className) => {
   return node;
 };
 
-export function createWorkbench({ catalog, token, run, details, save, readDraft, writeDraft, actions, report }) {
+export function createWorkbench({ catalog, token, run, details, save, readDraft, writeDraft, actions, report, address }) {
   const shell = element('section', null, 'initial-workbench');
   shell.innerHTML = `<section class="initial-preview" aria-label="Initial workspace">
       <header class="initial-preview-bar">
@@ -155,7 +155,7 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
     screen.replaceChildren();
     if (which === 'grid') renderGrid();
     else if (outputPanel) screen.append(outputPanel);
-    else screen.append(element('p', 'Try a command, Abe. Drag it up here when it does what you want.', 'initial-empty'));
+    else screen.append(element('p', address('Try a command, Abe. Drag it up here when it does what you want.', 1), 'initial-empty'));
     screen.classList.remove('initial-screen-enter');
     requestAnimationFrame(() => screen.classList.add('initial-screen-enter'));
   }

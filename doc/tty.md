@@ -5,6 +5,11 @@ terminal. Use `make tty OPEN=PATH` to open a directory or file, `make tty-build`
 to build the console diagnostic, and `make tty-check` to run the PTY tests.
 Press F1 for help and F10 to quit.
 
+Use **YHWH-ness · levels and upgrades** in the command palette to switch levels,
+read the welcome passages, or try the Pro and Elite previews. The terminal
+reader links to the original Nietzsche Family Circus. The palette uses the
+same level copy and Stripe guide as the desktop.
+
 Shaddai has its own [package and install guide](../yhwh/shaddai/README.md).
 Put its `yhwh-tty` launcher on `PATH` to use `yhwh tty [PATH]` or
 `YHWH_INTERFACE=tty yhwh open [PATH]`.

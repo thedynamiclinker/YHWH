@@ -65,7 +65,7 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('.titlebar #higher-help').count(), 0);
     assert.equal(await page.locator('.statusbar #higher-help').textContent(), 'Need Some Help?');
     assert.match(await page.locator('.window-title').innerText(), /Toward a pro-human AI apocalypse\./);
-    assert.match(await page.locator('.welcome').innerText(), /Guess who's back/i);
+    assert.match(await page.locator('.welcome').innerText(), /Welcome to We\./);
     assert.ok((await page.locator('.welcome').textContent()).includes(JSON.parse(sourceWords).welcomeBody));
     assert.equal(await page.locator('.personality').isVisible(), true);
     assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()), false);
@@ -515,6 +515,16 @@ process.stdin.on('end', () => {
     console.log('✓ overnight startup arc, legacy sender, hidden block setting, alternate senders, master mute and persistence');
     await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, '16-seedis.png'));
     console.log('✓ midnight timer, suspended-app cutoff, seedis envelope, Markdown, footnote, bundled attachment and persistence');
+    await require('../../../test/levels-ui.cjs')(page, path.join(artifacts, '17-zanmen.png'));
+    await open(path.join(directory, 'notes.md'));
+    const beforeSwitch = await page.evaluate(() => window.YHWH.getEditor().state.doc.toString());
+    await page.locator('#mode-name').click(); await page.locator('#dialog [data-energy="120"]').click();
+    assert.equal(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), beforeSwitch);
+    assert.match(await page.locator('#divine-footnote').textContent(), /Mo/);
+    await quit();
+    await launch();
+    assert.equal(await page.locator('body').getAttribute('data-level'), 'pro');
+    assert.equal(await page.locator('#upgrade-button').isVisible(), false);
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);
