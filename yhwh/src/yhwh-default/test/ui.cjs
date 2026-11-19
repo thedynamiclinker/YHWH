@@ -516,7 +516,9 @@ process.stdin.on('end', () => {
     await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, '16-seedis.png'));
     console.log('✓ midnight timer, suspended-app cutoff, seedis envelope, Markdown, footnote, bundled attachment and persistence');
     await require('../../../test/levels-ui.cjs')(page, path.join(artifacts, '17-zanmen.png'));
-    await open(path.join(directory, 'notes.md'));
+    const tierNote = path.join(directory, 'levels-verification.md');
+    await fs.writeFile(tierNote, '# A document open during the upgrade\n');
+    await open(tierNote);
     const beforeSwitch = await page.evaluate(() => window.YHWH.getEditor().state.doc.toString());
     await page.locator('#mode-name').click(); await page.locator('#dialog [data-energy="120"]').click();
     assert.equal(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), beforeSwitch);
@@ -525,6 +527,7 @@ process.stdin.on('end', () => {
     await launch();
     assert.equal(await page.locator('body').getAttribute('data-level'), 'pro');
     assert.equal(await page.locator('#upgrade-button').isVisible(), false);
+    console.log('✓ all five levels, Stripe guide, simulated upgrades, keyboard slider, open document and persisted unlocks');
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);

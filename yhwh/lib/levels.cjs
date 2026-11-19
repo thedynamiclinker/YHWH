@@ -18,7 +18,8 @@ function unlockedLevels(energy) {
 function editionState(value) {
   const paid = levels.filter(level => level.offer);
   const unlocked = paid.find(level => level.energy === value?.unlocked)?.energy ?? 100;
-  const selected = paid.find(level => level.energy === value?.selected && level.energy <= unlocked)?.energy;
+  const position = value?.selected;
+  const selected = Number.isInteger(position) && position > 100 && position <= unlocked ? position : undefined;
   return { unlocked, selected };
 }
 

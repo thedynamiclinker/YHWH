@@ -13,7 +13,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile .personality label { font-size: .75rem; white-space: nowrap; }
 .is-mobile .personality input { width: clamp(38px, 12vw, 68px); }
 .is-mobile #mode-name { min-width: 0; }
-.is-mobile .edition-glyph { min-height: 40px; min-width: 38px; }
+.is-mobile .edition-glyph { min-width: 44px; }
 @media (max-width: 365px) {
   .is-mobile .titlebar { gap: 3px; padding-inline: 7px; }
   .is-mobile .titlebar .brand { gap: 0; }

@@ -1,5 +1,5 @@
 @font-face { font-family: Phoenician; src: url('../assets/Phoenician.ttf') format('truetype'); font-display: swap; }
-@font-face { font-family: "YHWH Han"; src: url('fonts/yhwh-han.woff2') format('woff2'); font-display: swap; unicode-range: U+4E00, U+4E09, U+4E2B, U+4E8C, U+5152, U+5011, U+54B1, U+5C71, U+611B, U+6211, U+65E5, U+66F0, U+6708, U+6709, U+723E, U+8033, U+808F, U+9670; }
+@font-face { font-family: "YHWH Han"; src: url('fonts/yhwh-han.woff2') format('woff2'); font-display: swap; unicode-range: U+4E00, U+4E09, U+4E2B, U+4E8C, U+4EBA, U+5011, U+5152, U+54B1, U+5C71, U+611B, U+6211, U+65E5, U+66F0, U+6708, U+6709, U+723E, U+8033, U+808F, U+9670; }
 :root {
   color-scheme: dark;
   --bg: #1b1b20; --panel: #202026; --sidebar: #17171c; --rail: #131317;
@@ -355,8 +355,12 @@ body[data-theme='dawkins'] .divine-aside { display: none; }
 #margin-box .margin-content { padding-top: 36px; }
 #margin-box .verse-compact .verse-english { font-size: 1.1rem; }
 #margin-box .verse-compact .verse-original { font-size: 1.5rem; }
-#margin-box.margin-widget { flex: 0 1 auto; min-height: 36px; max-height: 40vh; padding: 0 24px; }
+#margin-box.margin-widget { flex: 0 1 auto; min-width: 0; min-height: 36px; max-width: 44%; max-height: 40vh; padding: 0 24px; }
 #margin-box.margin-widget .margin-content { padding-top: 10px; }
+@media (max-width: 650px) {
+  .center-panels:has(> .margin-widget:not([hidden])) { flex-direction: column; }
+  #margin-box.margin-widget { max-width: none; max-height: min(34vh, 220px); padding-inline: 14px; }
+}
 #inbox-view { flex: 1; min-width: 0; min-height: 0; overflow: auto; background: var(--panel); }
 .mail-list { padding: 12px 0; }
 .mail-row { width: 100%; display: grid; grid-template-columns: minmax(90px, 170px) minmax(0, 1fr) 110px; gap: 16px; text-align: left; padding: 16px 24px; border-radius: 0; border-bottom: 1px solid var(--line); font-weight: 400; }

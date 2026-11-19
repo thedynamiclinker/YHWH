@@ -163,7 +163,7 @@ async function main() {
       await help.getByRole('button', { name: 'Close', exact: true }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
       assert.deepEqual(errors, []);
-      await context.close(); console.log(`Passed ${device.name}: import, touch, editor, save, tabs, settings, verses, conflicts, persistence, recovery, scrolling PDF and touch file moves.`);
+      await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF and all five YHWH levels.`);
     }
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }

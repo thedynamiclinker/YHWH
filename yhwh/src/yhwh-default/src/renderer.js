@@ -857,7 +857,7 @@ function seedFunding() {
   modal(words.seedTitle, `${word('seedBody')}<blockquote class="character-copy">${escape(words.seedQuote)}</blockquote><small><span class="character-copy">${escape(words.seedAttribution)}</span> ${editButton('seedQuote')} ${editButton('seedAttribution')}</small><div class="dialog-actions">${payment ? '<button class="primary" data-command="pay">Give YHWH money ↗</button>' : `<p class="muted">${escape(address('Donation checkout is not connected yet, Abe.', 1))}</p>`}</div>`);
 }
 function comingSoon() { modal(ui("coming-soon"), ui("support-development", word('upgrades'), word('comingSoon'))); }
-function upgrades() {
+function upgradeEdition() {
   const upgrade = nextUpgrade(edition.unlocked);
   if (!upgrade) return modes();
   const { title, lines } = upgrade.offer;
@@ -895,8 +895,8 @@ function modes() {
   const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);
   const choices = unlockedLevels(edition.unlocked).map(level => `<button data-energy="${level.energy}" aria-pressed="${level === current}">${escape(level.label)} ${level.edition ? `<span>${escape(level.edition)}</span>` : ''}</button>`).join('');
   const dialog = modal(ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
-    <p class="muted">${escape(levelLines(current).join(' '))}</p>
-    <div class="dialog-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>${upgrade ? `<button data-command="upgrades">${escape(upgrade.offer.title)}</button>` : ''}</div>`);
+    <p class="muted">${escape([current.welcome, ...levelLines(current)].filter(Boolean).join(' '))}</p>
+    <div class="dialog-actions"><button data-command="circus">Nietzsche Family Circus ↗</button>${upgrade ? `<button data-command="upgrade">${escape(upgrade.offer.title)}</button>` : ''}</div>`);
   for (const button of dialog.querySelectorAll('[data-energy]')) button.onclick = () => {
     dialog.close(); setEnergy(Number(button.dataset.energy)).catch(error => notice(error.message));
   };
@@ -905,14 +905,14 @@ async function setEnergy(value) {
   if (!Number.isInteger(value) || value < 0 || value > edition.unlocked) return;
   const level = levelAt(value), revision = ++energyRevision;
   if (level.offer) {
-    try { saveEdition({ ...edition, selected: level.energy }); }
+    try { saveEdition({ ...edition, selected: value }); }
     finally { temporaryEnergy = undefined; applyConfig(active().config); }
     return;
   }
   temporaryEnergy = value; applyConfig(active().config);
   const saved = energySave.then(async () => {
-    if (edition.selected && revision === energyRevision) saveEdition({ ...edition, selected: undefined });
     await call('settings:save', { theme: level.id, energy: String(value) });
+    if (edition.selected && revision === energyRevision) saveEdition({ ...edition, selected: undefined });
     await refresh();
   });
   energySave = saved.catch(() => {});
@@ -1094,8 +1094,8 @@ const definitions = [
   ['offerings', ui("offerings"), '', offerings], ['burnt', ui("burnt-offering-setup-guide"), '', burnt], ['piece', ui("piece-offering"), '', piece],
   ['choose-offering', ui("choose-a-piece-offering"), '', async () => { const filename = await call('offering:piece', active().cwd); if (filename) notice(ui("email-prepared-attach-yourself-before-sending-no", filename)); }],
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
-  ['upgrades', 'Upgrade YHWH · Pro and Elite preview', '', upgrades],
-  ['coming-soon', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
+  ['upgrade', 'Upgrade YHWH · Pro and Elite preview', '', upgradeEdition],
+  ['upgrades', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
   ['modes', ui("yhwh-nietzsche-dawkins"), '', modes], ['circus', ui("nietzsche-family-circus"), '', circus],
   ['edit-footer', ui("edit-status-text"), '', () => editWords(footerKey(currentLevel()))],
   ['quit', ui("quit"), ui("ctrl-q"), async () => { for (const tab of tabs) if (!await mayReplace(tab)) return; await call('window:close'); }],
@@ -1452,7 +1452,11 @@ $('#location-form').onsubmit = event => { event.preventDefault(); let directory 
 $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };
-$('#energy').oninput = event => { temporaryEnergy = Number(event.target.value); applyConfig(active().config); };
+$('#energy').oninput = event => {
+  energyRevision++;
+  temporaryEnergy = Number(event.target.value);
+  applyConfig(active().config);
+};
 $('#energy').onchange = event => setEnergy(Number(event.target.value)).catch(error => notice(error.message));
 
 document.addEventListener('focusin', event => {
