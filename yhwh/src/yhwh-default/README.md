@@ -224,6 +224,12 @@ promised returns, and includes the collected Carlin excerpt. It only opens a
 payment page when `stripe_payment_link` is configured; otherwise it says checkout
 is not connected. About YHWH → About Us contains Our Team and Roadmap.
 
+**About YHWH → YHWH merch!** opens the Fourthwall guide from **YHWH** and
+the Printify + Shopify guide from **merch**. Each word opens the public shop in
+your browser once you save its URL. **Settings → Presence → Merch store setup**
+reopens either guide, with its checklist and place intact. A shop can turn up
+once in the local Inbox during work.
+
 From the repo root, `make develop` installs a **YHWH (Development)**
 launcher for the live checkout. `make install` installs the standalone package
 and a **YHWH** launcher. Both use 曰: light on dark for development,
@@ -236,7 +242,8 @@ launcher files are preserved on update/removal.
 
 Inbox uses a newest-first message list. Click a letter to read it, then return with **← Inbox**. Opening the list leaves unread letters unread. Inbox and conversation occupy the central reading area, alongside file-manager and terminal navigation; **Focus document** returns to the preserved editor buffer.
 
-During work, each section of `YHWH Emails.md` and then `YHWH Emails Next.md`
+During work, each section of [YHWH Emails](../../../var/declarative/yhwh-emails.md)
+and then [YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md)
 arrives as a separate letter in source order. They share the five-minute limit
 and respect the inbox switch, sender block and subdued modes. Each Markdown body
 is editable in `words.json`.

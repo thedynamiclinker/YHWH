@@ -115,8 +115,10 @@ plugin settings. Edits are saved to plugin `data.json`, persist across updates,
 and can be reset to defaults. They don't rewrite installed JavaScript.
 
 **Help and about** links to The Dynamic Linker and *Genesis* by The Nameless.
-**YHWH: Read YHWH emails** opens the bundled letters from `YHWH Emails.md` and
-`YHWH Emails Next.md`. Pick a subject to read its message and follow its links.
+**YHWH: Read YHWH emails** opens the bundled letters from
+[YHWH Emails](../../../var/declarative/yhwh-emails.md) and
+[YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md). Pick a subject
+to read its message and follow its links.
 This reader is available from **Help and about**.
 **Offerings** contains the requested Stripe setup guide and a local file picker.
 Payments and uploads are explicitly unconnected. Selecting a piece reveals
