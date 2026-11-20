@@ -50,9 +50,9 @@ module.exports = async function checkStartupInbox(page, screenshots) {
       assert.equal(await commentaryText.isVisible(), true);
       await citation.click();
       assert.equal(await commentaryText.isVisible(), false);
-      await sources.locator(':scope > summary').click();
+      await sources.locator(':scope > summary').press('Enter');
       assert.equal(await citation.isVisible(), false);
-      await sources.locator(':scope > summary').click();
+      await sources.locator(':scope > summary').press('Enter');
       assert.equal(await citation.isVisible(), true);
       assert.equal(await commentaryText.isVisible(), false);
     }

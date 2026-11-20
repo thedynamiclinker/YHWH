@@ -18,6 +18,7 @@ Usage: yhwh <command> [arguments]
 
 Each workflow command supports --help and --list. Explicit names support
 scripting; an interactive terminal offers selection when names are omitted.
+Draft and script directories are created as needed.
 Direct run/SCRIPT execution performs no workflow bookkeeping.
 External yhwh-NAME executables on PATH are invoked by yhwh NAME.
 Set YHWH_INTERFACE=NAME to use one for 'yhwh open PATH'.

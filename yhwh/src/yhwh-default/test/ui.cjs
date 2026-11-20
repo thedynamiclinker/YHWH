@@ -110,7 +110,7 @@ process.stdin.on('end', () => {
     assert.equal(await card.locator('.verse-original').getAttribute('dir'), 'rtl');
     assert.equal(await page.locator('[name=book] option').count(), 1);
     assert.match(await card.locator('.verse-original .source-j').first().evaluate(el => getComputedStyle(el).fontFamily), /WTN Paleo J/);
-    assert.equal(await card.locator('.verse-original .source-j').first().evaluate(el => getComputedStyle(el).color), 'rgb(0, 135, 0)');
+    assert.equal(await card.locator('.verse-original .source-j').first().evaluate(el => getComputedStyle(el).color), 'rgb(148, 192, 145)');
     const englishBox = await card.locator('.verse-english').boundingBox(), originalBox = await card.locator('.verse-original').boundingBox();
     assert.ok(englishBox.x + englishBox.width < originalBox.x);
     await card.locator('summary').click();
@@ -478,7 +478,7 @@ process.stdin.on('end', () => {
     await page.screenshot({ path: path.join(artifacts, '12-inbox.png') });
     await page.locator('.mail-row').first().click();
     assert.match(await page.locator('#inbox-view').innerText(), /Abe/);
-    assert.match(await page.locator('#inbox-view').innerText(), /literary adaptation/);
+    assert.equal(await page.locator('.mail-source > summary').textContent(), 'In the Margins, Literary sources');
     await page.screenshot({ path: path.join(artifacts, '13-letter.png') });
     await page.locator('[data-mail-back]').click();
     assert.equal(await page.locator('.mail-row').first().evaluate(el => el.classList.contains('unread')), false);
@@ -595,6 +595,12 @@ process.stdin.on('end', () => {
     assert.equal(await page.locator('body').getAttribute('data-level'), 'pro');
     assert.equal(await page.locator('#upgrade-button').innerText(), '咱');
     console.log('✓ all five levels, Stripe guide, reversible preview upgrades, keyboard slider, open document and persisted preview state');
+    await app.evaluate(({ shell }) => { globalThis.openedLinks = []; shell.openExternal = async url => { globalThis.openedLinks.push(url); }; });
+    await require('../../../test/merch-ui.cjs')(page, {
+      opened: () => app.evaluate(() => globalThis.openedLinks),
+      screenshot: path.join(artifacts, '18-merch-setup.png'),
+    });
+    console.log('✓ both merch guides, external browser handoff, independent URL and progress persistence, local Inbox letter');
     await quit();
     console.log('✓ settings persist across relaunch; compact layout fits; browsing creates no .yhwh; no renderer errors');
     console.log(`Screenshots: ${artifacts}`);

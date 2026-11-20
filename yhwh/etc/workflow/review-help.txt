@@ -4,7 +4,8 @@ Usage: yhwh review [DRAFT] [--answers FILE] [--list]
 
 Choose a tmp/ draft, answer concise questions (choices or free text), and preserve
 answers immediately for resumption. --answers reads a JSON object by question ID.
-The agent uses your draft and answers to write executable run/NAME containing the
-complete lordhavemercy -f --verbose heredoc. Remaining questions/blockers leave
-the draft in tmp/. Successful finalization removes the superseded draft.
+The agent uses your draft and answers to write executable run/NAME, creating
+the directory as needed. The script contains the complete prompt in a
+lordhavemercy -f --verbose heredoc. Remaining questions or blockers leave the
+draft in tmp/. Successful finalization removes the superseded draft.
 Inspect run/NAME before execution; nothing executes during this command.

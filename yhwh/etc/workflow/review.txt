@@ -1,4 +1,5 @@
-Inspect the repository read-only. Use the reviewed draft and saved answers to
+Inspect the repository read-only. Follow AGENTS.md and read the relevant
+desired-state declarations. Use the reviewed draft and saved answers to
 produce complete implementation instructions. Return ONLY JSON:
 {"prompt":"the complete final English implementation prompt","questions":[],"blockers":[]}
 The prompt must incorporate the answers and make the intended changes and checks

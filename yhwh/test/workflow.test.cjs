@@ -15,6 +15,20 @@ let input='';process.stdin.on('data',d=>input+=d);process.stdin.on('end',()=>{co
  return {root,bin,env,git,run,ok};
 }
 async function prepared(f){f.ok('begin','Improve the result');const draft=f.ok('review','--list').split('\n').find(x=>x.startsWith('improve-result'));const answers=path.join(f.root,'answers.json');await fs.writeFile(answers,'{"tone":"Plain"}');f.ok('review',draft,'--answers',answers);await fs.unlink(answers);return f.ok('run','--list');}
+test('draft and run directories are optional and deleted preparations can be regenerated',async t=>{
+ const f=await fixture(t),tmp=path.join(f.root,'tmp'),run=path.join(f.root,'run');
+ assert.equal(f.ok('review','--list'),'');assert.equal(f.ok('run','--list'),'');f.ok('run','--all');
+ await assert.rejects(fs.stat(tmp),{code:'ENOENT'});await assert.rejects(fs.stat(run),{code:'ENOENT'});
+
+ const draft=f.ok('begin','Improve the result');
+ await fs.unlink(path.join(f.root,draft));await fs.rmdir(tmp);
+ assert.equal(f.ok('begin','Improve the result'),draft);
+ const task=await prepared(f);
+ await fs.unlink(path.join(run,task));await fs.rmdir(run);
+ assert.match(f.run('review',task).stderr,/Approved script is missing/);
+ assert.equal(f.ok('run','--list'),'');
+ assert.equal(await prepared(f),task);
+});
 test('begin/review/direct execution/run/add/commit preserve exact instructions and clean Git state',async t=>{
  const f=await fixture(t);assert.match(f.ok('begin','--list'),/improve/);const task=await prepared(f);
  const script=await fs.readFile(path.join(f.root,'run',task));assert.match(script.toString(),/lordhavemercy -f --verbose << "EOF"/);

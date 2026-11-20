@@ -247,6 +247,13 @@ body:is([data-level='pro'], [data-level='elite']) .character-copy { font-family:
 .setup-step { padding: 15px 0; border-bottom: 1px solid var(--line); }
 .setup-step h3 { font-size: 1rem; margin: 0; }
 .setup-step p { font-size: .9375rem; margin: 6px 0; }
+.merch-links { font-size: .875rem; }
+.merch-links button { background: transparent; border: 0; color: inherit; font: inherit; padding: 0; }
+.merch-links button:is(:hover, :focus-visible) { color: var(--text); text-decoration: underline; text-underline-offset: .2em; }
+.merch-guide :is(.merch-intro, .merch-progress) { margin-top: 0; }
+.merch-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.merch-check { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+[data-merch-status]:not(:empty) { display: block; margin-top: 8px; }
 .warning { color: var(--gold) !important; }
 body[data-theme='dawkins'] { --bg: #111; --panel: #171717; --sidebar: #111; --rail: #0c0c0c; --line: #333; --text: #ccc; --muted: #999; --faint: #777; --purple: #ccc; --gold: #aaa; --purple-bg: #292929; --editor-font: 'DejaVu Sans Mono', monospace; font-family: 'DejaVu Sans Mono', monospace; }
 body[data-theme='dawkins'] .paleo { opacity: .5; }

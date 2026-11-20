@@ -1,0 +1,121 @@
+{
+  "fourthwall": {
+    "label": "Fourthwall",
+    "word": "YHWH",
+    "setting": "merch_fourthwall_url",
+    "intro": "Fourthwall hosts the shop, takes payment, and prints and ships catalog products. We supply the art, branding, and prices.",
+    "steps": [
+      {
+        "id": "account",
+        "title": "Create a Fourthwall account",
+        "body": "Sign up and name your shop We — The Nameless. YHWH can be the public shopkeeper. Use your real business details for billing and verification. You’re ready when the shop dashboard opens.",
+        "links": [["Open Fourthwall", "https://fourthwall.com/"], ["Account guide", "https://help.fourthwall.com/getting-started/setting-up-your-shop/get-started/create-your-fourthwall-account"]]
+      },
+      {
+        "id": "artwork",
+        "title": "Design your first shirt",
+        "body": "In Products, create a catalog listing and choose a print-on-demand tee. Upload original artwork in the designer and check placement, colors, sizes, and mockups. Save the first listing. You can use the same process for stickers, mugs, and posters.",
+        "links": [["Product listing guide", "https://help.fourthwall.com/getting-started/setting-up-your-shop/get-started/create-new-product-listings"]]
+      },
+      {
+        "id": "pricing",
+        "title": "Set a retail price",
+        "body": "Check the base production cost for each garment and variant. Subtract production, payment fees, shipping you cover, and other per-order costs from your retail price to estimate what each sale contributes. Check the actual fees and save prices you’re comfortable with.",
+        "links": [["Fourthwall pricing", "https://fourthwall.com/pricing"]]
+      },
+      {
+        "id": "storefront",
+        "title": "Design the storefront",
+        "body": "In the site designer, set the shop name, theme, logo, colors, description, and policies. Preview the public site. To use a branded subdomain such as shop.wethenameless.com, add it under Settings → Domains and enter the DNS records Fourthwall gives you at your DNS host. Wait for the domain to verify.",
+        "links": [["Store design guide", "https://help.fourthwall.com/getting-started/design-my-storefront/build-your-website"], ["Custom domain guide", "https://help.fourthwall.com/getting-started/setting-up-your-shop/get-started/set-up-your-custom-domain"]]
+      },
+      {
+        "id": "payouts",
+        "title": "Set up payouts and billing",
+        "body": "As the shop owner, open Settings → Billing and payouts and follow the payout setup. Enter the requested identity, business, tax, and banking details on the provider’s site. Add a billing method there if required. Check the dashboard for any outstanding verification requests.",
+        "links": [["Payout guide", "https://help.fourthwall.com/frequently-asked-questions/payments-and-pricing/how-you-get-paid"], ["Launch checklist", "https://help.fourthwall.com/getting-started/setting-up-your-shop/get-started/launch-your-shop/"]]
+      },
+      {
+        "id": "sample",
+        "title": "Order and inspect a sample",
+        "body": "Use Place order in the Fourthwall dashboard to buy a sample. Inspect the print, fit, artwork placement, and packaging. Check shipping cost and delivery time before promoting the design.",
+        "links": [["Sample order guide", "https://help.fourthwall.com/create-and-sell-products/how-to-guides/order-samples"]]
+      },
+      {
+        "id": "publish",
+        "title": "Publish the shop",
+        "body": "Set the site status to Live and make the product listings visible. Copy the shop address from the dashboard. Open it in a private browser window and check that a visitor can see the storefront and products.",
+        "links": [["Site status guide", "https://help.fourthwall.com/manage-my-shop/shop-settings/change-site-status"]]
+      }
+    ]
+  },
+  "shopify": {
+    "label": "Printify + Shopify",
+    "word": "merch",
+    "setting": "merch_shopify_url",
+    "intro": "Shopify runs the listings, checkout, payments, and customer orders. Printify makes and ships the products. We own the artwork, branding, pricing, policies, and merchant obligations.",
+    "launch": "Launch the store from Shopify admin and remove its storefront password. Confirm that visitors can browse it in a private browser window.",
+    "steps": [
+      {
+        "id": "shopify-account",
+        "title": "Create a Shopify account",
+        "body": "Create a Shopify store for We — The Nameless and enter your business details in Shopify. Review current subscription prices and choose a plan that can publish an online store when you’re ready to launch.",
+        "links": [["Open Shopify", "https://www.shopify.com/"], ["Shopify plans", "https://www.shopify.com/pricing"]]
+      },
+      {
+        "id": "printify-account",
+        "title": "Create a Printify account",
+        "body": "Sign up and open the Printify dashboard. The free plan is enough to start. Compare the current paid plans once actual order volumes give you a way to judge the production discounts.",
+        "links": [["Open Printify", "https://printify.com/"], ["Printify plans", "https://printify.com/pricing/"]]
+      },
+      {
+        "id": "integration",
+        "title": "Connect Printify to Shopify",
+        "body": "Install the official Printify app in Shopify and sign into Printify from it. Verify the connection under My Stores. Published products and variants go to Shopify. Orders come back to Printify for approval and fulfillment, and tracking returns to Shopify. Review your variant availability and order approval settings.",
+        "links": [["Install Printify in Shopify", "https://apps.shopify.com/printify"], ["Connection guide", "https://help.printify.com/hc/en-us/articles/4483630095505-How-can-I-connect-my-Shopify-store"]]
+      },
+      {
+        "id": "artwork",
+        "title": "Design your first shirt",
+        "body": "Choose a tee and a print provider in Printify’s catalog. Compare garment, print locations, size and color availability, and shipping to your target markets. Upload original artwork, choose sizes and colors, and preview the placement and mockups.",
+        "links": [["Printify Help Center", "https://help.printify.com/"]]
+      },
+      {
+        "id": "publish",
+        "title": "Publish products to Shopify",
+        "body": "Publish the product from Printify to your connected store. In Shopify Products, check the images, description, variants, prices, shipping profile, Active status, and Online Store availability. Preview the listing as a shopper.",
+        "links": [["How integrated publishing works", "https://help.printify.com/hc/en-us/articles/4483618218129-What-happens-after-integrating-with-Printify"]]
+      },
+      {
+        "id": "pricing",
+        "title": "Compare retail prices and margins",
+        "body": "Calculate contribution per sale after production, shipping you cover, payment fees, and other variable costs. Account for subscription costs when comparing profits at your actual volume. Use comparable garments, print placement, and destinations when comparing with Fourthwall.",
+        "links": [["Shopify plans", "https://www.shopify.com/pricing"], ["Printify plans", "https://printify.com/pricing/"]]
+      },
+      {
+        "id": "theme",
+        "title": "Make the shop look like We — The Nameless",
+        "body": "Open Online Store → Themes and preview a theme with your logo, colors, type, and product images. Check desktop and phone layouts before publishing it. A custom frontend using Shopify’s Storefront API can come later.",
+        "links": [["Shopify theme guide", "https://help.shopify.com/en/manual/online-store/themes/adding-themes"]]
+      },
+      {
+        "id": "domain",
+        "title": "Choose a public domain",
+        "body": "Keep the Shopify-hosted address or connect a custom domain in Settings → Domains. Apply Shopify’s DNS records at your DNS host and wait for the connection and HTTPS to be ready. Give this shop a distinct hostname if both stores are live.",
+        "links": [["Shopify domain guide", "https://help.shopify.com/en/manual/domains"]]
+      },
+      {
+        "id": "payments",
+        "title": "Set up payments, shipping, taxes, and policies",
+        "body": "In Shopify Settings, configure payments and payouts, shipping zones and rates, taxes, and your customer-facing return and privacy policies. Check that Printify can fulfill the destinations you list and set its billing method separately. Verify both dashboards and handle any tax, filing, or customer-service obligations for your business.",
+        "links": [["Shopify setup checklist", "https://help.shopify.com/en/manual/intro-to-shopify/initial-setup/new-to-shopify-checklists/general-checklist"], ["Printify Help Center", "https://help.printify.com/"]]
+      },
+      {
+        "id": "test",
+        "title": "Test checkout and fulfillment",
+        "body": "Use Shopify’s test payment mode to check checkout, order records, shipping rates, and tax. Turn test mode off afterward. Use a Printify sample to check print quality and delivery. If you need to verify the full Shopify-to-Printify handoff, review approval settings and place a controlled real order, which can incur production and shipping charges.",
+        "links": [["Shopify test and launch guide", "https://help.shopify.com/en/manual/intro-to-shopify/initial-setup/setup-prepare-for-launch"], ["Printify sample guide", "https://help.printify.com/hc/en-us/articles/4483617804689-How-does-sample-ordering-work"]]
+      }
+    ]
+  }
+}

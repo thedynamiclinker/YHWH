@@ -17,6 +17,7 @@ import { installFileDrag } from './file-drag.js';
 import { fileIcons } from './file-icons.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { mountChat } from './chat.js';
+import { createMerch } from './merch.js';
 import { yhwhAddress } from '../../../lib/mail-message.cjs';
 import { installInitial } from './initial.js';
 import actionLetters from '../../../etc/default/action-letters.json';
@@ -46,6 +47,14 @@ const verseUI = createVerseUI({ call, modal, notice });
 const tabs = [], commands = new Map(), listeners = new Map();
 let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], pluginKey = '', pluginGeneration = 0;
 const active = () => tabs.find(tab => tab.id === activeId);
+const merch = createMerch({
+  modal, escape, call,
+  settings: () => active()?.config.values || {},
+  async saveSettings(key, value) {
+    await call('settings:save', { [key]: value }, '/');
+    await Promise.all(tabs.map(tab => refresh(tab)));
+  },
+});
 const editionKey = 'yhwh:edition:v1';
 let edition = readEdition();
 function readEdition() {
@@ -783,6 +792,7 @@ function settings() {
       row('Outgoing mail command', 'A configured sendmail-compatible executable, such as /usr/sbin/sendmail.', `<input name="mail_transport" value="${escape(values.mail_transport || '')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
   dialog.querySelector('[data-section="files"] h3').insertAdjacentHTML('afterend', row('Default directory', mobile ? 'Opens from the app icon. Leave blank to open the app’s storage root (/).' : 'Opens from the app launcher. Leave blank to open your home directory.', `<input name="default_directory" value="${escape(boot.defaultDirectory)}" autocomplete="off" spellcheck="false">`));
+  dialog.querySelector('[data-section="presence"]').insertAdjacentHTML('beforeend', '<p><button type="button" data-command="merch-setup">Merch store setup</button></p>');
   if (boot.interface === 'mobile') {
     dialog.querySelector('[name="terminal_font_size"]').closest('label').hidden = true;
     dialog.querySelector('[name="pdf_open"]').closest('label').querySelector('small').textContent = 'Preview here, or export/share through your device. Choose once for all PDFs or ask each time.';
@@ -961,7 +971,7 @@ function piece() {
 }
 function about() {
   const notes = (currentLevel().about || []).map(line => `<p class="muted">${escape(line)}</p>`).join('');
-  modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes));
+  modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes + merch.links()));
 }
 function aboutUs() {
   modal('About Us', `<div class="publisher-signature"><span class="ld-mark" aria-hidden="true"></span><strong>The Dynamic Linker</strong></div><div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
@@ -1173,6 +1183,7 @@ async function reloadPlugins(config) {
 }
 
 const definitions = [
+  ['merch-setup', 'Merch store setup', '', merch.setup],
   ['higher-help', ui('higher-power'), '', higherHelp],
   ['be-root', ui('man'), '', () => enterWorld('root')],
   ['be-yhwh', ui('god'), '', () => enterWorld('yhwh')],
@@ -1288,9 +1299,10 @@ function receive(id, midnightOnly = false) {
   if (!letter && !midnightOnly) {
     const startup = nextStartupLetter(presence, options);
     const work = id && canReceiveLetter(presence, id, options) && actionLetters[id] && { id, ...actionLetters[id] };
+    const shop = id && merch.configured() && canReceiveLetter(presence, 'merch', options) && { id: 'merch', ...actionLetters.merch };
     // Address changes take priority; the name, overnight and work letters keep their slots.
     letter = startup?.afterBlockMinutes !== undefined ? startup
-      : nextNightLetter(presence, options) || startup || work || (id && nextEmailLetter(presence, options));
+      : nextNightLetter(presence, options) || startup || work || shop || (id && nextEmailLetter(presence, options));
   }
   if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
   const sender = senderFor(presence, letter);
@@ -1342,11 +1354,12 @@ function renderInbox() {
     const { letter, state } = selected;
     const source = letter.source;
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
+    const shopLinks = letter.id === 'merch' ? merch.links() : '';
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
     const note = source?.note || letter.note;
     const sources = note || letter.verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details>` : '';
-    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
+    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}${shopLinks}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
     host.querySelector('[data-mail-back]').onclick = () => {
       tab.mailId = null;
       renderInbox();
@@ -1508,6 +1521,7 @@ function followLink({ href, wiki, newTab, anchor }) {
 }
 document.addEventListener('click', event => {
   const edit = event.target.closest('[data-edit-word]'); if (edit) { editWords(edit.dataset.editWord); return; }
+  const shop = event.target.closest('[data-merch-store]'); if (shop) { merch.open(shop.dataset.merchStore).catch(error => notice(error.message)); return; }
   const external = event.target.closest('[data-url]'); if (external) { call('external', external.dataset.url).catch(error => notice(error.message)); return; }
   const anchor = event.target.closest('a');
   if (anchor) {

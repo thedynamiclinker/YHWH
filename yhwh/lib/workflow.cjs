@@ -124,8 +124,11 @@ function draftText(item,draft) {
 }
 async function begin(ctx,names) {
   const [item]=await select(await todos(ctx),names,{message:'Begin a kanban item'});
-  let task=(await records(ctx)).find(t=>t.id===item.id);
-  if(task){console.log(`Already ${task.status}: ${task.draft||task.script||task.name}`);return;}
+  const prior=(await records(ctx)).find(t=>t.id===item.id);
+  const preparation=prior?.status==='draft'?prior.draft:prior?.status==='ready'?prior.script:null;
+  if(prior&&(!preparation||await exists(await safe(ctx.root,preparation)))) {
+    console.log(`Already ${prior.status}: ${preparation||prior.draft||prior.script||prior.name}`);return;
+  }
   item.original=item.title;
   if(item.path!=='COVENANT.md')item.original+='\n'+await fs.readFile(await safe(ctx.root,item.path),'utf8');
   else if(item.link) {
@@ -134,7 +137,7 @@ async function begin(ctx,names) {
   }
   const draft=await agent('begin',{task:item},ctx);validateDraft(draft);
   const name=slug(draft.title||item.title)+'-'+item.id.slice(0,6);
-  task={...item,name,status:'draft',draft:`tmp/${name}.md`,answers:{},created:new Date().toISOString()};
+  const task={...item,name,status:'draft',draft:`tmp/${name}.md`,answers:{},created:new Date().toISOString()};
   const file=await safe(ctx.root,task.draft);await fs.mkdir(path.dirname(file),{recursive:true});
   await fs.writeFile(file,draftText(item,draft),{flag:'wx',mode:0o644});await save(ctx,task);console.log(task.draft);
 }
@@ -148,7 +151,13 @@ async function drafts(ctx) {
   return out;
 }
 async function review(ctx,names,answersFile) {
-  if(names.length===1) { const prior=(await records(ctx)).find(t=>(t.name===names[0]||t.id===names[0])&&t.status==='ready'); if(prior){console.log(prior.script);return;} }
+  if(names.length===1) {
+    const prior=(await records(ctx)).find(t=>(t.name===names[0]||t.id===names[0])&&t.status==='ready');
+    if(prior) {
+      if(!await exists(await safe(ctx.root,prior.script)))throw new Error('Approved script is missing. Use yhwh begin again to regenerate the draft.');
+      console.log(prior.script);return;
+    }
+  }
   const [item]=await select(await drafts(ctx),names,{message:'Review an implementation draft'});
   const text=await fs.readFile(await safe(ctx.root,item.path),'utf8');
   const data=text.match(/<!-- yhwh-review-data\n([\s\S]*?)\n-->/);

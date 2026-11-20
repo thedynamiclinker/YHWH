@@ -4,6 +4,8 @@ Usage: yhwh begin [TODO] [--list]
 
 With no name, choose a COVENANT or kanban/ item interactively. The agent inspects
 the repository read-only and writes tmp/NAME.md with the original task, intended
-result, implementation, genuine questions, blockers and assumptions. It never
-executes the draft or moves it to run/. Existing task associations are reused.
+result, implementation, genuine questions, blockers and assumptions. The draft
+directory is created as needed. Begin reuses an existing draft or approved
+script when available. If either was deleted before execution, begin regenerates
+the draft for that kanban item.
 Completion offers task basenames; duplicate basenames require a full listed name.

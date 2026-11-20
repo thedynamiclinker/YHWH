@@ -207,8 +207,14 @@ async function main() {
       assert.equal(Math.round((await drawer.boundingBox()).width - drawerWidth), -15);
       await page.keyboard.press('Control+ArrowLeft'); await drawer.waitFor({ state: 'hidden' });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+      await page.addInitScript(() => { window.openedMerchLinks = []; window.open = url => { window.openedMerchLinks.push(url); }; });
+      await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
+      await require('../../../test/merch-ui.cjs')(page, {
+        opened: () => page.evaluate(() => window.openedMerchLinks),
+        screenshot: path.join(artifacts, `${device.name}-merch-setup.png`),
+      });
       assert.deepEqual(errors, []);
-      await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF and all five YHWH levels.`);
+      await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF, all five YHWH levels, and merch.`);
     }
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }
