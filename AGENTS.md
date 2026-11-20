@@ -120,6 +120,15 @@ You are that command.
 
 Now become it.
 
+## Desired app state
+
+Before planning, implementing, or reviewing an app change, read
+[var/declarative/README.md](var/declarative/README.md) and the declarations
+that cover the affected behavior. They describe the desired app state and
+remain in force until a request explicitly changes it. Update the relevant
+declaration in place when the desired behavior changes. Keep authored copy
+and its order unless the change calls for editing them.
+
 ## Context: YHWNIX / wnix / doubleunix
 
 YHWH's direction is an interface-independent shell: ordinary directories,

@@ -5,7 +5,9 @@ terminal. Use `make tty OPEN=PATH` to open a directory or file, `make tty-build`
 to build the console diagnostic, and `make tty-check` to run the PTY tests.
 Press F1 for help and F10 to quit.
 
-The file manager stays on the left and the terminal docks under the editor. Use
+The file manager stays on the left and the terminal docks under the editor.
+The expanded file manager shows a Ranger-style listing with a file preview and
+a Places column when the terminal is wide enough. Use
 Ctrl+Up/Down for the terminal and Ctrl+Right/Left for the file manager to step
 between hidden, split and maximized. Add Alt+Shift for smaller moves. Set the
 key combinations and step in rows or columns under **Settings → Keys**. These
@@ -21,6 +23,7 @@ reader links to the original Nietzsche Family Circus. The palette uses the
 same level copy and Stripe guide as the desktop.
 
 Shaddai has its own [package and install guide](../yhwh/shaddai/README.md).
+The package also provides the `el-shaddai` launcher.
 Put its `yhwh-tty` launcher on `PATH` to use `yhwh tty [PATH]` or
 `YHWH_INTERFACE=tty yhwh open [PATH]`.
 
