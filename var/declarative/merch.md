@@ -8,7 +8,8 @@ to the project so fulfillment can change without taking the brand with it.
 
 ## Discovery
 
-- About YHWH contains the quiet phrase **YHWH merch!**. **YHWH** opens
+- The Electron status bar, the bottom of the mobile Menu, and About YHWH
+  contain the quiet phrase **YHWH merch!**. **YHWH** opens
   Fourthwall; **merch** opens Printify + Shopify. Each word is a keyboard
   reachable control with a tooltip. The space and exclamation point are plain
   text.

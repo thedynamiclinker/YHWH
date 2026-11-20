@@ -1705,6 +1705,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
 
 (async () => {
   boot = await call('bootstrap'); words = boot.words; $('#higher-help').textContent = words.helpButton;
+  $('#merch-shortcut').innerHTML = merch.links();
   try { await openRequest(boot.initial); } catch (error) { notice(error.message); if (!tabs.length) await newTab(boot.home); }
   for (const opening of boot.pending) await openRequest(opening);
   for (const [id, messages] of pendingTerminal) { if (tabs.some(tab => tab.id === id)) for (const message of messages) terminalMessage(message); }

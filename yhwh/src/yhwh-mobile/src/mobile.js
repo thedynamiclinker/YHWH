@@ -119,12 +119,17 @@ export function installMobile(app, storage) {
     }
     const add = document.createElement('button'); add.textContent = '+ New tab'; add.onclick = () => { dialog.close(); app.run('new-tab'); }; content.append(add);
   });
+  const merchShortcut = document.querySelector('#merch-shortcut');
+  merchShortcut.addEventListener('click', event => {
+    if (event.target.closest('[data-merch-store]')) merchShortcut.closest('dialog').close();
+  });
   function menu(title, entries) {
     const dialog = sheet(title), content = dialog.querySelector('.mobile-sheet-content');
     for (const [label, id] of entries) { const button = document.createElement('button'); button.textContent = label; button.onclick = () => { dialog.close(); app.run(id); }; content.append(button); }
+    return content;
   }
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Import files…', 'mobile-import']]));
-  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Talk to YHWH', 'chat'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]));
+  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Talk to YHWH', 'chat'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]).append(merchShortcut));
   command('mobile-guide', 'Mobile files and backups', () => {
     const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p><code>/</code> opens the app’s storage. Use Import files for documents from shared device storage and Export or share file to send files elsewhere. On iOS, see Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the hidden <code>/.Trash</code> folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Connect YHWH explains the available Codex account workflow.</p>';
   });

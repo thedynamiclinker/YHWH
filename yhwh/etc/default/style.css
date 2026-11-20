@@ -248,6 +248,7 @@ body:is([data-level='pro'], [data-level='elite']) .character-copy { font-family:
 .setup-step h3 { font-size: 1rem; margin: 0; }
 .setup-step p { font-size: .9375rem; margin: 6px 0; }
 .merch-links { font-size: .875rem; }
+#merch-shortcut .merch-links { margin: 0; color: var(--muted); font-size: .75rem; white-space: nowrap; }
 .merch-links button { background: transparent; border: 0; color: inherit; font: inherit; padding: 0; }
 .merch-links button:is(:hover, :focus-visible) { color: var(--text); text-decoration: underline; text-underline-offset: .2em; }
 .merch-guide :is(.merch-intro, .merch-progress) { margin-top: 0; }

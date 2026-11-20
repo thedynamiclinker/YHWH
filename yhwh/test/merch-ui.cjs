@@ -27,8 +27,16 @@ module.exports = async function checkMerch(page, { opened, screenshot }) {
   await page.clock.setFixedTime(new Date(2027, 1, 10, 12));
   await run('about');
   assert.equal(await dialog.locator('.merch-links').textContent(), 'YHWH merch!');
-  assert.match(await shop('fourthwall').getAttribute('title'), /Fourthwall/);
-  await shop('fourthwall').press('Enter');
+  await close();
+  const mobile = await page.locator('body').evaluate(body => body.classList.contains('is-mobile'));
+  if (mobile) await page.getByRole('button', { name: 'Open menu' }).tap();
+  const shortcut = page.locator(mobile ? '#mobile-dialog #merch-shortcut' : '.statusbar #merch-shortcut');
+  assert.equal(await shortcut.isVisible(), true);
+  assert.equal(await shortcut.textContent(), 'YHWH merch!');
+  const fourthwall = shortcut.locator('[data-merch-store="fourthwall"]');
+  assert.match(await fourthwall.getAttribute('title'), /Fourthwall/);
+  if (mobile) await fourthwall.tap();
+  else await fourthwall.press('Enter');
   await dialog.getByRole('heading', { name: 'Fourthwall setup' }).waitFor();
   await openedBy(() => button('Open Fourthwall ↗').click(), 'https://fourthwall.com/');
   assert.equal(await check.isChecked(), false);
