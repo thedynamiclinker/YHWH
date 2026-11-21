@@ -11,7 +11,8 @@ $(if (($#)); then printf '%q\n' "$@"; fi)
 Options:
   -a N, --add N       Addition level, from 1 (least) to 9 (most)
   -d N, --del N       Deletion level, from 1 (least) to 9 (most)
-  -s UNIT, --src UNIT  Source unit: file, paragraph, sentence, or word
+  -s UNIT, --src UNIT  Smallest movable chunk (file, paragraph, sentence, or word)
+                      Default is word. Paragraphs split at two consecutive newlines.
   --rip               R mode (default)
   --rje               RJE mode
   -i, --in-place, --inplace  Replace the first named file with the merge
@@ -39,13 +40,24 @@ Deletion applies to redundant material. At higher levels, remove increasingly
 substantial overlaps, up to whole repetitive passages, while keeping distinct
 information and variations that matter.
 
-The source unit sets the smallest unit for switching sources or moving
-material. File keeps each input together in the sequence. Paragraph permits
-interleaving and moving whole paragraphs. Sentence permits the same at
-sentence boundaries. Word (the default) permits clause or word-level joins,
-including mid-sentence. Preserve each source's relative order wherever
-possible at every setting. Rearrange only when the unit permits it and the
-merge needs it.
+The chunk size sets where you may switch sources or reorder source material.
+Apply these rules to the original source text before adding glue or cutting
+redundancy.
+
+- file treats each named file and stdin as separate whole chunks. You may
+  choose the order of those chunks. Keep each input together and preserve
+  the order of its retained lines, paragraphs, sentences, and words.
+- paragraph splits each source only at two consecutive Unix newline characters
+  (\n\n). You may reorder or interleave whole paragraphs. Keep each paragraph
+  together and preserve the order of its retained text.
+- sentence lets you reorder or interleave whole sentences. Keep each sentence
+  together and preserve the order of its retained words.
+- word, the default, allows word-level joins and moves, including mid-sentence.
+
+Use the selected addition and deletion levels for brief glue and redundancy
+cuts. These edits must respect the chosen chunk boundaries and the order of
+retained text within each chunk. Favor each source's original order among
+chunks and move them only when the merge needs it.
 
 Read each named source in operand order. Use the redirected or piped stdin
 text below as the first source if there is no dash operand. With a dash

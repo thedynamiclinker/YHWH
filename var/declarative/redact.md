@@ -7,9 +7,20 @@ more redundant passages. Both favor original wording, retain distinct source
 details, and add only brief glue. Explicit `--add` and `--del` levels from 1
 through 9 override the profiles independently.
 
-`--src` sets the smallest unit for switching sources or rearranging passages.
-The choices are `file`, `paragraph`, `sentence`, and `word` (the default).
-Both modes favor the order within each source.
+`-s` or `--src` sets the smallest chunk that can be moved or interleaved.
+
+- `file` keeps each named input and stdin together, with all retained text in
+  its original order. The input chunks can be reordered as a whole.
+- `paragraph` allows whole paragraphs to be moved or interleaved while
+  preserving the order of retained text inside each paragraph. Only two
+  consecutive Unix newline characters (`\n\n`) mark a paragraph boundary.
+- `sentence` allows whole sentences to be moved or interleaved while
+  preserving the order of retained words inside each sentence.
+- `word` (the default) allows word-level joins and moves, including
+  mid-sentence.
+
+Both modes favor the original order of chunks. Glue and redundancy cuts follow
+`--add` and `--del` within the selected chunk size's ordering constraints.
 
 File operands are read in order. Piped or redirected stdin comes first unless
 a `-` operand places it elsewhere. The merge goes to stdout by default.
