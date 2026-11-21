@@ -16,6 +16,7 @@ Running the same request again converges on the same result.
 - [YHWH Emails](yhwh-emails.md) and [YHWH Emails Next](yhwh-emails-next.md)
   are the two ordered sets of authored letters. [Presence](../../doc/presence.md)
   and [Overnight mail](../../doc/overnight-mail.md) cover delivery.
+- [Redact](redact.md) describes the R and RJE text-merging commands.
 
 [Workflow records](../README.md) describes how accepted changes and their
 declarations are stored.
