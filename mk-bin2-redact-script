@@ -6,7 +6,7 @@ Add a script called bin/redact that supports:
 
 (1) the R algorithm, and (2) the RJE algorithm.
 
-That is, the redact command will take in text from stdin or argv filenames, like grep, and generate text to stdout (or by making changes to the file in question if run with -i/--in-place, like sed.
+That is, the redact command will take in text from stdin or argv filenames, like grep, and generate text to stdout (or by making changes to the file in question if run with -i/--in-place, like sed.)
 
 The output text merges whatever stdin + argv input files and prints to stdout a single stream of text, Diatesseron or Torah style, the way that the R source would have combined JE and P, or in the way that the RJE source would have combined J and E, depending on the values of several parameters, described below.
 
@@ -14,8 +14,10 @@ Note: in both algorithms, the redactor (you) *adds* very little text, mostly jus
 
 But RJE is allowed to delete redundant things that appear in both sources, while R keeps both sources intact and is willing to have doublets.
 
+The algorithm is supposed to produce the best version of the input content by adding as little as possible to fill logical gaps, typos, thoughts being in the wrong place, etc. But the user gets to control how that happens.
+
 The algorithm is allowed to:
- - transition from one source to the other mid sentence
+ - transition from one source to the other mid sentence or between sentences, whenever is best.
  - add small amounts of glue prose
  - delete small or large amounts of redundant stuff within or between sources
  - reshuffle existing sentences or paragraphs (though how much that's allowed depends on a parameter below)
