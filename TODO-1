@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-lordhavemercy -f --verbose << "EOF"
-Refactor the file ./TODO using (1) the R algorithm, and (2) the RJE algorithm. That is, generate one file Diatesseron or Torah style, the way that the R source would have combined JE and P, and then as a separate file, generate another file Diatesseron or Torah style, the way that the RJE source would have combined J and E. Note: in both algorithms, the redactor (you) adds very little text, mostly just glue prose. But RJE is allowed to delete redundant things while R keeps both sources intact and is willing to have doublets. Both are allowed to reshuffle existing sentences or paragraphs in any order, or even transition from one source to the other mid sentence, but both are constrained by the fact that they're not allowed to generate large amounts of text that weren't already in the original source or sources.
-EOF
