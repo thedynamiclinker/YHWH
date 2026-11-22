@@ -60,14 +60,14 @@ Markdown notes without an NHS schema.
 
 - The RTK table contains the 3,000 revised-edition frame numbers, characters,
   and English keywords from the pinned [sdcr CSV](https://github.com/sdcr/heisig-kanjis/blob/e93cab40c55f193c975f91d4728bcc1d7e35556d/heisig-kanjis.csv).
-- The kindergarten East deck uses all 441 entries in the local [audited
-  primitive catalogue](../new-human-school/heisig-primitives.json).
-  The [atlas](../new-human-school/heisig-primitives-atlas.html) contains the
-  full drawings, variant forms, source evidence, and RTH checks. The quiz uses
-  the required illustration-only drawings from that atlas. For upstream
-  drawings, [cyphar’s CC0 statement](https://github.com/cyphar/heisig-rtk-index#license)
-  covers the author's contributions. The quiz uses original teaching notes
-  alongside factual mappings.
+- The kindergarten East deck uses all 441 entries in the audited primitive
+  catalogue. The atlas contains the full drawings, variant forms, source
+  evidence, and RTH checks. The quiz uses the illustration-only drawings it
+  needs from that atlas and adds original teaching notes to the factual mappings.
+  The upstream CC0 statement covers cyphar’s contributions to the drawings.
+  [Catalogue](../var/log/new-human-school/heisig-primitives.json) ·
+  [Atlas](../var/log/new-human-school/heisig-primitives-atlas.html) ·
+  [CC0 statement](https://github.com/cyphar/heisig-rtk-index#license)
 - The West deck uses the [22-letter Unicode range](https://www.unicode.org/charts/PDF/U10900.pdf)
   and an authored set of first words and grammar exercises. The Genesis
   completion cards show the source verse in their exported metadata.
