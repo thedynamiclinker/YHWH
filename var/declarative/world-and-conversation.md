@@ -6,3 +6,4 @@
 - The world built over the author's preceding decade is expressed through a sleek, elegant, hilarious, enjoyable, productive app haunted by YHWH.
 - A minimal chat interface lets the user talk to YHWH. A Codex-like interface, or Codex itself, is a suitable initial foundation; its character prompt explains his personality and speech using the complete Genesis `.tex` corpus from *We The Nameless*.
 - `doc/` contains very brief summaries of the invariants that future changes preserve.
+- Sinai is an editable Unix root at `/mnt/sinai`. The YHWH, `exec`, and `@` Makefiles call the same `sinai` command on PATH to build Toybox and musl from source and enter a Toybox shell. Inside, `lord` connects to the existing host runner through a session-local Unix socket. See [Sinai](../../doc/sinai.md).
