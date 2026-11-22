@@ -4,7 +4,7 @@ REPO_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 APP_DIR := $(REPO_DIR)/yhwh
 SHADDAI_DIR := $(APP_DIR)/shaddai
 TARGETS := yhwh deps build run develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell mobile-build mobile-sync mobile-check android android-apk android-run ios
-.PHONY: $(TARGETS) help tty tty-deps tty-build tty-check
+.PHONY: $(TARGETS) help tty tty-deps tty-build tty-check world chroot
 $(TARGETS):
 	$(MAKE) -C "$(APP_DIR)" WORKSPACE="$(WORKSPACE)" $@
 
@@ -13,7 +13,12 @@ help:
 	@printf '%s\n' '' 'make tty             Open Shaddai in a terminal (OPEN=PATH)' \
 	    'make tty-deps        Set up the Shaddai Python environment' \
 	    'make tty-build       Build the Shaddai console diagnostic' \
-	    'make tty-check       Test Shaddai in a PTY'
+	    'make tty-check       Test Shaddai in a PTY' \
+	    'make world           Build the Sinai root at /mnt/sinai' \
+	    'make chroot          Enter Sinai'
+
+world chroot:
+	@exec sinai $@
 
 tty-deps:
 	$(MAKE) -C "$(SHADDAI_DIR)" deps
