@@ -103,7 +103,7 @@ export function installMobile(app, storage) {
   command('mobile-back', 'Back', () => {
     const dialog = document.querySelector('dialog[open]'); if (dialog) { dialog.close(); return; }
     if (app.active().showFiles) { closeDrawer(); return; }
-    if (app.active().focusView === 'inbox') return app.run('focus-document');
+    if (app.active().focusView === 'inbox' || app.active().pluginView?.id === app.active().focusView) return app.run('focus-document');
     if (document.activeElement?.isContentEditable) { document.activeElement.blur(); return; }
     return app.run('back');
   });

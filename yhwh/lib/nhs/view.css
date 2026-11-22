@@ -1,0 +1,89 @@
+.nhs-view {
+  --nhs-border: var(--background-modifier-border, #bbb);
+  --nhs-paper: var(--background-secondary, #f2f2f2);
+  --nhs-ink: var(--text-normal, #1c2028);
+  --nhs-muted: var(--text-muted, #606775);
+  --nhs-blue: #24589c;
+  display: grid;
+  gap: 1.25rem;
+  max-width: 56rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3rem);
+  color: var(--nhs-ink);
+}
+.nhs-view [hidden] { display: none !important; }
+.nhs-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .65rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--nhs-border);
+}
+.nhs-heading h1 {
+  margin: 0;
+  font: 500 clamp(1.8rem, 4vw, 2.8rem)/1.15 Georgia, serif;
+  letter-spacing: -.025em;
+}
+.nhs-heading p { margin: .35rem 0 0; color: var(--nhs-muted); }
+.nhs-controls, .nhs-actions, .nhs-view footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .65rem;
+}
+.nhs-controls label { display: grid; gap: .2rem; font-size: .85em; }
+.nhs-view :is(button, input, select) {
+  min-height: 2.4rem;
+  padding: .3rem .65rem;
+  border: 1px solid var(--nhs-border);
+  border-radius: .3rem;
+  background: var(--background-primary, #fff);
+  color: var(--nhs-ink);
+  font: inherit;
+}
+.nhs-view input[type=number] { width: 6rem; }
+.nhs-view button { cursor: pointer; }
+.nhs-view button:hover { border-color: var(--nhs-muted); }
+.nhs-view .nhs-primary { background: var(--nhs-blue); border-color: var(--nhs-blue); color: white; }
+.nhs-session {
+  min-width: 0;
+  padding: clamp(.85rem, 3vw, 2rem);
+  border: 1px solid var(--nhs-border);
+  border-radius: .6rem;
+  background: var(--nhs-paper);
+}
+.nhs-session h2 { margin: .65rem 0 1rem; font: 600 1.15rem/1.4 Phoenician, "YHWH-Phoenician", system-ui, sans-serif; }
+.nhs-progress { margin: 0; color: var(--nhs-muted); font-variant-numeric: tabular-nums; }
+.nhs-glyph {
+  display: block;
+  margin-block: .35rem;
+  font-size: clamp(2.4rem, 8vw, 5rem);
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  unicode-bidi: isolate;
+}
+.nhs-glyph[dir=rtl] { text-align: start; }
+.nhs-shape {
+  display: block;
+  width: 6rem;
+  height: 6rem;
+  margin: .5rem 0;
+  padding: .45rem;
+  border-radius: .3rem;
+  object-fit: contain;
+  background: #faf7f2;
+}
+.nhs-session details { margin-block-end: .7rem; }
+.nhs-actions input { flex: 1 1 11rem; min-width: 0; font-family: Phoenician, "YHWH-Phoenician", system-ui, sans-serif; }
+.nhs-verdict { border-inline-start: 3px solid #b84c51; padding-inline-start: .6rem; font-weight: 650; }
+.nhs-feedback p { white-space: pre-line; }
+.nhs-view :is(p, bdi) { font-family: Phoenician, "YHWH-Phoenician", system-ui, sans-serif; }
+.nhs-view .nhs-glyph { font-family: Phoenician, "YHWH-Phoenician", "Noto Sans CJK JP", "YHWH Han", sans-serif; }
+.nhs-review { padding-inline-start: 0; list-style: none; }
+.nhs-review li { display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--nhs-border); }
+.nhs-review .nhs-glyph { font-size: 1.65rem; }
+.nhs-review .nhs-shape { width: 2.5rem; height: 2.5rem; }
+.nhs-view footer { align-items: center; justify-content: space-between; color: var(--nhs-muted); font-size: .85rem; overflow-wrap: anywhere; }

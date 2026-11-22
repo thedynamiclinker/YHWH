@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+
+const fs = require('node:fs/promises');
+const { closeSync, openSync } = require('node:fs');
+const path = require('node:path');
+const { createInterface } = require('node:readline');
+const { ReadStream, WriteStream } = require('node:tty');
+const { parseArgs } = require('node:util');
+
+const usage = `Usage: nhs [-i | --el] [--track east|west|all] [--grade k|N]
+           [--learn N] [--limit N] [--ordered | --shuffle] [FILE|DIRECTORY|- ...]
+Without operands, use piped Markdown when present or open the bundled curriculum.
+Use -i for an interactive quiz. With piped cards, answers come from the controlling terminal.
+Use --el for one nhs.card/v1 JSON record per line. Use --ordered for curriculum order.`;
+
+async function markdownFiles(filename) {
+  if (!(await fs.stat(filename)).isDirectory()) return [filename];
+  const entries = (await fs.readdir(filename, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name));
+  const files = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    const child = path.join(filename, entry.name);
+    if (entry.isDirectory()) files.push(...await markdownFiles(child));
+    else if (entry.isFile() && /\.md$/i.test(entry.name)) files.push(child);
+  }
+  return files;
+}
+
+async function quiz(cards, { matches }) {
+  const piped = !process.stdin.isTTY;
+  let read = process.stdin, write = process.stdout;
+  if (piped) {
+    let input, output;
+    try {
+      input = openSync('/dev/tty', 'r');
+      output = openSync('/dev/tty', 'w');
+      read = new ReadStream(input);
+      write = new WriteStream(output);
+    } catch (error) {
+      if (read === process.stdin && input !== undefined) closeSync(input);
+      if (read !== process.stdin) read.destroy();
+      if (output !== undefined) closeSync(output);
+      throw new Error('Interactive answers require a terminal. Use --el for a pipeline without one.', { cause: error });
+    }
+  }
+  const tty = createInterface({ input: read, output: write, terminal: true });
+  tty.on('SIGINT', () => tty.close());
+  const answers = tty[Symbol.asyncIterator]();
+  let correct = 0, played = 0;
+  try {
+    for (const card of cards) {
+      write.write(`\n${played + 1}/${cards.length}  ${card.glyph}\n${card.prompt}\n> `);
+      const guess = await answers.next();
+      if (guess.done || guess.value.trim() === ':q') break;
+      played++;
+      const known = matches(card, guess.value);
+      if (known) correct++;
+      write.write(`${known ? 'Correct' : 'Answer'} · ${card.answer}\n`);
+      for (const detail of new Set([card.mnemonic, card.body])) if (detail) write.write(detail + '\n');
+    }
+    write.write(`\n${correct}/${played} correct\n`);
+  } finally {
+    tty.close();
+    if (piped) { read.destroy(); write.end(); }
+  }
+}
+
+function number(value, option, minimum) {
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < minimum)
+    throw new Error(`${option} needs ${minimum ? 'a positive' : 'a nonnegative'} integer`);
+  return Number(value);
+}
+
+async function main() {
+  const { values, positionals } = parseArgs({
+    allowPositionals: true, options: {
+      interactive: { type: 'boolean', short: 'i' }, el: { type: 'boolean' },
+      help: { type: 'boolean', short: 'h' }, track: { type: 'string', default: 'all' },
+      grade: { type: 'string' }, learn: { type: 'string' }, limit: { type: 'string' },
+      ordered: { type: 'boolean' }, shuffle: { type: 'boolean' },
+    },
+  });
+  if (values.help) return console.log(usage);
+  if (values.el && values.interactive) throw new Error('Choose either --el or --interactive.');
+  if (values.ordered && values.shuffle) throw new Error('Choose either --ordered or --shuffle.');
+  if (!['east', 'west', 'all'].includes(values.track)) throw new Error('--track needs east, west, or all');
+  const grade = values.grade === undefined ? undefined : /^k(?:indergarten)?$/i.test(values.grade) ? 0 : number(values.grade, '--grade', 0);
+  const learn = values.learn === undefined ? undefined : number(values.learn, '--learn', 1);
+  const limit = values.limit === undefined ? undefined : number(values.limit, '--limit', 1);
+  const curriculum = path.join(__dirname, '../etc/nhs');
+  const shapes = require('../etc/nhs/shapes.json');
+  const model = await import('../lib/nhs/cards.mjs');
+  const bundled = path.join(curriculum, 'curriculum');
+  const inputs = positionals.length ? positionals : [process.stdin.isTTY ? bundled : '-'];
+  const interactive = !values.el;
+  const cards = [];
+  let consumed = false;
+  for (const input of inputs) {
+    if (input === '-') {
+      if (consumed) continue;
+      consumed = true;
+      process.stdin.setEncoding('utf8');
+      let text = '';
+      for await (const chunk of process.stdin) text += chunk;
+      cards.push(...model.parseMarkdown(text, 'stdin', shapes));
+      if (!positionals.length && !text.trim()) inputs.push(bundled);
+    } else {
+      for (const file of await markdownFiles(input)) cards.push(...model.parseMarkdown(await fs.readFile(file, 'utf8'), file, shapes));
+    }
+  }
+  const shuffle = !values.ordered && (values.shuffle || interactive);
+  let selected = model.selectCards(cards, { track: values.track, grade, learn, shuffle });
+  if (interactive) {
+    const usable = selected.filter(card => card.glyph);
+    if (usable.length < selected.length) console.error(`nhs: skipping ${selected.length - usable.length} illustration-only cards in the terminal`);
+    selected = usable;
+  }
+  if (!selected.length) throw new Error('No cards match these inputs and filters.');
+  selected = selected.slice(0, limit);
+  if (interactive) await quiz(selected, model);
+  else for (const card of selected) {
+    if (!process.stdout.write(JSON.stringify(card) + '\n')) await new Promise(resolve => process.stdout.once('drain', resolve));
+  }
+}
+
+process.stdout.on('error', error => { if (error.code === 'EPIPE') process.exit(0); throw error; });
+main().catch(error => { console.error('nhs: ' + error.message); process.exitCode = 1; });

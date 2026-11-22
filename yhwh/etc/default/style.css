@@ -91,6 +91,7 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .focus-area { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .center-panels { display: flex; flex: 1; min-width: 0; min-height: 0; }
 .center-panels:empty { display: none; }
+.workspace-focus-view { flex: 1; min-width: 0; min-height: 0; overflow: auto; }
 .document { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .document-toolbar { height: 39px; min-height: 39px; display: flex; align-items: center; justify-content: space-between; padding: 0 17px; color: var(--faint); font-size: .875rem; border-bottom: 1px solid #ffffff03; gap: 10px; }
 .document-toolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

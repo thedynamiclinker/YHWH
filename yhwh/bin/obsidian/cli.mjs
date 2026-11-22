@@ -106,6 +106,8 @@ async function exportSupport(destination) {
   await mkdir(join(destination,'lib'),{recursive:true});
   for (const file of ['text.cjs', 'text.d.cts', 'levels.cjs', 'levels.d.cts', 'circus.cjs', 'circus.d.cts'])
     await copyFile(join(system,'lib',file),join(destination,'lib',file));
+  await cp(join(system, 'lib/nhs'), join(destination, 'lib/nhs'), { recursive: true });
+  await cp(join(system, 'etc/nhs'), join(destination, 'etc/nhs'), { recursive: true });
   for (const file of await readdir(join(destination,'src'))) if (/\.ts$/.test(file)) {
     const target=join(destination,'src',file);
     await writeFile(target,(await readFile(target,'utf8')).replaceAll('../../../etc/obsidian/','../etc/').replaceAll('../../../etc/default/','../etc/default/').replaceAll('../../../lib/','../lib/'));
@@ -122,10 +124,11 @@ async function exportSupport(destination) {
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-await build({absWorkingDir:root,entryPoints:['src/main.ts'],outfile:'main.js',bundle:true,format:'cjs',target:'es2020',external:['obsidian']});
+await build({absWorkingDir:root,entryPoints:['src/main.ts'],outfile:'main.js',bundle:true,format:'cjs',target:'es2020',external:['obsidian'],loader:{'.md':'text'}});
 const font=await readFile(new URL('../assets/Phoenician.ttf',import.meta.url));
 const css=await readFile(new URL('../etc/styles.css',import.meta.url),'utf8');
-await writeFile(new URL('../styles.css',import.meta.url),'@font-face{font-family:YHWH-Phoenician;src:url(data:font/ttf;base64,'+font.toString('base64')+')}\\n'+css);
+const schoolCSS=await readFile(new URL('../lib/nhs/view.css',import.meta.url),'utf8');
+await writeFile(new URL('../styles.css',import.meta.url),'@font-face{font-family:YHWH-Phoenician;src:url(data:font/ttf;base64,'+font.toString('base64')+')}\\n'+css+'\\n'+schoolCSS);
 `);
   // Export a normal lockfile using npm rather than a second dependency format.
   const lock=await json(join(system,'package-lock.json'));

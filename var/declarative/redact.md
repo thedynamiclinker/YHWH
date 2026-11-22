@@ -7,6 +7,9 @@ more redundant passages. Both favor original wording, retain distinct source
 details, and add only brief glue. Explicit `--add` and `--del` levels from 1
 through 9 override the profiles independently.
 
+The checkout's `bin/` entry points resolve to the executable scripts in
+`bin2/`.
+
 `-s` or `--src` sets the smallest chunk that can be moved or interleaved.
 
 - `file` keeps each named input and stdin together, with all retained text in
@@ -26,6 +29,8 @@ File operands are read in order. Piped or redirected stdin comes first unless
 a `-` operand places it elsewhere. The merge goes to stdout by default.
 `--in-place` (also `-i` or `--inplace`) writes the merge to the first named
 file after all sources have been read and the merge succeeds.
+The Bash wrapper keeps the original file if the runner fails, returns no
+text, or the destination changes while redaction is running.
 
 `redact` parses the invocation in Bash before handing resolved settings and
 source text to `lordhavemercy`. It forwards `-f` or `--force` to the runner.

@@ -18,6 +18,8 @@ import { fileIcons } from './file-icons.js';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { mountChat } from './chat.js';
 import { createMerch } from './merch.js';
+import installNHS from '../plugins/new-human-school/main.js';
+import '../../../lib/nhs/view.css';
 import { yhwhAddress } from '../../../lib/mail-message.cjs';
 import { installInitial } from './initial.js';
 import actionLetters from '../../../etc/default/action-letters.json';
@@ -44,7 +46,7 @@ for (const button of document.querySelectorAll('#files [data-file-icon]')) butto
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const call = (channel, ...args) => bridge.call(channel, ...args);
 const verseUI = createVerseUI({ call, modal, notice });
-const tabs = [], commands = new Map(), listeners = new Map();
+const tabs = [], commands = new Map(), listeners = new Map(), focusViews = new Map();
 let activeId, boot, words, toastTimer, clipboardFiles, pluginCleanup = [], pluginKey = '', pluginGeneration = 0;
 const active = () => tabs.find(tab => tab.id === activeId);
 const merch = createMerch({
@@ -286,7 +288,7 @@ function activate(id) {
   });
 }
 function tabTitles() {
-  const label = tab => tab.customTitle || ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
+  const label = tab => tab.customTitle || focusViews.get(tab.focusView)?.title || ({ margins: 'In the margins', inbox: 'Inbox', chat: 'Conversation' })[tab.focusView] || tab.file?.name || basename(tab.cwd);
   $('#tabs').innerHTML = tabs.map(tab => ui("--3", tab.id === activeId, tab.id, escape(tab.file?.path || tab.cwd), tab.dirty ? '● ' : '', escape(label(tab)), tab.id, escape(label(tab)))).join('');
   for (const element of $('#tabs').querySelectorAll('[data-tab]')) element.draggable = true;
 }
@@ -355,6 +357,7 @@ function focusCurrent(tab = active()) {
   if (!tab || active() !== tab || document.querySelector('dialog[open]')) return;
   if (tab.focusView === 'chat') { if (boot.interface !== 'mobile') chatPanel?.element.querySelector('textarea')?.focus(); return; }
   if (tab.focusView === 'inbox') { $('#inbox-view').querySelector('button')?.focus(); return; }
+  if (tab.pluginView?.id === tab.focusView) { tab.pluginView.element.focus({ preventScroll: true }); return; }
   if (tab.focusView !== 'document') return;
   if (tab.file?.mode === 'reading') tab.document.querySelector('.reading-view').focus({ preventScroll: true });
   else if (tab.editor && boot.interface !== 'mobile') tab.editor.focus();
@@ -414,6 +417,8 @@ function update() {
   $('#document').hidden = view !== 'document';
   $('#inbox-view').hidden = view !== 'inbox';
   if (chatPanel) chatPanel.element.hidden = view !== 'chat';
+  for (const item of tabs) if (item.pluginView)
+    item.pluginView.element.hidden = item !== tab || view !== item.pluginView.id;
   for (const button of document.querySelectorAll('.ribbon [data-command]')) button.setAttribute('aria-pressed', String(button.dataset.command === ({ document: 'focus-document', margins: 'margins', inbox: 'inbox', chat: 'chat' })[view]));
   $('#navigation-area').hidden = !tab.showFiles && tab.expanded !== 'files';
   const terminalPanel = $('#terminal-panel');
@@ -646,9 +651,10 @@ async function closeTab(id = activeId) {
     if (!await mayReplace(tab)) return;
     await call('focus:close', id);
     const index = tabs.indexOf(tab);
-    closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index });
+    closedTabs.push({ cwd: tab.cwd, file: tab.file?.path, focusView: focusViews.has(tab.focusView) ? 'document' : tab.focusView, showFiles: tab.showFiles, showTerminal: tab.showTerminal, index });
     if (closedTabs.length > 30) closedTabs.shift();
     clearDocument(tab);
+    disposeFocusView(tab);
     for (const session of tab.terminals) session.terminal.dispose();
     tab.document.remove();
     tab.terminalElement.remove();
@@ -1152,12 +1158,46 @@ function draggable(header, id) {
   header.addEventListener('pointerdown', event => { control = !!event.target.closest('button, input, select, a'); });
   header.ondragstart = event => { if (control) { event.preventDefault(); return; } event.stopPropagation(); event.dataTransfer.setData('application/x-yhwh-panel', id); };
 }
+function disposeFocusView(tab) {
+  const view = tab.pluginView;
+  if (!view) return;
+  tab.pluginView = undefined;
+  try { view.cleanup?.(); } catch (error) { console.error(error); }
+  view.element.remove();
+}
+function addFocusView(view) {
+  if (focusViews.has(view.id)) throw new Error('Focus view already exists: ' + view.id);
+  focusViews.set(view.id, view);
+  return () => {
+    focusViews.delete(view.id);
+    for (const tab of tabs) if (tab.pluginView?.id === view.id) {
+      disposeFocusView(tab);
+      if (tab.focusView === view.id) tab.focusView = 'document';
+    }
+    update();
+  };
+}
+function showFocusView(id, options = {}) {
+  const tab = active(), view = focusViews.get(id);
+  if (!view) throw new Error('Unknown focus view: ' + id);
+  disposeFocusView(tab);
+  const element = document.createElement('div');
+  element.className = 'workspace-focus-view';
+  element.tabIndex = -1;
+  const close = () => { if (active() === tab && tab.focusView === id) focusView('document'); };
+  tab.pluginView = { id, element };
+  $('#center-panels').append(element);
+  try { tab.pluginView.cleanup = view.mount(element, { ...options, tab: tab.id, close }); }
+  catch (error) { disposeFocusView(tab); focusView('document'); throw error; }
+  tab.expanded = '';
+  focusView(id);
+}
 function pluginAPI() {
-  return { words, notice, editWords, addCommand, addPanel, movePanel, openFile, navigate, address, currentLevel, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
+  return { words, notice, editWords, addCommand, addPanel, movePanel, addFocusView, showFocusView, openFile, navigate, address, currentLevel, getFocus: () => ({ id: active().id, cwd: active().cwd, file: active().file?.path }), getEditor: () => active()?.editor,
     createCitation: verseUI.createCitation, showVerse: verseUI.browse,
     on(name, callback) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(callback); return () => listeners.get(name).delete(callback); },
     injectCSS(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); return () => style.remove(); },
-    files: { read: filename => call('file:read', filename), save: (filename, content, modified) => call('file:save', filename, content, modified) },
+    files: { list: (tab, directory) => call('directory:list', tab, directory), read: filename => call('file:read', filename), save: (filename, content, modified) => call('file:save', filename, content, modified) },
   };
 }
 async function reloadPlugins(config) {
@@ -1705,6 +1745,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
 
 (async () => {
   boot = await call('bootstrap'); words = boot.words; $('#higher-help').textContent = words.helpButton;
+  installNHS(pluginAPI());
   $('#merch-shortcut').innerHTML = merch.links();
   try { await openRequest(boot.initial); } catch (error) { notice(error.message); if (!tabs.length) await newTab(boot.home); }
   for (const opening of boot.pending) await openRequest(opening);

@@ -130,7 +130,7 @@ if ((in_place)); then
 fi
 
 # The dash tells the installed lord wrapper to have Codex read the heredoc.
-lordhavemercy --verbose "${runner_options[@]}" -- - << EOF
+lordhavemercy --quiet --no-agents @unix "${runner_options[@]}" -- - << EOF
 Merge the source texts below into one continuous text, in the style of a
 Diatessaron or the compilation of the Torah.
 
@@ -179,6 +179,7 @@ $source_text
 EOF
 
 if ((in_place)); then
+    [[ -s $output ]] || fail "runner returned no merged text"
     [[ $(stat --format='%d:%i:%s:%y:%z' -- "$target") == "$original_state" ]] ||
         fail "destination changed during redaction: $target"
     chmod --reference="$target" -- "$output"

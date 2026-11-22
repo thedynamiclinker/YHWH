@@ -17,6 +17,8 @@ Running the same request again converges on the same result.
   are the two ordered sets of authored letters. [Presence](../../doc/presence.md)
   and [Overnight mail](../../doc/overnight-mail.md) cover delivery.
 - [Redact](redact.md) describes the R and RJE text-merging commands.
+- [New Human School](new-human-school.md) describes the quiz, curriculum, and
+  the project goals behind them.
 
 [Workflow records](../README.md) describes how accepted changes and their
 declarations are stored.

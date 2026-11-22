@@ -161,6 +161,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
+| New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
 | YHWH Emails | One local Inbox message per section of [YHWH Emails](../../../var/declarative/yhwh-emails.md) and [YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md), delivered in order as you work, with shared presence controls and links that open in the native browser |
 | YHWH merch | About YHWH and Settings → Presence use the shared setup guides and store the two storefront URLs and checklists on this installation. Provider pages open in the platform browser. |
 | YHWH-ness and upgrade preview | Shared free levels, reversible Pro and Elite preview unlocks, Stripe setup guide and character names. Preview state persists on this installation. |

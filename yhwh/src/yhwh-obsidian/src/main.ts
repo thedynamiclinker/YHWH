@@ -9,6 +9,7 @@ import { ORIGIN as circusOrigin, parsePair, type CircusPair } from '../../../lib
 import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
+import { NHS, NHSView } from './nhs';
 
 export default class YHWH extends Plugin {
   settings!: Settings;
@@ -38,6 +39,7 @@ export default class YHWH extends Plugin {
     this.registerView(CONSOLE, leaf => new ConsoleView(leaf, this));
     this.registerView(TEXT, leaf => new TextView(leaf, this));
     this.registerView(ATLAS, leaf => new Atlas(leaf, this));
+    this.registerView(NHS, leaf => new NHSView(leaf));
     this.addRibbonIcon('flame', ui("yhwh-open-navigator"), () => this.run(() => this.show(NAV)));
     this.status = this.addStatusBarItem();
     this.status.addClass('yhwh-status');
@@ -48,6 +50,8 @@ export default class YHWH extends Plugin {
       ['focus-files', ui("toggle-file-manager-in-the-workspace"), () => this.toggleFilesFocus(), 'd'],
       ['toggle-console', ui("toggle-navigation-console"), () => this.toggle(CONSOLE), 'b'],
       ['open-atlas', ui("open-3d-directory"), () => this.show(ATLAS)],
+      ['new-human-school', 'New Human School', () => this.school(null)],
+      ['new-human-school-folder', 'New Human School · Practice this folder', () => this.school(this.folder)],
       ['emails', 'Read YHWH emails', () => this.emails()],
       ['up', ui("go-to-parent-folder"), () => this.go(parent(this.folder))],
       ['new-file', ui("new-file-in-current-folder"), () => this.newFile()],
@@ -153,6 +157,12 @@ export default class YHWH extends Plugin {
     const leaves = this.app.workspace.getLeavesOfType(type);
     if (leaves.length) leaves.forEach(leaf => leaf.detach());
     else await this.show(type);
+  }
+  async school(folder: string | null) {
+    const workspace = this.app.workspace;
+    const leaf = workspace.getLeavesOfType(NHS)[0] ?? workspace.getLeaf('tab');
+    await leaf.setViewState({ type: NHS, state: { folder }, active: true });
+    await workspace.revealLeaf(leaf);
   }
   async toggleFilesFocus() {
     const center = this.app.workspace.getLeavesOfType(NAV).filter(leaf => leaf.getRoot() === this.app.workspace.rootSplit);
