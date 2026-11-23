@@ -18,6 +18,15 @@ const root = path.resolve(__dirname, variant === 'three' ? '../../yhwh-three' : 
   await fs.writeFile(path.join(directory, 'data.json'), '{"hello":"world","count":3,"big":9007199254740993,"same":1,"same":2}');
   await fs.writeFile(path.join(directory, 'page.html'), '<html><body><div>hi</div></body></html>');
   await fs.writeFile(path.join(directory, 'boop'), 'a plain file\n');
+  const headings = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
+  const editorFixture = [
+    '---', 'cssclasses: [font-mono, large-text]', '---', '',
+    ...headings.flatMap((heading, index) => ['#'.repeat(index + 1) + ' ' + heading, '']),
+    '- [ ] Check off a task', '', 'move this', 'through here', '',
+    '```sh', 'echo "$HOME"', '```', '',
+  ].join('\n');
+  await fs.writeFile(path.join(directory, 'editor-fixture.md'), editorFixture);
+  await fs.writeFile(path.join(directory, 'Makefile'), 'CC := cc\n.PHONY: all\nall: main.c\n\t@echo "$(CC)"\n');
   await fs.writeFile(path.join(directory, 'links.md'), '# Links\n\n[Open a note](notes.md)\n\n[Open the web](https://thedynamiclinker.com)\n\n[[notes|Wiki note]]\n\n[Read text](boop)\n');
   await fs.writeFile(path.join(directory, '.hidden'), 'hidden');
   await fs.writeFile(path.join(config, 'theme.css'), '.statusbar { border-top-color: rgb(90, 70, 120); }');
@@ -91,6 +100,63 @@ process.stdin.on('end', () => {
     assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()), false);
     assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized()), false);
     await require('../../../test/interface-improvements.cjs')({ app, page, run, open, directory, artifacts });
+    await run('new-tab');
+    await open(path.join(directory, 'editor-fixture.md'));
+    const picker = page.locator('#language-picker'), why = page.locator('#language-why');
+    assert.equal(await picker.inputValue(), 'auto');
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · Markdown');
+    assert.equal(await why.isVisible(), false);
+    const activeDocument = page.locator('.document-content:visible');
+    assert.match(await activeDocument.getAttribute('class'), /font-mono large-text/);
+    assert.equal(await page.locator('#document').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(47, 56, 62)');
+    const ldColors = ['224, 102, 102', '109, 158, 235', '255, 229, 153', '147, 196, 125', '238, 238, 238', '173, 173, 173'];
+    async function verifyHeadingColors(selector) {
+      for (const [index, value] of ldColors.entries()) {
+        const heading = activeDocument.locator(selector(index + 1)).filter({ hasText: headings[index] });
+        assert.equal(await heading.first().evaluate(element => getComputedStyle(element).color), `rgb(${value})`, headings[index]);
+      }
+    }
+    await verifyHeadingColors(level => `.live-h${level}`);
+    await activeDocument.locator('[data-task-marker]').click();
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /- \[x\] Check off a task/);
+    await run('markdown-source');
+    await verifyHeadingColors(level => `.cm-header-${level}`);
+    await page.evaluate(() => {
+      const editor = window.YHWH.getEditor(), from = editor.state.doc.toString().indexOf('move this');
+      editor.dispatch({ selection: { anchor: from, head: from + 'move this'.length }, scrollIntoView: true });
+    });
+    await page.keyboard.press('Control+b');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /\*\*move this\*\*/);
+    await page.keyboard.press('Control+i');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /\*\*\*move this\*\*\*/);
+    await page.keyboard.press('Control+i');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /\n\*\*move this\*\*\n/);
+    await page.keyboard.press('Alt+ArrowDown');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /through here\n\*\*move this\*\*/);
+    const selection = () => page.evaluate(() => window.YHWH.getEditor().state.selection.toJSON());
+    const selectionBeforeHighlighting = await selection();
+    await picker.selectOption('plain');
+    await page.waitForFunction(() => window.YHWH.active().file.language === 'plain');
+    assert.deepEqual(await selection(), selectionBeforeHighlighting);
+    await page.keyboard.press('Control+z');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /\*\*move this\*\*\nthrough here/);
+    await page.keyboard.press('Control+Shift+Z');
+    assert.match(await page.evaluate(() => window.YHWH.getEditor().state.doc.toString()), /through here\n\*\*move this\*\*/);
+    await picker.selectOption('auto');
+    await page.waitForFunction(() => window.YHWH.active().file.language === 'markdown' && window.YHWH.active().file.mode === 'source');
+    await page.keyboard.press('Control+f');
+    await activeDocument.locator('.cm-search input').first().fill('move');
+    await activeDocument.locator('.cm-search [name=close]').click();
+    await run('reading-view');
+    await verifyHeadingColors(level => `.reading-view h${level}`);
+    assert.doesNotMatch(await activeDocument.locator('.reading-view').textContent(), /cssclasses/);
+    assert.equal(await activeDocument.locator('.reading-task').getAttribute('aria-checked'), 'true');
+    await activeDocument.locator('.reading-view pre [class^="syntax-"]').first().waitFor();
+    await activeDocument.locator('.reading-view').evaluate(element => { element.scrollTop = 0; });
+    await page.screenshot({ path: path.join(artifacts, '18-everforest-reading.png') });
+    await run('view-mode');
+    await run('save');
+    await run('close-tab');
     assert.equal(await page.locator('#margin-box').isVisible(), false);
     await run('margins');
     await page.locator('#margin-box .verse-block').waitFor();
@@ -383,6 +449,7 @@ process.stdin.on('end', () => {
     await page.screenshot({ path: path.join(artifacts, '03-markdown-preview.png') });
     console.log('✓ Markdown source/preview; edit/save; heading renames the real file; expansion preserves it');
 
+    await page.locator('#file-list').focus();
     await page.keyboard.press('Control+b'); await page.locator('#terminal-panel').waitFor({ state: 'visible' });
     await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);
     await page.keyboard.type(`cd '${nested}'`); await page.keyboard.press('Enter');
@@ -406,16 +473,52 @@ process.stdin.on('end', () => {
     console.log('✓ bidirectional real shell/file-manager cwd; independent app tabs; CLI routes to its originating tab');
 
     await open(path.join(directory, 'data.json')); await run('view-mode'); await run('save');
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · JSON');
+    const syntaxColors = await activeDocument.locator('.cm-line span').evaluateAll(spans => [...new Set(spans.map(span => getComputedStyle(span).color))]);
+    assert.ok(syntaxColors.includes('rgb(167, 192, 128)') && syntaxColors.includes('rgb(219, 188, 127)'), syntaxColors);
     assert.match(await fs.readFile(path.join(directory, 'data.json'), 'utf8'), /\n  "hello"/);
     assert.match(await fs.readFile(path.join(directory, 'data.json'), 'utf8'), /9007199254740993/);
     assert.equal((await fs.readFile(path.join(directory, 'data.json'), 'utf8')).match(/"same"/g).length, 2);
     await open(path.join(directory, 'page.html')); await run('view-mode'); await run('save');
     assert.match(await fs.readFile(path.join(directory, 'page.html'), 'utf8'), /\n/);
-    await open(path.join(directory, 'boop')); assert.equal(await page.locator('#language-button').textContent(), 'plain');
-    await page.locator('#language-button').click(); await page.locator('#dialog select[name=language]').selectOption('markdown'); await page.locator('#dialog select[name=remember]').selectOption('filename'); await page.locator('#dialog .primary').click();
-    await page.locator('#dialog').waitFor({ state: 'hidden' }); await open(path.join(directory, 'boop'));
-    assert.equal(await page.locator('#language-button').textContent(), 'markdown');
-    console.log('✓ JSON/HTML formatting; desktop detection; persistent filename language override');
+    await open(path.join(directory, 'Makefile'));
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · Makefile');
+    assert.equal(await activeDocument.locator('.syntax-function').filter({ hasText: /^all$/ }).count(), 1);
+    assert.equal(await activeDocument.locator('.syntax-string').filter({ hasText: /^CC$/ }).count(), 1);
+    await open(path.join(directory, 'boop'));
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · Plain Text');
+    await picker.selectOption('python');
+    await page.waitForFunction(() => window.YHWH.active().file.language === 'python');
+    await why.click();
+    await page.locator('#dialog textarea').fill('Discard this explanation');
+    await page.keyboard.press('Escape');
+    const log = path.join(config, 'var/lib/editor/language-feedback.tsv');
+    await assert.rejects(fs.stat(log), { code: 'ENOENT' });
+    await picker.selectOption('shell');
+    await page.waitForFunction(() => window.YHWH.active().file.language === 'shell');
+    await picker.selectOption('auto');
+    await why.waitFor({ state: 'hidden' });
+    await picker.selectOption('markdown');
+    await why.click();
+    const reason = 'These notes use Markdown.\nThis line has a tab\tand a backslash: \\.';
+    await page.locator('#dialog textarea').fill(reason);
+    await page.locator('#dialog select[name=remember]').selectOption('filename');
+    await page.screenshot({ path: path.join(artifacts, '19-language-feedback.png') });
+    await page.locator('#dialog .primary').click();
+    await page.locator('#dialog').waitFor({ state: 'hidden' });
+    assert.equal(await fs.readFile(path.join(config, 'etc/editor/languages'), 'utf8'), 'filename\tboop\tmarkdown\n');
+    const records = (await fs.readFile(log, 'utf8')).trimEnd().split('\n');
+    assert.equal(records.length, 1);
+    assert.deepEqual(records[0].split('\t').slice(1), [path.join(directory, 'boop'), 'text/plain', 'plain', 'markdown', 'These notes use Markdown.\\nThis line has a tab\\tand a backslash: \\\\.']);
+    assert.equal(await fs.readFile(path.join(directory, 'boop'), 'utf8'), 'a plain file\n');
+    await picker.selectOption('auto');
+    await why.waitFor({ state: 'hidden' });
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · Markdown');
+    await open(path.join(directory, 'page.html'));
+    await open(path.join(directory, 'boop'));
+    assert.equal(await picker.locator(':checked').textContent(), 'Auto · Markdown');
+    assert.equal(await why.isVisible(), false);
+    console.log('✓ Everforest Markdown modes and editing keys, automatic highlighting, manual override, and flat feedback/rules');
 
     await page.keyboard.press('Control+p'); await page.locator('#palette-search').fill('Hello, world'); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Hello, world.'));

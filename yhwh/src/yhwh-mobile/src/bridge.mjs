@@ -1,4 +1,5 @@
 import { fileType } from '../../../lib/file-type.cjs';
+import { ruleFile, feedbackFile, languageRuleLine, languageFeedbackLine } from '../../../lib/editor-language.mjs';
 import { addressCopy, levelAt } from '../../../lib/levels.cjs';
 import { draft, message } from '../../../lib/mail-message.cjs';
 
@@ -78,11 +79,13 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     const path = normalize(filename), stat = await storage.stat(path);
     if (!stat) throw new Error('ENOENT: file not found.');
     if (stat.directory) throw new Error('Open a regular file.');
-    const resolved = await config(path), type = fileType(path, new Uint8Array(), resolved.values, mime(path));
+    const resolved = await config(path);
+    const rules = await storage.loadText?.(ruleFile) || '';
+    const type = fileType(path, new Uint8Array(), resolved.values, mime(path), rules);
     const result = { ...stat, path, name: path.split('/').at(-1), ...type, config: resolved, kind: 'binary' };
     if (type.external || (type.viewer === 'pdf' && resolved.values.pdf_open === 'external') || stat.size > (type.viewer === 'pdf' ? 64 : 16) * 1024 * 1024) return result;
     const bytes = await storage.read(path);
-    Object.assign(result, fileType(path, bytes, resolved.values, mime(path)), { modified: version(stat, bytes) });
+    Object.assign(result, fileType(path, bytes, resolved.values, mime(path), rules), { modified: version(stat, bytes) });
     if (result.viewer === 'pdf') return { ...result, kind: 'pdf', bytes };
     if (bytes.includes(0)) return result;
     try { const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes); return { ...result, kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' }; }
@@ -120,6 +123,8 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'directory:list': async (id, directory) => (await list(id, directory)).entries,
     'path:stat': async filename => { const path = normalize(filename), stat = await storage.stat(path); if (!stat) throw new Error('ENOENT: path not found.'); return { ...stat, path }; },
     'file:read': read,
+    'editor:language-rule': (filename, language, scope) => storage.appendText(ruleFile, languageRuleLine(normalize(filename), language, scope)),
+    'editor:language-feedback': feedback => storage.appendText(feedbackFile, languageFeedbackLine({ ...feedback, filename: normalize(feedback.filename) })),
     async 'file:save'(filename, content, modified, force = false) {
       const path = normalize(filename), stat = await storage.stat(path);
       if (stat?.directory) throw new Error('Open a regular file.');
@@ -207,7 +212,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'verse:get': reference => verses.get(reference), 'verse:random': () => verses.random('Genesis'),
     'verse:commentary': (...args) => verses.saveCommentary(...args),
   };
-  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave']);
+  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave', 'editor:language-rule', 'editor:language-feedback']);
   return {
     // Parity tests require an explicit decision for every shared operation.
     supports: channel => Object.hasOwn(handlers, channel) || Object.hasOwn(unavailable, channel),

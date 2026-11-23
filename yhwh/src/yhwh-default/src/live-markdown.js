@@ -15,11 +15,18 @@ export const wikiLinks = {
 };
 
 class Marker extends WidgetType {
-  constructor(text) { super(); this.text = text; }
-  eq(other) { return this.text === other.text; }
+  constructor(text, type) { super(); this.text = text; this.type = type; }
+  eq(other) { return this.text === other.text && this.type === other.type; }
   toDOM() {
     const span = document.createElement('span');
     span.className = 'live-marker';
+    if (this.type === 'QuoteMark') span.classList.add('live-blockquote-marker');
+    if (this.type === 'TaskMarker') {
+      span.dataset.taskMarker = '';
+      span.setAttribute('role', 'checkbox');
+      span.setAttribute('aria-label', 'Toggle task');
+      span.setAttribute('aria-checked', String(this.text === '☑'));
+    }
     span.textContent = this.text;
     return span;
   }
@@ -98,11 +105,12 @@ function decorations(view) {
         if (!containsSelection(state, line.from, line.to)) {
           const value = state.sliceDoc(from, to);
           const glyph = name === 'QuoteMark' ? '▎' : name === 'TaskMarker' ? /x/i.test(value) ? '☑' : '☐' : /\d/.test(value) ? value : '•';
-          ranges.push(Decoration.replace({ widget: new Marker(glyph) }).range(from, to));
+          ranges.push(Decoration.replace({ widget: new Marker(glyph, name) }).range(from, to));
         }
-      } else if (name === 'CodeText' && node.parent?.name === 'FencedCode') {
-        for (let line = state.doc.lineAt(from); line.from < to; line = state.doc.line(line.number + 1)) {
-          decorateLine(ranges, 'live-fence', line.from);
+      } else if (name === 'FencedCode') {
+        for (let line = state.doc.lineAt(Math.max(from, visible.from)); line.from < Math.min(to, visible.to); line = state.doc.line(line.number + 1)) {
+          const edge = line.from <= from ? ' live-fence-start' : line.to >= to ? ' live-fence-end' : '';
+          decorateLine(ranges, 'live-fence' + edge, line.from);
           if (line.number === state.doc.lines) break;
         }
       }
@@ -131,9 +139,21 @@ export function liveMarkdown(follow) {
     }, { decorations: plugin => plugin.decorations }),
     EditorView.domEventHandlers({
       mousedown(event) {
-        return event.button === 0 && (event.metaKey || event.ctrlKey) && !!event.target.closest('[data-live-link]');
+        return event.button === 0 && !!(event.target.closest('[data-task-marker]')
+          || (event.metaKey || event.ctrlKey) && event.target.closest('[data-live-link]'));
       },
-      click(event) {
+      click(event, view) {
+        const marker = event.target.closest('[data-task-marker]');
+        if (marker) {
+          const position = view.posAtDOM(marker);
+          const tree = syntaxTree(view.state);
+          const node = [tree.resolveInner(position, 1), tree.resolveInner(position, -1)].find(node => node.name === 'TaskMarker');
+          if (node) {
+            const value = view.state.sliceDoc(node.from, node.to);
+            view.dispatch({ changes: { from: node.from, to: node.to, insert: /x/i.test(value) ? '[ ]' : '[x]' }, userEvent: 'input' });
+            return true;
+          }
+        }
         const link = event.target.closest('[data-live-link]');
         if (!link || (!event.ctrlKey && !event.metaKey)) return false;
         follow({ href: link.dataset.liveLink, wiki: link.dataset.wiki === 'true', newTab: event.shiftKey });

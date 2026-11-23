@@ -16,30 +16,39 @@ async function list(directory, hidden = false) {
   }))).sort((a, b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, undefined, { numeric: true }));
 }
 
-async function detect(filename, buffer, config = {}) {
-  let mime = '';
+async function detect(filename, buffer, config = {}, languageRules = '') {
+  let mime = '', type;
   // This is the shared-mime-info database used by Linux desktop file managers.
   // libmagic is the fallback on machines without xdg-mime (including macOS).
   for (const [command, args] of [['xdg-mime', ['query', 'filetype', filename]], ['file', ['--brief', '--mime-type', '--', filename]]]) {
-    try { mime = (await exec(command, args, { timeout: 2000, maxBuffer: 8192 })).stdout.trim(); if (mime) break; } catch {}
+    try {
+      const candidate = (await exec(command, args, { timeout: 2000, maxBuffer: 8192 })).stdout.trim();
+      if (!candidate) continue;
+      const guess = fileType(filename, buffer, config, candidate, languageRules);
+      mime = candidate;
+      type = guess;
+      if (!['text/plain', 'application/octet-stream'].includes(guess.mime) || guess.language !== 'plain') break;
+    } catch {}
   }
-  return fileType(filename, buffer, config, mime);
+  return type || fileType(filename, buffer, config, mime, languageRules);
 }
 
-async function read(filename, config) {
+async function read(filename, config, languageRules) {
   filename = path.resolve(filename);
   const stat = await fs.stat(filename);
   if (!stat.isFile()) throw new Error('Open a regular file.');
   const handle = await fs.open(filename, 'r');
   let prefix;
   try { const buffer = Buffer.alloc(Math.min(stat.size, 8192)); const { bytesRead } = await handle.read(buffer); prefix = buffer.subarray(0, bytesRead); } finally { await handle.close(); }
-  const type = await detect(filename, prefix, config);
+  const type = await detect(filename, prefix, config, languageRules);
   const result = { path: filename, name: path.basename(filename), size: stat.size, modified: stat.mtimeMs, ...type };
   if (type.external || (type.viewer === 'pdf' && config?.pdf_open === 'external')) return { ...result, kind: 'binary' };
   if (type.viewer === 'pdf' && stat.size <= 64 * 1024 * 1024) return { ...result, kind: 'pdf', bytes: new Uint8Array(await fs.readFile(filename)) };
   if (prefix.includes(0) || stat.size > 16 * 1024 * 1024 || type.viewer === 'pdf') return { ...result, kind: 'binary' };
   try {
-    const bytes = await fs.readFile(filename), content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const bytes = await fs.readFile(filename);
+    if (bytes.includes(0)) return { ...result, kind: 'binary' };
+    const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     return { ...result, modified: version(stat, bytes), kind: 'text', content, newline: content.includes('\r\n') ? '\r\n' : '\n' };
   } catch (error) { if (error.code === 'ERR_ENCODING_INVALID_ENCODED_DATA') return { ...result, kind: 'binary' }; throw error; }
 }

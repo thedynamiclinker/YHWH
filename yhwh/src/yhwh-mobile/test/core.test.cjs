@@ -19,6 +19,8 @@ function memoryStorage() {
     copy: async (source, target) => { for (const [name, value] of [...files]) if (name === source || name.startsWith(source + '/')) files.set(target + name.slice(source.length), structuredClone(value)); },
     loadState: async (name, fallback) => structuredClone(state.get(name) ?? fallback),
     saveState: async (name, value) => state.set(name, structuredClone(value)),
+    loadText: async name => state.get(name) || '',
+    appendText: async (name, text) => state.set(name, (state.get(name) || '') + text),
   };
 }
 async function fixture(storage = memoryStorage()) {
@@ -66,6 +68,20 @@ test('mobile attachments delegate without reading media/workbooks; only PDF reta
   storage.read = read;
   await storage.write('/preview.pdf', new TextEncoder().encode('%PDF-1.4\n'));
   assert.equal((await call('file:read', '/preview.pdf')).kind, 'pdf');
+});
+test('mobile remembers manual language rules and appends explanations in plain text', async () => {
+  const { ruleFile, feedbackFile } = require('../../../lib/editor-language.mjs');
+  const { storage, call } = await fixture();
+  await storage.write('/script', new TextEncoder().encode('#!/bin/sh\ntrue\n'));
+  assert.equal((await call('file:read', '/script')).language, 'shell');
+  await Promise.all([
+    call('editor:language-feedback', { filename: '/script', mime: 'application/octet-stream', detected: 'shell', selected: 'plain', explanation: 'Read the raw text.\nKeep this line.' }),
+    call('editor:language-rule', '/script', 'plain', 'filename'),
+  ]);
+  assert.match(await storage.loadText(feedbackFile), /\t\/script\tapplication\/octet-stream\tshell\tplain\tRead the raw text\.\\nKeep this line\.\n$/);
+  assert.equal(await storage.loadText(ruleFile), 'filename\tscript\tplain\n');
+  const { call: reopened } = await fixture(storage);
+  assert.equal((await reopened('file:read', '/script')).language, 'plain');
 });
 test('create is exclusive under concurrent calls and failed writes do not block later operations', async () => {
   const { call } = await fixture();

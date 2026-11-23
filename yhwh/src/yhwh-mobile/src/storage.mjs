@@ -7,6 +7,7 @@ export function createStorage(platform) {
   let volume, prefix, initializing;
   const location = path => ({ directory: volume, path: [prefix, normalize(path).slice(1)].filter(Boolean).join('/') });
   const state = name => ({ directory: Directory.Library, path: `yhwh/${name}.json` });
+  const textFile = name => ({ directory: Directory.Library, path: `yhwh/${name}`, encoding: 'utf8' });
   const statResult = result => ({ directory: result.type === 'directory', size: result.size, modified: result.mtime });
   const api = {
     async stat(path) {
@@ -42,6 +43,11 @@ export function createStorage(platform) {
       } else await Filesystem.copy({ directory: volume, from: location(from).path, to: location(to).path });
     },
     uri: async path => (await Filesystem.getUri(location(path))).uri,
+    async loadText(name) {
+      try { return (await Filesystem.readFile(textFile(name))).data; }
+      catch (error) { if (missing(error)) return ''; throw error; }
+    },
+    appendText: (name, data) => Filesystem.appendFile({ ...textFile(name), data, recursive: true }),
     async loadState(name, fallback) {
       try { const { data } = await Filesystem.readFile({ ...state(name), encoding: 'utf8' }); return JSON.parse(data); }
       catch (error) { if (missing(error)) return fallback; throw error; }

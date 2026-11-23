@@ -7,6 +7,7 @@ const os = require('node:os');
 const { spawn } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const files = require('../../../lib/files.cjs');
+const { ruleFile, feedbackFile, languageRuleLine, languageFeedbackLine } = require('../../../lib/editor-language.mjs');
 const { resolveConfig, configLocations, userDirectory, saveSettings } = require('./config.cjs');
 const keys = require('../../../lib/keys.cjs');
 const { freeEnergy, levelAt } = require('../../../lib/levels.cjs');
@@ -75,13 +76,23 @@ async function configFor(target) {
   const previous = configCache.get(target);
   const locations = await configLocations(path.resolve(target), configOptions);
   async function stamp(values = {}) {
-    const tracked = [...locations.flatMap(location => (three ? ['etc/profile', 'rc', 'rc.three'] : ['etc/profile', 'rc']).map(name => path.join(location.directory, name))), ...locations.map(location => location.directory), ...[values.stylesheet, values.bg].filter(Boolean)];
+    const configurations = ['etc/profile', 'rc', ruleFile, ...(three ? ['rc.three'] : [])];
+    const tracked = [...locations.flatMap(location => configurations.map(name => path.join(location.directory, name))), ...locations.map(location => location.directory), ...[values.stylesheet, values.bg].filter(Boolean)];
     return (await Promise.all(tracked.map(async filename => { try { const stat = await fs.stat(filename); return `${filename}:${stat.mtimeMs}:${stat.size}:${stat.mode}`; } catch { return filename; } }))).join('|');
   }
   const signature = await stamp(previous?.config.values);
   if (previous?.signature === signature) { previous.config.keys = await keys.load(previous.config); return previous.config; }
   const config = await resolveConfig(target, configOptions);
   config.keys = await keys.load(config);
+  const rules = await Promise.all(config.prefixes.map(async prefix => {
+    const filename = path.join(prefix, ruleFile);
+    try { return await fs.readFile(filename, 'utf8'); }
+    catch (error) {
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code)) config.warnings.push(`${filename}: ${error.message}`);
+      return '';
+    }
+  }));
+  Object.defineProperty(config, 'languageRules', { value: rules.join('\n') });
   if (config.values.stylesheet) {
     try {
       const filename = config.values.stylesheet.startsWith('file:') ? require('node:url').fileURLToPath(config.values.stylesheet) : config.values.stylesheet;
@@ -98,6 +109,18 @@ async function configFor(target) {
   }
   configCache.set(target, { signature: await stamp(config.values), config });
   return config;
+}
+
+async function appendEditorRecord(relative, line) {
+  const filename = path.join(userDirectory(), relative);
+  await fs.mkdir(path.dirname(filename), { recursive: true, mode: 0o700 });
+  const handle = await fs.open(filename, 'a+', 0o600);
+  try {
+    const { size } = await handle.stat();
+    const tail = Buffer.alloc(1);
+    if (size) await handle.read(tail, 0, 1, size - 1);
+    await handle.appendFile(size && tail[0] !== 10 ? '\n' + line : line, 'utf8');
+  } finally { await handle.close(); }
 }
 
 function refreshApp(reloadPlugins = false) {
@@ -292,7 +315,9 @@ async function launch() {
     } finally { conversations.delete(thread.id); refreshApp(); }
   });
   // Resolve shortcuts before choosing a language, preview base, or link directory.
-  handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values), config }; });
+  handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values, config.languageRules), config }; });
+  handle('editor:language-rule', (filename, language, scope) => appendEditorRecord(ruleFile, languageRuleLine(path.resolve(filename), language, scope)));
+  handle('editor:language-feedback', feedback => appendEditorRecord(feedbackFile, languageFeedbackLine(feedback)));
   handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(absolute); return { path: absolute, directory: stat.isDirectory() }; });
   handle('file:save', async (filename, ...args) => files.save(await destination(filename), ...args));
   handle('file:create', async (filename, directory) => files.create(await destination(filename), directory));

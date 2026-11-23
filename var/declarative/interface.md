@@ -7,7 +7,8 @@
 - Ctrl+L always clears the terminal when it is visible. It may focus the file-manager title bar only when the terminal is closed.
 - Settings and keyboard-shortcut controls belong to YHWH's visual language; the settings icon avoids an Apple-like appearance, and a bare question mark does not represent key combinations.
 - The app is a productive supernatural IDE, terminal++, and desktop environment for every directory on the system. Navigation and file management span the whole system without an inherent vault boundary.
-- Markdown H2 and H3 headings use the LD palette in source and preview. The rest of the theme stays intact. See [Interface](../../doc/interface.md).
+- The text editor uses the vault's Everforest palette, Noto type, and the six LD heading colors in Markdown Live Preview, Source, and Reading. Markdown editing uses familiar formatting and line-movement shortcuts while preserving the original source and undo history.
+- Text opens with automatic syntax highlighting from the system MIME type, filename, and file contents. The lower-right language picker defaults to Auto. Manual highlighting keeps the document text and undo history intact and reveals **Why?**. Saving an explanation appends the user's text to a local, language-independent tab-separated log. Explicitly remembered rules live in a plain-text prefix configuration file. See [Interface](../../doc/interface.md).
 
 [Abe](../../doc/abe.md) and [Verses](../../doc/verses.md) cover character copy,
 inbox letters, citations and commentary. [Branding](../../doc/branding.md),

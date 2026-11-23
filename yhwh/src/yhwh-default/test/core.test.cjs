@@ -72,6 +72,40 @@ async function rc(directory, text) { await fs.mkdir(directory, { recursive: true
   assert.equal((await files.read(plain, { file_types: '[{"filename":"^boop$","language":"markdown"}]' })).language, 'markdown');
   for (const [name, language] of [['notes.tex', 'latex'], ['app.swift', 'swift'], ['app.rs', 'rust']]) { const filename = path.join(base, name); await fs.writeFile(filename, ''); assert.equal((await files.read(filename)).language, language); }
  });
+ test('syntax detection uses normalized MIME, filenames, file headers and ordered flat rules', () => {
+  const { fileType } = require('../../../lib/file-type.cjs');
+  const { languageRuleLine } = require('../../../lib/editor-language.mjs');
+  const detect = (name, mime, content = '', rules = '') => fileType(name, Buffer.from(content), {}, mime, rules);
+  for (const [name, mime, content, language] of [
+    ['source', ' Text/X-CSRC; charset=UTF-8 ', '', 'c'],
+    ['.bashrc', 'text/plain', '', 'shell'],
+    ['Dockerfile.dev', 'text/plain', '', 'dockerfile'],
+    ['Makefile', 'text/x-makefile', '', 'makefile'],
+    ['rules.mk', 'text/plain', '', 'makefile'],
+    ['unit.service', 'text/x-systemd-unit', '', 'properties files'],
+    ['App.tsx', 'text/javascript', 'export const App = () => <div />;', 'tsx'],
+    ['tiles.tsx', 'application/x-tiled-tsx', '<?xml version="1.0"?><tileset />', 'xml'],
+    ['SETTINGS.JSON', 'text/plain', '', 'json'],
+    ['script', 'text/plain', '#!/usr/bin/env -S python3 -u\nprint(1)', 'python'],
+    ['config', 'text/plain', '{"abc": 123}', 'json'],
+    ['page', 'application/octet-stream', '<!DOCTYPE html><html></html>', 'html'],
+    ['layout', 'text/plain', '<?xml version="1.0"?><layout />', 'xml'],
+    ['paper', 'application/x-tex', '', 'latex'],
+    ['diff', 'text/x-patch', '', 'diff'],
+    ['note', 'text/plain', 'notes are not code', 'plain'],
+  ]) assert.equal(detect(name, mime, content).language, language, name);
+
+  const rules = '# Local assignments\n'
+    + 'mime\ttext/plain\tmarkdown\n'
+    + 'extension\tthing\tjson\n'
+    + languageRuleLine('/notes/sub/a.thing', 'toml', 'directory')
+    + languageRuleLine('/agent/a\twith\\literal.thing', 'python', 'filename');
+  assert.equal(detect('/notes/sub/child/a.thing', 'text/plain', '', rules).language, 'toml');
+  assert.equal(detect('/notes/sub-other/a.thing', 'text/plain', '', rules).language, 'json');
+  assert.equal(detect('/agent/a\twith\\literal.thing', 'text/plain', '', rules).language, 'python');
+  assert.equal(detect('/other/anything', 'text/plain', '', rules).language, 'markdown');
+  assert.equal(detect('/other/doc.pdf', 'application/pdf', '', 'extension\tpdf\tmarkdown').viewer, 'pdf');
+ });
  test('text saves preserve symlinks; conflicts and filename collisions preserve the existing data', async t => {
   const base = await fixture(t), filename = path.join(base, 'one'), alias = path.join(base, 'alias'), other = path.join(base, 'two');
   await files.create(filename); await fs.symlink(filename, alias); await fs.writeFile(other, 'other');

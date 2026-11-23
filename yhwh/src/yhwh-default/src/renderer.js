@@ -4,7 +4,8 @@ const ui = interfaceText(interfaceCopy);
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { createEditor, setLanguage, setEditorMode, formatText, renderMarkdown, languageNames } from './editor.js';
+import { createEditor, loadEditorLanguage, setLanguage, setEditorMode, formatText, renderMarkdown, applyDocumentStyle, highlightMarkdownBlocks } from './editor.js';
+import { languages, languageID, languageLabel, fileExtension } from '../../../lib/editor-language.mjs';
 import { linkAt } from './live-markdown.js';
 import { createVerseUI } from './verses.js';
 import verseCopy from '../../../etc/default/text-verses.json';
@@ -42,6 +43,17 @@ registerWheelZoom(window, direction => {
   else document.documentElement.style.setProperty('--mobile-zoom', factor);
 });
 const $ = selector => document.querySelector(selector);
+const languagePicker = $('#language-picker');
+languagePicker.add(new Option('Plain Text', 'plain'));
+for (const item of [...languages].sort((a, b) => a.name.localeCompare(b.name))) {
+  languagePicker.add(new Option(item.name, languageID(item)));
+}
+languagePicker.onchange = async () => {
+  const tab = active(), selection = languagePicker.value;
+  if (!tab?.editor) return;
+  try { await changeDocumentLanguage(tab, selection); }
+  catch (error) { notice(error.message); if (tab === active()) updateEditorStatus(tab); }
+};
 for (const button of document.querySelectorAll('#files [data-file-icon]')) button.innerHTML = fileIcons[button.dataset.fileIcon];
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const call = (channel, ...args) => bridge.call(channel, ...args);
@@ -83,6 +95,9 @@ function bindingFor(event) {
   if (!config) return;
   const combo = fromEvent(event);
   const binding = matchKey(config.keys?.bindings || [], combo, context);
+  if (context === 'editor' && combo === 'ctrl/b' && active().file?.language === 'markdown'
+    && binding?.command === 'toggle-terminal' && !binding.when && (boot.interface === 'mobile'
+      || binding.source === "// command: toggle-terminal\nexport default api => api.run('toggle-terminal');\n")) return;
   if (combo) for (const [id, spec] of Object.entries(panelKeys)) {
     if (boot.interface === 'mobile' && spec.panel === 'terminal') continue;
     const custom = config.values['key_' + id];
@@ -148,9 +163,13 @@ async function choose(title, message, options) {
   if (previous.open) await new Promise(resolve => { previous.addEventListener('close', resolve, { once: true }); previous.close(); });
   return new Promise(resolve => {
     const dialog = modal(title, ui("template", escape(message), options.map((option, index) => `<button data-choice="${index}" class="${index === 0 ? 'primary' : ''}">${escape(option)}</button>`).join('')));
-    let result = -1;
-    for (const button of dialog.querySelectorAll('[data-choice]')) button.onclick = () => { result = Number(button.dataset.choice); dialog.close(); };
-    dialog.addEventListener('close', () => resolve(result), { once: true });
+    const finish = result => { dialog.removeEventListener('close', closed); resolve(result); };
+    const closed = () => { if (!dialog.open) finish(-1); };
+    dialog.addEventListener('close', closed);
+    for (const button of dialog.querySelectorAll('[data-choice]')) button.onclick = () => {
+      dialog.close();
+      finish(Number(button.dataset.choice));
+    };
   });
 }
 async function editWords(key) {
@@ -433,17 +452,37 @@ function update() {
   if (document.activeElement !== $('#file-title')) $('#file-title').value = tab.file?.name || '';
   $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : '';
   $('#document-path').textContent = tab.file ? parent(tab.file.path) : tab.cwd;
-  $('#language-button').textContent = tab.file?.language || ui("plain-text");
-  $('#file-encoding').textContent = tab.file?.kind === 'text' ? ui("utf-8-", tab.file.newline === '\r\n' ? 'CRLF' : 'LF') : '';
-  $('#view-mode').textContent = tab.file?.language === 'markdown' ? ({ live: 'Live Preview', source: 'Source', reading: 'Reading' })[tab.file.mode] : ['json', 'html'].includes(tab.file?.language) ? ui("pretty-format") : ui("source");
-  $('#view-mode').disabled = tab.file?.kind !== 'text';
+  updateEditorStatus(tab);
+  const markdown = tab.file?.language === 'markdown';
+  const formattable = ['json', 'html'].includes(tab.file?.language);
+  const viewButton = $('#view-mode');
+  viewButton.textContent = markdown ? ({ live: 'Live Preview', source: 'Source', reading: 'Reading' })[tab.file.mode] : formattable ? ui('pretty-format') : ui('source');
+  viewButton.title = markdown ? 'Choose Markdown view (Ctrl+E Source, Ctrl+R Reading)' : formattable ? 'Pretty format this document' : '';
+  viewButton.disabled = !tab.editor || (!markdown && !formattable);
   $('#title-row [data-command="save"]').disabled = !tab.editor;
   applyConfig(tab.config);
+}
+function updateEditorStatus(tab) {
+  const editing = Boolean(tab.editor) && tab.focusView === 'document' && !tab.expanded;
+  $('#document').toggleAttribute('data-text-editor', Boolean(tab.editor));
+  document.body.toggleAttribute('data-editing-text', editing);
+  $('#language-controls').hidden = !editing;
+  $('#file-encoding').textContent = editing ? ui("utf-8-", tab.file.newline === '\r\n' ? 'CRLF' : 'LF') : '';
+  if (!editing) { $('#cursor-position').textContent = 'Ready'; return; }
+  const { file, editor } = tab;
+  languagePicker.options[0].textContent = `Auto · ${languageLabel(file.detectedLanguage)}`;
+  languagePicker.value = file.languageSelection;
+  languagePicker.title = `Syntax highlighting · ${file.mime}`;
+  $('#language-why').hidden = file.languageSelection === 'auto';
+  const position = editor.state.selection.main.head, line = editor.state.doc.lineAt(position);
+  $('#cursor-position').textContent = ui("ln-col", line.number, position - line.from + 1);
 }
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
   const sizes = active()?.panelSizes || {};
-  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${sizes.sidebar_width || Number(values.sidebar_width) || 258}px`, '--terminal-height': `${sizes.terminal_height || Number(values.terminal_height) || 240}px`, '--editor-font': values.editor_font || ui("-segoe-ui-system-ui-sans-serif"), '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  for (const [property, value] of Object.entries({ '--editor-size': `${Number(values.font_size) || 18}px`, '--ui-size': `${Math.max(14, Math.min(24, Number(values.ui_font_size) || 16))}px`, '--sidebar-width': `${sizes.sidebar_width || Number(values.sidebar_width) || 258}px`, '--terminal-height': `${sizes.terminal_height || Number(values.terminal_height) || 240}px`, '--line-width': values.line_width || '820px' })) style.setProperty(property, value);
+  if (values.editor_font) style.setProperty('--editor-font', values.editor_font);
+  else style.removeProperty('--editor-font');
   if (sizes.sidebar_width) style.setProperty('--drawer-width', `${sizes.sidebar_width}px`);
   else style.removeProperty('--drawer-width');
   for (const tab of tabs) for (const session of tab.terminals) session.terminal.options.fontSize = Math.max(12, Math.min(28, Number(tab.config.values.terminal_font_size) || 15));
@@ -575,14 +614,23 @@ async function openFile(filename, tab = active(), options = {}) {
   const filenameParent = parent(file.path);
   if (filenameParent !== tab.cwd) await navigate(filenameParent, tab);
   if (!current()) return false;
+  const previous = options.reload && tab.file?.path === file.path ? tab.file : null;
   clearDocument(tab); tab.focusView = 'document';
+  file.detectedLanguage = file.language;
+  file.languageSelection = previous?.languageSelection || 'auto';
+  file.languageReasons = previous?.languageReasons || new Map();
+  if (file.languageSelection !== 'auto') file.language = file.languageSelection;
   file.mode = file.language === 'markdown' ? tab.markdownEditMode : 'source';
   tab.file = file; tab.config = file.config; tab.dirty = false; tab.autosaveError = null;
   tab.selected = new Set([file.path]);
   tab.document.dataset.filename = file.path;
+  tab.document.dataset.language = file.language;
+  tab.document.dataset.mode = file.mode;
   tab.document.innerHTML = ui("template-3");
   if (file.kind === 'text') {
+    applyDocumentStyle(tab.document, file.language === 'markdown' ? file.content : '');
     const editor = await createEditor(tab.document.querySelector('.editor-host'), file, content => {
+      if (file.language === 'markdown') applyDocumentStyle(tab.document, content);
       tab.dirty = content !== tab.file.content.replace(/\r\n/g, '\n');
       if (tab.id === activeId) { $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : ''; tabTitles(); }
       emit('change', { path: file.path, content });
@@ -737,8 +785,8 @@ async function moveItems(items) {
         const updated = await call('file:read', filename);
         // Keep a stale version stale if an external edit preceded the move.
         if (updated.content === tab.file.content) tab.file.modified = updated.modified;
-        tab.file.language = updated.language; tab.document.dataset.language = updated.language;
-        if (tab.editor) await setLanguage(tab.editor, updated.language, tab.file.mode !== 'source');
+        tab.file.mime = updated.mime;
+        if (tab.editor) await changeDocumentLanguage(tab, tab.file.languageSelection, updated.language);
       }
     }
   } finally {
@@ -787,7 +835,7 @@ function settings() {
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="keys" aria-pressed="false">Keys</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
-    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in source view. Use Ctrl+R or the toolbar button to toggle preview.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
+    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in Live Preview. Use Ctrl+E for Source, Ctrl+R for Reading, or choose a view from the toolbar. The language picker controls automatic syntax highlighting.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Dawkins ← Nietzsche → YHWH. Use the title bar to switch preview editions.', `<input type="range" name="energy" min="0" max="100" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="keys" hidden><h3>Keys</h3><p class="muted">${mobile ? 'These shortcuts use a hardware keyboard. Open the Initial from the command menu for an in-app shell.' : 'Panel shortcuts work from the terminal, editor, and file manager.'} Enter a combination such as Ctrl+Up, or use off to disable it.</p>
       ${row('Resize step', 'Pixels per keypress.', number('panel_resize_pixels', 1, 500))}
@@ -852,26 +900,80 @@ function settings() {
   };
 }
 function languageMenu() {
-  const tab = active(); if (!tab.file || !tab.editor) return;
-  const names = languageNames();
-  if (!names.includes(tab.file.language)) names.push(tab.file.language);
-  const dialog = modal(ui("file-type"), ui("language-inferred-remember-this-choice-only-for-", escape(tab.file.mime), names.map(name => `<option ${tab.file.language === name ? 'selected' : ''}>${escape(name)}</option>`).join(''), escape(tab.cwd)));
-  dialog.querySelector('form').onsubmit = async event => {
+  if (languagePicker.closest('[hidden]')) return;
+  languagePicker.focus();
+  if (navigator.userActivation?.isActive) languagePicker.showPicker?.();
+}
+
+async function changeDocumentLanguage(tab, selection, detected) {
+  const { file, editor } = tab;
+  const request = file.languageRequest = Symbol();
+  const stillCurrent = () => tab.file === file && tab.editor === editor && file.languageRequest === request;
+  if (!detected && selection === 'auto') {
+    const updated = await call('file:read', file.path).catch(() => null);
+    if (!stillCurrent()) return;
+    if (updated?.kind === 'text') {
+      detected = updated.language;
+      file.mime = updated.mime;
+    }
+  }
+  detected ||= file.detectedLanguage;
+  const name = selection === 'auto' ? detected : selection;
+  const changesLanguage = file.language !== name;
+  const support = changesLanguage ? await loadEditorLanguage(name) : null;
+  if (!stillCurrent()) return;
+  file.languageSelection = selection;
+  file.detectedLanguage = detected;
+  if (!changesLanguage) {
+    if (tab === active()) updateEditorStatus(tab);
+    return;
+  }
+  const mode = name === 'markdown' ? tab.markdownEditMode : 'source';
+  file.language = name;
+  tab.document.dataset.language = name;
+  applyDocumentStyle(tab.document, name === 'markdown' ? editor.state.doc.toString() : '');
+  setLanguage(editor, name, mode, followLink, support);
+  changeMarkdownMode(tab, mode, false);
+}
+
+function languageWhy() {
+  const tab = active(), file = tab?.file;
+  if (!tab?.editor || file.languageSelection === 'auto') return;
+  const { language, detectedLanguage, mime } = file;
+  const extension = fileExtension(file.name);
+  const dialog = modal(ui('why-this-language'), ui('language-feedback-form', escape(languageLabel(language)),
+    escape(languageLabel(detectedLanguage)), escape(mime), extension
+      ? ui('language-rule-extension-options', escape(extension)) : ''));
+  const form = dialog.querySelector('form'), { explanation, remember } = form.elements;
+  explanation.value = file.languageReasons.get(language) || '';
+  form.querySelector('[data-cancel]').onclick = () => dialog.close();
+  explanation.focus();
+  explanation.onkeydown = event => {
+    if ((event.ctrlKey || event.metaKey) && ['Enter', 's'].includes(event.key)) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  };
+  form.onsubmit = async event => {
     event.preventDefault();
+    const saveButton = form.querySelector('[type="submit"]');
+    const errorMessage = form.querySelector('[role="alert"]');
+    if (saveButton.disabled) return;
+    const reason = explanation.value, scope = remember.value;
+    if (!reason.trim() && scope === 'no') { errorMessage.textContent = ui('language-explanation-needed'); return; }
+    saveButton.disabled = true;
+    errorMessage.textContent = '';
     try {
-      const data = Object.fromEntries(new FormData(event.target));
-      if (data.remember !== 'no') {
-        const extension = tab.file.name.includes('.') ? tab.file.name.split('.').at(-1) : '';
-        if (!extension && data.remember !== 'filename') throw new Error(ui("this-file-has-no-extension-choose-the-filename-r"));
-        const rule = data.remember === 'filename' ? { filename: `^${tab.file.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, language: data.language } : { extension, language: data.language };
-        const rules = JSON.parse(tab.config.values.file_types || '[]'); rules.push(rule);
-        await call('settings:save', { file_types: JSON.stringify(rules) }, data.remember === 'directory' ? tab.cwd : '/');
+      if (reason.trim() && file.languageReasons.get(language) !== reason) {
+        await call('editor:language-feedback', { filename: file.path, mime, detected: detectedLanguage, selected: language, explanation: reason });
+        file.languageReasons.set(language, reason);
       }
-      tab.file.language = data.language; tab.document.dataset.language = data.language;
-      changeMarkdownMode(tab, data.language === 'markdown' ? tab.markdownEditMode : 'source');
-      await setLanguage(tab.editor, data.language, tab.file.mode, followLink);
-      dialog.close(); update(); focusCurrent(tab);
-    } catch (error) { notice(error.message); }
+      if (scope !== 'no') await call('editor:language-rule', file.path, language, scope);
+      if (form.isConnected) dialog.close();
+      notice(ui('language-feedback-saved'));
+    } catch (error) {
+      errorMessage.textContent = error.message;
+    } finally { saveButton.disabled = false; }
   };
 }
 async function viewMode() {
@@ -880,6 +982,7 @@ async function viewMode() {
     if (tab.file.mode === 'reading') return changeMarkdownMode(tab, tab.markdownEditMode);
     return readingView();
   }
+  if (!['json', 'html'].includes(tab.file.language)) return;
   const text = await formatText(tab.editor.state.doc.toString(), tab.file.language);
   tab.editor.dispatch({ changes: { from: 0, to: tab.editor.state.doc.length, insert: text } });
   focusCurrent(tab);
@@ -889,19 +992,20 @@ function toggleMarkdownSource() {
   const mode = tab.file.mode === 'source' ? 'live' : 'source';
   changeMarkdownMode(tab, mode);
 }
-function changeMarkdownMode(tab, mode) {
+function changeMarkdownMode(tab, mode, reconfigure = true) {
   const editor = tab.document.querySelector('.editor-host');
   const reading = tab.document.querySelector('.reading-view');
   const leavingReading = !reading.hidden;
   if (mode === 'reading') {
     const ratio = tab.editor.scrollDOM.scrollTop / Math.max(1, tab.editor.scrollDOM.scrollHeight - tab.editor.scrollDOM.clientHeight);
-    reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path);
+    reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path, 'document');
+    highlightMarkdownBlocks(reading);
     reading.tabIndex = 0; reading.setAttribute('aria-label', 'Reading view');
     reading.hidden = false;
     reading.scrollTop = ratio * (reading.scrollHeight - reading.clientHeight);
   } else {
     tab.markdownEditMode = tab.file.language === 'markdown' ? mode : tab.markdownEditMode;
-    setEditorMode(tab.editor, tab.file.language, mode, followLink);
+    if (reconfigure) setEditorMode(tab.editor, tab.file.language, mode, followLink);
     reading.hidden = true;
   }
   editor.hidden = mode === 'reading';
@@ -1298,6 +1402,7 @@ const definitions = [
   ['open-external', ui("open-current-file-externally"), '', () => active().file && call('file:external', active().file.path)],
   ['palette', ui("command-palette"), ui("ctrl-p-ctrl-shift-p"), palette],
   ['language', ui("file-type-syntax-highlighting"), '', languageMenu],
+  ['language-why', ui('why-this-language'), '', languageWhy],
   ['settings', ui("settings"), ui("ctrl-"), settings],
   ['edit-config', ui("edit-user-rc"), '', async () => { const filename = await call('config:open'); $('#dialog').close(); await openFile(filename); }],
   ['open-guide', ui("open-the-full-guide"), '', async () => { $('#dialog').close(); await openFile(join(boot.root, ui("readme-md"))); }],

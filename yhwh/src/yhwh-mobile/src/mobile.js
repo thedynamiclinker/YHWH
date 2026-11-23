@@ -69,9 +69,11 @@ export function installMobile(app, storage) {
   const nav = document.createElement('nav'); nav.id = 'mobile-nav'; nav.setAttribute('aria-label', 'Mobile navigation');
   nav.innerHTML = '<button data-command="toggle-files" aria-label="Files">▤<small>Files</small></button><button data-command="mobile-back" aria-label="Back">←<small>Back</small></button><button data-command="mobile-create" aria-label="Create or find note">⊕<small>Note</small></button><button data-command="mobile-tabs" aria-label="Manage tabs"><span id="mobile-tab-count">1</span><small>Tabs</small></button><button data-command="mobile-actions" aria-label="Open menu">☰<small>Menu</small></button>';
   const toolbar = document.createElement('nav'); toolbar.id = 'mobile-editor-toolbar'; toolbar.setAttribute('aria-label', 'Editing tools');
-  toolbar.innerHTML = '<button data-command="mobile-undo" aria-label="Undo">↶</button><button data-command="mobile-redo" aria-label="Redo">↷</button><button data-command="mobile-bold" aria-label="Bold"><b>B</b></button><button data-command="mobile-link" aria-label="Insert link">[[ ]]</button><button data-command="follow-editor-link" aria-label="Open link at cursor">↗</button><button data-command="choose-view-mode" aria-label="Choose document view">◫</button><button data-command="save" aria-label="Save file">Save</button><button data-command="mobile-hide-keyboard" aria-label="Hide keyboard">⌄</button>';
+  toolbar.innerHTML = '<div class="mobile-editor-tools"><button data-command="mobile-undo" aria-label="Undo">↶</button><button data-command="mobile-redo" aria-label="Redo">↷</button><button data-command="mobile-bold" aria-label="Bold"><b>B</b></button><button data-command="mobile-link" aria-label="Insert link">[[ ]]</button><button data-command="follow-editor-link" aria-label="Open link at cursor">↗</button><button data-command="choose-view-mode" aria-label="Choose document view">◫</button><button data-command="save" aria-label="Save file">Save</button><button data-command="mobile-hide-keyboard" aria-label="Hide keyboard">⌄</button></div>';
+  const languageControls = document.querySelector('#language-controls');
+  toolbar.append(languageControls);
   // Retain the editor selection when tapping the toolbar.
-  toolbar.onpointerdown = event => event.preventDefault();
+  toolbar.onpointerdown = event => { if (!languageControls.contains(event.target)) event.preventDefault(); };
   body.append(toolbar, nav);
   const backdrop = document.createElement('button'); backdrop.id = 'mobile-drawer-backdrop'; backdrop.setAttribute('aria-label', 'Close file drawer'); backdrop.onclick = closeDrawer; body.append(backdrop);
   const sync = () => {
@@ -81,7 +83,7 @@ export function installMobile(app, storage) {
     const tab = app.active();
     const reading = tab?.file?.mode === 'reading';
     toolbar.hidden = !tab?.editor || tab.focusView !== 'document';
-    for (const button of toolbar.querySelectorAll('button')) button.hidden = reading && button.dataset.command !== 'choose-view-mode';
+    for (const button of toolbar.querySelectorAll('.mobile-editor-tools > button')) button.hidden = reading && button.dataset.command !== 'choose-view-mode';
   };
   new MutationObserver(sync).observe(document.querySelector('#navigation-area'), { attributes: true, attributeFilter: ['hidden'] });
   for (const event of ['focus', 'tab', 'navigate', 'change', 'save', 'view']) app.on(event, sync);

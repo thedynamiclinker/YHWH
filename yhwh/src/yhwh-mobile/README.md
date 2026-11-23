@@ -159,7 +159,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 
 | Feature | Android and iOS behavior |
 | --- | --- |
-| Editor, syntax, Markdown, formatting, themes | Shared Live Preview, Source and Reading modes. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
+| Editor, syntax, Markdown, formatting, themes | Shared Everforest editor with Live Preview, Source and Reading modes. The toolbar has Auto highlighting, language overrides, and Why? for explanations. Automatic detection uses filenames and file contents on mobile. Rules and feedback use the same flat files in private Library storage. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
 | New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
 | YHWH Emails | One local Inbox message per section of [YHWH Emails](../../../var/declarative/yhwh-emails.md) and [YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md), delivered in order as you work, with shared presence controls and links that open in the native browser |

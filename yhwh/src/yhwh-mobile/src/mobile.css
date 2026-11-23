@@ -28,7 +28,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 #mobile-nav button { display: flex; flex-direction: column; align-items: center; min-width: 54px; font-size: 23px; padding: 4px 8px; color: var(--purple); }
 #mobile-nav small { font-size: 11px; color: var(--muted); }
 #mobile-tab-count { border: 1px solid var(--muted); border-radius: 5px; font: 16px/23px system-ui; min-width: 25px; }
-#mobile-editor-toolbar { justify-content: space-around; overflow-x: auto; min-height: 44px; }
+#mobile-editor-toolbar { justify-content: space-between; min-height: 44px; }
 #mobile-editor-toolbar button { min-width: 44px; }
 .keyboard-open #mobile-nav { display: none !important; }
 .keyboard-open #mobile-editor-toolbar { padding-bottom: env(safe-area-inset-bottom); }
@@ -103,8 +103,12 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
   display: grid; place-items: center; min-width: 44px; min-height: 44px;
   padding: 0; flex-shrink: 0; color: var(--muted);
 }
-.is-mobile #mobile-editor-toolbar { justify-content: flex-start; }
-.is-mobile #mobile-editor-toolbar > button { flex: 1 0 auto; min-width: 38px; padding-inline: 6px; }
+.mobile-editor-tools { display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.mobile-editor-tools > button { flex: 1 0 auto; min-width: 38px; padding-inline: 6px; }
+.is-mobile[data-editing-text] #mobile-editor-toolbar { background: var(--write-toolbar); color: var(--write-ink); border-color: var(--write-line); }
+.is-mobile #language-controls { margin-inline-end: 6px; }
+.is-mobile #language-controls :is(select, button) { min-height: 44px; }
+.is-mobile #language-picker { max-width: 155px; }
 .is-mobile .cm-line { padding-inline: 16px; }
 .is-mobile .chat-workspace { grid-template-columns: minmax(0, 1fr); }
 .is-mobile .chat-controls small { display: inline; }

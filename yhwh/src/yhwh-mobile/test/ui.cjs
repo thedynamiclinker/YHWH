@@ -94,6 +94,17 @@ async function main() {
       await page.locator('#mobile-editor-toolbar [data-command="choose-view-mode"]').tap();
       await page.locator('#dialog [data-mode="live"]').tap();
       await page.locator('.cm-content:visible').waitFor();
+      const picker = page.locator('#mobile-editor-toolbar #language-picker');
+      assert.equal(await picker.locator(':checked').textContent(), 'Auto · Markdown');
+      await picker.selectOption('plain');
+      await page.locator('#language-why').tap();
+      await page.locator('#dialog textarea').fill('Show the Markdown punctuation as plain text.');
+      await page.locator('#dialog select[name=remember]').selectOption('filename');
+      await page.locator('#dialog .primary').tap();
+      await page.locator('#dialog').waitFor({ state: 'hidden' });
+      assert.equal(await page.evaluate(async () => (await window.yhwh.call('file:read', '/notes.md')).language), 'plain');
+      await picker.selectOption('markdown');
+      await page.waitForFunction(() => window.YHWH.active().file.language === 'markdown');
       // New features registered in the shared command palette remain reachable.
       await page.locator('#mobile-nav [data-command="mobile-tabs"]').tap();
       await page.locator('#mobile-dialog button', { hasText: '+ New tab' }).tap();
