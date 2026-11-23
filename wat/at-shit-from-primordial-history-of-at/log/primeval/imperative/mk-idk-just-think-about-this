@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+TODO: THINK ABOUT THIS PROBLEM
+
+user@world @ $ @ -h
+```text
+@ [--] [REQUEST ...]           Run a request in English, Unix, or symbols
+nsh                            Start the interactive shell
+nhs                            Start the shell with >>> prompts
+nsh -c LINE [NAME [ARG ...]]    Run one shell line
+LD -h                          Show loader help
+```
+
+In `nsh`, use `:paste` for multiline input and `ld.so COMMAND` to run plain Bash. Press Ctrl+D at an empty prompt to exit.
+
+[Full `@` manual](/home/jason/src/@/man/man1/@.1)
+user@world @ $ @ -h
+```text
+@ [--] [REQUEST ...]          Run one request in English, Unix, or both
+nsh                           Start the interactive shell
+nsh -c LINE [NAME [ARG ...]]   Run one shell line
+nhs                           Start the shell with >>> and ... prompts
+LD [--] PROGRAM [REQUEST ...] Run a prose program
+```
+
+`@` reads stdin when the request needs input. Inside a quoted request, a bare `@` passes one stage’s output to the next.
+
+```bash
+echo @ | @ ot                       # yhwh
+@ 'echo 木 @ pinyin @ uppercase'     # MÙ
+```
+
+In `nsh`, use `:paste` for multiline input and `ld.so COMMAND` to run Bash directly. See `man @`, `nsh --help`, or `LD --help` for more.
+user@world @ $
+
+EOF

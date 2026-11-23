@@ -1,0 +1,48 @@
+prefix ?= $(HOME)/.local
+PREFIX ?= $(prefix)
+bindir ?= $(PREFIX)/bin
+mandir ?= $(PREFIX)/share/man
+
+commands := $(wildcard bin/*)
+manpages := $(wildcard man/man1/*.1)
+destination := $(DESTDIR)$(bindir)
+man_destination := $(DESTDIR)$(mandir)/man1
+
+.PHONY: build install develop check man uninstall world chroot
+build:
+	sh -n bin/LD
+	bash -n bin/lord
+	bash -n bin/nsh
+	sh -n bin/nhs
+
+install: build
+	install -d "$(destination)" "$(man_destination)"
+	install -m 755 $(commands) "$(destination)"
+	install -m 644 $(manpages) "$(man_destination)"
+
+develop: build
+	install -d "$(destination)" "$(man_destination)"
+	@for command in $(commands); do \
+	    ln -sfn "$(CURDIR)/$$command" "$(destination)/" || exit; \
+	done
+	@for page in $(manpages); do \
+	    ln -sfn "$(CURDIR)/$$page" "$(man_destination)/" || exit; \
+	done
+
+check: build
+	bash tests/yhwh.sh
+	PATH="$(CURDIR)/bin:$$PATH" python3 tests/readline.py
+
+man:
+	NSH_PROGRAM=./@ ./bin/lord -- 'Read @, bin/LD, bin/lord, and bin/nsh. Bring man/man1/@.1, man/man1/LD.1, and man/man1/lord.1 up to date with the implemented behavior. Use section 1 roff man macros, cover all six runners in lord.1, preserve accurate text, and edit only those three pages.' </dev/null
+
+world chroot:
+	@exec sinai $@
+
+uninstall:
+	@for command in $(notdir $(commands)); do \
+	    rm -f -- "$(destination)/$$command" || exit; \
+	done
+	@for page in $(notdir $(manpages)); do \
+	    rm -f -- "$(man_destination)/$$page" || exit; \
+	done
