@@ -1,0 +1,2 @@
+/etc/har.d:
+    @nolord: note to self, describe how to implement the har system config option, har command, and how $confdir/har.d works

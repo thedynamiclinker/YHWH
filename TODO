@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+lordhavemercy -f --verbose << "EOF"
+Here's our version of the obsidian 'vault' concept (empty dir plus .obsidian/) or the git 'repo' concept (empty dir plus .git) that we want to enable support for in this app.
+
+It's also how we want to support the ability to 'chroot' within this app, and what sort of object (dir) we want to take as the base of the new [repo / vault / chroot / container / bootable system / root] when we make a new universe.
+
+Make a command called el
+A 'universe' is a git clone of https://github.com/thedynamiclinker/lord.git
+
+By default 
+That's it.
+
+Add a 'New Universe' button to the app and then once we're in a universe, by default make it be cd'ed into the user's
+EOF
