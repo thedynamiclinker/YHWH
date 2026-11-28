@@ -3,7 +3,7 @@
 - Start with readable files and an editor, no vault or required narrative. Interface/editor/terminal default to 16/18/15px and remain configurable.
 - The quiet grey “Need Some Help?” button opens the God and Man views of the desktop’s mounted sources. The mobile equivalent opens Files and backups.
 - Settings use categories, switches, sliders, and bounded numbers; rc remains the advanced escape hatch. Preserve directory scope and handwritten rc.
-- On desktop, single click selects and unfolds a folder. Double click or Enter enters it. On touch, tap a row to open it, tap the triangle to expand in place, and use the row menu for file actions. Keep filters and scroll positions per tab.
+- Single click, Enter, or Right enters a folder. Left goes up. The chevron unfolds a folder in place, and modified clicks select rows. **Settings → Files & editor → Double-click directories** switches the click gesture. Keep filters and scroll positions per tab.
 - Ctrl+L clears a focused terminal. From another pane it focuses the file location field. Explicit terminal actions focus the terminal when they reveal it.
 - A shell launch inherits the caller’s directory. Launchers use **Settings → Files & editor → Default directory**. Desktop defaults to the user’s home. Mobile defaults to its storage root.
 - Ctrl+Up/Down steps the terminal between hidden, split and vertically maximized. Ctrl+Right/Left does the same for the file manager. Add Shift+Alt for incremental resizing. **Settings → Keys** edits each shortcut and the resize step, with pixels on desktop and rows or columns in Shaddai.
@@ -19,15 +19,17 @@
 
 ## Directory shortcuts and folder actions
 
-`~` opens home and `/` opens the current filesystem or folder-view root.
-`@` starts at the tab’s opening directory. Use **Choose @ folder…** under `@`
-or **Set as @** in a folder’s context menu to change it without leaving the
-current directory. **Go to @** and `@/subdirectory` in the location field use
-the new anchor. Closing the tab discards its anchor.
+The prompt shows `.` (the working directory), `@` (the tab’s current
+prefix), and `/` (the root). The **go** row visits each location. The
+**set** row assigns the selected folder, or the current folder when none is
+selected. `cd` updates only `.`. Setting `@` preserves `.` and `/`. A
+new tab starts with `@` set to its opening directory. The `/` setter asks
+before opening a guest tab on Linux or a folder view on mobile.
 
-In a desktop tab’s shell, `@-get` prints the anchor and `@-set [DIRECTORY]`
-sets it. Omitting `DIRECTORY` uses the shell’s current directory. The same
-commands work as `yhwh @-get` and `yhwh @-set`, or inside the Initial.
+`cwat` prints `@`; `cwat DIRECTORY` sets it. `cd @` and `cd @/subdir`
+work in the tab shell and the Initial. The location field uses the same
+syntax. `@-get` and `@-set [DIRECTORY]` remain available. The **Confirm
+cwat** setting applies to interactive navigation and assignments.
 
 Add menu items under `${YHWH_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yhwh}/etc/folder-menu`.
 A UTF-8 `.txt` file adds an item named after the file and displays its contents.
@@ -45,20 +47,21 @@ Reopen the menu to pick up changes. Android and iOS read `.txt` actions from
 
 ## Universes
 
-Use **New universe** in the Files pane to choose a starter. **Enter** opens the
-selected universe directory. With no folder selected it uses the current directory.
-**Chroot** opens a separate terminal for the guest shell. A universe starts as
+Use **un** in the Files pane to see `new`, `cd`, `go`, and `ls`. **new**
+chooses a starter, **cd** enters the universe and sets `@`, and **go**
+opens a separate chroot tab. With no folder selected, use the current directory.
+A universe starts as
 an ordinary directory whose `.@` begins with `# un root`, the same marker
 used by `un new`. The bundled **Empty** and **Lord workshop** starters work
 offline. The workshop includes a TWO example, `un` recipes, and a `zan` manual page.
 
 ```sh
-yhwh nu --list
-yhwh nu workshop --template workshop
-cd -- "$(yhwh cd workshop)"
-yhwh nu ../alpine --template alpine
-yhwh nu ../from-docker-hub --from docker.io/library/alpine:latest
-yhwh go ../alpine --mount "$PWD" --mount-rw "$HOME/scratch" --sudo
+yhwh un ls
+yhwh un new workshop --template workshop
+un cd workshop
+yhwh un new ../alpine --template alpine
+yhwh un new ../from-docker-hub --from docker.io/library/alpine:latest
+yhwh un go ../alpine --mount "$PWD" --mount-rw "$HOME/scratch" --sudo
 ```
 
 On Linux, OCI imports use **Skopeo** and **umoci**. They download and unpack a
@@ -70,7 +73,8 @@ choice includes Node and adds the YHWH CLI and its prefix files. Guest
 interpreters and model providers follow the guest's own installation and login
 setup. `lord` uses Bash, and `un` uses Python 3.
 
-Go uses **Bubblewrap** and runs `/bin/sh` by default. Use `-- /absolute/command`
+Go uses **Bubblewrap** and runs `/bin/sh` by default. Use `--root` to use
+a Linux root directory without a universe marker. Use `-- /absolute/command`
 to run another guest command. Outer paths appear by basename under `/mnt/host`.
 Use `--mount` for read-only access and `--mount-rw` to let the guest change a
 host file or directory. Relative paths resolve from the outer working directory.
@@ -81,8 +85,9 @@ root identity maps to the invoking user, and sudo authenticates on the terminal.
 Desktop Go offers both options in its dialog. Imported shell settings are
 available inside the guest. The host skips imported directory prefixes.
 
-Shaddai offers Nu, Cd and Go in Files and Commands. Its `:nu` and `:go` accept
-the CLI arguments. The Obsidian plugin uses its vault for offline starters.
+Shaddai offers `un` in Files and Commands. Its `:` prompt accepts the same
+commands and passes other input to the running shell. The Obsidian plugin uses
+its vault for offline starters.
 On Linux it delegates OCI imports and the Go dialog to the installed `yhwh`
 command. Company and THWH open the shared desktop workflow from **File →
 Universes**. Android and iOS create and browse offline starter directories

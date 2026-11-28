@@ -44,3 +44,10 @@ generate a fresh draft for the original kanban item.
 `yhwh add` accepts them. Direct script execution has no workflow bookkeeping.
 Task metadata, answers and execution snapshots live in the worktree's
 Git-private `yhwh` directory.
+
+The New World Shell iteration script keeps a timestamped row per invocation
+in [log/new-world-shell-runs](log/new-world-shell-runs), keyed by the Git
+content ID of its prompt. If that prompt is submitted directly again, read the
+ledger, ask multiple-choice questions grounded in the current app, and record
+the invocation before implementing another pass. The script asks first when
+run from a terminal and includes the answers in the request.

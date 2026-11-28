@@ -89,7 +89,7 @@ reparses that output as executable syntax. `$HOME`, `$PWD`, `$PATH`, `$1`…`$9`
 and `$@` are supported. `$@` is a single text argument in this initial dialect.
 There is no globbing, control flow, job control or process shell.
 
-Implemented Atomics: `pwd`, `ls`, `cd`, `mkdir`, `touch`, `cat`, `echo`, `cp`,
+Implemented Atomics: `pwd`, `cwat`, `un`, `ls`, `cd`, `mkdir`, `touch`, `cat`, `echo`, `cp`,
 `mv`, `trash`, `grep`, `sort`, `head`, `wc`, `view`, `fm`, `open`, `chroot`,
 `help` and `man`. `?`, `help COMMAND` and `COMMAND --help` describe commands.
 `grep` performs literal case-insensitive matching. `cat` reads saved UTF-8
@@ -102,6 +102,37 @@ a live folder tab, refreshed on mutations, navigation, save, focus and resume.
 Tap **Select** in either file view to copy, cut, paste, rename or trash files.
 Commands stop on the first error. Earlier changes stay in place.
 Recursive aliases/Words and excessively long runs fail within bounded limits.
+
+## Shell files
+
+**--prefix** shows `@` and the user prefix. **bin**, **lib**, and **etc**
+open the directories at `@`. The prefix panel also opens their user-prefix
+counterparts. **etc/profile** opens the user’s sourceable configuration file.
+Desktop **PATH** shows the shell’s search path, and search also finds its
+aliases, functions and executable names. **Run in shell** sends the entered
+command to the current PTY, where pipelines, `.`, `chmod`, and `sudo` work as
+usual. Shaddai uses the same startup files and hooks.
+
+The user prefix defaults to `~/.config/yhwh` and honors `YHWH_CONFIG_HOME`
+and `XDG_CONFIG_HOME`. Edit its `etc/profile` to configure the shell.
+
+```sh
+yhwh_home_rc=yes             # Source ~/.bashrc or ~/.zshrc on startup
+yhwh_at_rc=.yhwh/etc/at      # Source this file at @ when it exists
+yhwh_bin=bin                 # Relative to @. An absolute path decouples it.
+yhwh_lib=lib
+yhwh_etc=etc
+yhwh_cd() { printf 'cd %s → %s\n' "$2" "$1"; }
+```
+
+`cwat --reload` re-sources `etc/profile` and applies the current prefix.
+The tab shell prepends the user’s `bin` and the active `@/bin` when present.
+Set `yhwh_at_path=no` to opt out of the automatic @ entry. Use
+`yhwh_enter NEW OLD` and `yhwh_leave OLD NEW` for prefix-specific shell state.
+Bash and Zsh retain shell functions and aliases across directory changes.
+Use `yhwh_leave` to undo assignments your @ startup file makes when needed.
+The Linux guest uses its own `/etc/yhwh/profile`. Android and iOS can edit
+prefix files for use on a Unix host and run their in-app commands locally.
 
 ## Folder roots and AI setup
 
@@ -122,7 +153,7 @@ guide. Desktop uses its existing Codex conversation. The official guides are
 
 Desktop, Three, Android and iOS share the Initial runtime and UI. Device I/O
 uses the filesystem bridge. The Initial interpreter runs in-app commands.
-The separate desktop terminal runs native programs. Shaddai and the Obsidian
+**Run in shell** uses the desktop terminal for native programs. Shaddai and the Obsidian
 plugin can edit the same scripts as ordinary text.
 
 Android and iOS source changes ship with a new native build. The browser

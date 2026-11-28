@@ -184,8 +184,8 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Panel keys | Hardware keyboards can hide, show, maximize or incrementally resize the file drawer. Configure the combinations and pixel step in Settings → Keys. The Initial opens as a sheet on mobile. |
 | Talk to YHWH | Shared composer and local left-side History for offline workspace help. Live chat setup opens the desktop connection guide. Live agent writes, chat attachments, and direct mail delivery require the desktop host. Electronic Mail can open a draft in the device’s mail app. |
 | Folder roots | Optional per-tab navigation into an existing folder using Use this folder as /. |
-| Tab anchor and folder actions | Shared `~`, `@`, and `/` controls. The Initial supports `@-set` and `@-get`. Tap a folder’s row menu to set `@` or run a text action from `/.yhwh/etc/folder-menu`. Executable actions require desktop process APIs. |
-| Universes | Nu creates the bundled Empty and Lord workshop starters in the workspace. Cd opens a marked directory. OCI import and Go need a Linux host with process and namespace access. |
+| Shell directories and prefix | Shared `.`, `@`, and `/` banner with go/set controls. The Initial supports `cwat`, `cd @`, and editing files under `--prefix`, including `/.yhwh/etc/profile`. Sourcing shell files, executable hooks, and native PATH require a Unix host. The folder row menu still reads text actions from `/.yhwh/etc/folder-menu`. |
+| Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. OCI import and `un go` need a Linux host with process and namespace access. |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Nietzsche Family Circus | Available in Nietzsche mode. The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |
 | Desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |

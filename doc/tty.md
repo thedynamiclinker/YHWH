@@ -13,6 +13,15 @@ between hidden, split and maximized. Add Alt+Shift for smaller moves. Set the
 key combinations and step in rows or columns under **Settings → Keys**. These
 shortcuts depend on the outer terminal sending the modified arrow keys.
 
+The status line shows `.`, `@`, and `/`. The file bar groups shortcuts as
+`go . @ /` and `set . @ /`. `un` opens the same universe commands as the
+desktop, including Linux guests in a separate tab. Type `:` in Files for a
+command line. Native commands run in the embedded shell, so aliases,
+functions and exports remain in that shell. The **--prefix** menu opens the
+real `bin`, `lib`, `etc`, `etc/profile`, and `~/.bashrc`, or prints
+`PATH`. Use **Settings → Terminal → Focus shell at startup** or
+`yhwh_shell_first=true` in `etc/profile` to land directly in the shell.
+
 A normal launch uses your current directory. Use `shaddai --launcher` for
 launcher shortcuts. It opens the global **Settings → Files and editor → Default
 directory**, which defaults to your home directory and is shared with desktop.
