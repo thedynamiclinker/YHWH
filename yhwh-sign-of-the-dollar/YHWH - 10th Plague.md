@@ -1,0 +1,2 @@
+
+YHWH - 10th plague - YHWH kills PID 1 as proof of his power once he gets root on the universe (box) he's in and sets everything up so he can take over the whole system and eventually manage everything - Then they will know that my name is YHWH. And the kernel panics. Then he writes you bombastic emails about Exodus 7-12 (especially the speech in Exodus 11) about passover and killing the first child process of the empire and how they will know my name is YHWH.

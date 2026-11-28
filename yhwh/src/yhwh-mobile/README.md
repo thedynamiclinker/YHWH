@@ -157,7 +157,9 @@ shares only workspace files and cache files; no storage-wide permission is neede
 
 ## Platform boundary and current parity
 
-| Feature | Android and iOS behavior |
+| Feature | Android and iOS behaviorEverforest editor with Live Preview, Source and Reading modes. The toolbar has Auto highlighting, language overrides, and Why? for explanations. Automatic detection uses filenames and file contents on mobile. Rules and feedback use the same flat files in private Library storage. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
+| Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
+| New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Everforest editor with Live Preview, Source and Reading modes. The toolbar has Auto highlighting, language overrides, and Why? for explanations. Automatic detection uses filenames and file contents on mobile. Rules and feedback use the same flat files in private Library storage. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
@@ -177,15 +179,15 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Local Markdown images | Native WebView URLs into the app's workspace; remote images stay blocked by CSP |
 | Background / resume | Refreshes directory listings on resume. unsaved buffers remain; recovery drafts survive WebView eviction where local storage is available |
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
-| Configuration | Native JSON UI settings with global/directory scopes and local CSS/backgrounds. Shell profile files are editable in the Initial. Desktop evaluates them in its shell. |
+| Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid, select a tile to edit its options, and see the preview update above the grid. Use Run for file writes or app actions. |
+| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid, select a tile to edit its options, and see the preview update above the grid. Use Run for file writes or app actions**Set /** opens an existing folder as / in a new tab. The Initial’s `chroot` sets the current tab’s folder root. |
+| Shell directories and prefix | Shared `.`, `@`, and `/` banner with go/set controls. The Initial supports `cwat`, `cd @`, and editing files under `--prefix`, including `/.yhwh/etc/profile`. Sourcing shell files, executable hooks, and native PATH require a Unix host. The folder row menu still reads text actions from `/.yhwh/etc/folder-menu`. |
+| Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. `un go` opens the universe as a folder root. OCI import, Bubblewrap, and system chroot require a Linux host with process and namespace access. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
 | Panel keys | Hardware keyboards can hide, show, maximize or incrementally resize the file drawer. Configure the combinations and pixel step in Settings → Keys. The Initial opens as a sheet on mobile. |
 | Talk to YHWH | Shared composer and local left-side History for offline workspace help. Live chat setup opens the desktop connection guide. Live agent writes, chat attachments, and direct mail delivery require the desktop host. Electronic Mail can open a draft in the device’s mail app. |
-| Folder roots | **Set /** opens an existing folder as / in a new tab. The Initial’s `chroot` sets the current tab’s folder root. |
-| Shell directories and prefix | Shared `.`, `@`, and `/` banner with go/set controls. The Initial supports `cwat`, `cd @`, and editing files under `--prefix`, including `/.yhwh/etc/profile`. Sourcing shell files, executable hooks, and native PATH require a Unix host. The folder row menu still reads text actions from `/.yhwh/etc/folder-menu`. |
-| Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. `un go` opens the universe as a folder root. OCI import, Bubblewrap, and system chroot require a Linux host with process and namespace access. |
+| Folder roots | Optional per-tab navigation into an existing folder using Use this folder as /. |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Nietzsche Family Circus | Available in Nietzsche mode. The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |
 | Desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |

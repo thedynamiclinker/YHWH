@@ -158,3 +158,48 @@ prefix. Each row contains the UTC timestamp, path, MIME type, Auto language,
 chosen language, and explanation. The rule and feedback files escape literal
 backslashes, tabs, CR, and LF as `\\`, `\t`, `\r`, and `\n`.
 Android and iOS store the same files in the app's private Library.
+
+## Editing keys
+
+Use Ctrl on Linux and Windows or Cmd on macOS for editor formatting and search.
+**Ctrl+B** and **Ctrl+I** toggle bold or italic in Markdown. **Ctrl+K** inserts a
+Markdown link, **Ctrl+Shift+C** inserts a fenced code block, and
+**Ctrl+Shift+Q** toggles a blockquote. **Alt+Up/Down** moves the selected lines
+and **Alt+Shift+Up/Down** duplicates them. **Tab** and **Shift+Tab** indent and
+outdent. **Ctrl+F** searches the active buffer. Click a Markdown task checkbox
+in Live Preview to update the source. **Ctrl+B** keeps its terminal shortcut
+outside the Markdown editor, and **Ctrl+backtick** opens the terminal from the editor.
+
+## Syntax highlighting
+
+The lower-right picker shows **Auto** and the language it found. Desktop uses
+`xdg-mime`, with `file --mime-type` as a fallback. Both desktop and mobile use
+known filenames and extensions, executable shebangs, and recognizable HTML,
+XML, or JSON for files with generic types. Pick any listed language to override
+highlighting in the open buffer. Use **Plain Text** to turn it off.
+
+After choosing a language, open **Why?** to save an explanation locally. Use
+the same form to make a language the Auto choice for a filename, extension,
+or extension under the file's folder. The explanation is a record for review.
+Auto applies explicit rules.
+
+YHWH looks for `etc/editor/languages` under the system, user, and ancestor
+`.yhwh` prefixes, in that order. The settings form writes to the user prefix,
+normally `~/.config/yhwh` or `$YHWH_CONFIG_HOME`. Rules are UTF-8, one per line,
+with tab-separated fields. Blank lines and comments beginning with `#` are
+ignored. The last matching rule wins. A fourth field optionally limits a rule
+to files under that absolute directory. Old `file_types` settings still work
+and are applied before the flat rules.
+
+```text
+filename	notes	markdown
+extension	logconf	properties files
+extension	conf	nginx	/home/abe/sites
+mime	text/x-tex	latex
+```
+
+Explanations go to `var/lib/editor/language-feedback.tsv` under the same user
+prefix. Each row contains the UTC timestamp, path, MIME type, Auto language,
+chosen language, and explanation. The rule and feedback files escape literal
+backslashes, tabs, CR, and LF as `\\`, `\t`, `\r`, and `\n`.
+Android and iOS store the same files in the app's private Library.
