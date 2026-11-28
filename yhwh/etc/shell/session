@@ -191,9 +191,7 @@ __yhwh_report() {
     printf '\007'
 }
 
-__yhwh_prompt() {
-    __yhwh_at
-    if [ "${__yhwh_previous_pwd:-$PWD}" != "$PWD" ]; then __yhwh_cd_hook; fi
+__yhwh_record() {
     if [ -n "${YHWH_TAB_ANCHOR:-}" ]; then
         local state="${YHWH_TAB_ANCHOR%/*}/shell" pending
         pending="$state.$$"
@@ -203,6 +201,17 @@ __yhwh_prompt() {
             __yhwh_command_names
         ) > "$pending" && command mv -f -- "$pending" "$state"
     fi
+}
+
+__yhwh_update_anchor() {
+    __yhwh_at
+    __yhwh_record
+}
+
+__yhwh_prompt() {
+    __yhwh_at
+    if [ "${__yhwh_previous_pwd:-$PWD}" != "$PWD" ]; then __yhwh_cd_hook; fi
+    __yhwh_record
     __yhwh_report
     printf '\033]133;A\007'
 }

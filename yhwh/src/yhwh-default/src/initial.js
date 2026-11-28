@@ -57,7 +57,8 @@ export function installInitial(app, { home, mobile, call }) {
 
   const root = () => {
     const tab = app.active();
-    return tab?.initialRoot || tab?.worldRoot || (tab?.systemRoot !== '/' ? tab?.systemRoot : null);
+    const directory = tab?.initialRoot || tab?.worldRoot || tab?.systemRoot;
+    return directory === '/' ? null : directory;
   };
   const prefix = action => call('shell:prefix', app.active().id, action);
   let shellCommands = [];

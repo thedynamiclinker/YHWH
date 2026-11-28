@@ -11,10 +11,10 @@ __yhwh_command_names() {
 function cd { __yhwh_cd "$@"; }
 function @-set { cwat "$@"; }
 
-zle -N __yhwh_at
-bindkey -M emacs '^[[277~' __yhwh_at
-bindkey -M viins '^[[277~' __yhwh_at
-bindkey -M vicmd '^[[277~' __yhwh_at
+zle -N __yhwh_update_anchor
+bindkey -M emacs '^[[277~' __yhwh_update_anchor
+bindkey -M viins '^[[277~' __yhwh_update_anchor
+bindkey -M vicmd '^[[277~' __yhwh_update_anchor
 autoload -Uz add-zsh-hook
 add-zsh-hook chpwd __yhwh_cd_hook
 add-zsh-hook precmd __yhwh_prompt

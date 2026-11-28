@@ -281,7 +281,7 @@ async function shellPrefix(focus, action) {
     };
     const folders = pathValue === '' && !live ? [] : [...new Set(pathValue.split(path.delimiter))];
     await Promise.all(folders.map(async folder => {
-      const location = path.resolve(focus.cwd, folder);
+      const location = path.resolve(live ? runtime[0] : focus.cwd, folder);
       if (guestRoot) {
         const directory = path.posix.resolve('/' + path.relative(guestRoot, focus.cwd), folder);
         const resolve = part => universes.guestPath(guestRoot, path.posix.join(directory, path.basename(part)));

@@ -17,7 +17,7 @@ function cd {
 function @-set { cwat "$@"; }
 
 for __yhwh_map in emacs-standard vi-insertion vi-command; do
-    bind -m "$__yhwh_map" -x '"\e[277~":__yhwh_at'
+    bind -m "$__yhwh_map" -x '"\e[277~":__yhwh_update_anchor'
 done
 unset __yhwh_map
 _yhwh_un() { COMPREPLY=($(compgen -W 'new cd go ls' -- "${COMP_WORDS[COMP_CWORD]}")); }
