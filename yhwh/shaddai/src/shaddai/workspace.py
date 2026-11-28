@@ -242,7 +242,8 @@ class Workspace:
                          preview_visible),
                 ]),
             ]),
-            bar(self.universe_bar),
+            bar(self.go_bar),
+            bar(self.set_bar),
         ])
         document = HSplit([
             bar(self.document_bar, lambda: self.tab_position(self.document_bar())),
@@ -400,13 +401,6 @@ class Workspace:
              clickable(self.browser.location)),
         ]
 
-    def universe_bar(self):
-        return [
-            *self.go_bar(), *self.set_bar(),
-            ("class:heading", " un ", clickable(self.universe_menu)),
-            ("", " --prefix ", clickable(self.prefix_menu)),
-        ]
-
     @property
     def shell_root(self):
         world = self.browser.tree.world
@@ -420,13 +414,15 @@ class Workspace:
         return [("class:muted", " go  "),
                 ("", " . ", clickable(self.browser.refresh)),
                 ("", " @ ", clickable(lambda: self.browser.navigate(self.tab.anchor))),
-                ("", " / ", clickable(lambda: self.browser.navigate(self.shell_root)))]
+                ("", " / ", clickable(lambda: self.browser.navigate(self.shell_root))),
+                ("class:heading", " un ", clickable(self.universe_menu))]
 
     def set_bar(self):
         return [("class:muted", " set "),
                 ("", " . ", clickable(lambda: self.browser.navigate(self.universe_target()))),
                 ("", " @ ", clickable(lambda: self.attempt(self.set_anchor, self.universe_target()))),
-                ("", " / ", clickable(lambda: self.attempt(self.chroot_universe, True)))]
+                ("", " / ", clickable(lambda: self.attempt(self.chroot_universe, True))),
+                ("", " --prefix ", clickable(self.prefix_menu))]
 
     def places(self):
         places = [("Workspace", self.browser.root), ("Home", Path.home())]
@@ -1212,7 +1208,8 @@ class Workspace:
             self.browser.navigate(path)
 
         def profile():
-            path = self.config.yhwh.user / "etc/profile"
+            path = self.shell_root / "etc/yhwh/profile" if self.tab.guest_args else self.config.yhwh.user / "etc/profile"
+            path = self.browser.physical(path)
             path.parent.mkdir(parents=True, exist_ok=True)
             try:
                 source = (self.config.library if self.config.library.etc else self.library).data("profile").read_text()
