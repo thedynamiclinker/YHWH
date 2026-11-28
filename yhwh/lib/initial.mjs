@@ -12,6 +12,8 @@ const text = value => ({ kind: 'text', text: String(value ?? '') });
 const nameOK = name => typeof name === 'string' && name.length > 0 && name.length < 100 && !/[\s/\\\0|;<>$'"#]/u.test(name);
 export const atomics = [
   ['pwd', 'Where am I?', 'pwd', 'Print the current folder.'],
+  ['@-get', 'Print tab anchor', '@-get', 'Print the directory assigned to @ in this tab.'],
+  ['@-set', 'Set tab anchor', '@-set [folder]', 'Assign a directory to @ in this tab. Omit the folder to use the current directory.'],
   ['ls', 'List files', 'ls [folder]', 'Produce a fixed list of files. Pipe to view to browse it.'],
   ['cd', 'Change folder', 'cd [folder]', 'Go to a folder; no argument returns home.'],
   ['mkdir', 'New folder', 'mkdir name', 'Create a folder without replacing anything.'],
@@ -257,6 +259,17 @@ export function createInitial(host) {
     const requireArgs = count => { if (args.length < count) throw new Error(`Choose ${count} argument${count===1?'':'s'} for ${name}. ${help(name).split('\n')[1]}`); };
     if (context.preview && ['mkdir', 'touch', 'cp', 'mv', 'trash'].includes(name)) requireRun(`execute ${name}`);
     if (name==='pwd') return text(context.root ? context.cwd.slice(context.root.length) || '/' : context.cwd);
+    if (name === '@-get') {
+      if (args.length) throw new Error('Usage: @-get');
+      return text(await host.anchor());
+    }
+    if (name === '@-set') {
+      if (args.length > 1 || args[0] === '') throw new Error('Usage: @-set [folder]');
+      if (context.capture) throw new Error('Set the tab anchor outside $().');
+      if (context.preview) requireRun('set the tab anchor');
+      await host.anchor(path(args[0] ?? '.'));
+      return text('');
+    }
     if (name==='echo') return text(args.join(' '));
     if (name==='ls') return { kind: 'entries', entries: await host.list(path(args[0] || '.')) };
     if (name==='cd') { const target=path(args[0] || context.root || home); const stat=await host.stat(target); if (!stat.directory) throw new Error('Choose a folder.'); context.cwd=target; if (!context.capture && !context.preview) await host.navigate(target); return text(target); }

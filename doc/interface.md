@@ -17,6 +17,77 @@
 - MIME file associations belong to the system: delegate non-text attachments, including images, media, spreadsheets and CSV/TSV, to the user’s preferred application. External opens preserve the current buffer and report launch failures. Keep only the optional read-only scrolling PDF preview; offer Ask / Preview here / System app and remember a choice for all PDFs. PDF Ctrl+click/double-click opens externally. Never execute document scripts, macros or formula text in previews.
 - Trash actions await context-menu closure before opening confirmation, retain recoverability, and never fall back to permanent deletion. Provide full and relative path-copy actions.
 
+## Directory shortcuts and folder actions
+
+`~` opens home and `/` opens the current filesystem or folder-view root.
+`@` starts at the tab’s opening directory. Use **Choose @ folder…** under `@`
+or **Set as @** in a folder’s context menu to change it without leaving the
+current directory. **Go to @** and `@/subdirectory` in the location field use
+the new anchor. Closing the tab discards its anchor.
+
+In a desktop tab’s shell, `@-get` prints the anchor and `@-set [DIRECTORY]`
+sets it. Omitting `DIRECTORY` uses the shell’s current directory. The same
+commands work as `yhwh @-get` and `yhwh @-set`, or inside the Initial.
+
+Add menu items under `${YHWH_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yhwh}/etc/folder-menu`.
+A UTF-8 `.txt` file adds an item named after the file and displays its contents.
+The bundled **Hello world** is one such file. Desktop also runs executable
+files with the clicked folder as both the working directory and the first
+argument. For example, save this as `Show folder` and run `chmod +x 'Show folder'`.
+
+```sh
+#!/bin/sh
+printf '%s\n' "$1"
+```
+
+Reopen the menu to pick up changes. Android and iOS read `.txt` actions from
+`/.yhwh/etc/folder-menu` under the app storage root.
+
+## Universes
+
+Use **New universe** in the Files pane to choose a starter. **Enter** opens the
+selected universe directory. With no folder selected it uses the current directory.
+**Chroot** opens a separate terminal for the guest shell. A universe starts as
+an ordinary directory whose `.@` begins with `# un root`, the same marker
+used by `un new`. The bundled **Empty** and **Lord workshop** starters work
+offline. The workshop includes a TWO example, `un` recipes, and a `zan` manual page.
+
+```sh
+yhwh nu --list
+yhwh nu workshop --template workshop
+cd -- "$(yhwh cd workshop)"
+yhwh nu ../alpine --template alpine
+yhwh nu ../from-docker-hub --from docker.io/library/alpine:latest
+yhwh go ../alpine --mount "$PWD" --mount-rw "$HOME/scratch" --sudo
+```
+
+On Linux, OCI imports use **Skopeo** and **umoci**. They download and unpack a
+root filesystem for the host architecture without starting the image's
+entrypoint. Specify a tag or SHA-256 digest to select an image version. The
+Alpine, Nix, Gentoo and Arch choices add lord commands from `$YHWH_LORD_DIR/bin`,
+`~/src/lord/bin`, or the directory containing `lord` on PATH. The Debian YHWH
+choice includes Node and adds the YHWH CLI and its prefix files. Guest
+interpreters and model providers follow the guest's own installation and login
+setup. `lord` uses Bash, and `un` uses Python 3.
+
+Go uses **Bubblewrap** and runs `/bin/sh` by default. Use `-- /absolute/command`
+to run another guest command. Outer paths appear by basename under `/mnt/host`.
+Use `--mount` for read-only access and `--mount-rw` to let the guest change a
+host file or directory. Relative paths resolve from the outer working directory.
+Mounts belong to the session. Use `--network` to share host networking.
+`--sudo` permits a retry after an unprivileged namespace failure. This route
+requires system-installed Bubblewrap, util-linux `unshare` and sudo. The guest
+root identity maps to the invoking user, and sudo authenticates on the terminal.
+Desktop Go offers both options in its dialog. Imported shell settings are
+available inside the guest. The host skips imported directory prefixes.
+
+Shaddai offers Nu, Cd and Go in Files and Commands. Its `:nu` and `:go` accept
+the CLI arguments. The Obsidian plugin uses its vault for offline starters.
+On Linux it delegates OCI imports and the Go dialog to the installed `yhwh`
+command. Company and THWH open the shared desktop workflow from **File →
+Universes**. Android and iOS create and browse offline starter directories
+inside the app workspace. OCI import and Go require the Linux host.
+
 ## Editing keys
 
 Use Ctrl on Linux and Windows or Cmd on macOS for editor formatting and search.

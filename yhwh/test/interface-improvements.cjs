@@ -92,14 +92,37 @@ module.exports = async function ({ app, page, run, open, directory, artifacts })
   // Copy paths through the actual right-click menu, including a nested file.
   const nested = path.join(directory, 'nested', 'child.txt');
   await page.evaluate(async filename => { const app = window.YHWH; app.active().selected = new Set([filename]); }, nested);
-  await page.locator('#file-list [data-path$="/nested"]').click({ button: 'right' });
-  await page.locator('#dialog [data-menu]', { hasText: 'Copy Full Path' }).click();
-  await page.waitForFunction(() => !document.querySelector('#dialog').open);
+  const folder = page.locator('#file-list [data-path$="/nested"]'), menu = page.locator('#directory-menu');
+  await folder.click({ button: 'right' });
+  await menu.getByRole('menuitem', { name: 'Copy Full Path', exact: true }).click();
   await copied(path.join(directory, 'nested'));
-  await page.locator('#file-list [data-path$="/nested"]').click({ button: 'right' });
-  await page.locator('#dialog [data-menu]', { hasText: 'Copy Relative Path' }).click();
-  await page.waitForFunction(() => !document.querySelector('#dialog').open);
+  await folder.click({ button: 'right' });
+  await menu.getByRole('menuitem', { name: 'Copy Relative Path', exact: true }).click();
   await copied('nested');
+  assert.deepEqual(await page.locator('.directory-shortcuts button').allTextContents(), ['~', '@', '/']);
+  assert.equal(await page.locator('#files [data-command="open-directory"]').count(), 0);
+  const anchor = path.dirname(nested);
+  const anchorButton = page.getByRole('button', { name: 'Tab anchor', exact: true });
+  await anchorButton.click();
+  await menu.getByRole('menuitem', { name: 'Set @ to nested', exact: true }).click();
+  await page.waitForFunction(anchor => window.YHWH.active().anchor === anchor, anchor);
+  assert.equal(await page.evaluate(() => window.YHWH.active().cwd), directory);
+  await anchorButton.click();
+  await menu.getByRole('menuitem', { name: 'Go to @', exact: true }).click();
+  await page.waitForFunction(anchor => window.YHWH.active().cwd === anchor, anchor);
+  await page.evaluate(directory => window.YHWH.navigate(directory), directory);
+  await folder.click({ button: 'right' });
+  await menu.getByRole('menuitem', { name: 'Hello world', exact: true }).click();
+  assert.equal((await page.locator('#dialog[open] pre').textContent()).trim(), 'Hello world!');
+  await page.keyboard.press('Escape');
+  const configDirectory = await page.evaluate(() => window.YHWH.active().config.userDirectory);
+  const actions = path.join(configDirectory, 'etc/folder-menu');
+  await fs.mkdir(actions, { recursive: true });
+  await fs.writeFile(path.join(actions, 'Show folder'), '#!/bin/sh\nprintf "%s\\n%s\\n" "$PWD" "$1"\n', { mode: 0o755 });
+  await folder.click({ button: 'right' });
+  await menu.getByRole('menuitem', { name: 'Show folder', exact: true }).click();
+  assert.equal((await page.locator('#dialog[open] pre').textContent()).trim(), `${anchor}\n${anchor}`);
+  await page.keyboard.press('Escape');
   const disposable = path.join(directory, 'trash-me.txt'); await fs.writeFile(disposable, 'Recoverable');
   // Isolate desktop trash integration while exercising confirmation and UI refresh.
   await app.evaluate(({ shell }) => {

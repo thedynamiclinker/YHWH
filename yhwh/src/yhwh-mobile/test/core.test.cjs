@@ -36,6 +36,41 @@ test('logical paths stay inside the workspace', async () => {
   assert.equal(normalize('../../outside', '/notes'), '/outside');
   for (const value of ['a\0b', 'a\\b']) assert.throws(() => normalize(value));
 });
+test('the tab anchor and folder actions use ordinary directories and independent tabs', async () => {
+  const { bridge, call, storage } = await fixture();
+  await storage.mkdir('/outside repo');
+  await call('focus:new', 'two', '/outside repo');
+  const changes = [];
+  bridge.on('anchor-changed', event => changes.push(event));
+  await call('@-set', 'one', '/outside repo');
+  await call('@-set', 'two', '/');
+  assert.equal(await call('@-get', 'one'), '/outside repo');
+  assert.equal(await call('@-get', 'two'), '/');
+  assert.equal((await call('list', 'one')).cwd, '/');
+  assert.equal((await call('list', 'two')).cwd, '/outside repo');
+  assert.deepEqual(await storage.list('/outside repo'), []);
+  assert.deepEqual(changes, [{ id: 'one', anchor: '/outside repo' }, { id: 'two', anchor: '/' }]);
+  await assert.rejects(call('@-set', 'one', '/missing'), /existing directory/);
+  const config = '/.yhwh/etc/folder-menu';
+  await storage.mkdir(config);
+  await storage.write(`${config}/Greetings.txt`, new TextEncoder().encode('Hello, Abe.'));
+  assert.deepEqual(await call('folder-menu:list'), [{ name: 'Greetings.txt', label: 'Greetings' }]);
+  assert.deepEqual(await call('folder-menu:run', 'one', 'Greetings.txt'), { stdout: 'Hello, Abe.' });
+  await call('focus:close', 'one');
+  await assert.rejects(call('@-get', 'one'), /closed/);
+});
+test('Nu and Cd use the shared starter format inside mobile storage', async () => {
+  const { storage, call } = await fixture();
+  const root = await call('universe:create', 'one', 'Workshop', 'workshop');
+  assert.equal(root, '/Workshop');
+  assert.match(new TextDecoder().decode((await storage.stat('/Workshop/.@')).bytes), /^# un root\nhello:/);
+  assert.equal(await call('universe:cd', 'one', root), root);
+  await assert.rejects(call('universe:create', 'one', 'Workshop', 'empty'), /already exists/);
+  await assert.rejects(call('universe:create', 'one', '../escape', 'empty'), /without slashes/);
+  await assert.rejects(call('universe:create', 'one', 'Alpine', 'alpine'), /Linux/);
+  assert.equal(await storage.stat('/Alpine'), null);
+  await assert.rejects(call('universe:go', 'guest', 'one', root, {}), /Linux/);
+});
 test('files preserve UTF-8 and CRLF and reject conflicting changes even at the same timestamp', async () => {
   const { storage, call } = await fixture();
   await storage.write('/note.md', new TextEncoder().encode('שלום\r\nhello\r\n'));

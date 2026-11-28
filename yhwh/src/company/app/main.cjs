@@ -9,12 +9,14 @@ const {
 } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs/promises");
+const { execFile, spawn } = require("node:child_process");
+const { promisify } = require("node:util");
 const { pathToFileURL } = require("node:url");
 const { Workspace } = require("../../../lib/company/workspace.cjs");
 const { hunks } = require("../../../lib/company/repository.cjs");
 const { Review } = require("../../../lib/company/review.cjs");
 const { primarySender, emailLetters } = require("../../../lib/inbox.cjs");
-const { etc } = require("../../../lib/paths.cjs");
+const { etc, output } = require("../../../lib/paths.cjs");
 const thwh = process.argv.includes("--thwh");
 
 if (thwh) {
@@ -68,6 +70,36 @@ async function readEmail(letter) {
     if (response === 1 && link) await shell.openExternal(link);
   } catch (error) {
     dialog.showErrorBox("Could not open YHWH email", error.message);
+  }
+}
+
+async function openUniverse(action) {
+  try {
+    const picked = await dialog.showOpenDialog(window, {
+      title: action === "nu" ? "Choose a parent directory" : "Choose a universe directory",
+      defaultPath: process.cwd(),
+      properties: ["openDirectory"],
+    });
+    if (picked.canceled) return;
+    const [directory] = picked.filePaths;
+    if (action !== "nu") await require("../../../lib/universes.cjs").enter(directory);
+    const env = { ...process.env };
+    for (const key of ["ELECTRON_RUN_AS_NODE", "YHWH_DATA_DIR", "YHWH_TAB", "YHWH_INTERFACE"]) delete env[key];
+    const bin = path.join(__dirname, "../../../bin"), node = env.YHWH_NODE || "node";
+    try { await fs.access(output("default/ui/renderer.js")); }
+    catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      await promisify(execFile)(node, [path.join(bin, "build.cjs"), "default"], { env });
+    }
+    const child = spawn(node, [path.join(bin, "yhwh"), "open", "default", "--open", directory, `--universe=${action}`], { env, stdio: ["ignore", "ignore", "pipe"] });
+    let errors = "";
+    child.stderr.on("data", chunk => { errors = (errors + chunk).slice(-4000); });
+    child.on("error", error => dialog.showErrorBox("Could not open YHWH", error.message));
+    child.on("close", code => {
+      if (code) dialog.showErrorBox("Could not open YHWH", errors.trim() || `Exited with status ${code}.`);
+    });
+  } catch (error) {
+    dialog.showErrorBox("Could not open universe", error.message);
   }
 }
 
@@ -171,6 +203,14 @@ app
               label: "Export files",
               accelerator: "CmdOrCtrl+Shift+E",
               click: () => window.webContents.send("ui:export"),
+            },
+            {
+              label: "Universes",
+              submenu: [
+                { label: "Nu · Make new universe…", click: () => openUniverse("nu") },
+                { label: "Cd · Enter universe…", click: () => openUniverse("cd") },
+                { label: "Go · Chroot universe…", click: () => openUniverse("go") },
+              ],
             },
             { type: "separator" },
             { role: "quit" },

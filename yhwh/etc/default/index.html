@@ -41,11 +41,13 @@
           <button data-command="universe-enter" title="Cd · Enter selected or current universe" aria-label="Enter universe"><span data-file-icon="enterUniverse"></span>Enter</button>
           <button data-command="universe-go" title="Go · Chroot into selected or current universe" aria-label="Chroot universe"><span data-file-icon="chrootUniverse"></span>Chroot</button>
         </div>
-        <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button><button data-command="home" data-file-icon="home" title="Home directory" aria-label="Home directory"></button><button data-command="open-directory" data-file-icon="openFolder" title="Choose directory" aria-label="Choose directory"></button></div>
+        <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button></div>
         <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
         <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>
+        <div class="directory-shortcuts" role="group" aria-label="Directory shortcuts"><button data-command="home" title="Home directory" aria-label="Home directory">~</button><button data-command="anchor-menu" title="Tab anchor" aria-label="Tab anchor" aria-haspopup="menu" aria-expanded="false">@</button><button data-command="root-directory" title="Root directory" aria-label="Root directory">/</button></div>
         <div id="file-list" role="listbox" tabindex="0" aria-label="Directory contents"></div>
         <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" data-file-icon="refresh" title="Refresh" aria-label="Refresh directory"></button></footer>
+        <div id="directory-menu" class="directory-menu" popover="auto" role="menu" aria-label="Directory actions"></div>
       </section>
       <div class="resize-handle sidebar-resize" role="separator" aria-label="Resize file manager"></div>
     </div>

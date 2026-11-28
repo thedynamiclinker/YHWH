@@ -26,6 +26,11 @@ and the requirement to carry new features across all app versions wherever
 possible and practical. Shared source changes reach newly built releases;
 installed devices still need an app update.
 
+**Nu**, **Cd**, and **Go** create, enter, and chroot into universes from Files or
+the `yhwh` command. Bundled Empty and Lord workshop starters are available
+offline. Linux supports distro roots and Docker Hub imports.
+[Universe setup and commands](../doc/interface.md#universes)
+
 One root npm lockfile owns JavaScript dependencies. Node >=22.12, npm, Make, Bash, Git,
 `fold`, Python 3 and `file` are required. Native node-pty builds may need a C++
 toolchain. Electron needs a desktop; headless checks need Xvfb. On NixOS the

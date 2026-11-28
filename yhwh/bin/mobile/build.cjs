@@ -6,7 +6,13 @@ async function build() {
   const directory = output('mobile/ui');
   await fs.mkdir(directory, { recursive: true });
   const keys = await require('../../lib/keys.cjs').scan(path.join(root, 'etc/keys'));
-  const result = await esbuild.build({ absWorkingDir: root, define: { YHWH_BUILTIN_KEYS: JSON.stringify(keys.map(({ filename, source, ...binding }) => binding)) }, entryPoints: { mobile: 'src/yhwh-mobile/src/entry.js' }, bundle: true, splitting: true,
+  const menu = path.join(root, 'etc/folder-menu');
+  const names = (await fs.readdir(menu, { withFileTypes: true })).filter(entry => entry.isFile() && entry.name.endsWith('.txt') && !entry.name.startsWith('.')).map(entry => entry.name);
+  const actions = await Promise.all(names.map(async name => [name, await fs.readFile(path.join(menu, name), 'utf8')]));
+  const result = await esbuild.build({ absWorkingDir: root, define: {
+    YHWH_BUILTIN_KEYS: JSON.stringify(keys.map(({ filename, source, ...binding }) => binding)),
+    YHWH_BUILTIN_FOLDER_ACTIONS: JSON.stringify(Object.fromEntries(actions)),
+  }, entryPoints: { mobile: 'src/yhwh-mobile/src/entry.js' }, bundle: true, splitting: true,
     format: 'esm', outdir: directory, sourcemap: true, target: ['chrome110', 'safari16'], metafile: true, loader: { '.md': 'text', '.png': 'file', '.ttf': 'file' } });
   await require('../viewer-assets.cjs')(directory);
   let html = await fs.readFile(path.join(root, 'etc/default/index.html'), 'utf8');

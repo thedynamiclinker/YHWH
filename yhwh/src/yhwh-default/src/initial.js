@@ -63,7 +63,8 @@ export function installInitial(app, { home, mobile, call }) {
     list: path => call('directory:list', app.active().id, path),
     copy: (...args) => call('file:copy', ...args), move: (...args) => call('file:move', ...args), trash: path => call('file:trash', path),
     navigate: path => app.navigate(path), open: path => app.openFile(path), view: showView,
-    builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface'].includes(item.id)),
+    anchor: path => path === undefined ? call('@-get', app.active().id) : call('@-set', app.active().id, path),
+    builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface', '@-get', '@-set'].includes(item.id)),
     chroot: async path => {
       const tab = app.active();
       tab.initialRoot = mobile ? null : path;

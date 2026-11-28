@@ -459,12 +459,20 @@ process.stdin.on('end', () => {
     await page.evaluate(() => window.YHWH.active().terminal.focus());
     await page.keyboard.type("printf 'SYNC:%s\\n' \"$PWD\""); await page.keyboard.press('Enter');
     await page.waitForFunction(directory => { const t = window.YHWH.active().terminal; for (let i = 0; i < t.buffer.active.length; i++) if (t.buffer.active.getLine(i)?.translateToString().includes(`SYNC:${directory}`)) return true; return false; }, directory);
+    await page.keyboard.type("@-set nested && printf 'ANCHOR:%s\\n' \"$(yhwh @-get)\""); await page.keyboard.press('Enter');
+    await page.waitForFunction(({ nested, directory }) => {
+      const tab = window.YHWH.active(), buffer = tab.terminal.buffer.active;
+      const output = Array.from({ length: buffer.length }, (_, i) => buffer.getLine(i)?.translateToString(true));
+      return output.includes(`ANCHOR:${nested}`) && tab.anchor === nested && tab.cwd === directory && tab.systemRoot === '/';
+    }, { nested, directory });
     await require('../../../test/terminal-layout.cjs')(page, app, path.join(artifacts, '17-terminal-docking.png'));
     console.log('✓ terminal docking, compact sizing, nested drops, hidden ancestors, recovery and real PTY size');
     await page.keyboard.press('Control+Shift+b'); await page.waitForFunction(() => window.YHWH.active().expanded === 'terminal'); assert.equal(await page.locator('#document').isVisible(), false); assert.equal(await page.locator('#files').isVisible(), true);
     await page.keyboard.press('Control+Shift+b');
     await page.keyboard.press('Control+t'); await page.waitForFunction(() => window.YHWH.tabs.length === 2);
+    assert.equal(await page.evaluate(() => window.YHWH.active().anchor), directory);
     await page.keyboard.press('Control+Shift+Tab'); await page.waitForFunction(() => window.YHWH.active().file?.name === 'renamed.md');
+    assert.equal(await page.evaluate(() => window.YHWH.active().anchor), nested);
     const tab = await page.evaluate(() => window.YHWH.active().id);
     const second = exec(process.execPath, [path.join(root, '../../bin/default/cli.cjs'), 'open', path.join(directory, 'boop')], { env: { ...env, YHWH_TAB: tab, YHWH_ELECTRON: require('../../../lib/electron.cjs')() } });
     await page.waitForFunction(() => window.YHWH.active().file?.name === 'boop'); await second;

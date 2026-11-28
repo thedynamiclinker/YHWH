@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
 const paths = require('./paths.cjs');
+const anchor = require('./tab-anchor.cjs');
 const workflows = ['begin','review','run','add','commit'];
 const files = ['create','read','append','prepend','list','search','move','rename','config'];
 const interfaces = ['default','three','obsidian'];
@@ -50,7 +51,8 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','inbox','keys','nu','cd','go',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys','nu','cd','go',...anchor.commands,...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if (anchor.commands.includes(command)) { await anchor.cli(command, rest); return 0; }
   if (['nu', 'cd', 'go'].includes(command.toLowerCase())) return universe(command.toLowerCase(), rest);
   if (command === 'inbox') {
     if (rest.length === 1 && ['-h', '--help'].includes(rest[0])) {
@@ -111,7 +113,7 @@ async function universe(command, args) {
       for (const seed of seeds) console.log(`${seed.id}\t${seed.label}\t${seed.image || seed.description}`);
       return 0;
     }
-    if (positionals.length !== 1 || values.list || (values.from && values.template)) throw new Error(help.nu);
+    if (positionals.length !== 1 || values.list || (values.from !== undefined && values.template !== undefined)) throw new Error(help.nu);
     const controller = new AbortController();
     const stop = () => controller.abort();
     process.once('SIGINT', stop); process.once('SIGTERM', stop);

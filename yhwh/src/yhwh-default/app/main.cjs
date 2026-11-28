@@ -14,6 +14,8 @@ const { freeEnergy, levelAt } = require('../../../lib/levels.cjs');
 const { mail } = require('./mail.cjs');
 const { chat } = require('./chat.cjs');
 const paths = require('../../../lib/paths.cjs');
+const tabAnchor = require('../../../lib/tab-anchor.cjs');
+const folderMenu = require('./folder-menu.cjs');
 const universes = require('../../../lib/universes.cjs');
 const { universeName } = require('../../../lib/universe-seeds.cjs');
 
@@ -53,7 +55,7 @@ async function request(argv, cwd = process.cwd(), configured) {
       filename = home;
     }
   }
-  return { path: path.resolve(cwd, filename || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme'), warning, universeGo: argv.includes('--universe-go') };
+  return { path: path.resolve(cwd, filename || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme'), warning, universe: flag(argv, '--universe') };
 }
 
 const locked = app.requestSingleInstanceLock();
@@ -188,7 +190,20 @@ async function navigate(id, directory, fromShell = false) {
   await watchDirectory(focus);
   if (!fromShell && focus.terminalId) host.send({ type: 'cd', id: focus.terminalId, cwd: await worlds.physical(focus, directory) });
   const config = await configFor(directory);
-  return { worldRoot: focus.worldRoot || null, cwd: directory, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config };
+  return { worldRoot: focus.worldRoot || null, systemRoot: path.parse(directory).root, cwd: directory, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config };
+}
+
+async function accessAnchor(id, directory) {
+  const focus = focuses.get(id);
+  if (!focus?.anchor) throw new Error('That tab has closed.');
+  if (directory === undefined) return tabAnchor.read(focus.anchor.filename);
+  if (typeof directory !== 'string' || !path.isAbsolute(directory)) throw new Error('Choose an existing directory for @.');
+  const anchor = path.resolve(directory);
+  const target = worlds.directory(focus, anchor) === anchor ? await worlds.physical(focus, anchor) : anchor;
+  if (!(await fs.stat(target).catch(() => null))?.isDirectory()) throw new Error(`Choose an existing directory for @. ${anchor}`);
+  if (focuses.get(id) !== focus) throw new Error('That tab has closed.');
+  await tabAnchor.write(focus.anchor.filename, anchor);
+  return anchor;
 }
 
 async function sourcePath(filename) {
@@ -210,7 +225,7 @@ async function startTerminal(focus, id) {
   if (terminals.has(id)) throw new Error('Invalid terminal.');
   if ([...terminals.values()].includes(focus.id)) throw new Error('This app tab already has a shell.');
   terminals.set(id, focus.id); focus.terminalId = id;
-  host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });
+  host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_TAB_ANCHOR: focus.anchor.filename, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });
 }
 
 async function launch() {
@@ -246,14 +261,26 @@ async function launch() {
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
+      focus.anchor = await tabAnchor.create(result.cwd, anchor => send('anchor-changed', { id, anchor }));
       if (guest) {
         terminals.set(id, focus.id);
         host.send({ type: 'start', id, cwd: guest.cwd, guest: { program: guest.program, args: guest.args } });
       } else await startTerminal(focus, id);
-      return result;
-    } catch (error) { focus.watcher?.close(); clearTimeout(focus.watchTimer); focuses.delete(id); throw error; }
+      return { ...result, anchor: result.cwd };
+    } catch (error) { focus.anchor?.close(); focus.watcher?.close(); clearTimeout(focus.watchTimer); focuses.delete(id); throw error; }
   }
   handle('focus:new', (id, directory) => newFocus(id, directory));
+  handle('@-get', id => accessAnchor(id));
+  handle('@-set', (id, directory) => accessAnchor(id, directory ?? focuses.get(id)?.cwd));
+  handle('folder-menu:list', folderMenu.list);
+  handle('folder-menu:run', async (id, name, directory) => {
+    const focus = focuses.get(id);
+    if (!focus) throw new Error('That tab has closed.');
+    if (worlds.directory(focus, directory) !== path.resolve(directory)) throw new Error('That folder is outside the current view.');
+    const cwd = await worlds.physical(focus, path.resolve(directory));
+    const { environment } = await configFor(focus.cwd);
+    return folderMenu.run(name, cwd, { ...environment, YHWH_TAB: id, YHWH_TAB_ANCHOR: focus.anchor.filename, PATH: [path.join(paths.root, 'bin'), environment.PATH || process.env.PATH].join(path.delimiter) });
+  });
   handle('universe:go', async (id, from, directory, options) => {
     const focus = focuses.get(from);
     if (!focus) throw new Error('Closed tab.');
@@ -291,6 +318,7 @@ async function launch() {
   });
   handle('focus:close', id => {
     const focus = focuses.get(id); focus?.watcher?.close(); clearTimeout(focus?.watchTimer); focuses.delete(id);
+    focus?.anchor?.close();
     focus?.creatingUniverse?.abort();
     for (const [terminalId, owner] of terminals) if (owner === id) { terminals.delete(terminalId); host.send({ type: 'close', id: terminalId }); }
   });
@@ -461,6 +489,10 @@ async function launch() {
 app.on('will-quit', () => {
   quitting = true;
   for (const controller of conversations.values()) controller.abort();
-  for (const focus of focuses.values()) { focus.watcher?.close(); clearTimeout(focus.watchTimer); }
+  for (const focus of focuses.values()) {
+    focus.anchor?.close();
+    focus.watcher?.close(); clearTimeout(focus.watchTimer);
+    focus.creatingUniverse?.abort();
+  }
   host?.disconnect();
 });

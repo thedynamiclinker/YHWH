@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('yhwh', {
   },
   terminal(type, message) { if (['write', 'resize'].includes(type)) ipcRenderer.send(`terminal:${type}`, message); },
   on(channel, callback) {
-    if (!['command', 'open', 'terminal', 'navigation', 'directory-changed', 'app-changed', 'error'].includes(channel)) throw new Error('Unknown event.');
+    if (!['command', 'open', 'terminal', 'navigation', 'anchor-changed', 'directory-changed', 'app-changed', 'error'].includes(channel)) throw new Error('Unknown event.');
     const listener = (_event, value) => callback(value);
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);

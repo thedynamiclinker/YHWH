@@ -3,6 +3,7 @@
 const callChannels = [
   'bootstrap', 'directory:list', 'chat', 'world:enter', 'world:leave', 'world:books', 'world:quotes',
   'focus:new', 'focus:close', 'navigate', 'list', 'path:stat', 'file:read', 'file:save', 'file:create',
+  '@-get', '@-set', 'folder-menu:list', 'folder-menu:run',
   'file:move', 'file:copy', 'file:trash', 'file:external', 'file:reveal', 'clipboard:path', 'choose',
   'editor:language-rule', 'editor:language-feedback',
   'choose:save', 'settings:save', 'config:open', 'config:reload', 'words:save', 'plugins', 'circus',

@@ -77,6 +77,14 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .file-filter { display: flex; margin: 3px 12px 8px; gap: 3px; }
 #file-filter { background: transparent; width: 100%; padding: 4px 7px; font-size: .875rem; }
 .file-filter button { flex-shrink: 0; }
+.directory-shortcuts { display: flex; gap: 4px; margin: 0 12px 4px; }
+.directory-shortcuts button { width: 32px; height: 32px; padding: 0; border-radius: 8px; color: var(--muted); font: 600 1rem monospace; }
+.directory-shortcuts button:hover, .directory-shortcuts button[aria-expanded='true'] { color: var(--purple); background: var(--purple-bg); }
+.directory-menu { position: fixed; inset: auto; margin: 0; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); box-shadow: 0 8px 24px #0005; }
+.directory-menu button { display: block; width: 100%; padding: 6px 12px; text-align: left; }
+.directory-menu button:is(:hover, :focus-visible) { background: var(--purple-bg); color: var(--purple); }
+@supports not selector(:popover-open) { .directory-menu { display: none; } }
+@media (pointer: coarse) { .directory-shortcuts button { width: 44px; height: 44px; } }
 #file-list { overflow: auto; padding: 0 8px 20px; flex: 1; outline-offset: -2px; }
 .file-row { display: flex; align-items: center; gap: 8px; padding: 5px 9px; border-radius: 4px; cursor: default; min-height: 29px; color: var(--muted); }
 .file-row:hover { background: #ffffff05; }

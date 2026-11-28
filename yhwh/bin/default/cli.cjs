@@ -4,7 +4,8 @@ const constants = require('node:fs').constants;
 const path = require('node:path');
 const sharedCLI = require('../../lib/cli.cjs');
 const root = path.join(__dirname, '../../src/yhwh-default');
-const builtin = ['open', 'create', 'read', 'append', 'prepend', 'list', 'search', 'move', 'rename', 'config', 'commands', 'completion', 'help'];
+const anchor = require('../../lib/tab-anchor.cjs');
+const builtin = ['open', 'create', 'read', 'append', 'prepend', 'list', 'search', 'move', 'rename', 'config', ...anchor.commands, 'commands', 'completion', 'help'];
 const help = `YHWH — Toward a pro-human AI apocalypse.
 
 Usage: yhwh-default [path] [--theme yhwh|nietzsche|dawkins]
@@ -20,6 +21,8 @@ Usage: yhwh-default [path] [--theme yhwh|nietzsche|dawkins]
   move <source> <destination>     Rename/move without overwriting another file
   rename <source> <name>          Rename within its directory
   config [path]                  Print resolved hierarchical config as JSON
+  @-get                          Print the calling tab's directory anchor
+  @-set [directory]              Set it, defaulting to the shell directory
   commands                       List builtins and adjacent yhwh-* executables
   completion bash|zsh             Print a shell completion script
   help                           Show this help
@@ -54,6 +57,7 @@ async function start(args) {
 }
 async function main(argv = process.argv.slice(2), bin = process.env.YHWH_BIN || path.join(root, 'bin')) {
   const [command, ...args] = argv;
+  if (anchor.commands.includes(command)) return anchor.cli(command, args);
   if (command && !command.startsWith('-') && !command.includes('/') && !command.includes('\\')) {
     const candidate = path.join(bin, `yhwh-${command}`);
     try { await fs.access(candidate, constants.X_OK); if ((await fs.stat(candidate)).isFile()) { execute(candidate, args); return; } } catch {}

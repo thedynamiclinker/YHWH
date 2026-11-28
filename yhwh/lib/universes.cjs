@@ -56,11 +56,12 @@ function registryImage(ref) {
 function run(program, args, { signal, output } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(program, args, { signal, stdio: ['ignore', 'ignore', 'pipe'] });
-    let stderr = '';
+    let stderr = '', launchError;
     child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-8000); output?.(chunk); });
-    child.once('error', reject);
+    child.once('error', error => { launchError = error; });
     child.once('close', code => {
-      if (code === 0) resolve();
+      if (launchError) reject(launchError);
+      else if (code === 0) resolve();
       else reject(new Error(stderr.trim() || `${path.basename(program)} exited ${code ?? 'after a signal'}.`));
     });
   });
@@ -166,15 +167,20 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   if (root === '/') throw new Error('Choose a universe directory other than the host root.');
   if (!Array.isArray(command) || !command.length || command.some(item => typeof item !== 'string') || !command[0].startsWith('/'))
     throw new Error('Give an absolute guest command such as /bin/sh.');
-  try { await fs.access(await guestPath(root, command[0]), constants.X_OK); }
+  try {
+    const filename = await guestPath(root, command[0]);
+    if (!(await fs.stat(filename)).isFile()) throw new Error('Expected a regular file.');
+    await fs.access(filename, constants.X_OK);
+  }
   catch { throw new Error(`This universe has no executable ${command[0]}. Use Cd to browse it or import a Linux root filesystem with Nu.`); }
   if (![mounts, writableMounts].every(list => Array.isArray(list) && list.every(item => typeof item === 'string' && item && !/[\x00-\x1f]/.test(item))))
     throw new Error('Use one outer path per mount.');
 
   let program = await executable('bwrap');
   const bwrap = program;
-  const isolation = network ? ['--unshare-all', '--share-net'] :
-    ['--unshare-user', '--unshare-pid', '--unshare-ipc', '--unshare-uts', '--unshare-net', '--unshare-cgroup-try'];
+  const namespaces = ['--unshare-pid', '--unshare-ipc', '--unshare-uts', '--unshare-cgroup-try'];
+  if (!network) namespaces.push('--unshare-net');
+  let isolation = ['--unshare-user', '--uid', '0', '--gid', '0', ...namespaces];
   const args = ['--die-with-parent', '--new-session', '--cap-drop', 'ALL', '--clearenv', '--setenv', 'PATH', '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin',
     '--setenv', 'HOME', '/root', '--setenv', 'TERM', process.env.TERM || 'xterm-256color',
     '--bind', root, '/', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--chdir', '/'];
@@ -182,9 +188,10 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   if (mounts.length || writableMounts.length) args.push('--tmpfs', '/mnt/host');
   const names = new Set();
   for (const [item, mode] of [...mounts.map(item => [item, '--ro-bind']), ...writableMounts.map(item => [item, '--bind'])]) {
-    const source = await fs.realpath(path.resolve(mountBase, item.replace(/^~(?=\/|$)/, os.homedir())));
-    const name = path.basename(item.replace(/\/+$/, '')) || path.basename(source);
-    if (!name || name === '.' || name === '..' || names.has(name)) throw new Error('Give each outer mount a distinct basename.');
+    const outer = path.resolve(mountBase, item.replace(/^~(?=\/|$)/, os.homedir()));
+    const source = await fs.realpath(outer);
+    const name = path.basename(outer) || 'root';
+    if (names.has(name)) throw new Error('Give each outer mount a distinct basename.');
     const stat = await fs.stat(source);
     if (!stat.isDirectory() && !stat.isFile()) throw new Error('Mount a directory or regular file.');
     names.add(name);
@@ -204,8 +211,7 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
       program = await executable('sudo', systemDirs);
       prefix.push('--', unshare, `--map-users=0:${process.getuid()}:1`, `--map-groups=0:${process.getgid()}:1`,
         '--setgid', '0', '--setuid', '0', '--keep-caps', '--', trustedBwrap);
-      isolation.splice(0, isolation.length, '--unshare-pid', '--unshare-ipc', '--unshare-uts', '--unshare-cgroup-try');
-      if (!network) isolation.push('--unshare-net');
+      isolation = namespaces;
     }
   }
   return { program, args: [...prefix, ...isolation, ...args, '--', ...command], cwd: root };

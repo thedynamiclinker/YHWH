@@ -333,6 +333,7 @@ function renderFiles() {
   const hiddenToggle = $('#files [data-command="toggle-hidden"]');
   hiddenToggle.setAttribute('aria-pressed', String(hiddenFiles));
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
+  renderAnchor(tab);
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
   $('#terminal-cwd').textContent = tab.terminals.some(session => session.guest) ? `Chroot · ${tab.guestDirectory}` : tab.cwd;
   $('#shell-state').textContent = ui("-files");
@@ -571,6 +572,24 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
   emit('navigate', { id: tab.id, cwd: tab.cwd });
 }
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
+function renderAnchor(tab) {
+  $('#files [data-command="anchor-menu"]').title = `@ → ${tab.anchor}`;
+}
+async function setAnchor(tab, directory) {
+  const anchor = await call('@-set', tab.id, directory);
+  if (tab === active()) notice(`@ → ${anchor}`);
+  return anchor;
+}
+async function chooseAnchor(tab = active()) {
+  const directory = await call('choose', 'directory', tab.anchor);
+  if (directory) return setAnchor(tab, directory);
+}
+async function goToAnchor(tab, suffix = '') {
+  const anchor = await call('@-get', tab.id);
+  const root = tab.initialRoot || tab.worldRoot;
+  if (root && !withinPath(anchor, root)) throw new Error('@ is outside the current folder root.');
+  return navigateFiles(suffix ? join(anchor, `./${suffix}`) : anchor, tab);
+}
 async function mayReplace(tab) {
   await tab.saveQueue?.catch(() => {});
   await flushAutosave(tab);
@@ -787,7 +806,7 @@ function newUniverse() {
       pending = false;
       if (dismissed) return;
       dialog.close();
-      await navigate(filename, tab);
+      await navigate(filename, tab).catch(error => notice(error.message));
     } catch (error) {
       if (!dismissed && form.isConnected && dialog.open) { alert.textContent = error.message; alert.hidden = false; }
       else if (!dismissed && !dialog.open) notice(error.message);
@@ -1130,33 +1149,80 @@ function chooseViewMode() {
     button.onclick = () => { dialog.close(); changeMarkdownMode(tab, button.dataset.mode); };
   }
 }
-function fileMenu(filename = active()?.file?.path) {
+function showDirectoryMenu(title, items, { trigger, point } = {}) {
+  const menu = $('#directory-menu');
+  if (boot.interface === 'mobile' || !menu.showPopover || (!trigger && !point)) {
+    const dialog = modal(title, ui('template-5', items.map(([label], i) => `<button data-menu="${i}">${escape(label)}</button>`).join('')));
+    for (const button of dialog.querySelectorAll('[data-menu]')) button.onclick = () => {
+      dialog.addEventListener('close', () => invoke(Number(button.dataset.menu)), { once: true });
+      dialog.close();
+    };
+    return;
+  }
+  if (menu.matches(':popover-open')) menu.hidePopover();
+  menu.setAttribute('aria-label', title);
+  menu.innerHTML = items.map(([label], i) => `<button type="button" role="menuitem" data-menu="${i}" tabindex="-1">${escape(label)}</button>`).join('');
+  const buttons = [...menu.querySelectorAll('button')];
+  for (const [index, button] of buttons.entries()) button.onclick = () => { menu.hidePopover(); invoke(index); };
+  menu.onkeydown = event => {
+    const directions = { ArrowDown: 1, ArrowUp: -1 };
+    const step = directions[event.key], current = buttons.indexOf(document.activeElement);
+    if (!step && !['Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation();
+    buttons[step ? (current + step + buttons.length) % buttons.length : event.key === 'Home' ? 0 : buttons.length - 1].focus();
+  };
+  menu.showPopover();
+  if (trigger) {
+    trigger.setAttribute('aria-expanded', 'true');
+    menu.addEventListener('beforetoggle', () => trigger.setAttribute('aria-expanded', 'false'), { once: true });
+  }
+  const bounds = trigger?.getBoundingClientRect(), { x, y } = point || { x: bounds.left, y: bounds.bottom + 3 };
+  menu.style.left = `${Math.max(8, Math.min(x, innerWidth - menu.offsetWidth - 8))}px`;
+  menu.style.top = `${Math.max(8, Math.min(y, innerHeight - menu.offsetHeight - 8))}px`;
+  buttons[0].focus({ preventScroll: true });
+
+  function invoke(index) { Promise.resolve().then(items[index][1]).catch(error => notice(error.message)); }
+}
+function anchorMenu() {
+  const tab = active();
+  const path = [...tab.selected][0];
+  const folder = tab.selected.size === 1 && $('#file-list').querySelector(`[data-path="${CSS.escape(path)}"][data-directory="true"][data-parent="false"]`);
+  showDirectoryMenu(`@ → ${tab.anchor}`, [
+    ['Go to @', () => goToAnchor(tab)],
+    [folder ? `Set @ to ${basename(path)}` : 'Set @ to this directory', () => setAnchor(tab, folder ? path : tab.cwd)],
+    ['Choose @ folder…', () => chooseAnchor(tab)],
+  ], { trigger: $('#files [data-command="anchor-menu"]') });
+}
+async function fileMenu(filename = active()?.file?.path, { folder = false, point } = {}) {
   if (!filename) return;
+  const tab = active();
   const mobile = boot.interface === 'mobile';
-  const folder = active()?.entries.some(entry => entry.path === filename && entry.directory)
-    || [...$('#file-list').querySelectorAll('[data-directory="true"]')].some(row => row.dataset.path === filename);
   const items = [
+    ...(folder ? [['Open', () => navigateFiles(filename, tab)], ['Set as @', () => setAnchor(tab, filename)]] : []),
     [ui("open-in-a-new-app-tab"), () => openRequest({ path: filename })],
     [ui("rename-"), () => renameFile(filename)],
     ['Move to folder…', () => moveFile(filename)],
     [ui("copy"), () => { clipboardFiles = { paths: [filename], cut: false }; }],
     [ui("cut"), () => { clipboardFiles = { paths: [filename], cut: true }; }],
     ['Copy Full Path', () => call('clipboard:path', filename)],
-    ['Copy Relative Path', () => call('clipboard:path', filename, active().worldRoot || active().cwd)],
+    ['Copy Relative Path', () => call('clipboard:path', filename, tab.worldRoot || tab.cwd)],
     ...(mobile
       ? folder ? [] : [['Export or share…', () => call('file:external', filename)]]
       : [[ui("open-in-desktop-application"), () => call('file:external', filename)],
         [ui("show-in-desktop-file-manager"), () => call('file:reveal', filename)]]),
-    [ui("reading-view-markdown-"), readingView],
-    [ui("overwrite-file-with-editor-contents-"), async () => { if (await choose(ui("overwrite-file"), ui("replace-the-on-disk-contents-with-this-editor-s-"), [ui("overwrite"), ui("cancel")]) === 0) await save(active(), true); }],
+    ...(!folder ? [[ui('reading-view-markdown-'), readingView],
+      [ui('overwrite-file-with-editor-contents-'), async () => { if (await choose(ui('overwrite-file'), ui('replace-the-on-disk-contents-with-this-editor-s-'), [ui('overwrite'), ui('cancel')]) === 0) await save(tab, true); }]] : []),
     [ui("move-to-trash-"), () => trashFiles([filename])],
   ];
-  const dialog = modal(basename(filename), ui("template-5", items.map(([label], i) => `<button data-menu="${i}">${escape(label)}</button>`).join('')));
-  for (const button of dialog.querySelectorAll('[data-menu]')) button.onclick = async () => {
-    const action = items[Number(button.dataset.menu)][1];
-    await new Promise(resolve => { dialog.addEventListener('close', resolve, { once: true }); dialog.close(); });
-    Promise.resolve().then(action).catch(error => notice(error.message));
-  };
+  if (folder) {
+    const actions = await call('folder-menu:list').catch(error => { notice(error.message); return []; });
+    if (tab !== active()) return;
+    for (const { name, label } of actions) items.push([label, async () => {
+      const { stdout, stderr, code } = await call('folder-menu:run', tab.id, name, filename);
+      if (stdout || stderr || code) modal(label, `<pre class="key-output">${escape(stdout || '')}${escape(stderr || '')}${code ? `\nExit ${code}` : ''}</pre>`);
+    }]);
+  }
+  showDirectoryMenu(basename(filename), items, { point: folder ? point : undefined });
 }
 function palette() {
   const dialog = modal(ui("commands"), ui("template-6"));
@@ -1483,6 +1549,10 @@ const definitions = [
   ['focus-terminal', ui("focus-terminal"), 'Ctrl+Alt+3', () => { active().expanded = ''; return revealTerminal(); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
+  ['anchor-menu', 'Tab anchor menu', '', anchorMenu],
+  ['@-get', '@-get · Show tab anchor', '', async () => { const anchor = await call('@-get', active().id); notice(anchor); return anchor; }],
+  ['@-set', '@-set · Choose tab anchor', '', chooseAnchor],
+  ['root-directory', 'Root directory', '', () => { const tab = active(); return navigateFiles(tab.initialRoot || tab.worldRoot || tab.systemRoot, tab); }],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['location', 'Clear focused terminal / edit location', ui("ctrl-l"), () => { if (keyContext() === 'terminal' && !$('#terminal-panel').hidden && !$('#terminals').hidden && active().terminalId) { active().terminal?.clear(); active().terminal?.focus(); bridge.terminal('write', { id: active().terminalId, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
@@ -1711,6 +1781,11 @@ bridge.on('navigation', state => {
   if (tab.id === activeId) update(); emit('navigate', { id: tab.id, cwd: tab.cwd });
 });
 bridge.on('directory-changed', ({ id }) => { const tab = tabs.find(item => item.id === id); if (tab && !movingFiles) refresh(tab).catch(error => notice(error.message)); });
+bridge.on('anchor-changed', ({ id, anchor }) => {
+  const tab = tabs.find(item => item.id === id); if (!tab) return;
+  tab.anchor = anchor;
+  if (tab === active()) renderAnchor(tab);
+});
 bridge.on('error', notice);
 let appRefresh = Promise.resolve();
 bridge.on('app-changed', ({ reloadPlugins }) => {
@@ -1731,7 +1806,8 @@ async function openRequest(opening) {
   if (info.directory) { if (tab) await navigate(info.path, tab); else tab = await newTab(info.path); }
   else { tab ||= await newTab(parent(info.path)); await openFile(info.path, tab); }
   if (opening.theme) { temporaryEnergy = opening.theme === 'dawkins' ? 0 : opening.theme === 'nietzsche' ? 50 : 100; applyConfig(active().config); }
-  if (opening.universeGo && info.directory) chrootUniverse();
+  if (opening.universe === 'nu' && info.directory) newUniverse();
+  if (opening.universe === 'go' && info.directory) chrootUniverse();
 }
 
 function followLink({ href, wiki, newTab, anchor }) {
@@ -1806,7 +1882,7 @@ $('#file-list').onclick = event => {
   const row = event.target.closest('[data-path]'); if (!row) return;
   const tab = active();
   if (event.target.closest('[data-expand-folder]')) { toggleFolder(row).catch(error => notice(error.message)); return; }
-  if (event.target.closest('[data-row-menu]')) { fileMenu(row.dataset.path); return; }
+  if (event.target.closest('[data-row-menu]')) { fileMenu(row.dataset.path, { folder: row.dataset.directory === 'true' }).catch(error => notice(error.message)); return; }
   if (boot.interface === 'mobile' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
     const openRow = row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path);
     openRow.catch(error => notice(error.message)); return;
@@ -1845,7 +1921,8 @@ $('#file-list').onauxclick = event => {
 };
 $('#file-list').oncontextmenu = event => {
   const row = event.target.closest('[data-path]'); if (!row || row.dataset.parent === 'true') return;
-  event.preventDefault(); active().selected = new Set([row.dataset.path]); renderFiles(); fileMenu(row.dataset.path);
+  event.preventDefault(); active().selected = new Set([row.dataset.path]); renderFiles();
+  fileMenu(row.dataset.path, { folder: row.dataset.directory === 'true', point: { x: event.clientX, y: event.clientY } }).catch(error => notice(error.message));
 };
 let typeAhead = '', typeTimer;
 installFileDrag({
@@ -1880,7 +1957,15 @@ $('#file-list').onkeydown = event => {
   } else return;
   event.preventDefault(); if (action) Promise.resolve().then(action).catch(error => notice(error.message));
 };
-$('#location-form').onsubmit = event => { event.preventDefault(); let directory = $('#location').value; if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1); if (active().worldRoot && directory.startsWith('/')) directory = active().worldRoot + directory; navigateFiles(directory).catch(error => notice(error.message)); };
+$('#location-form').onsubmit = event => {
+  event.preventDefault();
+  const tab = active();
+  let directory = $('#location').value;
+  if (directory === '@' || directory.startsWith('@/')) { goToAnchor(tab, directory.slice(2)).catch(error => notice(error.message)); return; }
+  if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1);
+  if (tab.worldRoot && directory.startsWith('/')) directory = tab.worldRoot + directory;
+  navigateFiles(directory, tab).catch(error => notice(error.message));
+};
 $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };

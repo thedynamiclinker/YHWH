@@ -5,6 +5,7 @@ import { draft, message } from '../../../lib/mail-message.cjs';
 import { createSeed, universeName, marker, hostOnly } from '../../../lib/universe-seeds.cjs';
 
 export const HOME = '/';
+const folderMenuDirectory = '/.yhwh/etc/folder-menu';
 export const legacyPath = value => /^\/YHWH(?=\/|$)/.test(value) ? value.slice(5) || '/' : value;
 export const unavailable = {
   'keys:run': 'Custom executable and JavaScript key files require the desktop host. Bundled commands work here.',
@@ -67,7 +68,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     const resolved = await config(cwd);
     const entries = (await storage.list(cwd)).filter(item => resolved.values.show_hidden === 'true' || !item.name.startsWith('.'));
     entries.sort((a,b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, undefined, { numeric: true }));
-    return { cwd, entries, config: resolved, worldRoot: current.worldRoot || null, worldName: current.worldName || null };
+    return { cwd, entries, config: resolved, systemRoot: HOME, worldRoot: current.worldRoot || null, worldName: current.worldName || null };
   }
   async function navigate(id, directory) {
     const current = focus(id);
@@ -94,6 +95,16 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     catch { return result; }
   }
   async function unused(path) { if (await storage.stat(path)) throw new Error('A file with that name already exists.'); }
+  async function folderActions() {
+    const bundled = typeof YHWH_BUILTIN_FOLDER_ACTIONS === 'undefined' ? {} : YHWH_BUILTIN_FOLDER_ACTIONS;
+    const actions = new Map(Object.entries(bundled).map(([name, text]) => [name, { text }]));
+    if ((await storage.stat(folderMenuDirectory))?.directory) {
+      for (const { name, path, directory, size } of await storage.list(folderMenuDirectory)) {
+        if (!directory && !name.startsWith('.') && name.endsWith('.txt')) actions.set(name, { path, size });
+      }
+    }
+    return actions;
+  }
   const handlers = {
     async bootstrap() {
       await storage.init();
@@ -108,10 +119,32 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     },
     async 'focus:new'(id, directory) {
       if (typeof id !== 'string' || focuses.has(id)) throw new Error('Invalid tab.');
-      focuses.set(id, { cwd: HOME });
-      try { return await navigate(id, directory); } catch (error) { focuses.delete(id); throw error; }
+      const current = { cwd: HOME };
+      focuses.set(id, current);
+      try { const state = await navigate(id, directory); current.anchor = state.cwd; return { ...state, anchor: current.anchor }; }
+      catch (error) { focuses.delete(id); throw error; }
     },
     'focus:close': id => focuses.delete(id), navigate,
+    '@-get': id => focus(id).anchor,
+    async '@-set'(id, directory) {
+      const current = focus(id), anchor = normalize(directory ?? current.cwd, current.cwd);
+      if (!(await storage.stat(anchor))?.directory) throw new Error(`Choose an existing directory for @. ${anchor}`);
+      if (focus(id) !== current) throw new Error('That tab has closed.');
+      current.anchor = anchor;
+      emit('anchor-changed', { id, anchor });
+      return anchor;
+    },
+    async 'folder-menu:list'() {
+      const names = [...(await folderActions()).keys()];
+      return names.sort((a, b) => a.localeCompare(b)).map(name => ({ name, label: name.slice(0, -4) }));
+    },
+    async 'folder-menu:run'(id, name) {
+      focus(id);
+      const action = (await folderActions()).get(name);
+      if (!action) throw new Error('That folder action is no longer available.');
+      if (action.size > 1024 * 1024) throw new Error('Folder action text exceeds 1 MiB.');
+      return { stdout: action.path ? new TextDecoder().decode(await storage.read(action.path)) : action.text };
+    },
     async 'world:enter'(id, name) {
       const current = focus(id);
       if (name === 'root' || name === 'yhwh') throw new Error('Use an existing folder as the root on mobile.');

@@ -233,7 +233,7 @@ export default class YHWH extends Plugin {
     if (seed.image || seed.id === 'oci') {
       const adapter = this.linuxAdapter;
       if (!adapter) throw new Error(hostOnly);
-      await this.hostCommand(['nu', adapter.getFullPath(directory), ...(image ? ['--from', image] : ['--template', template])]);
+      await this.hostCommand(['nu', adapter.getFullPath(directory), ...(seed.id === 'oci' ? ['--from', image || ''] : ['--template', template])]);
     } else {
       await createSeed(directory, template, {
         mkdir: file => vault.createFolder(file),
@@ -253,7 +253,7 @@ export default class YHWH extends Plugin {
   async chrootUniverse(directory: string) {
     const adapter = this.linuxAdapter;
     if (!adapter) throw new Error(hostOnly);
-    await this.hostCommand(['open', 'default', '--open', adapter.getFullPath(directory), '--universe-go']);
+    await this.hostCommand(['open', 'default', '--open', adapter.getFullPath(directory), '--universe=go']);
   }
   universeDialog() {
     const modal = new Modal(this.app), form = modal.contentEl.createEl('form', { cls: 'yhwh-universe-form' });

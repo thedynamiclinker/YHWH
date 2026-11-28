@@ -29,6 +29,9 @@
 .yhwh-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
 .yhwh-tools button, .yhwh-footer > button { font-size: var(--font-ui-smaller); padding: 4px 8px; height: 27px; }
 .yhwh-tools code { flex: 1; overflow-wrap: anywhere; }
+.yhwh-universe-tools button { display: inline-flex; align-items: center; gap: 5px; }
+.yhwh-universe-tools button:first-child { color: var(--yhwh-accent); }
+.yhwh-universe-form label { display: grid; gap: 4px; margin-bottom: 10px; }
 .yhwh-breadcrumbs { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0; }
 .yhwh-breadcrumbs button { box-shadow: none; background: transparent; color: var(--text-muted); font-size: var(--font-ui-smaller); padding: 2px 5px; }
 .yhwh-breadcrumbs button + button::before { content: '/'; margin-right: 8px; color: var(--text-faint); }

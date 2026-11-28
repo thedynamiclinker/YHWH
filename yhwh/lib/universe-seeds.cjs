@@ -7,7 +7,7 @@ const seeds = [
   { id: 'nix', label: 'Nix + lord', image: 'docker.io/nixos/nix:latest', tools: 'lord' },
   { id: 'gentoo', label: 'Gentoo + lord', image: 'docker.io/gentoo/stage3:latest', tools: 'lord' },
   { id: 'arch', label: 'Arch + lord', image: 'docker.io/library/archlinux:base', tools: 'lord' },
-  { id: 'yhwh', label: 'Alpine + lord + YHWH', image: 'docker.io/library/alpine:latest', tools: 'yhwh' },
+  { id: 'yhwh', label: 'Debian + lord + YHWH', image: 'docker.io/library/node:24-bookworm-slim', tools: 'yhwh' },
   { id: 'oci', label: 'Legacy provider · OCI image', description: 'Import a root filesystem from Docker Hub or another OCI registry.' },
 ];
 

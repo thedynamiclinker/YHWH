@@ -237,6 +237,7 @@ class Workspace:
                          preview_visible),
                 ]),
             ]),
+            bar(self.universe_bar),
         ])
         document = HSplit([
             bar(self.document_bar, lambda: self.tab_position(self.document_bar())),
@@ -391,11 +392,15 @@ class Workspace:
             ("", " ‹ ", clickable(lambda: self.browser.step_history(-1))),
             ("", " › ", clickable(lambda: self.browser.step_history(1))),
             ("class:heading", " ↙ " if expanded else " ↗ ", clickable(lambda: self.maximize("files"))),
-            ("class:heading", " +Nu ", clickable(lambda: self.attempt(self.new_universe))),
-            ("", " Cd ", clickable(lambda: self.attempt(self.enter_universe))),
-            ("", " Go ", clickable(lambda: self.attempt(self.chroot_universe))),
             ("class:muted", f" {label(self.browser.cwd if expanded else self.browser.cwd.name or '/')} ",
              clickable(self.browser.location)),
+        ]
+
+    def universe_bar(self):
+        return [
+            ("class:heading", " +Nu ", clickable(lambda: self.attempt(self.new_universe))),
+            ("", " Cd Enter ", clickable(lambda: self.attempt(self.enter_universe))),
+            ("", " Go Chroot ", clickable(lambda: self.attempt(self.chroot_universe))),
         ]
 
     def places(self):
