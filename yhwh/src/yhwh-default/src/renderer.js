@@ -16,6 +16,7 @@ import { mountViewer } from './viewers.js';
 import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
 import { fileIcons } from './file-icons.js';
+import { seeds as universeSeeds, hostOnly as universeHostOnly } from '../../../lib/universe-seeds.cjs';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { mountChat } from './chat.js';
 import { createMerch } from './merch.js';
@@ -186,11 +187,11 @@ async function editWords(key) {
   };
 }
 
-async function newTab(directory = active()?.cwd || boot.home) {
+async function newTab(directory = active()?.cwd || boot.home, guest) {
   const id = crypto.randomUUID();
   startingTerminals.add(id);
   let state;
-  try { state = await call('focus:new', id, directory); }
+  try { state = guest ? await call('universe:go', id, guest.tabId, directory, guest.options) : await call('focus:new', id, directory); }
   catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
   const tab = { id, ...state, file: null, markdownEditMode: 'live', focusView: 'document', selected: new Set(), folders: new Map(), history: [state.cwd], historyIndex: 0, showFiles: state.config.values.file_manager !== 'false', showTerminal: state.config.values.terminal === 'true', expanded: '', panelSizes: {} };
   tab.document = document.createElement('section'); tab.document.className = 'document-content'; tab.document.tabIndex = -1; tab.document.dataset.tab = id;
@@ -198,19 +199,20 @@ async function newTab(directory = active()?.cwd || boot.home) {
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
   tab.terminals = [];
-  if (boot.capabilities?.terminal !== false) createTerminal(tab, id);
+  if (guest) { tab.guestDirectory = state.cwd; tab.showTerminal = true; }
+  if (boot.capabilities?.terminal !== false) createTerminal(tab, id, Boolean(guest));
   tabs.push(tab); welcome(tab); activate(id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
   pendingTerminal.delete(id);
   startingTerminals.delete(id);
   emit('tab', tab); return tab;
 }
-function createTerminal(tab, id = crypto.randomUUID()) {
+function createTerminal(tab, id = crypto.randomUUID(), guest = false) {
   const element = document.createElement('div'); element.className = 'terminal-session';
   tab.terminalElement.append(element);
   const terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
   const fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(element);
-  const session = { id, terminal, fit, element, cwd: tab.cwd };
+  const session = { id, terminal, fit, element, cwd: tab.cwd, guest };
   terminal.onData(data => bridge.terminal('write', { id, data }));
   terminal.attachCustomKeyEventHandler(event => {
     const binding = bindingFor(event);
@@ -332,7 +334,7 @@ function renderFiles() {
   hiddenToggle.setAttribute('aria-pressed', String(hiddenFiles));
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
-  $('#terminal-cwd').textContent = tab.cwd;
+  $('#terminal-cwd').textContent = tab.terminals.some(session => session.guest) ? `Chroot · ${tab.guestDirectory}` : tab.cwd;
   $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
@@ -735,6 +737,104 @@ async function newFile(directory = false) {
   const filename = await call('file:create', join(tab.cwd, name), directory);
   await refresh(tab);
   if (!directory) await openFile(filename, tab, { edit: true });
+}
+const linuxUniverses = () => boot.platform === 'linux' && boot.capabilities?.terminal !== false;
+function universeTarget(tab) {
+  const selected = [...tab.selected];
+  if (selected.length > 1) throw new Error('Select one universe directory.');
+  const row = selected.length ? $('#file-list').querySelector(`[data-path="${CSS.escape(selected[0])}"]`) : null;
+  return row?.dataset.directory === 'true' && row.dataset.parent !== 'true' ? selected[0] : tab.cwd;
+}
+function newUniverse() {
+  const tab = active();
+  const available = linuxUniverses();
+  const options = universeSeeds.map(seed => `<option value="${seed.id}" ${!available && (seed.image || seed.id === 'oci') ? 'disabled' : ''}>${escape(seed.label)}</option>`).join('');
+  const dialog = modal('Nu · Make new universe', `<form class="universe-form">
+    <label class="field"><span>Directory name</span><input name="directory" required autofocus></label>
+    <label class="field"><span>Template</span><select name="template">${options}</select></label>
+    <p data-template-description></p>
+    <label class="field" data-image hidden><span>OCI image</span><input name="image" placeholder="alpine:latest or ghcr.io/owner/image:tag" spellcheck="false"></label>
+    ${available ? '' : `<p>${universeHostOnly}</p>`}
+    <p role="status" hidden></p><p role="alert" hidden></p>
+    <div class="dialog-actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Make new universe</button></div>
+  </form>`);
+  const form = dialog.querySelector('form'), fields = form.elements;
+  const status = form.querySelector('[role="status"]'), alert = form.querySelector('[role="alert"]');
+  let pending = false, dismissed = false;
+  const describe = () => {
+    const seed = universeSeeds.find(seed => seed.id === fields.template.value);
+    form.querySelector('[data-template-description]').textContent = seed.description || `Downloads ${seed.image} and installs ${seed.tools === 'yhwh' ? 'lord and the YHWH CLI' : 'the local lord commands'}.`;
+    form.querySelector('[data-image]').hidden = seed.id !== 'oci';
+    fields.image.required = seed.id === 'oci';
+  };
+  describe(); fields.template.onchange = describe;
+  form.querySelector('[data-cancel]').onclick = () => dialog.close();
+  dialog.addEventListener('close', () => {
+    dismissed = true;
+    if (pending) call('universe:cancel', tab.id).catch(error => notice(error.message));
+  }, { once: true });
+  form.onsubmit = async event => {
+    event.preventDefault();
+    if (pending) return;
+    pending = true;
+    const { directory, template, image } = Object.fromEntries(new FormData(form));
+    for (const field of fields) if (!field.hasAttribute('data-cancel')) field.disabled = true;
+    alert.hidden = true;
+    status.textContent = (template === 'oci' || universeSeeds.find(seed => seed.id === template).image) ? 'Downloading and preparing the image…' : 'Creating the directory…';
+    status.hidden = false;
+    try {
+      const filename = await call('universe:create', tab.id, directory, template, image.trim());
+      pending = false;
+      if (dismissed) return;
+      dialog.close();
+      await navigate(filename, tab);
+    } catch (error) {
+      if (!dismissed && form.isConnected && dialog.open) { alert.textContent = error.message; alert.hidden = false; }
+      else if (!dismissed && !dialog.open) notice(error.message);
+    } finally {
+      pending = false; status.hidden = true;
+      for (const field of fields) field.disabled = false;
+    }
+  };
+}
+async function enterUniverse() {
+  const tab = active();
+  const directory = await call('universe:cd', tab.id, universeTarget(tab));
+  await navigate(directory, tab);
+}
+function chrootUniverse() {
+  if (!linuxUniverses()) throw new Error(universeHostOnly);
+  const tab = active(), directory = universeTarget(tab);
+  const dialog = modal('Go · Chroot universe', `<form class="universe-form">
+    <p>${escape(directory)}</p>
+    <label class="field"><span>Read-only outer paths · one per line</span><textarea name="mounts" placeholder="~/src"></textarea></label>
+    <label class="field"><span>Writable outer paths · one per line</span><textarea name="writableMounts"></textarea></label>
+    <p>Outer paths appear under /mnt/host.</p>
+    <div class="universe-options">
+      <label><input type="checkbox" name="network"> Share the host network</label>
+      <label><input type="checkbox" name="sudo" checked> Ask for sudo if Linux requires it</label>
+    </div>
+    <p role="alert" hidden></p>
+    <div class="dialog-actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Chroot</button></div>
+  </form>`);
+  const form = dialog.querySelector('form'), button = form.querySelector('[type="submit"]'), alert = form.querySelector('[role="alert"]');
+  const lines = field => field.value.split('\n').map(line => line.trim()).filter(Boolean);
+  form.querySelector('[data-cancel]').onclick = () => dialog.close();
+  form.onsubmit = async event => {
+    event.preventDefault();
+    if (button.disabled) return;
+    button.disabled = true; alert.hidden = true;
+    try {
+      const { mounts, writableMounts, network, sudo } = form.elements;
+      const guest = await newTab(directory, { tabId: tab.id, options: { mounts: lines(mounts), writableMounts: lines(writableMounts), network: network.checked, sudo: sudo.checked } });
+      if (form.isConnected && dialog.open) dialog.close();
+      window.YHWH?.initial?.switchToUnix?.();
+      focusTerminal(guest);
+    } catch (error) {
+      if (form.isConnected && dialog.open) { alert.textContent = error.message; alert.hidden = false; }
+      else notice(error.message);
+    } finally { button.disabled = false; }
+  };
 }
 async function renameFile(filename = active()?.file?.path) {
   if (!filename) return;
@@ -1359,6 +1459,9 @@ const definitions = [
   ['previous-tab', ui("previous-tab"), ui("ctrl-shift-tab-ctrl-pageup"), () => activate(tabs[(tabs.indexOf(active()) + tabs.length - 1) % tabs.length].id)],
   ['new-file', ui("new-file"), ui("ctrl-n"), () => newFile()],
   ['new-directory', ui("new-directory"), '', () => newFile(true)],
+  ['universe-new', 'Nu · Make new universe', '', newUniverse],
+  ['universe-enter', 'Cd · Enter universe', '', enterUniverse],
+  ['universe-go', 'Go · Chroot universe', '', chrootUniverse],
   ['open-file', ui("open-file-"), ui("ctrl-o"), async () => { const filename = await call('choose', 'file', active().cwd); if (filename) await openFile(filename); }],
   ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigateFiles(directory); }],
   ['save', ui("save-file"), ui("ctrl-s"), () => save()],
@@ -1589,7 +1692,10 @@ function terminalMessage(message) {
   const session = tab.terminals.find(item => item.id === message.id);
   if (message.type === 'data') session.terminal.write(message.data);
   if (message.type === 'cwd') session.cwd = message.cwd;
-  if (message.type === 'exit') closeTerminal(message.id, true).catch(error => notice(error.message));
+  if (message.type === 'exit') {
+    if (session.guest && message.code) session.terminal.write(`\r\nChroot exited with status ${message.code}.\r\n`);
+    else closeTerminal(message.id, true).catch(error => notice(error.message));
+  }
   if (message.type === 'error') { notice(message.message); session.terminal.write(`\r\n${message.message}\r\n`); }
 }
 bridge.on('terminal', terminalMessage);
@@ -1625,6 +1731,7 @@ async function openRequest(opening) {
   if (info.directory) { if (tab) await navigate(info.path, tab); else tab = await newTab(info.path); }
   else { tab ||= await newTab(parent(info.path)); await openFile(info.path, tab); }
   if (opening.theme) { temporaryEnergy = opening.theme === 'dawkins' ? 0 : opening.theme === 'nietzsche' ? 50 : 100; applyConfig(active().config); }
+  if (opening.universeGo && info.directory) chrootUniverse();
 }
 
 function followLink({ href, wiki, newTab, anchor }) {

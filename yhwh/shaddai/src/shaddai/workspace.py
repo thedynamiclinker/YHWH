@@ -391,6 +391,9 @@ class Workspace:
             ("", " ‹ ", clickable(lambda: self.browser.step_history(-1))),
             ("", " › ", clickable(lambda: self.browser.step_history(1))),
             ("class:heading", " ↙ " if expanded else " ↗ ", clickable(lambda: self.maximize("files"))),
+            ("class:heading", " +Nu ", clickable(lambda: self.attempt(self.new_universe))),
+            ("", " Cd ", clickable(lambda: self.attempt(self.enter_universe))),
+            ("", " Go ", clickable(lambda: self.attempt(self.chroot_universe))),
             ("class:muted", f" {label(self.browser.cwd if expanded else self.browser.cwd.name or '/')} ",
              clickable(self.browser.location)),
         ]
@@ -973,11 +976,13 @@ class Workspace:
                         for name, url in links.items()})
         self.pick("Reading actions" if self.reading and self.reader_actions else "Open link", actions)
 
-    def tty_command(self, argv, *, pause=False, directory=None):
+    def tty_command(self, argv, *, pause=False, directory=None, finished=None):
         def run():
             try:
                 result = subprocess.run(argv, cwd=directory or self.browser.physical(self.browser.cwd),
                                         env=self.config.yhwh.environment)
+                if not result.returncode and finished:
+                    finished()
                 if result.returncode or pause:
                     print(f"\n{Path(argv[0]).name} exited with status {result.returncode}. Press Enter to return.",
                           file=sys.stderr)
@@ -986,6 +991,58 @@ class Workspace:
                 self.message = str(error) or "Cancelled"
 
         run_in_terminal(run)
+
+    def universe_command(self, *args):
+        executable = self.config.library.command
+        if not executable:
+            raise ValueError("Install yhwh on PATH to use universe commands.")
+        return [executable, *args]
+
+    def new_universe(self):
+        output = subprocess.check_output(self.universe_command("nu", "--list"), text=True)
+        choices = {}
+        for line in output.splitlines():
+            name, title, description = line.split("\t", 2)
+            choices[name] = f"{title} · {description}"
+
+        def configure(name):
+            if not name or name in (".", "..") or "/" in name or "\\" in name:
+                raise ValueError("Enter one new directory name.")
+            destination = str(self.browser.write_path(self.browser.cwd / name))
+
+            def create(template):
+                if template == "oci":
+                    self.ask("OCI image", lambda image: self.tty_command(
+                        self.universe_command("nu", destination, "--from", image), finished=self.browser.refresh))
+                elif template in choices:
+                    self.tty_command(self.universe_command("nu", destination, "--template", template),
+                                     finished=self.browser.refresh)
+                else:
+                    raise ValueError("Choose a listed template.")
+
+            self.ask("Universe template", create, "empty", choices=list(choices), hints=choices)
+
+        self.ask("Nu · New universe directory name", configure)
+
+    def universe_target(self):
+        selected = self.browser.selected
+        if selected and selected != self.browser.cwd.parent and self.browser.physical(selected).is_dir():
+            return selected
+        return self.browser.cwd
+
+    def enter_universe(self):
+        target = self.universe_target()
+        result = subprocess.run(self.universe_command("cd", str(self.browser.physical(target))),
+                                text=True, capture_output=True)
+        if result.returncode:
+            raise ValueError(result.stderr.strip() or "Choose a universe directory.")
+        self.browser.navigate(target)
+
+    def chroot_universe(self):
+        directory = str(self.browser.physical(self.universe_target()))
+        self.ask("Go · Chroot universe · optional outer paths (shell quoting)", lambda answer: self.tty_command(
+            self.universe_command("go", directory, "--sudo",
+                                  *(arg for path in shlex.split(answer) for arg in ("--mount", path)))))
 
     def external(self, target):
         if isinstance(target, Path):
@@ -1479,6 +1536,16 @@ class Workspace:
             elif command == "mkdir" and argument:
                 self.browser.write_path(Path(os.path.abspath(self.browser.cwd / argument))).mkdir()
                 self.browser.refresh()
+            elif command == "nu":
+                if argument:
+                    self.tty_command(self.universe_command("nu", *shlex.split(argument)), finished=self.browser.refresh)
+                else:
+                    self.new_universe()
+            elif command == "go":
+                if argument:
+                    self.tty_command(self.universe_command("go", "--sudo", *shlex.split(argument)))
+                else:
+                    self.chroot_universe()
             elif command == "set" and "=" in argument:
                 key, value = argument.split("=", 1)
                 save_setting(self.browser.cwd, key.strip(), value.strip())
@@ -1486,7 +1553,7 @@ class Workspace:
             elif command.startswith("!"):
                 self.tty_command([os.environ.get("SHELL") or "/bin/sh", "-c", line.lstrip()[1:]], pause=True)
             elif command:
-                raise ValueError("Use :cd, :open, :mkdir, :set key=value, or :! command. Ctrl+P lists actions.")
+                raise ValueError("Use :cd, :open, :mkdir, :nu, :go, :set key=value, or :! command. Ctrl+P lists actions.")
 
         self.ask(":", run)
 
@@ -1602,6 +1669,9 @@ class Workspace:
             ("reload", "Refresh files and configuration", self.refresh, True),
             ("new_file", "Create file", lambda: self.browser.create(directory=False), False),
             ("new_directory", "Create folder", lambda: self.browser.create(directory=True), False),
+            (None, "Nu · Make new universe", self.new_universe, False),
+            (None, "Cd · Enter universe", self.enter_universe, False),
+            (None, "Go · Chroot universe", self.chroot_universe, False),
             ("rename", "Rename selected file", self.browser.rename, False),
             ("trash", "Move selected file to Trash", self.browser.trash, False),
             ("toggle_hidden", "Toggle hidden files", self.browser.toggle_hidden, False),

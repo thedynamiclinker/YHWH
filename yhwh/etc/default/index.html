@@ -36,6 +36,11 @@
     <div id="navigation-area" class="navigation-area">
       <section id="files" class="file-manager workspace-leaf" aria-label="File manager">
         <header class="pane-header"><span>Files</span><div><button data-command="new-file" data-file-icon="newFile" title="New file (Ctrl+N)" aria-label="New file"></button><button data-command="new-directory" data-file-icon="newFolder" title="New directory" aria-label="New directory"></button><button data-command="expand-files" data-file-icon="maximize" title="Expand file manager (Ctrl+D)" aria-label="Expand file manager"></button></div></header>
+        <div class="universe-tools" role="group" aria-label="Universe controls">
+          <button data-command="universe-new" title="Nu · Make new universe" aria-label="Make new universe"><span data-file-icon="newUniverse"></span>New universe</button>
+          <button data-command="universe-enter" title="Cd · Enter selected or current universe" aria-label="Enter universe"><span data-file-icon="enterUniverse"></span>Enter</button>
+          <button data-command="universe-go" title="Go · Chroot into selected or current universe" aria-label="Chroot universe"><span data-file-icon="chrootUniverse"></span>Chroot</button>
+        </div>
         <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button><button data-command="home" data-file-icon="home" title="Home directory" aria-label="Home directory"></button><button data-command="open-directory" data-file-icon="openFolder" title="Choose directory" aria-label="Choose directory"></button></div>
         <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
         <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>

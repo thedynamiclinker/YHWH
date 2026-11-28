@@ -1,7 +1,7 @@
 import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-main.json';
 const ui = interfaceText(interfaceCopy);
-import { Component, FileView, MarkdownRenderer, Modal, Notice, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { Component, FileSystemAdapter, FileView, MarkdownRenderer, Modal, Notice, Platform, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { ancestors, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
 import email from '../../../etc/default/yhwh-emails.json';
 import letterCopy from '../../../etc/default/words.json';
@@ -10,6 +10,7 @@ import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedL
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
 import { NHS, NHSView } from './nhs';
+import { createSeed, hostOnly, marker, seeds, universeName } from '../../../lib/universe-seeds.cjs';
 
 export default class YHWH extends Plugin {
   settings!: Settings;
@@ -56,6 +57,9 @@ export default class YHWH extends Plugin {
       ['up', ui("go-to-parent-folder"), () => this.go(parent(this.folder))],
       ['new-file', ui("new-file-in-current-folder"), () => this.newFile()],
       ['new-folder', ui("new-folder-in-current-folder"), () => this.newFolder()],
+      ['universe-new', 'Nu · Make new universe', () => this.universeDialog()],
+      ['universe-enter', 'Cd · Enter universe', () => this.enterUniverse(this.folder)],
+      ['universe-go', 'Go · Chroot universe', () => this.chrootUniverse(this.folder)],
       ['reload-config', ui("reload-folder-configuration"), () => this.go(this.folder)],
       ['hello-world', ui("hello-world"), () => new Notice(this.current.energy ? this.settings.copy.hello : ui("hello-world-"))],
       ['offerings', ui("offerings"), () => this.offerings()],
@@ -207,6 +211,83 @@ export default class YHWH extends Plugin {
     if (name === null) return;
     if (!name.trim()) throw new Error(ui("enter-a-folder-name-"));
     await this.app.vault.createFolder(resolvePath(this.folder, name));
+  }
+  private get linuxAdapter() {
+    const { adapter } = this.app.vault;
+    return Platform.isDesktopApp && process.platform === 'linux' && adapter instanceof FileSystemAdapter ? adapter : null;
+  }
+  private hostCommand(args: string[]) {
+    if (!this.linuxAdapter) throw new Error(hostOnly);
+    const { execFile } = require('node:child_process') as typeof import('node:child_process');
+    return new Promise<void>((resolve, reject) => {
+      execFile('yhwh', args, (error, _stdout, stderr) => {
+        if (error) reject(new Error(error.code === 'ENOENT' ? 'Install the desktop yhwh command on PATH to use OCI images and Chroot here.' : stderr.trim() || error.message));
+        else resolve();
+      });
+    });
+  }
+  async makeUniverse(name: string, template = 'empty', image?: string) {
+    const { vault } = this.app, directory = resolvePath(this.folder, universeName(name));
+    const seed = seeds.find(seed => seed.id === template);
+    if (!seed) throw new Error('Choose a listed template.');
+    if (seed.image || seed.id === 'oci') {
+      const adapter = this.linuxAdapter;
+      if (!adapter) throw new Error(hostOnly);
+      await this.hostCommand(['nu', adapter.getFullPath(directory), ...(image ? ['--from', image] : ['--template', template])]);
+    } else {
+      await createSeed(directory, template, {
+        mkdir: file => vault.createFolder(file),
+        write: (file, content) => vault.adapter.write(file, content),
+        remove: file => vault.adapter.rmdir(file, true),
+      }, resolvePath);
+    }
+    return directory;
+  }
+  async enterUniverse(directory: string) {
+    const file = resolvePath(directory, '.@'), adapter = this.app.vault.adapter;
+    const info = await adapter.stat(file);
+    if (info?.type !== 'file' || info.size > 65536 || !(await adapter.read(file)).startsWith(marker))
+      throw new Error('Choose a universe directory created by Nu or un new.');
+    await this.go(directory);
+  }
+  async chrootUniverse(directory: string) {
+    const adapter = this.linuxAdapter;
+    if (!adapter) throw new Error(hostOnly);
+    await this.hostCommand(['open', 'default', '--open', adapter.getFullPath(directory), '--universe-go']);
+  }
+  universeDialog() {
+    const modal = new Modal(this.app), form = modal.contentEl.createEl('form', { cls: 'yhwh-universe-form' });
+    modal.setTitle('Nu · Make new universe');
+    const name = form.createEl('label', { text: 'Directory name' }).createEl('input', { type: 'text', attr: { required: '' } });
+    const template = form.createEl('label', { text: 'Template' }).createEl('select');
+    const description = form.createEl('p'), imageLabel = form.createEl('label', { text: 'OCI image' });
+    const image = imageLabel.createEl('input', { type: 'text', placeholder: 'alpine:latest' });
+    const available = Boolean(this.linuxAdapter);
+    for (const seed of seeds) {
+      const option = template.createEl('option', { text: seed.label, value: seed.id });
+      option.disabled = !available && Boolean(seed.image || seed.id === 'oci');
+    }
+    const update = () => {
+      const seed = seeds.find(seed => seed.id === template.value)!;
+      description.setText(seed.description || `Downloads ${seed.image}.`);
+      imageLabel.hidden = seed.id !== 'oci'; image.required = seed.id === 'oci';
+    };
+    template.onchange = update; update();
+    if (!available) form.createEl('p', { text: hostOnly });
+    const status = form.createEl('p', { attr: { role: 'status' } });
+    const submit = form.createEl('button', { text: 'Make new universe', type: 'submit', cls: 'mod-cta' });
+    form.onsubmit = async event => {
+      event.preventDefault();
+      if (submit.disabled) return;
+      submit.disabled = true; status.setText('Preparing the universe…');
+      try {
+        await this.makeUniverse(name.value, template.value, image.value.trim() || undefined);
+        modal.close();
+        this.changed();
+      } catch (error) { status.setText((error as Error).message); }
+      finally { submit.disabled = false; }
+    };
+    modal.open(); name.focus();
   }
   async rename(file: TFile | TFolder) {
     const name = await prompt(this.app, ui("rename-or-move"), ui("path-relative-to-the-current-parent-folder"), file.name);

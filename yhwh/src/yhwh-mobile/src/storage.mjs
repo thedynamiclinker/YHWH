@@ -35,6 +35,7 @@ export function createStorage(platform) {
     },
     write: (path, bytes) => Filesystem.writeFile({ ...location(path), data: encode(bytes) }),
     mkdir: path => Filesystem.mkdir(location(path)),
+    remove: path => Filesystem.rmdir({ ...location(path), recursive: true }),
     move: (from, to) => Filesystem.rename({ directory: volume, from: location(from).path, to: location(to).path }),
     async copy(from, to) {
       if ((await api.stat(from))?.directory) {

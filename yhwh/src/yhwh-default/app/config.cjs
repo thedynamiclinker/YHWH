@@ -2,6 +2,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { spawn } = require('node:child_process');
+const { isImported } = require('../../../lib/universes.cjs');
 
 const defaults = require('../../../etc/default/defaults.json');
 const userDirectory = () => process.env.YHWH_CONFIG_HOME || path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'yhwh');
@@ -55,11 +56,23 @@ async function configLocations(target, { system = process.env.YHWH_SYSTEM_CONFIG
   const locations = [{ directory: system, base: system }, { directory: user, base: user }];
   if (globalOnly) return locations;
   const ancestors = [];
+  const physical = await fs.realpath(target).catch(() => target);
+  const foreignPrefixes = new Set();
+  // A guest's shell profiles should only be evaluated inside the guest.
+  if (physical !== target) {
+    for (let directory = physical; directory !== path.dirname(directory); directory = path.dirname(directory)) {
+      if (await isImported(directory)) foreignPrefixes.add(directory);
+    }
+  }
   for (let directory = target;; directory = path.dirname(directory)) {
     ancestors.unshift(directory);
     if (directory === path.dirname(directory)) break;
   }
-  for (const directory of ancestors) locations.push({ directory: path.join(directory, '.yhwh'), base: directory });
+  for (const directory of ancestors) {
+    const real = foreignPrefixes.size && await fs.realpath(directory).catch(() => directory);
+    if (foreignPrefixes.has(real) || await isImported(directory)) break;
+    locations.push({ directory: path.join(directory, '.yhwh'), base: directory });
+  }
   return locations;
 }
 

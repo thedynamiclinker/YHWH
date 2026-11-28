@@ -37,6 +37,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile #workspace[data-expanded='files'] #navigation-area:not([hidden]) { width: 100%; }
 .is-mobile .file-row { min-height: 44px; }
 .is-mobile .file-manager [data-file-icon] { width: 44px; }
+.is-mobile .file-manager .universe-tools span[data-file-icon] { width: auto; }
 .is-mobile .file-manager .pane-header { height: 48px; min-height: 48px; }
 .is-mobile .navigation-buttons button { flex-shrink: 0; }
 .is-mobile dialog { max-width: min(var(--mobile-layout-width) - 16px, 780px); max-height: calc(var(--mobile-layout-height) - env(safe-area-inset-top) - 24px); overflow: auto; overscroll-behavior: contain; }

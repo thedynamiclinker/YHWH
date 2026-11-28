@@ -1,7 +1,7 @@
 import {
   ArrowLeft, ArrowRight, ChevronRight, CornerLeftUp, Ellipsis, Eye, EyeOff,
   FilePlus, FileText, Folder, FolderOpen, FolderPlus, House, List, Grid2X2,
-  Maximize, RefreshCw, createElement,
+  Maximize, RefreshCw, Orbit, DoorOpen, Terminal as TerminalIcon, createElement,
 } from 'lucide';
 
 const icons = {
@@ -9,6 +9,7 @@ const icons = {
   more: Ellipsis, visible: Eye, hidden: EyeOff, newFile: FilePlus, file: FileText,
   folder: Folder, openFolder: FolderOpen, newFolder: FolderPlus, home: House,
   maximize: Maximize, refresh: RefreshCw, list: List, grid: Grid2X2,
+  newUniverse: Orbit, enterUniverse: DoorOpen, chrootUniverse: TerminalIcon,
 };
 
 export const fileIcons = Object.fromEntries(Object.entries(icons).map(([name, [tag, attrs, children]]) => [

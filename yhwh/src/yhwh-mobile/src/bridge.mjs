@@ -2,6 +2,7 @@ import { fileType } from '../../../lib/file-type.cjs';
 import { ruleFile, feedbackFile, languageRuleLine, languageFeedbackLine } from '../../../lib/editor-language.mjs';
 import { addressCopy, levelAt } from '../../../lib/levels.cjs';
 import { draft, message } from '../../../lib/mail-message.cjs';
+import { createSeed, universeName, marker, hostOnly } from '../../../lib/universe-seeds.cjs';
 
 export const HOME = '/';
 export const legacyPath = value => /^\/YHWH(?=\/|$)/.test(value) ? value.slice(5) || '/' : value;
@@ -15,6 +16,7 @@ export const unavailable = {
   'window:close': 'Use your device’s app switcher to leave YHWH. Save any edits first.',
   'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
+  'universe:go': hostOnly,
 };
 export function normalize(input, cwd = HOME) {
   if (typeof input !== 'string' || input.includes('\0') || input.includes('\\')) throw new Error('Invalid path.');
@@ -137,6 +139,25 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       if (directory) await storage.mkdir(path); else await storage.write(path, new Uint8Array());
       changed(); return path;
     },
+    async 'universe:create'(id, name, template) {
+      const encoder = new TextEncoder();
+      const path = normalize(universeName(name), focus(id).cwd);
+      await unused(path);
+      await createSeed(path, template, {
+        mkdir: storage.mkdir,
+        write: (file, contents) => storage.write(file, encoder.encode(contents)),
+        remove: storage.remove,
+      }, (directory, file) => normalize(file, directory));
+      changed(); return path;
+    },
+    'universe:cancel': id => { focus(id); },
+    async 'universe:cd'(id, directory) {
+      const current = focus(id), path = normalize(directory, current.cwd);
+      const file = normalize('.@', path), info = await storage.stat(file);
+      if ((current.worldRoot && !inside(path, current.worldRoot)) || !info || info.directory || info.size < marker.length || info.size > 65536 ||
+          !new TextDecoder().decode(await storage.read(file)).startsWith(marker)) throw new Error('Choose a universe directory created by Nu or un new.');
+      return path;
+    },
     async 'file:move'(source, destination) {
       source = normalize(source); destination = normalize(destination);
       if (source === HOME || inside(destination, source)) throw new Error('Cannot move a directory into itself.');
@@ -212,7 +233,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'verse:get': reference => verses.get(reference), 'verse:random': () => verses.random('Genesis'),
     'verse:commentary': (...args) => verses.saveCommentary(...args),
   };
-  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave', 'editor:language-rule', 'editor:language-feedback']);
+  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave', 'editor:language-rule', 'editor:language-feedback', 'universe:create']);
   return {
     // Parity tests require an explicit decision for every shared operation.
     supports: channel => Object.hasOwn(handlers, channel) || Object.hasOwn(unavailable, channel),

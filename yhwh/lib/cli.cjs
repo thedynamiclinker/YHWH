@@ -50,7 +50,8 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','inbox','keys',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys','nu','cd','go',...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if (['nu', 'cd', 'go'].includes(command.toLowerCase())) return universe(command.toLowerCase(), rest);
   if (command === 'inbox') {
     if (rest.length === 1 && ['-h', '--help'].includes(rest[0])) {
       console.log('Usage: yhwh inbox [MESSAGE-ID]\nList bundled YHWH email subjects and IDs, or read a message.');
@@ -89,5 +90,43 @@ async function main(args=process.argv.slice(2)) {
     return execute(external,rest,{env:{...process.env,YHWH_COMMAND_STACK:JSON.stringify([...active,external])}});
   }
   console.error(`yhwh: unknown command '${command}'. See 'yhwh --help'.`);return 127;
+}
+async function universe(command, args) {
+  const { parseArgs } = require('node:util');
+  const { seeds } = require('./universe-seeds.cjs');
+  const universes = require('./universes.cjs');
+  const help = {
+    nu: 'Usage: yhwh nu DIRECTORY [--template ID | --from IMAGE]\n       yhwh nu --list',
+    cd: 'Usage: cd -- "$(yhwh cd DIRECTORY)"\nPrint the absolute path of a universe. The calling shell owns cd.',
+    go: 'Usage: yhwh go [DIRECTORY] [--mount PATH ...] [--mount-rw PATH ...] [--network] [--sudo] [-- /absolute/guest/command ARG ...]',
+  };
+  if (args.length === 1 && ['-h', '--help'].includes(args[0])) { console.log(help[command]); return 0; }
+  const delimiter = args.indexOf('--');
+  const cut = command === 'go' && delimiter >= 0 ? delimiter : args.length;
+  const options = command === 'nu' ? { list: { type: 'boolean' }, template: { type: 'string' }, from: { type: 'string' } } :
+    command === 'go' ? { mount: { type: 'string', multiple: true }, 'mount-rw': { type: 'string', multiple: true }, network: { type: 'boolean' }, sudo: { type: 'boolean' } } : {};
+  const { values, positionals } = parseArgs({ args: args.slice(0, cut), options, allowPositionals: true });
+  if (command === 'nu') {
+    if (values.list && args.length === 1) {
+      for (const seed of seeds) console.log(`${seed.id}\t${seed.label}\t${seed.image || seed.description}`);
+      return 0;
+    }
+    if (positionals.length !== 1 || values.list || (values.from && values.template)) throw new Error(help.nu);
+    const controller = new AbortController();
+    const stop = () => controller.abort();
+    process.once('SIGINT', stop); process.once('SIGTERM', stop);
+    try {
+      console.log(await universes.create(positionals[0], values.from === undefined ? values.template : 'oci', values.from,
+        { signal: controller.signal, output: chunk => process.stderr.write(chunk) }));
+      return 0;
+    } finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); }
+  }
+  if (positionals.length > 1) throw new Error(help[command]);
+  if (command === 'cd') { console.log(await universes.enter(positionals[0] || '.')); return 0; }
+  const target = await universes.go(positionals[0] || '.', {
+    mounts: values.mount, writableMounts: values['mount-rw'], network: values.network, sudo: values.sudo,
+    command: cut < args.length ? args.slice(cut + 1) : undefined,
+  });
+  return execute(target.program, target.args, { cwd: target.cwd });
 }
 module.exports={main,commands,execute};

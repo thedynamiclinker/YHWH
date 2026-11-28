@@ -139,21 +139,15 @@ export function installInitial(app, { home, mobile, call }) {
   function switchInterface() {
     if (!embedded) return;
     modal('Terminal interface', `<div class="initial-tools">${buttons([['Terminal', 'terminal'], ['Initial', 'initial']])}</div>`);
-    const select = async next => {
-      if (next) await library.reload();
-      dialog.close();
-      docked = next;
-      terminal.hidden = next;
-      embedded.hidden = !next;
-      toggle.textContent = next ? 'Initial ▾' : 'Terminal ▾';
-      if (next) {
-        await shelf();
-        workbench.focus();
-      } else {
-        await app.run('focus-terminal');
-      }
-    };
-    bind({ terminal: () => select(false), initial: () => select(true) });
+    bind({ terminal: async () => { dialog.close(); selectTerminal(false); await app.run('focus-terminal'); },
+      initial: async () => { await library.reload(); dialog.close(); selectTerminal(true); await shelf(); workbench.focus(); } });
+  }
+  function selectTerminal(initial) {
+    if (!embedded) return;
+    docked = initial;
+    terminal.hidden = initial;
+    embedded.hidden = !initial;
+    toggle.textContent = initial ? 'Initial ▾' : 'Terminal ▾';
   }
 
   function launchFull(action) {
@@ -801,7 +795,7 @@ export function installInitial(app, { home, mobile, call }) {
   app.addCommand({ id: 'initial-draw', name: 'Draw a Letter', run: () => draw() });
   app.addCommand({ id: 'initial-new', name: 'New Letter', run: async () => { await library.reload(); aliasEditor(); } });
   app.addCommand({ id: 'initial-rc', name: 'Initial · edit aliases file', run: openRC });
-  return { ...library, open: shelf, draw: () => draw(), focusTerminal() {
+  return { ...library, open: shelf, draw: () => draw(), switchToUnix: () => selectTerminal(false), focusTerminal() {
     if (!docked || !embedded?.contains(workbench.shell)) return false;
     workbench.focus(); return true;
   } };

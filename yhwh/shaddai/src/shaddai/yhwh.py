@@ -29,6 +29,15 @@ def trusted_file(path):
     return True
 
 
+def oci_root(path):
+    try:
+        fd = os.open(path / ".yhwh-oci", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(fd, "rb") as marker:
+            return S_ISREG(os.fstat(fd).st_mode) and marker.read(6) == b"image "
+    except OSError:
+        return False
+
+
 def sections(text):
     result = []
     for number, line in enumerate(text.splitlines(), 1):
@@ -76,7 +85,12 @@ class Prefixes:
         system = Path(os.environ.get("YHWH_SYSTEM_CONFIG") or "/etc/yhwh").absolute()
         self.locations = [(system, system), (self.user, self.user)]
         if not global_only:
-            self.locations.extend((parent / ".yhwh", parent) for parent in reversed((path, *path.parents)))
+            physical = path.resolve()
+            imported = {parent for parent in (physical, *physical.parents) if oci_root(parent)}
+            for parent in reversed((path, *path.parents)):
+                if oci_root(parent) or (imported and parent.resolve() in imported):
+                    break
+                self.locations.append((parent / ".yhwh", parent))
         self.target = path
         self.environment = dict(os.environ)
         self.values = {}

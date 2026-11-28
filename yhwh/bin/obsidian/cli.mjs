@@ -104,7 +104,7 @@ async function exportSupport(destination) {
   for (const file of ['levels.json', 'yhwh-emails.json', 'words.json'])
     await copyFile(join(system, 'etc/default', file), join(destination, 'etc/default', file));
   await mkdir(join(destination,'lib'),{recursive:true});
-  for (const file of ['text.cjs', 'text.d.cts', 'levels.cjs', 'levels.d.cts', 'circus.cjs', 'circus.d.cts'])
+  for (const file of ['text.cjs', 'text.d.cts', 'levels.cjs', 'levels.d.cts', 'circus.cjs', 'circus.d.cts', 'universe-seeds.cjs', 'universe-seeds.d.cts'])
     await copyFile(join(system,'lib',file),join(destination,'lib',file));
   await cp(join(system, 'lib/nhs'), join(destination, 'lib/nhs'), { recursive: true });
   await cp(join(system, 'etc/nhs'), join(destination, 'etc/nhs'), { recursive: true });
@@ -124,7 +124,7 @@ async function exportSupport(destination) {
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-await build({absWorkingDir:root,entryPoints:['src/main.ts'],outfile:'main.js',bundle:true,format:'cjs',target:'es2020',external:['obsidian'],loader:{'.md':'text'}});
+await build({absWorkingDir:root,entryPoints:['src/main.ts'],outfile:'main.js',bundle:true,format:'cjs',target:'es2020',external:['obsidian','node:child_process'],loader:{'.md':'text'}});
 const font=await readFile(new URL('../assets/Phoenician.ttf',import.meta.url));
 const css=await readFile(new URL('../etc/styles.css',import.meta.url),'utf8');
 const schoolCSS=await readFile(new URL('../lib/nhs/view.css',import.meta.url),'utf8');

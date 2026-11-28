@@ -8,7 +8,17 @@ const { quote } = require('../../lib/shell.cjs');
 const sessions = new Map();
 const send = message => { if (process.connected) process.send(message); };
 
-function start({ id, cwd, env = {} }) {
+function start({ id, cwd, env = {}, guest }) {
+  if (guest) {
+    const terminal = pty.spawn(guest.program, guest.args, { cwd, env: { ...process.env, TERM: 'xterm-256color' }, name: 'xterm-256color', cols: 100, rows: 25 });
+    sessions.set(id, { terminal, cwd, hooked: true });
+    terminal.onData(data => send({ type: 'data', id, data }));
+    terminal.onExit(({ exitCode, signal }) => {
+      sessions.delete(id);
+      send({ type: 'exit', id, code: exitCode || (signal ? 128 + signal : 0) });
+    });
+    return;
+  }
   const shell = process.env.YHWH_SHELL || process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/bash');
   const name = path.basename(shell), environment = { ...process.env, ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor', YHWH_TAB: env.YHWH_TAB || id };
   environment.YHWH_PREFIX_SHELL ||= path.join(__dirname, '../prefix-shell.cjs');

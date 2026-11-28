@@ -9,5 +9,6 @@ const callChannels = [
   'external', 'mail', 'words:read', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
   'verse:random', 'verse:commentary', 'keys:run', 'keys:shell', 'keys:save',
   'terminal:open', 'terminal:close',
+  'universe:create', 'universe:cancel', 'universe:cd', 'universe:go',
 ];
 module.exports = { callChannels };

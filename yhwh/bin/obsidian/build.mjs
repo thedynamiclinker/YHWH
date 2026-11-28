@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import paths from '../../lib/paths.cjs';
 const root = join(paths.root, 'src/yhwh-obsidian'), out = paths.output('obsidian');
 await mkdir(out, { recursive: true });
-await build({ absWorkingDir: root, entryPoints: ['src/main.ts'], outfile: join(out, 'main.js'), bundle: true, format: 'cjs', target: 'es2020', external: ['obsidian'], loader: { '.md': 'text' } });
+await build({ absWorkingDir: root, entryPoints: ['src/main.ts'], outfile: join(out, 'main.js'), bundle: true, format: 'cjs', target: 'es2020', external: ['obsidian', 'node:child_process'], loader: { '.md': 'text' } });
 const font = await readFile(paths.etc('assets/Phoenician.ttf'));
 const css = await readFile(paths.etc('obsidian/styles.css'), 'utf8');
 const schoolCSS = await readFile(join(paths.root, 'lib/nhs/view.css'), 'utf8');

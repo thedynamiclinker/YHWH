@@ -14,6 +14,8 @@ const { freeEnergy, levelAt } = require('../../../lib/levels.cjs');
 const { mail } = require('./mail.cjs');
 const { chat } = require('./chat.cjs');
 const paths = require('../../../lib/paths.cjs');
+const universes = require('../../../lib/universes.cjs');
+const { universeName } = require('../../../lib/universe-seeds.cjs');
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
@@ -51,7 +53,7 @@ async function request(argv, cwd = process.cwd(), configured) {
       filename = home;
     }
   }
-  return { path: path.resolve(cwd, filename || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme'), warning };
+  return { path: path.resolve(cwd, filename || cwd), tab: flag(argv, '--tab'), theme: flag(argv, '--theme'), warning, universeGo: argv.includes('--universe-go') };
 }
 
 const locked = app.requestSingleInstanceLock();
@@ -238,18 +240,58 @@ async function launch() {
     loaded = true;
     return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial, defaultDirectory: configured, pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
-  handle('focus:new', async (id, directory) => {
+  async function newFocus(id, directory, guest) {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
     const focus = { id, cwd: path.resolve(directory) };
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
-      await startTerminal(focus, id);
+      if (guest) {
+        terminals.set(id, focus.id);
+        host.send({ type: 'start', id, cwd: guest.cwd, guest: { program: guest.program, args: guest.args } });
+      } else await startTerminal(focus, id);
       return result;
-    } catch (error) { focuses.delete(id); throw error; }
+    } catch (error) { focus.watcher?.close(); clearTimeout(focus.watchTimer); focuses.delete(id); throw error; }
+  }
+  handle('focus:new', (id, directory) => newFocus(id, directory));
+  handle('universe:go', async (id, from, directory, options) => {
+    const focus = focuses.get(from);
+    if (!focus) throw new Error('Closed tab.');
+    directory = worlds.directory(focus, directory);
+    const guest = await universes.go(await worlds.physical(focus, directory), {
+      mounts: options.mounts, writableMounts: options.writableMounts,
+      mountBase: await worlds.physical(focus),
+      network: options.network === true, sudo: options.sudo === true,
+    });
+    if (focuses.get(from) !== focus) throw new Error('Closed tab.');
+    return newFocus(id, guest.cwd, guest);
+  });
+  handle('universe:cd', async (id, directory) => {
+    const focus = focuses.get(id);
+    if (!focus) throw new Error('Closed tab.');
+    directory = worlds.directory(focus, directory);
+    await universes.enter(await worlds.physical(focus, directory));
+    return directory;
+  });
+  handle('universe:create', async (id, name, template, image) => {
+    const focus = focuses.get(id);
+    if (!focus) throw new Error('Closed tab.');
+    if (focus.creatingUniverse) throw new Error('This tab is already creating a universe.');
+    const controller = new AbortController();
+    focus.creatingUniverse = controller;
+    const directory = focus.cwd;
+    try {
+      universeName(name);
+      await universes.create(path.join(await worlds.physical(focus, directory), name), template, image, { signal: controller.signal });
+      return path.join(directory, name);
+    } finally { focus.creatingUniverse = null; }
+  });
+  handle('universe:cancel', id => {
+    focuses.get(id)?.creatingUniverse?.abort();
   });
   handle('focus:close', id => {
     const focus = focuses.get(id); focus?.watcher?.close(); clearTimeout(focus?.watchTimer); focuses.delete(id);
+    focus?.creatingUniverse?.abort();
     for (const [terminalId, owner] of terminals) if (owner === id) { terminals.delete(terminalId); host.send({ type: 'close', id: terminalId }); }
   });
   handle('terminal:open', async (id, terminalId) => {

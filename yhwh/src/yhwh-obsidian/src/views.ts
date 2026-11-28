@@ -101,6 +101,11 @@ export class Navigator extends ItemView {
     fileButton(tools, '', ui("toggle-file-manager-in-the-workspace-ctrl-d"), 'maximize', () => p.run(() => p.toggleFilesFocus()));
     button(tools, '>_', ui("toggle-navigation-console-ctrl-b"), () => p.run(() => p.toggle(CONSOLE)));
     button(tools, ui("3d"), ui("open-3d-directory"), () => p.run(() => p.show(ATLAS)));
+    const universe = el.createDiv({ cls: 'yhwh-tools yhwh-universe-tools', attr: { role: 'group', 'aria-label': 'Universe controls' } });
+    const target = () => { const selected = this.visible[this.index]; return selected instanceof TFolder ? selected.path : p.folder; };
+    fileButton(universe, 'New universe', 'Nu · Make new universe', 'orbit', () => p.universeDialog());
+    fileButton(universe, 'Enter', 'Cd · Enter universe', 'door-open', () => p.run(() => p.enterUniverse(target())));
+    fileButton(universe, 'Chroot', 'Go · Chroot universe', 'terminal', () => p.run(() => p.chrootUniverse(target())));
     const crumbs = el.createDiv('yhwh-breadcrumbs');
     this.dropTarget(button(crumbs, '/', ui("vault-root"), () => p.run(() => p.go(''))), '');
     let path = '';
@@ -180,7 +185,7 @@ export class Navigator extends ItemView {
   async onClose() { this.unsubscribe?.(); }
 }
 
-const HELP = ui("vault-commands-quote-paths-containing-spaces-hel");
+const HELP = ui("vault-commands-quote-paths-containing-spaces-hel") + '\nnu NAME [TEMPLATE] · create a universe\ngo [DIRECTORY] · open the chroot dialog';
 
 export class ConsoleView extends ItemView {
   private unsubscribe?: () => void;
@@ -270,6 +275,10 @@ export class ConsoleView extends ItemView {
       arity(1); const file = await this.app.vault.create(at(), ''); await p.open(file, true); this.write(ui("created") + file.path);
     } else if (command === 'mkdir') {
       arity(1); await this.app.vault.createFolder(at()); this.write(ui("created") + at());
+    } else if (command === 'nu') {
+      arity(1, 2); this.write(await p.makeUniverse(args[0], args[1]));
+    } else if (command === 'go') {
+      arity(0, 1); await p.chrootUniverse(at());
     } else if (command === 'mv') {
       arity(2); const destination = at(1); await this.app.fileManager.renameFile(entry(), destination); this.write(ui("moved-to") + destination);
     } else if (command === 'cat') {
