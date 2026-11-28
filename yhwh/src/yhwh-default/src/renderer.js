@@ -30,7 +30,7 @@ import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, freeMaximum, themeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
-import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, nextMidnightLetter, nextMidnight, attachmentsFor, senderFor } from '../../../lib/inbox.cjs';
+import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, nextMidnightLetter, nextMidnight, attachmentsFor, senderFor, deliveryFor, addressLetter } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 import mailImages from '../../../lib/mode-mail-images.mjs';
 const mailAttachments = { 'biblical-polygyny.png': polygynyAttachment, ...mailImages };
@@ -1786,7 +1786,8 @@ function updateInboxBadge() {
 }
 function receive(id, midnightOnly = false, working = Boolean(id)) {
   if (!active() || document.visibilityState !== 'visible') return;
-  const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme, level: currentLevel().id };
+  const { id: level } = currentLevel();
+  const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: level, level };
   if (startNight(presence, options.now)) savePresence();
   const personal = ['samuel', 'exodus'].includes(options.level);
   const misdelivered = working && !midnightOnly ? nextMisdeliveredLetter(presence, options) : undefined;
@@ -1807,7 +1808,11 @@ function receive(id, midnightOnly = false, working = Boolean(id)) {
   const sender = senderFor(presence, letter);
   if (!sender) return;
   if (letter === misdelivered) presence.lastMisdelivery = options.now;
-  presence.letters.push({ id: letter.id, sender, read: false, at: options.now }); presence.lastLetter = options.now; savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
+  const envelope = deliveryFor(letter, level, presence.letters.length);
+  presence.letters.push({ id: letter.id, sender, ...envelope, read: false, at: options.now });
+  presence.lastLetter = options.now;
+  savePresence();
+  if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
 // Ordinary letters need actual use; seedis also has a visible-app midnight timer.
 document.addEventListener('click', () => receive(undefined, false, true));
@@ -1829,6 +1834,7 @@ scheduleMidnightMail();
 function inbox() { focusView('inbox'); }
 function mailSettings() {
   const dialog = modal('Mail settings', `<form id="mail-settings-form"><details class="mail-sender-settings"><summary>Sender controls</summary><label class="setting-row"><span>Block ${primarySender}<small>Applies to this exact address. Earlier letters stay in your inbox.</small></span><input type="checkbox" role="switch" name="blocked_yhwh" ${presence.blockedYhwh ? 'checked' : ''}></label></details><div class="dialog-actions"><button type="button" data-mail-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`);
+  dialog.querySelector('form').insertAdjacentHTML('afterbegin', '<p class="muted">I pick your name and my verse from the YHWH-ness level when I hit Send. I can still get the story mixed up, Mo. Abe. Shit.</p>');
   dialog.querySelector('[data-mail-cancel]').onclick = () => dialog.close();
   dialog.querySelector('form').onsubmit = event => {
     event.preventDefault();
@@ -1859,13 +1865,15 @@ function renderInbox() {
   if (selected) {
     const { letter, state } = selected;
     const source = letter.source;
-    const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
+    const title = addressLetter(letter, state, letter.title);
+    const text = addressLetter(letter, state, words[letter.textKey] || '');
+    const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(text)}</div>${editButton(letter.textKey)}` : `<p><span class="character-copy">${escape(text)}</span> ${editButton(letter.textKey)}</p>`;
     const shopLinks = letter.id === 'merch' ? merch.links() : '';
-    const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
+    const recipients = `<span>to ${escape(state.to || letter.to || 'Abe')}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
     const attachment = mailAttachmentFigures(attachmentsFor(letter));
-    const note = source?.note || letter.note;
-    const sources = note || letter.verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details>` : '';
-    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}${shopLinks}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
+    const note = source?.note || letter.note, verse = state.verse || letter.verse;
+    const sources = note || verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary>${note ? `<p>${escape(note)}</p>` : ''}${verse ? `<div data-citation="${escape(verse)}"></div>` : ''}</details>` : '';
+    host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}${shopLinks}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
     host.querySelector('[data-mail-back]').onclick = () => {
       tab.mailId = null;
       renderInbox();
@@ -1874,10 +1882,10 @@ function renderInbox() {
     verseUI.hydrate(host, { citeCommentary: true, embedded: Boolean(letter.level) });
   } else {
     const rows = available.map(({ letter, state }) => {
-      const text = words[letter.textKey] || '';
-      const preview = (letter.format === 'markdown' ? text : address(text)).replace(/\s+/g, ' ').slice(0, 140);
+      const title = addressLetter(letter, state, letter.title);
+      const preview = addressLetter(letter, state, words[letter.textKey] || '').replace(/\s+/g, ' ').slice(0, 140);
       const sender = state.sender || primarySender;
-      return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH<small title="${escape(sender)}">${escape(sender)}</small></span><span class="mail-subject">${escape(letter.title)} <span class="mail-preview">— ${escape(preview)}</span></span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time></button>`;
+      return `<button type="button" class="mail-row ${state.read ? '' : 'unread'}" data-mail="${escape(letter.id)}"><span class="mail-sender">${state.read ? '' : '● '}YHWH<small title="${escape(sender)}">${escape(sender)}</small></span><span class="mail-subject">${escape(title)} <span class="mail-preview">— ${escape(preview)}</span></span><time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time></button>`;
     }).join('');
     host.innerHTML = `<div class="mail-list" aria-label="Messages">${rows || `<p class="mail-empty muted">${escape(address('No letters. A quiet miracle, Abe.', 1))}</p>`}</div>`;
     for (const row of host.querySelectorAll('[data-mail]')) row.onclick = () => {

@@ -21,6 +21,15 @@ WALK = {
     "inspect": "Open the terminal", "covenant": "Open another tab", "navigate": "Explore a directory",
 }
 WEB = re.compile(r"\[([^\]\n]+)\]\((https?://[^\s)]+)\)|(https?://[^\s<>]+)")
+MAIL_NAME = re.compile(r"\b(Abe|Mo|Dave|Josh)\b(?![’']s\b| inbox\b)", re.I)
+
+
+def address_letter(letter, receipt, text):
+    original = letter.get("to", "Abe") if letter.get("level") else "Abe"
+    to = receipt.get("to")
+    if not to or to == original:
+        return text
+    return MAIL_NAME.sub(lambda match: to if match[0].lower() == original.lower() else match[0], text)
 
 
 def web_links(text):
@@ -190,7 +199,15 @@ class Services:
                 candidate = next((letter_id for letter_id in pending if letter_id not in letters), None)
             if candidate is None:
                 return False
-            letters[candidate] = {"read": False, "at": now}
+            letter = self.letters[candidate]
+            profile = self.mode_mail.get("delivery", {}).get(level_id)
+            to, verse = letter.get("to", "Abe"), letter.get("verse")
+            if profile:
+                to = profile["name"]
+                if not verse or not verse.startswith(tuple(book + " " for book in profile["books"])):
+                    choices = profile["verses"]
+                    verse = choices[len(letters) % len(choices)]
+            letters[candidate] = {"read": False, "at": now, "to": to, "verse": verse}
             state["last"] = now
             return True
 
@@ -215,13 +232,13 @@ class Services:
             return True
 
         letter = self.letters[key]
-        body = self.words[letter["textKey"]]
-        if letter.get("format") != "markdown":
-            body = self.address(body)
         message = self.state("inbox")["letters"][key]
         self.update("inbox", mark_read)
+        title = address_letter(letter, message, letter["title"])
+        body = address_letter(letter, message, self.words[letter["textKey"]])
         date = datetime.fromtimestamp(message["at"]).astimezone().isoformat(timespec="minutes")
-        return f"From: {SENDER}\nTo: {letter.get('to') or self.address('Abe')}\nDate: {date}\n\n{body}"
+        to = message.get("to") or letter.get("to") or "Abe"
+        return title, f"From: {SENDER}\nTo: {to}\nDate: {date}\n\n{body}", message.get("verse", letter.get("verse"))
 
     def block(self, blocked):
         def change(state):

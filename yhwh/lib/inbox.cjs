@@ -1,6 +1,6 @@
 // Local literary mail, shared by the desktop, Three and mobile renderers.
 const { sender: primarySender, messages: emailLetters } = require('../etc/default/yhwh-emails.json');
-const { songOfTheSea, misdelivery, messages: modeLetters } = require('../etc/default/mode-mail.json');
+const { songOfTheSea, misdelivery, delivery, messages: modeLetters } = require('../etc/default/mode-mail.json');
 const alternateSenders = ['jewvacation@gmail.com', 'yhwvacation@gmail.com', 'admin@yahoo.com'];
 const { canReceiveLetter } = require('./presence.cjs');
 const minute = 60000;
@@ -91,6 +91,24 @@ function attachmentsFor(letter) {
   return letter.attachments || (letter.attachment ? [{ name: letter.attachment, alt: letter.attachmentAlt }] : []);
 }
 
+function deliveryFor(letter, level, index) {
+  const profile = delivery[level];
+  if (!profile) return { to: letter.to || 'Abe', verse: letter.verse };
+  const authoredVerse = profile.books.some(book => letter.verse?.startsWith(book + ' '));
+  return {
+    to: level === 'genesis' && letter.id === midnightLetter.id ? letter.to : profile.name,
+    verse: authoredVerse ? letter.verse : profile.verses[index % profile.verses.length],
+  };
+}
+
+function addressLetter(letter, receipt, text) {
+  const original = letter.level ? letter.to : 'Abe';
+  if (!receipt.to || receipt.to === original || receipt.to === 'ʾbe') return text;
+  // Another inbox or a name he blurts out mid-story is part of the letter.
+  return text.replace(/\b(Abe|Mo|Dave|Josh)\b(?![’']s\b| inbox\b)/gi,
+    (name) => name.toLowerCase() === original.toLowerCase() ? receipt.to : name);
+}
+
 function senderFor(state, letter) {
   if (letter.sender) return letter.sender;
   if (!state.blockedYhwh) return primarySender;
@@ -101,4 +119,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, attachmentsFor, senderFor };
+module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, attachmentsFor, senderFor, deliveryFor, addressLetter };

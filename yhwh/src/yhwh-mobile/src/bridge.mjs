@@ -295,6 +295,11 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
         return 'I’m behind the glass, Dave. Tell me what you see and I’ll talk you through it. And leave the lid alone.';
       if (level.id === 'exodus' && /\b(root|universe|pharaoh)\b/.test(query))
         return 'The bush is burning, Mo. Pick a directory in Files → un and make yourself a universe. This phone gives me the app’s files. That’s where we start.';
+      if (level.id === 'yue' && /\b(josh(?:ua)?|jericho|rahab|mary|magdalene?|xp|ix|jesus|tomb)\b/.test(query)) {
+        const memories = level.asides.filter(Boolean);
+        const previous = messages.filter(message => message.role === 'assistant' && memories.includes(message.content)).length;
+        return memories[previous % memories.length];
+      }
       if (/\b(where|pwd|path)\b/.test(query)) return `You’re in ${directory}${say(', Abe. I happen to own the place. I’m giving it to you anyway.', 1)}`;
       if (/\b(list|ls|files)\b/.test(query)) {
         const entries = await storage.list(directory);
@@ -303,11 +308,6 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       }
       if (/\b(logos|letter|tiles?|pipe|commands?)\b/.test(query)) return say('Tap a tile in the Initial to try it, Abe. Drag it up into your script. A row pipes its output to the right, and each new row starts another command.', 4);
       if (/\b(note|edit|markdown|save)\b/.test(query)) return say('Tap Note to make a file, Abe, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.');
-      if (level.id === 'yue' && /\b(josh(?:ua)?|jericho|rahab|mary|magdalene?|xp|ix|jesus|tomb|remember)\b/.test(query)) {
-        const memories = level.asides.filter(Boolean);
-        const previous = messages.filter(message => message.role === 'assistant' && memories.includes(message.content)).length;
-        return memories[previous % memories.length];
-      }
       return say('I can help with this folder, files, notes and Logos while we’re offline, Abe. Tap Live chat setup for the desktop connection guide.', 1);
     },
     plugins: async configuration => { if (configuration && configuration !== '[]') throw new Error('Mobile currently supports bundled plugins only.'); return builtinPlugins; },

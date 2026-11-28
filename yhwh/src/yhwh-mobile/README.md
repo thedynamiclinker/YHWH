@@ -56,6 +56,7 @@ build outputs and signing secrets stay out of version control. Do not edit
 the copied JavaScript under native `assets/public` or `App/public`.
 Gradle's `preBuild` and Xcode's first build phase also rebuild and copy the
 shared UI before Run/Archive, so IDE builds inherit source changes automatically.
+The build prunes superseded chunks and fingerprinted assets before copying the UI.
 They require the root npm dependencies and Node on PATH (`YHWH_NODE` overrides
 the executable). After adding/upgrading native plugins, run `make mobile-sync`
 to update the native dependency projects as well.

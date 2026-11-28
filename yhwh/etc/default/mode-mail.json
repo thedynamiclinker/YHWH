@@ -4,6 +4,28 @@
     "levels": ["genesis", "exodus", "yue"],
     "intervalMinutes": 30
   },
+  "delivery": {
+    "genesis": {
+      "name": "Abe",
+      "books": ["Genesis"],
+      "verses": ["Genesis 12:1", "Genesis 15:5", "Genesis 18:3"]
+    },
+    "exodus": {
+      "name": "Mo",
+      "books": ["Exodus"],
+      "verses": ["Exodus 3:2", "Exodus 7:5", "Exodus 14:21"]
+    },
+    "samuel": {
+      "name": "Dave",
+      "books": ["1 Samuel", "2 Samuel"],
+      "verses": ["1 Samuel 3:10", "1 Samuel 17:39", "2 Samuel 7:5"]
+    },
+    "yue": {
+      "name": "Josh",
+      "books": ["Joshua"],
+      "verses": ["Joshua 2:18", "Joshua 6:20"]
+    }
+  },
   "messages": [
     {
       "id": "samuel-first-knock",

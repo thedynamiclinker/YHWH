@@ -27,6 +27,12 @@ async function build() {
   await fs.writeFile(path.join(directory, 'style.css'), css.replaceAll('../assets/', './assets/'));
   await fs.copyFile(path.join(root, 'etc/verses/we-the-nameless.json'), path.join(directory, 'verses.json'));
   await fs.copyFile(path.join(root, 'src/yhwh-default/plugins/hello-world/main.js'), path.join(directory, 'hello-world.js'));
+  // Capacitor copies the entire web directory. Drop old split chunks and
+  // fingerprinted assets after their replacements are in place.
+  const outputs = new Set(Object.keys(result.metafile.outputs).map(filename => path.basename(filename)));
+  const stale = (await fs.readdir(directory, { withFileTypes: true }))
+    .filter(entry => entry.isFile() && /-[A-Z0-9]{8}\.(?:(?:js|css)(?:\.map)?|png|jpg|ttf)$/.test(entry.name) && !outputs.has(entry.name));
+  await Promise.all(stale.map(entry => fs.rm(path.join(directory, entry.name), { force: true })));
   await fs.writeFile(output('mobile/metafile.json'), JSON.stringify(result.metafile, null, 2) + '\n');
   console.log('Built Android/iOS shared UI: ' + directory);
 }

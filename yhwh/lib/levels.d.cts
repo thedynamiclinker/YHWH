@@ -8,6 +8,7 @@ export type Level = {
   asides?: (string | null)[];
   about?: string[];
   names?: string[];
+  chatVoice?: string;
   welcome?: string;
   poem?: string;
   welcomePoem?: string;

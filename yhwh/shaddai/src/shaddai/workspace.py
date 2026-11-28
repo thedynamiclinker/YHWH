@@ -45,7 +45,7 @@ from .files import BinaryFile, Document, fuzzy
 from .fonts import ConsoleFonts
 from .navigation import serve_paths
 from .terminal import Shell, TerminalControl
-from .services import SENDER, WALK, Services, web_links
+from .services import SENDER, WALK, Services, address_letter, web_links
 from .yhwh import FolderRoot, Guest, Prefixes, World, save_setting
 
 
@@ -399,7 +399,7 @@ class Workspace:
             ("", " ‹ ", clickable(lambda: self.browser.step_history(-1))),
             ("", " › ", clickable(lambda: self.browser.step_history(1))),
             ("class:heading", " ↙ " if expanded else " ↗ ", clickable(lambda: self.maximize("files"))),
-            ("class:muted", f" {label(self.browser.cwd if expanded else self.browser.cwd.name or '/')} ",
+            ("class:muted", f" {prompt_path(self.browser.cwd)} ",
              clickable(self.browser.location)),
         ]
 
@@ -409,7 +409,7 @@ class Workspace:
         return world.root if world else Path("/")
 
     def shell_paths(self):
-        return " ".join(f"{name} {label(path)}" for name, path in
+        return " ".join(f"{name} {prompt_path(path)}" for name, path in
                         ((".", self.browser.cwd), ("@", self.tab.anchor), ("/", self.shell_root)))
 
     def directory_bar(self, names=False):
@@ -1537,7 +1537,8 @@ class Workspace:
         for key, message in sorted(letters.items(), key=lambda item: item[1]["at"], reverse=True):
             if letter := self.services.letters.get(key):
                 marker = "* " if not message["read"] else ""
-                commands[marker + letter["title"]] = partial(self.read_letter, key)
+                title = address_letter(letter, message, letter["title"])
+                commands[marker + title] = partial(self.read_letter, key)
         toggle = ("Unblock " if state.get("blocked") else "Block ") + SENDER
 
         def block():
@@ -1549,7 +1550,7 @@ class Workspace:
 
     def read_letter(self, key):
         letter = self.services.letters[key]
-        text = self.services.letter(key)
+        title, text, citation = self.services.letter(key)
         if letter.get("source") and letter.get("level"):
             text += f"\n\n{letter['source']['label']} · {letter['source']['url']}"
         if letter.get("attachment"):
@@ -1557,11 +1558,11 @@ class Workspace:
         for attachment in letter.get("attachments", []):
             filename = self.config.library.etc / "assets/mail" / attachment["name"]
             text += f"\n\n{attachment['alt']}\n{filename}"
-        if not (letter.get("note") or letter.get("verse")):
-            self.show(letter["title"], text, back=self.inbox)
+        if not (letter.get("note") or citation):
+            self.show(title, text, back=self.inbox)
             return
         copy = self.config.library.json("default/text-verses.json")
-        verses = self.services.cited_verses(letter.get("verse", ""))
+        verses = self.services.cited_verses(citation or "")
         sources_open = True
         open_commentary = set()
 
@@ -1597,7 +1598,7 @@ class Workspace:
                     disclosure(citation, expanded, partial(toggle_commentary, verse_id))
                     if expanded:
                         lines.extend(["", self.services.commentary(verse) or copy["no-commentary"]])
-            self.show(letter["title"], "\n".join(lines), back=self.inbox, actions=actions)
+            self.show(title, "\n".join(lines), back=self.inbox, actions=actions)
             self.reader.buffer.cursor_position = self.reader.document.translate_row_col_to_index(cursor_row, 0)
 
         render()

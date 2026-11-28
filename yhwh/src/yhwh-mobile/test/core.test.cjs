@@ -36,6 +36,27 @@ test('logical paths stay inside the workspace', async () => {
   assert.equal(normalize('../../outside', '/notes'), '/outside');
   for (const value of ['a\0b', 'a\\b']) assert.throws(() => normalize(value));
 });
+test('Yue remembers both Joshes offline and still answers workspace questions', async () => {
+  const { call } = await fixture(), messages = [];
+  const ask = async content => {
+    messages.push({ role: 'user', content });
+    const reply = await call('chat', 'one', { directory: '/' }, messages, [], 140);
+    messages.push({ role: 'assistant', content: reply });
+    return reply;
+  };
+  assert.match(await ask('Where was Jesus at Jericho?'), /Josh, remember Jericho.*XP\? IX\?/);
+  assert.match(await ask('And Rahab?'), /Rahab.*Josh.*Mary Magdalene/);
+  assert.match(await ask('Tell me about the tomb'), /Jericho.*tomb.*remember when we did both/);
+  assert.match(await ask('Where am I?'), /You’re in \/, Josh/);
+});
+test('native app schemes without randomUUID still get valid unique IDs', async t => {
+  const { randomUUID } = await import('../../../lib/random-uuid.mjs');
+  const getRandomValues = crypto.getRandomValues.bind(crypto);
+  t.mock.getter(globalThis, 'crypto', () => ({ getRandomValues }));
+  const ids = new Set(Array.from({ length: 8 }, randomUUID));
+  assert.equal(ids.size, 8);
+  for (const id of ids) assert.match(id, /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/);
+});
 test('the tab anchor and folder actions use ordinary directories and independent tabs', async () => {
   const { bridge, call, storage } = await fixture();
   await storage.mkdir('/outside repo');

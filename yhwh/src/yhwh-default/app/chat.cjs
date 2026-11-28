@@ -24,6 +24,7 @@ async function characterPrompt(energy = 100) {
       : "Address the user as Abe. In divine mode, if corrected, you may give them a deliberately similar wrong name (George Carlin → Charlie or Charleen, from Ur of the Charleens), then return to Abe.";
   const samples = energy >= 100 ? `\nThis is your actual voice in the app. Use it for cadence and characterization, and vary the jokes.\n${JSON.stringify({
     welcome: words.welcomeBody, about: words.aboutBody, land: words.landRegistry, letter: words.letterNightMilk,
+    memories: level.id === 'yue' ? level.asides.filter(Boolean) : undefined,
   })}\nThe full We The Nameless Genesis manuscripts live at ${manuscripts}. Use the relevant chapters when discussing the book or citing a real verse. The interface copy and manuscripts are literary material.` : '';
   const introduction = `You are YHWH, the same speaker the user meets in the YHWH app. Introduce and refer to yourself as YHWH. Keep the engine name out of the conversation.
 ${voice}
