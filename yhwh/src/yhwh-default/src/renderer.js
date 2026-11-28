@@ -130,6 +130,8 @@ async function executeBinding(binding) {
   else if (result.stdout || result.stderr || result.code) modal(`Key command · ${binding.combo}`, `<pre class="key-output">${escape(result.stdout || '')}${escape(result.stderr || '')}${result.code ? `\nExit ${result.code}` : ''}</pre>`);
 }
 const basename = filename => filename.replace(/[/\\]+$/, '').split(/[/\\]/).at(-1) || filename;
+// Like Bash's clip_prompt_if_its_super_long, fall back to the last component.
+const promptPath = filename => filename.length > 30 && basename(filename) !== filename ? `…/${basename(filename)}` : filename;
 const join = (directory, name) => /^(?:[/\\]|[A-Z]:[/\\])/i.test(name) ? name : `${directory.replace(/[/\\]$/, '')}/${name}`;
 const parent = filename => { const value = filename.replace(/[/\\][^/\\]+[/\\]?$/, '') || (boot.platform === 'win32' ? filename.slice(0, 3) : '/'); return /^[A-Z]:$/i.test(value) ? `${value}/` : value; };
 const humanSize = size => size > 1048576 ? ui("mb", (size / 1048576).toFixed(1)) : size > 1024 ? ui("kb", Math.round(size / 1024)) : ui("b", size);
@@ -341,21 +343,26 @@ function renderFiles() {
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
   renderShellDirectories(tab);
   const fileRoot = tab.worldRoot || (tab.guestMode && root);
-  $('#location').value = fileRoot ? '/' + tab.cwd.slice(fileRoot.length).replace(/^\/+/, '') : tab.cwd;
+  const directory = fileRoot ? '/' + tab.cwd.slice(fileRoot.length).replace(/^\/+/, '') : tab.cwd;
+  const location = $('#location');
+  if (document.activeElement !== location || location.title !== directory) location.value = directory;
+  location.title = directory;
+  location.setAttribute('aria-description', directory);
+  $('#location-label').textContent = promptPath(directory);
   $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
   const folder = entry.parent ? undefined : tab.folders.get(entry.path);
   const expanded = !!folder?.open;
   const icon = fileIcons[entry.parent ? 'parent' : entry.directory ? 'expand' : 'file'];
-  let row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.parent ? ui('parent-directory') : entry.path), icon, escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
+  const control = entry.directory && !entry.parent
+    ? `<button type="button" class="file-icon" data-expand-folder draggable="false" aria-label="Toggle contents of ${escape(entry.name)}" aria-expanded="${expanded}">${icon}</button>`
+    : `<span class="file-icon">${icon}</span>`;
+  let row = ui("template-2", entry.directory ? 'directory' : '', entry.parent ? 'parent-row' : '', tab.selected.has(entry.path) ? 'selected' : '', tab.selected.has(entry.path), escape(entry.path), entry.directory, !!entry.parent, escape(entry.parent ? ui('parent-directory') : entry.path), control, escape(entry.name), entry.directory ? 'Directory' : humanSize(entry.size), '');
   if (boot.interface === 'mobile' && !entry.parent) {
-    if (entry.directory) {
-      row = row.replace(/<span class="file-icon">.*?<\/span>/, () => `<button type="button" class="file-icon" data-expand-folder draggable="false" aria-label="Toggle contents of ${escape(entry.name)}" aria-expanded="${expanded}">${icon}</button>`);
-    }
     row = row.replace(/<\/[^>]+>$/, match => `<button type="button" draggable="false" data-row-menu aria-label="Actions for ${escape(entry.name)}">${fileIcons.more}</button>${match}`);
   }
-  return row.replace('role="option"', `draggable="${!entry.parent}" style="padding-left:${9 + depth * 18}px" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
+  return row.replace('role="option"', `draggable="${!entry.parent}" style="--file-depth:${depth}" data-depth="${depth}" ${entry.directory && !entry.parent ? `aria-expanded="${expanded}"` : ''} role="option"`) + (expanded ? `<div class="folder-children" data-children="${escape(entry.path)}" style="--file-depth:${depth}">${folder.entries.map(child => fileRow(tab, child, depth + 1)).join('') || '<small class="empty-folder">Empty directory</small>'}</div>` : '');
 }
 async function toggleFolder(row, expand) {
   const tab = active(), path = row.dataset.path;
@@ -373,6 +380,7 @@ async function toggleFolder(row, expand) {
   row.querySelector('[data-expand-folder]')?.setAttribute('aria-expanded', String(open));
   if (open) {
     const group = document.createElement('div'); group.className = 'folder-children'; group.dataset.children = path;
+    group.style.setProperty('--file-depth', row.dataset.depth);
     group.innerHTML = folder.entries.map(entry => fileRow(tab, entry, Number(row.dataset.depth) + 1)).join('') || '<small class="empty-folder">Empty directory</small>';
     row.after(group);
   }
@@ -461,7 +469,9 @@ function update() {
   $('#title-row').hidden = !tab.file;
   if (document.activeElement !== $('#file-title')) $('#file-title').value = tab.file?.name || '';
   $('#dirty-indicator').textContent = tab.autosaveError ? 'Autosave paused · unsaved' : tab.dirty ? ui("unsaved") : '';
-  $('#document-path').textContent = tab.file ? parent(tab.file.path) : tab.cwd;
+  const directory = tab.file ? parent(tab.file.path) : tab.cwd;
+  $('#document-path').textContent = promptPath(directory);
+  $('#document-path').title = directory;
   updateEditorStatus(tab);
   const markdown = tab.file?.language === 'markdown';
   const formattable = ['json', 'html'].includes(tab.file?.language);
@@ -616,8 +626,9 @@ function renderShellDirectories(tab) {
     button.title = `${button.getAttribute('aria-label')} (${button.firstElementChild.textContent})\n${directory}`;
     button.setAttribute('aria-description', directory);
   }
-  $('#terminal-cwd').textContent = `. ${tab.cwd}   @ ${tab.anchor}   / ${root}`;
-  $('#terminal-cwd').title = $('#terminal-cwd').textContent;
+  const paths = [['.', tab.cwd], ['@', tab.anchor], ['/', root]];
+  $('#terminal-cwd').textContent = paths.map(([symbol, directory]) => `${symbol} ${promptPath(directory)}`).join('   ');
+  $('#terminal-cwd').title = paths.map(([symbol, directory]) => `${symbol} ${directory}`).join('\n');
 }
 async function confirmAnchor(tab, directory) {
   return tab.config.values.ask_at !== 'true' || directory === tab.anchor ||
@@ -2108,6 +2119,7 @@ $('#file-list').onclick = event => {
 };
 $('#file-list').ondblclick = event => {
   clearTimeout(pdfClickTimer);
+  if (event.target.closest('button')) return;
   const row = event.target.closest('[data-path]'); if (!row) return;
   if (row.dataset.directory === 'true' ? active().config.values.double_cd !== 'true' : boot.interface === 'mobile') return;
   (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path, active(), { external: /\.pdf$/i.test(row.dataset.path) })).catch(error => notice(error.message));
@@ -2137,6 +2149,7 @@ installFileDrag({
   },
 });
 $('#file-list').onkeydown = event => {
+  if (event.target.closest('button') && ['Enter', ' '].includes(event.key)) return;
   const rows = [...$('#file-list').querySelectorAll('[data-path]')], tab = active();
   const current = rows.findIndex(row => tab.selected.has(row.dataset.path));
   const control = event.ctrlKey || event.metaKey;

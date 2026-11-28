@@ -12,7 +12,7 @@
   "-dejavu-sans-mono-monospace": "\"DejaVu Sans Mono\", monospace",
   "welcome-screen": "<section class=\"welcome\"><div class=\"logo-signature\"><span class=\"ld-mark\" aria-hidden=\"true\"></span><span class=\"paleo\">𐤉𐤄𐤅𐤄</span></div>{{0}}{{1}}<div class=\"welcome-actions\"><button class=\"primary\" data-command=\"open-file\">Open a file <small>Ctrl+O</small></button><button data-command=\"new-file\">New file <small>Ctrl+N</small></button></div>{{2}}<div class=\"welcome-bottom\"><button data-command=\"chat\">Talk to YHWH</button><span>·</span><button data-command=\"narrative\">Take a walk</button></div></section>",
   "--3": "<div class=\"tab\" role=\"tab\" aria-selected=\"{{0}}\" data-tab=\"{{1}}\"><span title=\"{{2}}\">{{3}}{{4}}</span><button data-close-tab=\"{{5}}\" aria-label=\"Close {{6}}\">×</button></div>",
-  "template-2": "<div class=\"file-row {{0}} {{1}} {{2}}\" role=\"option\" aria-selected=\"{{3}}\" data-path=\"{{4}}\" data-directory=\"{{5}}\" data-parent=\"{{6}}\" title=\"{{7}}\"><span class=\"file-icon\">{{8}}</span><span class=\"file-name\">{{9}}</span><span class=\"file-size\">{{10}}</span><span class=\"file-date\">{{11}}</span></div>",
+  "template-2": "<div class=\"file-row {{0}} {{1}} {{2}}\" role=\"option\" aria-selected=\"{{3}}\" data-path=\"{{4}}\" data-directory=\"{{5}}\" data-parent=\"{{6}}\" title=\"{{7}}\">{{8}}<span class=\"file-name\">{{9}}</span><span class=\"file-size\">{{10}}</span><span class=\"file-date\">{{11}}</span></div>",
   "shell-exited": "Shell exited",
   "-files": "↔ Files",
   "unsaved": "Unsaved",

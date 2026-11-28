@@ -105,6 +105,10 @@ class MarkdownLexer(Lexer):
 
 
 @lru_cache(maxsize=64)
+def prompt_path(path):
+    return label(f"…/{path.name}" if len(str(path)) > 30 and path.name else path)
+
+
 def lexer(suffix):
     if suffix in (".md", ".markdown"):
         return MarkdownLexer()
