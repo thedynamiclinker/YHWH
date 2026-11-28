@@ -56,7 +56,7 @@ module.exports = async function checkLevels(page, screenshot) {
   await choose(120, 'exodus');
   assert.match(await welcome.innerText(), /Mo.*b\*sh is burning/i);
   await checkPitch('Mo');
-  assert.equal(await upgrade.innerText(), '咱');
+  assert.equal(await upgrade.innerText(), '曰');
   await choose(100, 'genesis');
   await defaultWelcome();
   await checkAbout(['God is a four letter word.', 'LD is a four letter word.']);
@@ -74,18 +74,18 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.equal(await dialog.locator('[data-palette-command="circus"]').count(), 0);
   await dialog.getByRole('button', { name: 'Close dialog' }).click();
 
-  assert.equal(await upgrade.innerText(), '咱');
+  assert.equal(await upgrade.innerText(), '曰');
   assert.equal(await slider.getAttribute('max'), '4');
   await upgrade.click();
-  await dialog.getByRole('heading', { name: 'Upgrade to Zanmen Elite!' }).waitFor();
+  await dialog.getByRole('heading', { name: 'Upgrade to YHWH Pro!' }).waitFor();
   await dialog.getByText('Set up Stripe', { exact: true }).click();
   assert.equal(await dialog.getByRole('link', { name: /Create Payment Links/ }).isVisible(), true);
   await steal.click();
-  await level('elite');
+  await level('yue');
   assert.equal(await upgrade.isVisible(), false);
-  assert.match(await welcome.innerText(), /YHWH level Zanmen[\s\S]*Hey Josh/i);
-  assert.deepEqual(await welcome.locator('pre').allTextContents(), [levelAt(140).welcomePoem, levelAt(140).poem]);
-  assert.equal(await page.locator('#file-filter').getAttribute('placeholder'), levelAt(140).filter);
+  assert.match(await welcome.innerText(), /YHWH level 曰 · Pro[\s\S]*Welcome to 山三[\s\S]*Hey Josh/i);
+  assert.deepEqual(await welcome.locator('pre').allTextContents(), [levelAt(140).poem]);
+  assert.equal(await page.locator('#file-filter').getAttribute('placeholder'), 'Filter files…');
   assert.equal(await slider.getAttribute('max'), '5');
   const poemStyles = await welcome.locator('pre code').evaluateAll(async blocks => {
     const font = `16px ${getComputedStyle(blocks[0]).fontFamily}`;
@@ -110,11 +110,11 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.equal(poemStyles.loaded, true);
   assert.equal(poemStyles.fixedWidth, true);
   assert.equal(poemStyles.hanWidth, true);
-  assert.deepEqual(poemStyles.styles, Array(2).fill({ mono: true, tabSize: '4', whiteSpace: 'pre' }));
+  assert.deepEqual(poemStyles.styles, [{ mono: true, tabSize: '4', whiteSpace: 'pre' }]);
   await slider.press('Home');
   await level('dawkins');
   await slider.press('End');
-  await level('elite');
+  await level('yue');
   await slider.press('ArrowLeft');
   await level('exodus');
   await slider.press('ArrowLeft');
@@ -122,18 +122,18 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.equal(await slider.inputValue(), '3');
   await defaultWelcome();
   await slider.press('End');
-  await level('elite');
+  await level('yue');
   if (screenshot) await page.screenshot({ path: screenshot });
 
   await page.locator('#mode-name').click();
   await unsteal.click();
   await level('exodus');
   assert.equal(await slider.getAttribute('max'), '4');
-  assert.equal(await upgrade.innerText(), '咱');
+  assert.equal(await upgrade.innerText(), '曰');
   await page.locator('#mode-name').click();
   assert.equal(await dialog.locator('[data-energy="140"]').count(), 0);
   assert.equal(await unsteal.count(), 0);
   await dialog.getByRole('button', { name: 'Close dialog' }).click();
 
-  await upgrade.click(); await steal.click(); await level('elite');
+  await upgrade.click(); await steal.click(); await level('yue');
 };

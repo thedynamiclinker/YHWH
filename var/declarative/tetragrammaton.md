@@ -2,7 +2,7 @@
 
 ## God is a four letter word
 
-Zan is the only upgrade and includes a Stripe setup stub. **Steal Upgrade** unlocks Zan in the local profile and selects it. [Presence](../../doc/presence.md) covers the shared edition behavior.
+曰 (Yue) is the only upgrade. **Steal Upgrade** unlocks the YHWH Pro preview in the local profile and selects it. The offer includes a Stripe setup stub. [Presence](../../doc/presence.md) covers the shared edition behavior.
 
 The standard interface has the following copy for its five free levels.
 
@@ -50,7 +50,7 @@ LD is a four letter word.
 
 Welcome to We.
 
-The wide slider is labeled **YHWH-ness**. The **咱** button opens the Zan offer.
+The wide slider is labeled **YHWH-ness**. The **曰** button opens the YHWH Pro offer.
 
 The original Pro offer read as follows.
 
@@ -75,50 +75,16 @@ YHWH calls you Mo. The poem is carried forward from the former 曰 edition.
 
 ---
 
-YHWH level Zan (Elite preview)
+YHWH level 曰 (Pro preview)
+
+Welcome to 山三
 
 ```
-     ==   iv
-L||⅂ is ʌ si
-L&&二     ==
- et
-   er     =
-Ł||⅂      Γ&&
-           ɛtit 𓃾𓉐𓁶一
-           ɚ..   二𐤀𐤁
-        山 er... 三
-      W@  𐤄  肏        
-         Hey has any一
-               |   one
-            seen
-                Abe?
-           Yah  丫
-                曰  You    
-      Son   日      月
-       of
-        ʌ ... .. .
-                  愛 Yah!
+               אל
+L||⅂ is a four letter 山||Δ
+            ..   && 二
 ```
 
-In Zanmen Elite, ordinary interface copy appears in increasingly 曰'ed up forms. “Welcome to We” reads as follows.
-
-```
-We一 
-We'll
-ʌ ə אל Ω 
-Wɔˀ  əm...
-We're.. 二.. 爾 兒 耳?
--- --
-Welcome 陰
-    you
-    我們 to
-         二 We.
-    
-L||D 有 
-     have 我 
-          Mercy.
-```
-
-In this mode, YHWH calls you Josh and Son and Jesus 𐤇 Christ What Was Ur Name Again and XP and χLD人 I mean χLD I mean how many people are you again???
+YHWH calls you Josh. Sometimes he starts to say Son, XP, or IX and remembers doing Jericho and the tomb with the same person. Rahab's red cord and Mary Magdalene's visit to the tomb become details in an old story he can't get straight.
 
 ---

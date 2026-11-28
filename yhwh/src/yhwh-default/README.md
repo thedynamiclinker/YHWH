@@ -151,7 +151,7 @@ Each module is loaded from a local source blob; bundle dependencies into that mo
 
 The original Paleo-Hebrew font and purple/charcoal presentation remain. The title bar's YHWH-ness slider gives each unlocked level its own stop. Settings → Presence also accepts a free YHWH-ness value through Exodus. **In the margins** starts hidden in Genesis. Its left-ribbon widget opens a focused reading surface showing a random Genesis verse, Nietzsche Family Circus in Nietzsche mode, and is hidden in Dawkins mode. The refresh button chooses another verse or pairing; the minus/plus button collapses the box and remembers your choice. Circus fetches the original site's current cartoon/quote and credits the pairing. Network failure leaves the editor working.
 
-Click **咱** beside the slider, then **Steal Upgrade** to preview Zan. Click the current level beside the slider and choose **Unsteal Upgrade** to relock Zan. The app remembers the preview state in this profile. **Set up Stripe** covers sandbox Payment Links and verifying payments before granting an upgrade. The preview collects no payment.
+Click **曰** beside the slider, then **Steal Upgrade** to preview YHWH Pro in 曰 (Yue) mode. Click the current level beside the slider and choose **Unsteal Upgrade** to relock it. The app remembers the preview state in this profile. **Set up Stripe** covers sandbox Payment Links and verifying payments before granting an upgrade. The preview collects no payment.
 
 Character writing is based on sampled passages of the user's *We The Nameless*, especially Genesis 3 and 18 and Exodus 3: embodied curiosity, interruptions, bargaining, grand promises, and occasional regret. Routine controls keep their ordinary names.
 
@@ -212,7 +212,7 @@ Edit character copy and new feature labels in `yhwh/etc/default/words.json`, usi
 
 ## Abe, seed, and desktop launchers
 
-YHWH calls the user Dave in Samuel, Abe in Genesis, Mo in Exodus, and Josh, Son, and other names in Zan. Active character copy and chat use the selected voice.
+YHWH calls the user Dave in Samuel, Abe in Genesis, Mo in Exodus, and Josh in 曰. Active character copy and chat use the selected voice.
 The inbox brings occasional seed promises during
 real work, respecting its switch, mode limits, and five-minute delivery interval.
 These letters stay inside the app. Character text, letters, the buried land

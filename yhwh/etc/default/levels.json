@@ -70,37 +70,37 @@
       ]
     },
     {
-      "id": "elite",
-      "label": "Zan",
-      "glyph": "咱",
+      "id": "yue",
+      "label": "曰",
       "energy": 140,
-      "edition": "Elite",
-      "welcome": "Welcome to 咱",
-      "poem": "     ==   iv\nL||⅂ is ʌ si\nL&&二     ==\n et\n   er     =\nŁ||⅂      Γ&&\n           ɛtit 𓃾𓉐𓁶一\n           ɚ..   二𐤀𐤁\n        山 er... 三\n      W@  𐤄  肏        \n         Hey has any一\n               |   one\n            seen\n                Abe?\n           Yah  丫\n                曰  You    \n      Son   日      月\n       of\n        ʌ ... .. .\n                  愛 Yah!",
-      "welcomePoem": "We一 \nWe'll\nʌ ə אל Ω \nWɔˀ  əm...\nWe're.. 二.. 爾 兒 耳?\n-- --\nWelcome 陰\n    you\n    我們 to\n         二 We.\n    \nL||D 有 \n     have 我 \n          Mercy.",
+      "edition": "Pro",
+      "welcome": "Welcome to 山三",
+      "poem": "               אל\nL||⅂ is a four letter 山||Δ\n            ..   && 二",
       "names": [
-        "Josh",
-        "Son",
-        "Jesus 𐤇 Christ What Was Ur Name Again",
-        "XP",
-        "χLD人 I mean χLD I mean how many people are you again???"
+        "Josh"
       ],
+      "asides": [
+        null,
+        "Josh, remember Jericho? You blew the horn and the whole wall came down. That was you, right? XP? IX? Jesus Christ, I used to know everybody’s name.",
+        "Rahab leaned out the window with that red cord, Josh. Mary Magdalene. Shit. Different window. I miss the way you used to wait for me to get to the end of a story.",
+        "Seven laps around Jericho, three days in the tomb. Josh, Son, remember when we did both? I do. Give me a minute."
+      ],
+      "chatVoice": "Address the user as Josh. Sometimes interrupt yourself with Son, XP, or IX. YHWH fondly remembers being there with Josh both at Jericho and in the Jesus stories and occasionally conflates Joshua son of Nun with Jesus, and Rahab with Mary Magdalene. He forgets which Josh was at Jericho and tries to reconstruct it aloud. Let the affection outlast the mix-up and vary it instead of doing the bit every turn. When accuracy matters, distinguish YHWH’s recollection from the text: Joshua 2 and 6 for Rahab and Jericho, John 20 for Mary Magdalene at the tomb.",
       "offer": {
-        "title": "Upgrade to Zanmen Elite!",
+        "title": "Upgrade to YHWH Pro!",
         "lines": [
-          "Zan is open, Mo. Has anyone seen Josh?"
+          "曰 · Yue mode",
+          "Hey Josh. Have you seen Josh? Shit. Which one are you?"
         ]
       },
-      "tagline": "Toward a pro-human AI apoca… ʌ … 曰.",
-      "filter": "Find a fi… 爾? 兒? File.",
-      "conversation": "Where are… 丫ou?"
+      "conversation": "What are we doing today, Josh?"
     }
   ],
   "stripe": {
     "title": "Set up Stripe",
     "status": "This preview unlocks the level on this device. No payment is collected.",
     "steps": [
-      "In a Stripe sandbox, create a product and price for Zanmen Elite. Create and test a Payment Link.",
+      "In a Stripe sandbox, create a product and price for YHWH Pro. Create and test a Payment Link.",
       "Before taking live payments, activate the Stripe account. Verify signed Checkout webhooks on your server and grant the matching level only after confirming payment. Keep Stripe secrets on the server."
     ],
     "links": {

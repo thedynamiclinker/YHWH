@@ -1,4 +1,5 @@
 import limits from '../../../lib/chat-limits.cjs';
+import { randomUUID } from '../../../lib/random-uuid.mjs';
 import { renderMarkdown } from './editor.js';
 
 const legacyPrefix = 'yhwh:chat:v1:';
@@ -94,7 +95,7 @@ export function mountChat(element, { active, address, level, energy, mobile, cal
 
   const conversationRoot = tab => tab.worldName === 'folder' ? null : tab.worldRoot || null;
   function makeThread(tab) {
-    return { id: crypto.randomUUID(), directory: tab.cwd, worldRoot: conversationRoot(tab), messages: [], files: [], draft: '' };
+    return { id: randomUUID(), directory: tab.cwd, worldRoot: conversationRoot(tab), messages: [], files: [], draft: '' };
   }
   function current() {
     const tab = active();
@@ -137,7 +138,7 @@ export function mountChat(element, { active, address, level, energy, mobile, cal
       const messages = legacyMessage(key);
       const draft = localStorage.getItem(key + ':draft') || '';
       if (!messages && !draft) continue;
-      const thread = { id: crypto.randomUUID(), directory: location, worldRoot: workspaceRoot(location),
+      const thread = { id: randomUUID(), directory: location, worldRoot: workspaceRoot(location),
         updated: 1, messages: (messages || []).filter(message => message &&
           ['user', 'assistant'].includes(message.role) && typeof message.content === 'string'), draft, files: [] };
       await persist(thread);

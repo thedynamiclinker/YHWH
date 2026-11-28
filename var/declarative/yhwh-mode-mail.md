@@ -2,7 +2,7 @@
 
 These series arrive during work in their respective modes. The app retains received letters across mode changes. Image order follows the [original image notes](../log/yhwh-sign-of-the-dollar/YHWH%20-%20Images%20for%20Exodus%20mode%20emails.md).
 
-During work in Genesis, Exodus, or Zan, a Dave letter marked for accidental delivery can turn up with its original envelope. The first is eligible 30 minutes after the first local letter arrives and later misdeliveries are at least 30 minutes apart. The inbox switch, sender block, and shared mail interval apply. Each letter arrives once across modes and stays in the Inbox.
+During work in Genesis, Exodus, or 曰, a Dave letter marked for accidental delivery can turn up with its original envelope. The first is eligible 30 minutes after the first local letter arrives and later misdeliveries are at least 30 minutes apart. The inbox switch, sender block, and shared mail interval apply. Each letter arrives once across modes and stays in the Inbox.
 
 ## Samuel
 

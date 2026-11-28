@@ -1,6 +1,7 @@
 import { fileType } from '../../../lib/file-type.cjs';
 import { ruleFile, feedbackFile, languageRuleLine, languageFeedbackLine } from '../../../lib/editor-language.mjs';
 import { addressCopy, levelAt } from '../../../lib/levels.cjs';
+import { randomUUID } from '../../../lib/random-uuid.mjs';
 import { draft, message } from '../../../lib/mail-message.cjs';
 import { createSeed, universeName, hostOnly } from '../../../lib/universe-seeds.cjs';
 
@@ -18,6 +19,7 @@ export const unavailable = {
   'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
   'terminal:run': 'This device uses the Initial interpreter. Bash, Zsh, and native executables require the desktop host.',
+  'exodus:first-root': 'The first-root scene uses desktop OS privileges. Here, / is the app’s workspace.',
 };
 export function normalize(input, cwd = HOME) {
   if (typeof input !== 'string' || input.includes('\0') || input.includes('\\')) throw new Error('Invalid path.');
@@ -248,10 +250,11 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       const target = '/.Trash', source = normalize(filename);
       if (source === HOME || source === target) throw new Error('Cannot trash the storage root or its Trash folder.');
       if (!await storage.stat(target)) await storage.mkdir(target);
-      await storage.move(source, `${target}/${crypto.randomUUID()}-${source.split('/').at(-1)}`); changed();
+      await storage.move(source, `${target}/${randomUUID()}-${source.split('/').at(-1)}`); changed();
     },
     'file:external': filename => share(normalize(filename)),
     'file:reveal': () => { throw new Error('Use Files in YHWH, or Export or share file to open a document in another app.'); },
+    'clipboard:text': text => clipboard(text),
     'clipboard:path': (filename, relativeTo) => {
       const path = normalize(filename); if (!relativeTo) return clipboard(path);
       const from = normalize(relativeTo).split('/'), to = path.split('/');
@@ -299,7 +302,12 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
           : say('Empty folder, Abe. I know the feeling. Make a note and we’ll call it a beginning.', 2);
       }
       if (/\b(logos|letter|tiles?|pipe|commands?)\b/.test(query)) return say('Tap a tile in the Initial to try it, Abe. Drag it up into your script. A row pipes its output to the right, and each new row starts another command.', 4);
-      if (/\b(note|edit|markdown|save)\b/.test(query)) return 'Tap Note to make a file, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.';
+      if (/\b(note|edit|markdown|save)\b/.test(query)) return say('Tap Note to make a file, Abe, then tap the page to write. In Live Preview the punctuation comes back when you touch it. Use the view button for Source or Reading.');
+      if (level.id === 'yue' && /\b(josh(?:ua)?|jericho|rahab|mary|magdalene?|xp|ix|jesus|tomb|remember)\b/.test(query)) {
+        const memories = level.asides.filter(Boolean);
+        const previous = messages.filter(message => message.role === 'assistant' && memories.includes(message.content)).length;
+        return memories[previous % memories.length];
+      }
       return say('I can help with this folder, files, notes and Logos while we’re offline, Abe. Tap Live chat setup for the desktop connection guide.', 1);
     },
     plugins: async configuration => { if (configuration && configuration !== '[]') throw new Error('Mobile currently supports bundled plugins only.'); return builtinPlugins; },

@@ -1,5 +1,5 @@
 const { levels, stripe } = require('../etc/default/levels.json');
-const [dawkins, nietzsche, samuel, genesis, exodus, zan] = levels;
+const [dawkins, nietzsche, samuel, genesis, exodus, yue] = levels;
 const freeMaximum = exodus.energy;
 
 function levelAt(energy = genesis.energy) {
@@ -31,9 +31,10 @@ function unlockedLevels(energy) {
 }
 
 function editionState(value) {
-  const unlocked = value?.unlocked === zan.energy ? zan.energy : freeMaximum;
-  // Preserve previous Pro and Elite selections during the upgrade migration.
-  const selected = value?.selected === exodus.energy || (unlocked === zan.energy && value?.selected === zan.energy)
+  // The previous premium slot carries over to 曰. The older 120 slot
+  // continues to select Exodus.
+  const unlocked = value?.unlocked === yue.energy ? yue.energy : freeMaximum;
+  const selected = value?.selected === exodus.energy || (unlocked === yue.energy && value?.selected === yue.energy)
     ? value.selected : undefined;
   return { unlocked, selected };
 }
@@ -44,8 +45,8 @@ function nextUpgrade(unlocked) {
 
 function unstealUpgrade(value) {
   const { unlocked, selected } = editionState(value);
-  if (unlocked !== zan.energy) return;
-  return { unlocked: freeMaximum, selected: selected === zan.energy ? freeMaximum : selected };
+  if (unlocked !== yue.energy) return;
+  return { unlocked: freeMaximum, selected: selected === yue.energy ? freeMaximum : selected };
 }
 
 function createLevelAsides() {

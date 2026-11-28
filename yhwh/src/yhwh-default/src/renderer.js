@@ -25,6 +25,7 @@ import '../../../lib/nhs/view.css';
 import { yhwhAddress } from '../../../lib/mail-message.cjs';
 import { quote as shellQuote } from '../../../lib/shell.cjs';
 import { installInitial } from './initial.js';
+import { randomUUID } from '../../../lib/random-uuid.mjs';
 import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
@@ -190,7 +191,7 @@ async function editWords(key) {
 }
 
 async function newTab(directory = active()?.cwd || boot.home, guest) {
-  const id = crypto.randomUUID();
+  const id = randomUUID();
   startingTerminals.add(id);
   let state;
   try { state = guest ? await call('universe:go', id, guest.tabId, directory, guest.options) : await call('focus:new', id, directory); }
@@ -210,7 +211,7 @@ async function newTab(directory = active()?.cwd || boot.home, guest) {
   startingTerminals.delete(id);
   emit('tab', tab); return tab;
 }
-function createTerminal(tab, id = crypto.randomUUID(), guest = false) {
+function createTerminal(tab, id = randomUUID(), guest = false) {
   const element = document.createElement('div'); element.className = 'terminal-session';
   tab.terminalElement.append(element);
   const terminal = new Terminal({ cursorBlink: true, fontFamily: ui("-dejavu-sans-mono-monospace"), fontSize: 15, scrollback: 5000, theme: { background: '#131317', foreground: '#d4d0da', cursor: '#b7a1ef', selectionBackground: '#5c447977' } });
@@ -233,7 +234,7 @@ async function newTerminal(tab = active()) {
 }
 async function startTerminal(tab) {
   if (boot.capabilities?.terminal === false) throw new Error('Local Unix shells are available on desktop.');
-  const id = crypto.randomUUID();
+  const id = randomUUID();
   startingTerminals.add(id);
   try { await call('terminal:open', tab.id, id); }
   catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
@@ -934,9 +935,28 @@ async function chrootUniverse(raw = false, directory = universeTarget(active()))
 const setRoot = () => chrootUniverse(true);
 function directoryActions() {
   const trigger = $('#files [data-command="directory-actions"]');
-  showDirectoryMenu('Shell directory actions', ['cwd-set', 'anchor-set', 'root-set'].map(id => [
+  showDirectoryMenu('Shell directory actions', ['cwd-set', 'anchor-set', 'root-set', 'shell-directory-help'].map(id => [
     commands.get(id).name, () => run(id),
   ]), { trigger });
+}
+function shellDirectoryHelp() {
+  const tab = active();
+  const directories = [
+    ['.', 'Current directory. Change it with cd or the Files location field.', tab.cwd],
+    ['~', 'Home directory. The ~ shortcut opens it.', homeDirectory(tab)],
+    ['@', 'Prefix for this tab. Set it with cwat to give this tab a base for bin, lib, and etc.', tab.anchor],
+    ['/', 'Root of this view. Use un go or Set / to open a folder as the root of a new tab.', tab.worldRoot || tab.systemRoot],
+  ];
+  const mobile = boot.interface === 'mobile';
+  const note = mobile ? 'The Initial runs pipes, commands, and scripts in the app’s workspace.'
+    : 'The terminal runs under your operating-system account. You can also choose the Initial from the Terminal menu.';
+  const dialog = modal('Shell directories', `<dl class="shell-directory-help">${directories.map(([symbol, label, directory]) =>
+    `<dt><code>${symbol}</code> ${escape(label)}</dt><dd><code>${escape(directory)}</code></dd>`).join('')}</dl>
+    <p>${escape(note)}</p><button type="button" data-open-shell>Open shell</button>`);
+  dialog.querySelector('[data-open-shell]').onclick = () => {
+    dialog.close();
+    run(mobile ? 'initial' : 'focus-terminal');
+  };
 }
 function universeMenu() {
   showDirectoryMenu('un', [
@@ -1392,7 +1412,7 @@ function showLdLm(level) {
   const inscription = attachmentsFor(letter).at(-1);
   const dialog = modal('LD / LM', `${word(key, 'p', level)}<p>LD links a request and its context into an English script. LM runs it through Lord with the shell user’s permissions.</p><p>${escape(platform)}</p><pre><code>${escape(demo)}</code></pre><button type="button" data-copy-demo>Copy commands</button>${mailAttachmentFigures([inscription])}`);
   dialog.querySelector('[data-copy-demo]').onclick = async () => {
-    try { await navigator.clipboard.writeText(demo); notice('Commands copied.'); }
+    try { await call('clipboard:text', demo); notice('Commands copied.'); }
     catch (error) { notice(error.message); }
   };
 }
@@ -1548,7 +1568,7 @@ async function bookList(name) {
 }
 function help() {
   const keys = active()?.config.keys?.bindings || [];
-  modal(ui("help"), `<button data-command="hotkeys">Inspect or change keyboard bindings</button>` + ui("each-tab-is-a-directory-a-shell-and-an-optional-", keys.filter(item => item.kind !== 'disabled').map(item => `<div><span>${escape(commands.get(item.command)?.name || item.command || item.kind)}</span><kbd>${escape(item.combo.replaceAll('/', '+'))}</kbd></div>`).join('')));
+  modal(ui("help"), `<button data-command="hotkeys">Inspect or change keyboard bindings</button><button data-command="shell-directory-help">Shell directories (~ . @ /)</button>` + ui("each-tab-is-a-directory-a-shell-and-an-optional-", keys.filter(item => item.kind !== 'disabled').map(item => `<div><span>${escape(commands.get(item.command)?.name || item.command || item.kind)}</span><kbd>${escape(item.combo.replaceAll('/', '+'))}</kbd></div>`).join('')));
 }
 
 const panels = new Map();
@@ -1698,6 +1718,7 @@ const definitions = [
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(homeDirectory(active()))],
   ['directory-actions', 'Shell directory actions', '', directoryActions],
+  ['shell-directory-help', 'Shell directories (~ . @ /)', '', shellDirectoryHelp],
   ['cwd-directory', '. · Current directory', '', () => navigateFiles(active().cwd)],
   ['anchor-directory', '@ · Go to prefix', '', () => goToAnchor(active())],
   ['cwd-set', 'cd · Enter selected directory', '', () => navigateFiles(universeTarget(active()))],
@@ -1738,7 +1759,7 @@ const definitions = [
   ['offerings', ui("offerings"), '', offerings], ['burnt', ui("burnt-offering-setup-guide"), '', burnt], ['piece', ui("piece-offering"), '', piece],
   ['choose-offering', ui("choose-a-piece-offering"), '', async () => { const filename = await call('offering:piece', active().cwd); if (filename) notice(ui("email-prepared-attach-yourself-before-sending-no", filename)); }],
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
-  ['upgrade', 'Upgrade YHWH · Pro and Elite preview', '', upgradeEdition],
+  ['upgrade', 'Upgrade YHWH · 曰 (Yue) Pro preview', '', upgradeEdition],
   ['upgrades', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
   ['modes', ui("yhwh-ness"), '', modes],
   ['edit-footer', ui("edit-status-text"), '', () => editWords(footerKey(currentLevel()))],

@@ -1,6 +1,6 @@
 # Abe and the interface
 
-- YHWH calls the user Abe in the free levels, Mo in Pro, and Josh, Son, or another of the Zanmen names in Elite. In the free levels, a name correction may briefly become a similar wrong name before YHWH returns to Abe. These names are part of the character's voice.
+- YHWH calls the reader Abe in Genesis, Dave in Samuel, Mo in Exodus, and Josh in 曰 (Yue), the Pro mode. In Genesis, a name correction may briefly become a similar wrong name before YHWH returns to Abe. In 曰, he sometimes remembers both Joshua and Jesus as the same Josh.
 - Keep the seed promises, needy visitor, and grandiose team-building voice grounded in the YHWH-and-Abraham apocryphon in `We The Nameless/01-genesis/apocrypha.tex`. Character copy remains editable in `yhwh/etc/default/words.json`.
 - The welcome copy asks “Hey Abe, can I stay with you for a bit?” Preserve the blank line between that question and the greeting.
 - Inbox letters are local app messages, triggered by work, once per topic and at most once per five minutes. Preserve read state and the inbox switch; subdued modes retain their existing limits. Do not send real email for these bits.

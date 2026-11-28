@@ -191,7 +191,7 @@ test('only selected Dave letters can go astray, with a shared cooldown across mo
   state.lastLetter = at(12, 26);
   assert.equal(next('genesis', at(12, 30)), undefined);
 
-  for (const [index, level] of ['genesis', 'exodus', 'elite'].entries()) {
+  for (const [index, level] of ['genesis', 'exodus', 'yue'].entries()) {
     const now = at(12, 31) + index * 30 * 60000;
     const letter = next(level, now);
     assert.equal(letter.id, ids[index]);
@@ -199,7 +199,7 @@ test('only selected Dave letters can go astray, with a shared cooldown across mo
     state.letters.push({ id: letter.id, at: now, read: index === 0 });
     state.lastLetter = state.lastMisdelivery = now;
     state = JSON.parse(JSON.stringify(state));
-    assert.equal(next('elite', now + 30 * 60000 - 1), undefined);
+    assert.equal(next('yue', now + 30 * 60000 - 1), undefined);
   }
   assert.equal(next('genesis', at(15)), undefined);
   const preceding = modeLetters.slice(0, modeLetters.findIndex(letter => letter.id === ids[0]));

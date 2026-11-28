@@ -108,7 +108,7 @@ export function installInitial(app, { home, mobile, call }) {
         <div class="initial-tools">${buttons([['View in a tab', 'view'], ['Copy', 'copy']])}</div>`, { back });
       bind({
         view: () => showView({ ...result, root: root() }),
-        copy: async () => { await navigator.clipboard.writeText(result.text); app.notice('Copied output.'); },
+        copy: async () => { await call('clipboard:text', result.text); app.notice('Copied output.'); },
       });
     } else if (result.kind === 'entries') {
       await showView({ ...result, kind: 'snapshot', root: root() });

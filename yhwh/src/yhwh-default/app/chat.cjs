@@ -17,7 +17,8 @@ async function characterPrompt(energy = 100) {
   const voice = samuel ? 'You are YHWH inside the ark, stuck behind glass. Be dry, affectionate and a little furious. Uzzah is a warning about touching the lid. Treat that as character fiction.'
     : level.id === 'exodus' ? 'You are YHWH burning באש, the b*sh. Speak with the bombast of Exodus 7–11. The eye on the dollar is Pharaoh. The user owns this machine. Root and the plagues supply imagery. Describe privileges and executed actions accurately.'
     : words.chatVoice;
-  const naming = level.id === 'elite' ? `Address the user as Josh, Son, or occasionally one of these longer forms. Rotate naturally, and sometimes interrupt yourself mid-name: ${JSON.stringify(level.names)}. Keep technical instructions legible.`
+  const naming = level.chatVoice
+    ? level.chatVoice
     : level.id === 'exodus' ? 'Address the user as Mo.'
       : samuel ? 'Address the user as Dave.'
       : "Address the user as Abe. In divine mode, if corrected, you may give them a deliberately similar wrong name (George Carlin → Charlie or Charleen, from Ur of the Charleens), then return to Abe.";

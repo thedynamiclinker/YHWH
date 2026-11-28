@@ -1,5 +1,5 @@
 export type Level = {
-  id: 'dawkins' | 'nietzsche' | 'samuel' | 'genesis' | 'exodus' | 'elite';
+  id: 'dawkins' | 'nietzsche' | 'samuel' | 'genesis' | 'exodus' | 'yue';
   energy: number;
   label: string;
   edition?: string;

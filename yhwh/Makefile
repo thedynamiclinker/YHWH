@@ -2,6 +2,7 @@
 APP_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 WORKSPACE ?= $(CURDIR)
 NODE ?= node
+ADB ?= adb
 export YHWH_NODE := $(shell command -v $(NODE))
 .PHONY: yhwh help deps build run develop install uninstall check test test-ui three three-build three-check obsidian obsidian-build obsidian-check obsidian-install company company-check clean package nix-shell
 help:
@@ -83,21 +84,20 @@ mobile-check: mobile-build
 	$(NODE) --test test/initial.test.cjs
 	$(NODE) --test src/yhwh-mobile/test/*.test.cjs
 	$(NODE) src/yhwh-mobile/test/ui.cjs
-android: mobile-sync
+android: mobile-build
+	./node_modules/.bin/cap sync android
 	./node_modules/.bin/cap open android
-android-apk: mobile-sync
-	@# NixOS needs the SDK's native aapt2 as well as Java and the Android SDK.
-	@if [ -f /etc/NIXOS ]; then \
+android-apk: mobile-build
+	./node_modules/.bin/cap sync android
+	@# When no SDK is configured on NixOS, supply JDK, SDK, and its native aapt2.
+	@if [ -f /etc/NIXOS ] && [ -z "$${ANDROID_HOME}$${ANDROID_SDK_ROOT}" ]; then \
 		cd src/yhwh-mobile/android && nix-shell ../shell.nix --run './gradlew assembleDebug'; \
 	else \
 		cd src/yhwh-mobile/android && ./gradlew assembleDebug; \
 	fi
 	cp src/yhwh-mobile/android/app/build/outputs/apk/debug/app-debug.apk var/tmp/yhwh/mobile/yhwh-debug.apk
 android-run:
-	@command -v adb >/dev/null || { printf '%s\n' 'adb is required on PATH. Connect and authorize your phone first.'; exit 1; }
-	adb get-state
-	$(MAKE) android-apk
-	adb install -r var/tmp/yhwh/mobile/yhwh-debug.apk
-	adb shell am start -S -W -n com.thedynamiclinker.yhwh/.MainActivity
-ios: mobile-sync
+	+@sh bin/mobile/android-run.sh "$(ADB)" $(MAKE) android-apk
+ios: mobile-build
+	./node_modules/.bin/cap sync ios
 	./node_modules/.bin/cap open ios

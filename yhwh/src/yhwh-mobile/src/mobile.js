@@ -67,7 +67,7 @@ export function installMobile(app, storage) {
   const closeSheets = () => { for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close(); };
   const command = (id, name, run) => app.addCommand({ id, name, run });
   const nav = document.createElement('nav'); nav.id = 'mobile-nav'; nav.setAttribute('aria-label', 'Mobile navigation');
-  nav.innerHTML = '<button data-command="toggle-files" aria-label="Files">▤<small>Files</small></button><button data-command="mobile-back" aria-label="Back">←<small>Back</small></button><button data-command="mobile-create" aria-label="Create or find note">⊕<small>Note</small></button><button data-command="mobile-tabs" aria-label="Manage tabs"><span id="mobile-tab-count">1</span><small>Tabs</small></button><button data-command="mobile-actions" aria-label="Open menu">☰<small>Menu</small></button>';
+  nav.innerHTML = '<button data-command="toggle-files" aria-label="Files">▤<small>Files</small></button><button data-command="mobile-back" aria-label="Back">←<small>Back</small></button><button data-command="mobile-create" aria-label="Create or find note">⊕<small>Note</small></button><button data-command="initial" aria-label="Open shell"><span aria-hidden="true">›_</span><small>Shell</small></button><button data-command="mobile-tabs" aria-label="Manage tabs"><span id="mobile-tab-count">1</span><small>Tabs</small></button><button data-command="mobile-actions" aria-label="Open menu">☰<small>Menu</small></button>';
   const toolbar = document.createElement('nav'); toolbar.id = 'mobile-editor-toolbar'; toolbar.setAttribute('aria-label', 'Editing tools');
   toolbar.innerHTML = '<div class="mobile-editor-tools"><button data-command="mobile-undo" aria-label="Undo">↶</button><button data-command="mobile-redo" aria-label="Redo">↷</button><button data-command="mobile-bold" aria-label="Bold"><b>B</b></button><button data-command="mobile-link" aria-label="Insert link">[[ ]]</button><button data-command="follow-editor-link" aria-label="Open link at cursor">↗</button><button data-command="choose-view-mode" aria-label="Choose document view">◫</button><button data-command="save" aria-label="Save file">Save</button><button data-command="mobile-hide-keyboard" aria-label="Hide keyboard">⌄</button></div>';
   const languageControls = document.querySelector('#language-controls');
@@ -137,7 +137,7 @@ export function installMobile(app, storage) {
     return content;
   }
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Make new universe', 'universe-new'], ['Import files…', 'mobile-import']]));
-  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Initial · your commands', 'initial'], ['Talk to YHWH', 'chat'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]).append(merchShortcut));
+  command('mobile-actions', 'Mobile menu', () => menu('YHWH', [['Talk to YHWH', 'chat'], ['Shell directories (~ . @ /)', 'shell-directory-help'], ['Use folder as /', 'mobile-root'], ['Leave folder root', 'leave-world'], ['Commands', 'palette'], ['Settings', 'settings'], ['In the margins', 'margins'], ['Inbox', 'inbox'], ['Import files…', 'mobile-import'], ['Export or share file…', 'mobile-share'], ['Files and backups', 'mobile-guide']]).append(merchShortcut));
   command('mobile-guide', 'Mobile files and backups', () => {
     const dialog = sheet('Files and backups'); dialog.querySelector('.mobile-sheet-content').innerHTML = '<p><code>/</code> opens the app’s storage. Use Import files for documents from shared device storage and Export or share file to send files elsewhere. On iOS, see Files → On My iPhone/iPad → YHWH.</p><p>Save edits before leaving. YHWH also keeps a recovery draft if the operating system stops the app. Trash moves files to the hidden <code>/.Trash</code> folder; enable hidden files to recover them.</p><p>Keep exported backups. Uninstalling the app removes its local files and settings. Use the Initial for programmable in-app commands, aliases and Words. Connect YHWH explains the available Codex account workflow.</p>';
   });
@@ -157,7 +157,7 @@ export function installMobile(app, storage) {
     for (const button of content.querySelectorAll('[data-connect]')) button.onclick = async () => {
       try {
         const action = button.dataset.connect;
-        if (action === 'copy') { await navigator.clipboard.writeText('codex login --device-auth'); app.notice('Copied. Run this on your development computer.'); }
+        if (action === 'copy') { await window.yhwh.call('clipboard:text', 'codex login --device-auth'); app.notice('Copied. Run this on your development computer.'); }
         else if (action === 'share') { dialog.close(); await app.run('mobile-share'); }
         else await window.yhwh.call('external', links[action]);
       } catch (error) { app.notice(error.message); }

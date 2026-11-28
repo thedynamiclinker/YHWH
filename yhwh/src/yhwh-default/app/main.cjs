@@ -549,6 +549,7 @@ async function launch() {
   });
   handle('file:reveal', filename => sourcePath(filename).then(value => shell.showItemInFolder(value)));
   handle('clipboard:path', (filename, relativeTo) => clipboard.writeText(relativeTo ? path.relative(relativeTo, filename) || '.' : path.resolve(filename)));
+  handle('clipboard:text', text => clipboard.writeText(text));
   handle('choose', async (kind, directory) => {
     const result = await dialog.showOpenDialog(window, { defaultPath: directory, properties: kind === 'directory' ? [ui("opendirectory")] : [ui("openfile")] });
     return result.canceled ? null : result.filePaths[0];

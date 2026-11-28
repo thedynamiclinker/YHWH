@@ -690,7 +690,7 @@ process.stdin.on('end', () => {
     console.log('✓ overnight startup arc, legacy sender, hidden block setting, alternate senders, master mute and persistence');
     await require('../../../test/midnight-inbox.cjs')(page, path.join(artifacts, '16-seedis.png'));
     console.log('✓ midnight timer, suspended-app cutoff, seedis envelope, Markdown, footnote, bundled attachment and persistence');
-    await require('../../../test/levels-ui.cjs')(page, path.join(artifacts, '17-zanmen.png'));
+    await require('../../../test/levels-ui.cjs')(page, path.join(artifacts, '17-yue.png'));
     const tierNote = path.join(directory, 'levels-verification.md');
     await fs.writeFile(tierNote, '# A document open during the upgrade\n');
     await open(tierNote);
@@ -703,7 +703,7 @@ process.stdin.on('end', () => {
     await quit();
     await launch();
     assert.equal(await page.locator('body').getAttribute('data-level'), 'exodus');
-    assert.equal(await page.locator('#upgrade-button').innerText(), '咱');
+    assert.equal(await page.locator('#upgrade-button').innerText(), '曰');
     console.log('✓ all six levels, Stripe guide, reversible preview upgrades, keyboard slider, open document and persisted preview state');
     await app.evaluate(({ shell }) => { globalThis.openedLinks = []; shell.openExternal = async url => { globalThis.openedLinks.push(url); }; });
     await require('../../../test/merch-ui.cjs')(page, {

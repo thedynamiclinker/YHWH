@@ -17,7 +17,7 @@ test('the agent takes its voice from the app, with Abraham and subdued modes', a
   await assert.rejects(characterPrompt(50), /available from Samuel onward/);
   assert.match(await characterPrompt(80), /Address the user as Dave/);
   assert.match(await characterPrompt(120), /Address the user as Mo[\s\S]*LD and LM/);
-  assert.match(await characterPrompt(140), /Address the user as Josh, Son[\s\S]*Jesus 𐤇 Christ What Was Ur Name Again[\s\S]*XP[\s\S]*χLD人/);
+  assert.match(await characterPrompt(140), /Address the user as Josh[\s\S]*XP, or IX[\s\S]*Jericho[\s\S]*Joshua son of Nun with Jesus[\s\S]*Rahab with Mary Magdalene/);
 });
 
 test('Samuel uses the read-only runner without an app-control mailbox', async () => {

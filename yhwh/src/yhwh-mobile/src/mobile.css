@@ -25,7 +25,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile .tab-strip { padding-left: 8px; }
 .is-mobile #mobile-nav, .is-mobile #mobile-editor-toolbar { flex-shrink: 0; display: flex; align-items: center; background: var(--sidebar); border-top: 1px solid var(--line); }
 .is-mobile #mobile-nav { justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); }
-#mobile-nav button { display: flex; flex-direction: column; align-items: center; min-width: 54px; font-size: 23px; padding: 4px 8px; color: var(--purple); }
+#mobile-nav button { display: flex; flex-direction: column; align-items: center; min-width: 44px; font-size: 23px; padding: 4px 5px; color: var(--purple); }
 #mobile-nav small { font-size: 11px; color: var(--muted); }
 #mobile-tab-count { border: 1px solid var(--muted); border-radius: 5px; font: 16px/23px system-ui; min-width: 25px; }
 #mobile-editor-toolbar { justify-content: space-between; min-height: 44px; }

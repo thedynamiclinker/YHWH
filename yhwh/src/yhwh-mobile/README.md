@@ -13,7 +13,7 @@ sheet, tab counter and switcher, ribbon actions in a menu, and an editing
 toolbar above the keyboard. Tablets retain a wider layout and visible tab strip.
 Safe areas, portrait/landscape layouts and keyboard viewport changes are handled.
 
-The [Initial](../../../../doc/initial.md) adds a programmable touch shell: on-screen gestures, Unicode Letters, reusable Logos, a draggable 5×5 script grid,
+Tap **Shell** to open the [Initial](../../../../doc/initial.md). The programmable shell supports typed commands, on-screen gestures, Unicode Letters, reusable Logos, a draggable 5×5 script grid,
 versioned rc/script files and live or fixed graphical file tabs. Desktop and
 Three share the shell and can switch to it from the terminal header.
 
@@ -40,10 +40,10 @@ make deps
 make mobile-build     # bundles the shared core into yhwh/var/tmp/yhwh/mobile/ui
 make mobile-check     # behavioral tests and phone/tablet browser workflows
 make mobile-sync      # rebuilds and cap syncs BOTH checked-in native projects
-make android          # sync, then open Android Studio
+make android          # sync Android, then open Android Studio
 make android-apk      # sync and compile a debug APK; sets up the toolchain on NixOS
 make android-run      # rebuild, install and open on your adb-connected phone
-make ios              # sync, then open Xcode on macOS
+make ios              # sync iOS, then open Xcode on macOS
 ```
 
 One root npm lockfile owns all dependencies. The equivalent npm scripts are
@@ -80,9 +80,11 @@ Select an Apple development team in Xcode for a physical device. Use Android
 Studio's signed bundle workflow or Xcode Archive for release distribution;
 keystores, provisioning and store accounts are supplied by the app owner.
 
-On NixOS, `make android-apk` automatically runs Gradle in `shell.nix`, which
+On NixOS, `make android-apk` runs Gradle in `shell.nix` when
+`ANDROID_HOME` and `ANDROID_SDK_ROOT` are both unset. The shell
 supplies JDK 21, the Android SDK and a native aapt2 without changing the system
 profile. Java and the SDK do not need to be installed in the calling shell.
+Set `ANDROID_HOME` to use an existing compatible SDK and JDK 21.
 For an interactive native development environment, from the vault root:
 
 ```sh
@@ -102,7 +104,7 @@ make android-run
 
 Repeat this after source changes. It checks the adb connection before building,
 rebuilds the shared UI and debug APK, installs it while keeping app data, and
-restarts YHWH so the latest code loads. Nix supplies the build toolchain on NixOS;
+checks that YHWH restarts on the same device. Nix can supply the build toolchain on NixOS.
 Android Studio, an emulator and a store account are not needed for this workflow.
 The first build may download dependencies; later builds reuse the Nix and Gradle
 caches. This installs bundled code, so the app also runs unplugged; it is not a
@@ -110,6 +112,7 @@ live-reload server.
 
 If several devices are connected, select one with
 `ANDROID_SERIAL=SERIAL make android-run`, using its serial from `adb devices -l`.
+Set `ADB=/path/to/adb` to select a particular platform-tools installation.
 
 The equivalent individual steps are:
 
@@ -157,16 +160,14 @@ shares only workspace files and cache files; no storage-wide permission is neede
 
 ## Platform boundary and current parity
 
-| Feature | Android and iOS behaviorEverforest editor with Live Preview, Source and Reading modes. The toolbar has Auto highlighting, language overrides, and Why? for explanations. Automatic detection uses filenames and file contents on mobile. Rules and feedback use the same flat files in private Library storage. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
-| Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
-| New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
+| Feature | Android and iOS behavior |
 | --- | --- |
 | Editor, syntax, Markdown, formatting, themes | Shared Everforest editor with Live Preview, Source and Reading modes. The toolbar has Auto highlighting, language overrides, and Why? for explanations. Automatic detection uses filenames and file contents on mobile. Rules and feedback use the same flat files in private Library storage. Tap a link label to edit it, use Open link at cursor to follow it in Live Preview, or tap directly in Reading. |
 | Commands, tabs, settings, inbox, character copy | Shared UI; native settings and copy overrides persist privately |
 | New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
 | YHWH Emails | One local Inbox message per section of [YHWH Emails](../../../var/declarative/yhwh-emails.md) and [YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md), delivered in order as you work, with shared presence controls and links that open in the native browser |
 | YHWH merch | About YHWH and Settings → Presence use the shared setup guides and store the two storefront URLs and checklists on this installation. Provider pages open in the platform browser. |
-| YHWH-ness and upgrade preview | Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. Zan has a reversible preview unlock. Samuel and Exodus receive illustrated local mail where applicable. Preview state persists on this installation. OS privilege detection and the first-root scene use the desktop host. |
+| YHWH-ness and upgrade preview | Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. 曰 (Yue) is the reversible YHWH Pro preview. Yue welcomes Josh and shares his memories of Jericho and the tomb in offline chat. Samuel and Exodus receive illustrated local mail where applicable. Preview state persists on this installation. OS privilege detection and the first-root scene use the desktop host. |
 | Getting Root and LD / LM | Shared illustrated local Inbox letters. Genesis and Exodus can open the pitch in About YHWH and copy the example. Running its commands requires a Unix host with Lord installed. |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
@@ -182,7 +183,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
 | Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
-| Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid, select a tile to edit its options, and see the preview update above the grid. Use Run for file writes or app actions**Set /** opens an existing folder as / in a new tab. The Initial’s `chroot` sets the current tab’s folder root. |
+| Initial · in-app shell | Tap **Shell** to type commands or use the shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid and use Run for file writes or app actions. **Set /** opens a folder as / in a new tab. The Initial’s `chroot` sets the current tab’s folder root. |
 | Shell directories and prefix | Shared `~`, `@`, and `/` shortcuts with directory names and an assignment menu. `~` opens app storage or the root of the current folder view. The Initial supports `cwat`, `cd @`, and editing files under `--prefix`, including `/.yhwh/etc/profile`. Sourcing shell files, executable hooks, and native PATH require a Unix host. The folder row menu still reads text actions from `/.yhwh/etc/folder-menu`. |
 | Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. `un go` opens the universe as a folder root. OCI import, Bubblewrap, and system chroot require a Linux host with process and namespace access. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |

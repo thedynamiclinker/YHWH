@@ -103,7 +103,7 @@ The **Amount of YHWH-ness** slider has five free stops and one upgrade:
 | Samuel · 80% | YHWH is stuck in the box and calls you Dave. |
 | Genesis · 100% | Default Abe mode with the Paleo-Hebrew wordmark. |
 | Exodus · 120% | The burning b*sh calls you Mo. |
-| Zan · 140% | Preview upgrade with its own greetings and poems. |
+| 曰 · 140% | YHWH Pro preview. YHWH calls the reader Josh. |
 
 No cartoons or other external content are loaded automatically. **Next cartoon**
 fetches a random cartoon/quote pairing from `nietzschefamilycircus.com` using

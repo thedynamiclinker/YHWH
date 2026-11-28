@@ -42,7 +42,10 @@ test('inbox switch and modes suppress night mail without consuming the sequence'
 test('Exodus is free and older preview unlocks and selections migrate', () => {
   const free = editionState();
   assert.deepEqual(unlockedLevels(free.unlocked).map(level => level.id), ['dawkins', 'nietzsche', 'samuel', 'genesis', 'exodus']);
-  assert.equal(nextUpgrade(free.unlocked).id, 'elite');
+  assert.equal(nextUpgrade(free.unlocked).id, 'yue');
+  assert.equal(nextUpgrade(free.unlocked).label, '曰');
+  assert.deepEqual(editionState({ unlocked: 140, selected: 140 }), { unlocked: 140, selected: 140 });
+  assert.deepEqual(editionState({ unlocked: 120, selected: 140 }), { unlocked: 120, selected: undefined });
   assert.equal(levelAt(freeEnergy({})).id, 'genesis');
   assert.equal(levelAt(freeEnergy({ theme: 'nietzsche', energy: 90 })).id, 'nietzsche');
   assert.equal(levelAt(freeEnergy({ theme: 'samuel' })).id, 'samuel');

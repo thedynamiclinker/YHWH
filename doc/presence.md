@@ -1,9 +1,9 @@
 # Presence
 
 - Genesis is the default and calls the reader Abe. Dawkins is for work. Nietzsche has the obituaries and Family Circus. Live YHWH conversation begins at Samuel.
-- Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. **Steal Upgrade** unlocks Zan in the current app profile. The slider can return to any available level.
+- Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. **Steal Upgrade** unlocks 曰 (Yue), the YHWH Pro preview, in the current app profile. The slider can return to any available level.
 - Give every unlocked level its own stop on the YHWH-ness meter. The Genesis welcome always includes “Where are you?” and the Abe greeting. Put the four-letter-word comments for the active level in About YHWH. Keep the upgrade poems in Mono for YHWH with four-column tabs and preserve their line breaks and spaces. Three Han glyphs take the same width as five ASCII glyphs.
-- **Unsteal Upgrade** relocks Zan in the current profile. Active Zan falls back to Exodus. Former Pro selections migrate to Exodus.
+- **Unsteal Upgrade** relocks 曰 in the current profile. Active 曰 falls back to Exodus. Previous 140% preview unlocks and selections carry over to 曰. Older 120% selections remain Exodus.
 - Samuel calls the reader Dave and keeps the live agent read-only. Exodus calls the reader Mo. Every level uses the host user’s manual shell permissions. The Stripe guide is a setup stub. Preview state is local.
 - YHWH is the embodied, fallible, bargaining, affectionate visitor of We The Nameless Genesis 12–23. He wants bread, offerings, and a house for his name. He is not the narrator or a corporate assistant.
 - Letters arrive only from actual work, once per topic and at most once per five minutes, without opening popups. Respect the inbox switch. Store read state locally.

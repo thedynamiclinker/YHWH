@@ -2,23 +2,24 @@ const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const { output } = require('../../../lib/paths.cjs');
 const ui = output('mobile/ui'), artifacts = output('mobile/screenshots');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
+const url = 'http://localhost';
+async function serveAsset(route) {
+  try {
+    const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
+    const filename = path.resolve(ui, '.' + (pathname === '/' ? '/index.html' : pathname));
+    if (!filename.startsWith(ui + path.sep)) return route.fulfill({ status: 403 });
+    const body = await fs.readFile(filename);
+    return route.fulfill({ contentType: types[path.extname(filename)] || 'application/octet-stream', body });
+  } catch { return route.fulfill({ status: 404 }); }
+}
 async function main() {
   await fs.mkdir(artifacts, { recursive: true });
   const metadata = JSON.parse(await fs.readFile(output('mobile/metafile.json'), 'utf8'));
   for (const name of ['src/yhwh-default/src/renderer.js', 'src/yhwh-default/src/editor.js', 'lib/verse-library.cjs', 'lib/file-type.cjs']) assert.ok(metadata.inputs[name], name);
-  const server = http.createServer(async (request, response) => {
-    try {
-      const filename = path.resolve(ui, '.' + decodeURIComponent(new URL(request.url, 'http://localhost').pathname === '/' ? '/index.html' : new URL(request.url, 'http://localhost').pathname));
-      if (!filename.startsWith(ui + path.sep)) { response.writeHead(403).end(); return; }
-      const data = await fs.readFile(filename); response.writeHead(200, { 'Content-Type': types[path.extname(filename)] || 'application/octet-stream' }); response.end(data);
-    } catch { response.writeHead(404).end(); }
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   let executablePath = process.env.YHWH_CHROMIUM;
   if (!executablePath) {
     try { await fs.access(chromium.executablePath()); }
@@ -33,13 +34,23 @@ async function main() {
       { name: 'ipad', width: 1024, height: 1366 },
     ]) {
       const context = await browser.newContext({ viewport: { width: device.width, height: device.height }, isMobile: true, hasTouch: true });
+      await context.route(`${url}/**`, serveAsset);
+      if (device.name === 'iphone') await context.addInitScript(() => {
+        // Capacitor's iOS scheme can expose getRandomValues without randomUUID.
+        Object.defineProperty(crypto, 'randomUUID', { value: undefined });
+      });
       const page = await context.newPage(), errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      const url = `http://127.0.0.1:${server.address().port}`;
       await page.goto(url);
       await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
       assert.equal(await page.locator('#mobile-nav').isVisible(), true);
       assert.equal(await page.locator('#navigation-area').isVisible(), false);
+      await page.getByRole('button', { name: 'Open shell', exact: true }).tap();
+      await page.locator('.initial-shell-dialog[open]').getByRole('button', { name: 'Close Initial' }).tap();
+      await page.getByRole('button', { name: 'Open menu' }).tap();
+      await page.getByRole('button', { name: 'Shell directories (~ . @ /)', exact: true }).tap();
+      assert.match(await page.locator('#dialog').innerText(), /Prefix for this tab[\s\S]*Root of this view/);
+      await page.getByRole('button', { name: 'Close dialog' }).tap();
       await page.screenshot({ path: path.join(artifacts, `${device.name}-welcome.png`) });
       const dot = page.locator('#initial-dot'), dotBox = await dot.boundingBox();
       const opacity = () => dot.evaluate(element => Number(getComputedStyle(element, '::after').opacity));
@@ -219,15 +230,18 @@ async function main() {
       await help.getByRole('button', { name: 'Send', exact: true }).click();
       await help.getByRole('log').getByText(/You’re in \/, Abe/).waitFor();
       await help.getByRole('button', { name: 'Close conversation' }).click();
-      await require('../../../test/levels-ui.cjs')(page, path.join(deviceArtifacts, 'zanmen.png'));
+      await require('../../../test/levels-ui.cjs')(page, path.join(deviceArtifacts, 'yue.png'));
       await page.reload(); await page.waitForFunction(() => window.YHWH?.commands.has('mobile-tabs'));
-      assert.equal(await page.locator('body').getAttribute('data-level'), 'elite');
+      assert.equal(await page.locator('body').getAttribute('data-level'), 'yue');
       await page.evaluate(() => window.YHWH.run('chat'));
       await help.getByRole('button', { name: 'History', exact: true }).click();
       await help.getByRole('navigation', { name: 'Chat history' }).getByRole('button', { name: 'Where am I?' }).click();
       await help.getByRole('log').getByText(/You’re in \/, Abe/).waitFor();
       await help.getByRole('button', { name: /New chat/ }).click();
       await help.getByRole('log').getByText(/^Josh\. Ask where you are/).waitFor();
+      await help.getByRole('textbox', { name: 'Message YHWH' }).fill('Do you remember Jericho?');
+      await help.getByRole('button', { name: 'Send', exact: true }).click();
+      await help.getByRole('log').getByText(/Josh, remember Jericho\?/).waitFor();
       await help.getByRole('button', { name: 'Close conversation' }).click();
       await page.evaluate(() => window.YHWH.run('settings'));
       await page.locator('[data-category=files]').tap();
@@ -255,6 +269,6 @@ async function main() {
       assert.deepEqual(errors, []);
       await context.close(); console.log(`Passed ${device.name}: import, editor, tabs, settings, verses, persistence, recovery, touch file moves, PDF, all five YHWH levels, and merch.`);
     }
-  } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
+  } finally { await browser?.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
