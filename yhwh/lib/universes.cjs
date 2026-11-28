@@ -2,9 +2,10 @@ const fs = require('node:fs/promises');
 const { constants } = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const { execFile, spawn } = require('node:child_process');
+const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const { seedFor, marker, hostOnly, createSeed } = require('./universe-seeds.cjs');
+const { createPlain, run } = require('./un-provider.cjs');
 
 const exec = promisify(execFile);
 const systemDirs = ['/run/wrappers/bin', '/run/current-system/sw/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin'];
@@ -40,7 +41,7 @@ const isImported = directory => hasMarker(directory, '.yhwh-oci', 'image ');
 
 async function enter(directory) {
   const root = await fs.realpath(directory);
-  if (!await isUniverse(root)) throw new Error('Choose a universe directory created by Nu or un new.');
+  if (!(await fs.stat(root)).isDirectory()) throw new Error('Choose a directory.');
   return root;
 }
 
@@ -51,20 +52,6 @@ function registryImage(ref) {
   if (parts.length === 1) return `docker.io/library/${ref}`;
   if (!/[.:]/.test(parts[0]) && parts[0] !== 'localhost') return `docker.io/${ref}`;
   return ref;
-}
-
-function run(program, args, { signal, output } = {}) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(program, args, { signal, stdio: ['ignore', 'ignore', 'pipe'] });
-    let stderr = '', launchError;
-    child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-8000); output?.(chunk); });
-    child.once('error', error => { launchError = error; });
-    child.once('close', code => {
-      if (launchError) reject(launchError);
-      else if (code === 0) resolve();
-      else reject(new Error(stderr.trim() || `${path.basename(program)} exited ${code ?? 'after a signal'}.`));
-    });
-  });
 }
 
 // Resolve an image path with guest symlink semantics, including absolute links.
@@ -126,6 +113,7 @@ async function installTools(root, tools, lord) {
 
 async function create(destination, id = 'empty', ref, options = {}) {
   destination = path.resolve(destination);
+  if (id === 'plain') return createPlain(destination, options);
   const seed = seedFor(id);
   if (!seed.image && id !== 'oci') return createSeed(destination, id, {
     mkdir: directory => fs.mkdir(directory, { mode: 0o755 }),

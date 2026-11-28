@@ -702,9 +702,9 @@ process.stdin.on('end', () => {
     assert.match(await page.locator('#divine-footnote').textContent(), /Mo/);
     await quit();
     await launch();
-    assert.equal(await page.locator('body').getAttribute('data-level'), 'pro');
+    assert.equal(await page.locator('body').getAttribute('data-level'), 'exodus');
     assert.equal(await page.locator('#upgrade-button').innerText(), '咱');
-    console.log('✓ all five levels, Stripe guide, reversible preview upgrades, keyboard slider, open document and persisted preview state');
+    console.log('✓ all six levels, Stripe guide, reversible preview upgrades, keyboard slider, open document and persisted preview state');
     await app.evaluate(({ shell }) => { globalThis.openedLinks = []; shell.openExternal = async url => { globalThis.openedLinks.push(url); }; });
     await require('../../../test/merch-ui.cjs')(page, {
       opened: () => app.evaluate(() => globalThis.openedLinks),

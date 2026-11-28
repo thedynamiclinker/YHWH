@@ -1,6 +1,6 @@
 import defaults from '../../../etc/obsidian/defaults.json';
 import copy from '../../../etc/obsidian/copy.json';
-import { editionState, type EditionState } from '../../../lib/levels.cjs';
+import { editionState, themeEnergy, type EditionState } from '../../../lib/levels.cjs';
 export const COPY = copy;
 export type CopyKey = keyof typeof COPY;
 export interface Settings {
@@ -20,8 +20,7 @@ export function settings(data: Partial<Settings> | null): Settings {
     copy: Object.fromEntries(Object.entries(COPY).map(([k, v]) =>
       [k, typeof data?.copy?.[k as CopyKey] === 'string' ? data.copy[k as CopyKey] : v])) as Settings['copy'] };
 }
-export function energy(value: number): number { return value < 25 ? 0 : value < 75 ? 50 : 100; }
-export function mode(value: number): string { return value === 0 ? 'dawkins' : value === 50 ? 'nietzsche' : 'yhwh'; }
+export function energy(value: number): number { return value === 80 || value === 120 ? value : value < 25 ? 0 : value < 75 ? 50 : 100; }
 export function parent(path: string): string { return path.split('/').slice(0, -1).join('/'); }
 
 /** Paths are vault-relative; attempting to leave the vault is an error. */
@@ -87,11 +86,12 @@ export function config(text: string, directory: string, current: string): { valu
       const value = parsed[0] ?? '';
       const put = (k: keyof Overrides, v: string | number | boolean) => { if (applies) Object.assign(values, { [k]: v }); };
       if (key === 'energy') {
-        if (!['0', '50', '100'].includes(value)) throw new Error('energy must be 0, 50 or 100.');
+        if (!['0', '50', '80', '100', '120'].includes(value)) throw new Error('energy must be 0, 50, 80, 100 or 120.');
         put('energy', Number(value));
       } else if (key === 'mode') {
-        if (!['yhwh', 'nietzsche', 'dawkins'].includes(value)) throw new Error('Unknown mode.');
-        put('energy', value === 'yhwh' ? 100 : value === 'nietzsche' ? 50 : 0);
+        const amount = themeEnergy(value);
+        if (amount === undefined) throw new Error('Unknown mode.');
+        put('energy', amount);
       } else if (key === 'accent') {
         if (!/^#[\da-f]{6}$/i.test(value)) throw new Error('accent must be a six-digit hex color.');
         put('accent', value);

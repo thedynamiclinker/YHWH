@@ -122,3 +122,14 @@ test('retired terminal-tab defaults upgrade without changing customized, executa
   assert.equal((await fs.lstat(path.join(directory, 'ctrl/shift/w.js'))).isSymbolicLink(), true);
   assert.equal(await fs.readFile(source, 'utf8'), legacy);
 });
+
+test('Bash tabs read .bshrc and opt in to existing .bashrc aliases and functions', async t => {
+  const base = await fixture(t);
+  const etc = path.resolve(__dirname, '../../../etc/shell');
+  await write(path.join(base, '.bashrc'), 'alias from_bashrc="printf shared"\n');
+  await write(path.join(base, '.bshrc'), '. "$HOME/.bashrc"\nfrom_bshrc() { printf " functions"; }\n');
+  const { stdout } = await exec('bash', ['--rcfile', path.join(etc, 'bashrc'), '-ic', 'from_bashrc; from_bshrc'], {
+    cwd: base, env: { ...process.env, HOME: base, HISTFILE: '/dev/null', YHWH_NO_SHELL_RC: '0', YHWH_SHELL_LIB: path.join(etc, 'session') },
+  });
+  assert.equal(stdout, 'shared functions');
+});

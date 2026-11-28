@@ -4,13 +4,15 @@ const ui = interfaceText(interfaceCopy);
 import { Component, FileSystemAdapter, FileView, MarkdownRenderer, Modal, Notice, Platform, Plugin, PluginSettingTab, requestUrl, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 import { ancestors, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
 import email from '../../../etc/default/yhwh-emails.json';
+import modeMail from '../../../etc/default/mode-mail.json';
+import dollarImages from '../../../lib/mode-mail-images.mjs';
 import letterCopy from '../../../etc/default/words.json';
 import { ORIGIN as circusOrigin, parsePair, type CircusPair } from '../../../lib/circus.cjs';
-import { addressCopy, createLevelAsides, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
+import { addressCopy, createLevelAsides, freeMaximum, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
 import { Navigator, ConsoleView, TextView, NAV, CONSOLE, TEXT, button, prompt } from './views';
 import { Atlas, ATLAS } from './atlas';
 import { NHS, NHSView } from './nhs';
-import { createSeed, hostOnly, marker, seeds, universeName } from '../../../lib/universe-seeds.cjs';
+import { createSeed, hostOnly, seeds, universeName } from '../../../lib/universe-seeds.cjs';
 
 export default class YHWH extends Plugin {
   settings!: Settings;
@@ -228,7 +230,7 @@ export default class YHWH extends Plugin {
       });
     });
   }
-  async makeUniverse(name: string, template = 'empty', image?: string) {
+  async makeUniverse(name: string, template = 'plain', image?: string) {
     const { vault } = this.app, directory = resolvePath(this.folder, universeName(name));
     const seed = seeds.find(seed => seed.id === template);
     if (!seed) throw new Error('Choose a listed template.');
@@ -246,10 +248,7 @@ export default class YHWH extends Plugin {
     return directory;
   }
   async enterUniverse(directory: string) {
-    const file = resolvePath(directory, '.@'), adapter = this.app.vault.adapter;
-    const info = await adapter.stat(file);
-    if (info?.type !== 'file' || info.size > 65536 || !(await adapter.read(file)).startsWith(marker))
-      throw new Error('Choose a universe directory created by Nu or un new.');
+    if (!(this.app.vault.getAbstractFileByPath(directory || '/') instanceof TFolder)) throw new Error('Choose a directory.');
     await this.go(directory);
     this.setAnchor(directory);
   }
@@ -318,8 +317,8 @@ export default class YHWH extends Plugin {
   level() { return levelAt(this.settings.edition.selected ?? this.current.energy); }
   async selectLevel(value: number) {
     if (value > this.settings.edition.unlocked) return;
-    this.settings.edition = { ...this.settings.edition, selected: value > 100 ? value : undefined };
-    if (value <= 100) this.settings.energy = value;
+    this.settings.edition = { ...this.settings.edition, selected: value > freeMaximum ? value : undefined };
+    if (value <= freeMaximum) this.settings.energy = value;
     await this.go(this.folder);
   }
   updateLevelControls(el: HTMLElement) {
@@ -361,7 +360,7 @@ export default class YHWH extends Plugin {
       this.welcomeLevel = level.id;
       this.welcomeAside = this.nextLevelAside(level);
     }
-    if (level.id !== 'yhwh') el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
+    if (level.id !== 'genesis') el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
     const lines = [level.welcome, ...(level.lines || []), this.welcomeAside];
     for (const line of lines) if (line) el.createEl('p', { text: line });
     if (level.names) el.createEl('p', { text: addressCopy('Hey Abe, take a look around.', level) });
@@ -471,25 +470,37 @@ export default class YHWH extends Plugin {
     const modal = new Modal(this.app);
     const el = modal.contentEl;
     let reading: Component | undefined;
+    const messages: {
+      id: string; title: string; textKey: string; attachment?: string; attachmentAlt?: string;
+      source?: { label: string; url: string }; verse?: string;
+    }[] = [...email.messages, ...modeMail.messages];
     const clear = () => { reading?.unload(); reading = undefined; el.empty(); };
     const list = (returnTo?: string) => {
       clear();
       modal.setTitle('YHWH emails');
       const subjects = el.createEl('ul');
-      for (const message of email.messages) {
+      for (const message of messages) {
         const control = button(subjects.createEl('li'), message.title, message.title, () => this.run(() => read(message)));
         if (message.id === returnTo) control.focus();
       }
     };
-    const read = async (message: typeof email.messages[number]) => {
+    const read = async (message: typeof messages[number]) => {
       clear();
       modal.setTitle(message.title);
       button(el, '← YHWH emails', 'Back to YHWH emails', () => list(message.id)).focus();
       el.createEl('p', { text: `From: YHWH <${email.sender}>` });
       reading = new Component();
-      reading.load();
+      const component = reading;
+      component.load();
       const body = letterCopy[message.textKey as keyof typeof letterCopy];
-      await MarkdownRenderer.render(this.app, body.replace(/^(https?:\/\/\S+)$/gm, '<$1>'), el.createDiv('markdown-rendered'), '', reading);
+      await MarkdownRenderer.render(this.app, body.replace(/^(https?:\/\/\S+)$/gm, '<$1>'), el.createDiv('markdown-rendered'), '', component);
+      if (component !== reading) return;
+      if (message.attachment && dollarImages[message.attachment]) {
+        const src = dollarImages[message.attachment];
+        el.createEl('img', { cls: 'yhwh-mail-attachment', attr: { src, alt: message.attachmentAlt || '' } });
+      }
+      if (message.source) this.external(el, message.source.label, message.source.url);
+      if (message.verse) el.createEl('p', { text: message.verse + ' · We The Nameless' });
     };
     modal.onClose = clear;
     list();

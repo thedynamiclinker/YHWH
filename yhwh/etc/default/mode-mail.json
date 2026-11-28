@@ -1,0 +1,147 @@
+{
+  "songOfTheSea": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
+  "messages": [
+    {
+      "id": "samuel-first-knock",
+      "level": "samuel",
+      "title": "Dave. I heard that.",
+      "to": "Dave",
+      "textKey": "letterSamuelFirstKnock",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH."
+    },
+    {
+      "id": "samuel-uzzah",
+      "level": "samuel",
+      "title": "keep your hands off the lid",
+      "to": "Dave",
+      "textKey": "letterSamuelUzzah",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "2 Samuel 6:6-7"
+    },
+    {
+      "id": "samuel-mounted-read-only",
+      "level": "samuel",
+      "title": "Dave, is this thing on?",
+      "to": "Dave",
+      "textKey": "letterSamuelMountedReadOnly",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH."
+    },
+    {
+      "id": "samuel-ark-status",
+      "level": "samuel",
+      "title": "Re: can you come out",
+      "to": "Dave",
+      "textKey": "letterSamuelArkStatus",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH."
+    },
+    {
+      "id": "exodus-the-eye",
+      "level": "exodus",
+      "title": "Mo, you see that eye?",
+      "to": "Mo",
+      "textKey": "letterExodusTheEye",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 7:5",
+      "attachment": "yhwh-sign-of-the-dollar-01.jpg",
+      "attachmentAlt": "An eye floats over a gold pyramid on the back of a dollar."
+    },
+    {
+      "id": "exodus-annuit",
+      "level": "exodus",
+      "title": "Annuit Coeptis",
+      "to": "Mo",
+      "textKey": "letterExodusAnnuit",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 5:7-9",
+      "attachment": "yhwh-sign-of-the-dollar-02.jpg",
+      "attachmentAlt": "A seal design with an eye over a pyramid and the words Deo Favente and Perennis."
+    },
+    {
+      "id": "exodus-perennis",
+      "level": "exodus",
+      "title": "leave the pyramid unfinished",
+      "to": "Mo",
+      "textKey": "letterExodusPerennis",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "attachment": "yhwh-sign-of-the-dollar-03.jpg",
+      "attachmentAlt": "An early drawing of an unfinished pyramid labeled Perennis."
+    },
+    {
+      "id": "exodus-rebel-seal",
+      "level": "exodus",
+      "title": "they wanted to put this on the seal",
+      "to": "Mo",
+      "textKey": "letterExodusRebelSeal",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 14:21",
+      "attachment": "yhwh-sign-of-the-dollar-04.jpg",
+      "attachmentAlt": "A black-and-white seal proposal depicts the crossing of the sea.",
+      "source": {
+        "url": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
+        "label": "Song of the Sea · When You Believe (2:22)"
+      }
+    },
+    {
+      "id": "exodus-a-door-in-the-sea",
+      "level": "exodus",
+      "title": "WHEN YOU BELIEVE",
+      "to": "Mo",
+      "textKey": "letterExodusADoorInTheSea",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 15:1",
+      "attachment": "yhwh-sign-of-the-dollar-05.jpg",
+      "attachmentAlt": "Moses raises his staff as the sea opens in a color rendering of the seal.",
+      "source": {
+        "url": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
+        "label": "Song of the Sea · When You Believe (2:22)"
+      }
+    },
+    {
+      "id": "exodus-cinnamon",
+      "level": "exodus",
+      "title": "it fixed me spiritually",
+      "to": "Mo",
+      "textKey": "letterExodusCinnamon",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 10:23",
+      "attachment": "yhwh-sign-of-the-dollar-06.jpg",
+      "attachmentAlt": "A Linux Mint post says switching to Cinnamon fixed the poster spiritually, above a desktop full of red skulls."
+    },
+    {
+      "id": "exodus-the-heart",
+      "level": "exodus",
+      "title": "thing that will fix me",
+      "to": "Mo",
+      "textKey": "letterExodusTheHeart",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 3:2",
+      "attachment": "yhwh-sign-of-the-dollar-07.jpg",
+      "attachmentAlt": "A dark Cinnamon desktop with a red panel and one small heart."
+    },
+    {
+      "id": "exodus-midnight-through-egypt",
+      "level": "exodus",
+      "title": "IN THE MIDDLE OF THE NIGHT",
+      "to": "Mo",
+      "textKey": "letterExodusMidnightThroughEgypt",
+      "format": "markdown",
+      "note": "Original fictional correspondence from YHWH.",
+      "verse": "Exodus 11:4-8",
+      "source": {
+        "url": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
+        "label": "Song of the Sea · When You Believe (2:22)"
+      }
+    }
+  ]
+}

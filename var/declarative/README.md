@@ -16,6 +16,7 @@ Running the same request again converges on the same result.
 - [YHWH Emails](yhwh-emails.md) and [YHWH Emails Next](yhwh-emails-next.md)
   are the two ordered sets of authored letters. [Presence](../../doc/presence.md)
   and [Overnight mail](../../doc/overnight-mail.md) cover delivery.
+- [Samuel and Exodus mail](yhwh-mode-mail.md) contains the Dave and Mo series.
 - [Redact](redact.md) describes the R and RJE text-merging commands.
 - [New Human School](new-human-school.md) describes the quiz, curriculum, and
   the project goals behind them.

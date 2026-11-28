@@ -233,7 +233,9 @@ export function mountChat(element, { active, address, level, energy, mobile, cal
     if (!thread.messages.length || pending.has(thread.id)) {
       const status = document.createElement('p'); status.className = 'muted';
       const welcome = mobile ? 'Abe. Ask where you are, what files are here, or how to make a Logos.'
-        : level().energy >= 100 ? 'Abe. Show me what you’re making. I’ll come down and look.' : 'Ask me about this directory or give me something to work on, Abe.';
+        : level().id === 'samuel' ? 'Dave. I can look out from the box. Leave the lid alone.'
+          : level().id === 'exodus' ? 'Mo. Show me where your people are. The b*sh is burning.'
+            : level().energy >= 100 ? 'Abe. Show me what you’re making. I’ll come down and look.' : 'Ask me about this directory or give me something to work on, Abe.';
       status.textContent = pending.has(thread.id) ? 'YHWH is working…' : address(welcome);
       if (pending.has(thread.id)) status.setAttribute('role', 'status');
       log.append(status);

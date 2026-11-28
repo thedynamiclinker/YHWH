@@ -166,7 +166,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | New Human School | Menu → Commands opens the bundled offline quiz or cards in the current workspace folder. The native app uses the shared quiz view. |
 | YHWH Emails | One local Inbox message per section of [YHWH Emails](../../../var/declarative/yhwh-emails.md) and [YHWH Emails Next](../../../var/declarative/yhwh-emails-next.md), delivered in order as you work, with shared presence controls and links that open in the native browser |
 | YHWH merch | About YHWH and Settings → Presence use the shared setup guides and store the two storefront URLs and checklists on this installation. Provider pages open in the platform browser. |
-| YHWH-ness and upgrade preview | Shared free levels, reversible Pro and Elite preview unlocks, Stripe setup guide and character names. Preview state persists on this installation. |
+| YHWH-ness and upgrade preview | Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. Zan has a reversible preview unlock. Samuel and Exodus receive illustrated local mail where applicable. Preview state persists on this installation. OS privilege detection and the first-root scene use the desktop host. |
 | 曰 night letters | Shared ordered inbox sequence, local 22:00–06:00 delivery during use, five-minute spacing and a Wiktionary link opened by the native browser |
 | `seedis` midnight letter | Shared local 00:00 delivery, To/CC/BCC, editable Markdown, footnote and bundled offline attachment; requires the visible app, with no late catch-up or OS background service |
 | Chapter/verse navigation and commentary | Shared UI and model, bundled offline library, persistent private edits |
@@ -254,3 +254,5 @@ The Initial’s gesture and tile UI is shared with desktop/Three. TTY and the
 Obsidian plugin do not yet host its interpreter; their existing command interfaces
 and ordinary text editing remain. See [the Initial guide](../../../../doc/initial.md)
 for syntax, deliberate limits and persistence behavior.
+
+Mobile universes can start as ordinary app-storage directories. The provider menu describes the desktop host requirement for Lord’s Unix executables and clone fallback.

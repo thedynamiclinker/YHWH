@@ -5,7 +5,7 @@ module.exports=async function initialUI(page,artifacts) {
   const press=async action=>{await dialog.locator(`[data-initial="${action}"]`).click();};
   await page.locator('#initial-commands').click();
   await page.waitForSelector('#initial-dialog[open] .initial-shelf');
-  assert.deepEqual(await dialog.locator('[data-kind]').allTextContents(), ['Atomics/bin', 'Builtins/usr/bin', 'Letters~/.bashrc', 'Logos~/bin']);
+  assert.deepEqual(await dialog.locator('[data-kind]').allTextContents(), ['Atomics/bin', 'Builtins/usr/bin', 'Letters~/.bshrc', 'Logos~/bin']);
   await dialog.locator('.initial-tile').filter({ has: page.locator('b', { hasText: /^ls$/ }) }).tap();
   await dialog.locator('.initial-preview-files').waitFor();
   assert.match(await dialog.locator('[data-screen-path]').textContent(), /stdout/);

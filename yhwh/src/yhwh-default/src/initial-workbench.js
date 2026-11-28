@@ -3,7 +3,7 @@ import { asText, tokenize } from '../../../lib/initial.mjs';
 
 const kinds = [
   ['Atomics', 'Atomics', '/bin'], ['Builtins', 'Builtins', '/usr/bin'],
-  ['Initials', 'Letters', '~/.bashrc'], ['Words', 'Logos', '~/bin'],
+  ['Initials', 'Letters', '~/.bshrc'], ['Words', 'Logos', '~/bin'],
 ];
 const element = (tag, text, className) => {
   const node = document.createElement(tag);
@@ -79,7 +79,7 @@ export function createWorkbench({ catalog, token, run, runShell, details, save, 
       tab.focus();
     });
     tab.dataset.kind = id;
-    tab.title = id === 'Initials' ? 'Like ~/.bashrc in Bash. YHWH reads ~/.initialrc.' : path;
+    tab.title = id === 'Initials' ? 'Like ~/.bshrc in Bash. YHWH reads ~/.initialrc.' : path;
     tab.append(element('small', path));
     $('.initial-categories').append(tab);
   }

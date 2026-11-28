@@ -81,7 +81,10 @@ test('Nu and Cd use the shared starter format inside mobile storage', async () =
   await assert.rejects(call('universe:create', 'one', 'Alpine', 'alpine'), /Linux/);
   assert.equal(await storage.stat('/Alpine'), null);
   await assert.rejects(call('universe:go', 'guest', 'one', root, {}), /Linux/);
-  await assert.rejects(call('universe:go', 'folder', 'one', '/', { mode: 'folder' }), /un new/);
+  const plain = await call('universe:create', 'one', 'Plain', 'plain');
+  assert.equal(await storage.stat(plain + '/.@'), null);
+  assert.equal(await call('universe:cd', 'one', plain), plain);
+  assert.equal((await call('universe:go', 'folder-plain', 'one', plain, { mode: 'folder' })).cwd, plain);
   const folder = await call('universe:go', 'folder', 'one', root, { mode: 'folder' });
   assert.equal(folder.worldRoot, root);
   assert.equal(folder.anchor, root);

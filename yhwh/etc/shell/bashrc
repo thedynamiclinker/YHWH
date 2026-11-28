@@ -1,5 +1,9 @@
-# To source ~/.bashrc, set yhwh_home_rc=yes in the YHWH etc/profile.
-if [[ "$YHWH_NO_SHELL_RC" != 1 && "${yhwh_home_rc:-no}" == yes && -r ~/.bashrc ]]; then . ~/.bashrc; fi
+# Put Bash configuration here via ~/.bshrc, optionally sourcing ~/.bashrc.
+if [[ "$YHWH_NO_SHELL_RC" != 1 ]]; then
+    if [[ -f ~/.bshrc && -r ~/.bshrc ]]; then . ~/.bshrc
+    elif [[ "${yhwh_home_rc:-no}" == yes && -r ~/.bashrc ]]; then . ~/.bashrc
+    fi
+fi
 [[ -f "$YHWH_BUNDLED_COMPLETION" ]] && . "$YHWH_BUNDLED_COMPLETION"
 if [[ -f "$YHWH_PREFIX_SHELL" ]]; then
     eval "$("${YHWH_NODE:-node}" "$YHWH_PREFIX_SHELL")"
@@ -20,8 +24,33 @@ for __yhwh_map in emacs-standard vi-insertion vi-command; do
     bind -m "$__yhwh_map" -x '"\e[277~":__yhwh_update_anchor'
 done
 unset __yhwh_map
-_yhwh_un() { COMPREPLY=($(compgen -W 'new cd go ls' -- "${COMP_WORDS[COMP_CWORD]}")); }
-complete -F _yhwh_un un
+_yhwh_un() { COMPREPLY=($(compgen -W 'new cd go ls providers open switch close dn up @ clone export path list' -- "${COMP_WORDS[COMP_CWORD]}")); }
+complete -p un >/dev/null 2>&1 || complete -F _yhwh_un un
+_yhwh_dn() {
+    local cur=${COMP_WORDS[COMP_CWORD]} word
+    COMPREPLY=()
+    compopt -o filenames
+    while IFS= read -r word; do
+        [[ $word == "$cur"* ]] && COMPREPLY+=("$word")
+    done < <(dn --cached 2>/dev/null)
+}
+complete -p dn >/dev/null 2>&1 || complete -F _yhwh_dn dn
+if [[ $(type -t @) != function && $(type -t @) != alias ]]; then
+    function @ {
+        if [ "${1:-}" != cd ]; then un @ "$@"; return; fi
+        shift
+        [ "$#" -le 1 ] || { printf '%s\n' 'usage: @ cd [DIR]' >&2; return 2; }
+        case ${1:-.} in
+            /*|-) cd -- "$1" ;;
+            *)
+                local tree
+                tree=$(un @ --directory && printf '.') || return
+                tree=${tree%.}
+                tree=${tree%?}
+                cd -- "$tree/${1:-.}" ;;
+        esac
+    }
+fi
 if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a'* ]]; then
     PROMPT_COMMAND+=(__yhwh_prompt)
 else

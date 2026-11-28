@@ -1,14 +1,29 @@
 const { levels, stripe } = require('../etc/default/levels.json');
+const [dawkins, nietzsche, samuel, genesis, exodus, zan] = levels;
+const freeMaximum = exodus.energy;
 
-function levelAt(energy) {
-  return levels.find(level => level.id === 'nietzsche' ? energy < 100 : energy <= level.energy) || levels.at(-1);
+function levelAt(energy = genesis.energy) {
+  if (energy <= 0) return dawkins;
+  if (energy < samuel.energy) return nietzsche;
+  return levels.findLast(level => energy >= level.energy) || genesis;
+}
+
+function themeEnergy(theme) {
+  if (theme === 'yhwh') return genesis.energy;
+  if (theme === 'pro') return exodus.energy;
+  return levels.find(level => level.id === theme && !level.offer)?.energy;
 }
 
 function freeEnergy({ theme, energy }) {
+  const amount = Number(energy ?? genesis.energy);
   if (theme === 'dawkins') return 0;
-  const amount = Number(energy ?? 100);
-  if (theme === 'nietzsche' && !(amount > 0 && amount < 100)) return 50;
-  return Number.isFinite(amount) ? Math.max(0, Math.min(100, amount)) : 100;
+  // Older settings used Nietzsche for the entire range below 100.
+  if (theme === 'nietzsche') return amount > 0 && amount < samuel.energy ? amount : nietzsche.energy;
+  if (['samuel', 'genesis', 'exodus', 'pro'].includes(theme)) {
+    return amount <= freeMaximum && levelAt(amount).id === theme ? amount : themeEnergy(theme);
+  }
+  if (theme === 'yhwh' && amount >= samuel.energy && amount < genesis.energy) return nietzsche.energy;
+  return Number.isFinite(amount) ? Math.max(0, Math.min(freeMaximum, amount)) : genesis.energy;
 }
 
 function unlockedLevels(energy) {
@@ -16,23 +31,21 @@ function unlockedLevels(energy) {
 }
 
 function editionState(value) {
-  const paid = levels.filter(level => level.offer);
-  const unlocked = paid.find(level => level.energy === value?.unlocked)?.energy ?? 100;
-  const position = value?.selected;
-  const selected = Number.isInteger(position) && position > 100 && position <= unlocked ? position : undefined;
+  const unlocked = value?.unlocked === zan.energy ? zan.energy : freeMaximum;
+  // Preserve previous Pro and Elite selections during the upgrade migration.
+  const selected = value?.selected === exodus.energy || (unlocked === zan.energy && value?.selected === zan.energy)
+    ? value.selected : undefined;
   return { unlocked, selected };
 }
 
 function nextUpgrade(unlocked) {
-  return levels.find(level => level.energy > unlocked);
+  return levels.find(level => level.offer && level.energy > unlocked);
 }
 
 function unstealUpgrade(value) {
   const { unlocked, selected } = editionState(value);
-  const options = unlockedLevels(unlocked);
-  if (!options.at(-1)?.offer) return;
-  const previous = options.at(-2).energy;
-  return editionState({ unlocked: previous, selected: selected > previous ? previous : selected });
+  if (unlocked !== zan.energy) return;
+  return { unlocked: freeMaximum, selected: selected === zan.energy ? freeMaximum : selected };
 }
 
 function createLevelAsides() {
@@ -51,4 +64,4 @@ function addressCopy(text, level, nameIndex = 0) {
   return names ? text?.replace(/\bAbe\b/gi, () => names[nameIndex % names.length]) : text;
 }
 
-module.exports = { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy };
+module.exports = { stripe, levelAt, themeEnergy, freeEnergy, freeMaximum, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy };

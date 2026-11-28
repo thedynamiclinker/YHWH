@@ -43,17 +43,21 @@ test('Nu installs starter files, preserves an existing name, and interoperates w
   assert.match(await fs.readFile(path.join(root, '.@'), 'utf8'), /^# un root\nhello:/);
   assert.match(await fs.readFile(path.join(root, 'zan/men/1/hello'), 'utf8'), /un hello/);
   await assert.rejects(command('nu', root), /EEXIST/);
+  await tool('un', 'test "$1" = nu\ntest "$#" = 2\ntest -d "$2"\n');
+  const plain = path.join(base, 'ordinary universe');
+  assert.equal((await command('un', 'new', 'ordinary universe')).stdout.trimEnd(), plain);
+  assert.deepEqual(await fs.readdir(plain), []);
   await fs.mkdir(path.join(base, 'external'));
   await fs.writeFile(path.join(base, 'external/.@'), '# un root\n');
   await command('cd', 'external');
-  await assert.rejects(command('cd', '.'));
+  assert.equal((await command('cd', '.')).stdout.trimEnd(), await fs.realpath(base));
   await tool('un', 'printf "<%s>\\n" "$@"');
   assert.equal((await command('un', 'hello', 'one argument')).stdout, '<hello>\n<one argument>\n');
 });
 
 test('native Go uses system chroot and preserves the guest argument vector', { skip: process.platform !== 'linux' }, async t => {
   const { base, command } = await fixture(t);
-  await command('un', 'new', 'guest root');
+  await command('un', 'new', 'guest root', '--template', 'empty');
   const root = path.join(base, 'guest root');
   await assert.rejects(go(root, { native: true }), /no executable \/bin\/sh/);
   await fs.mkdir(path.join(root, 'bin'));
@@ -111,4 +115,28 @@ printf "printf unsafe > profile-ran\\n" > "$root/.yhwh/etc/profile"`);
     if (!error.message.startsWith('Install bwrap')) throw error;
     t.diagnostic('Bubblewrap unavailable for mount-plan assertion');
   }
+});
+
+test('a missing PATH command clones the configured Lord source once and reuses its cache', { skip: process.platform === 'win32' }, async t => {
+  const { base } = await fixture(t);
+  const { execFile } = require('node:child_process');
+  const exec = require('node:util').promisify(execFile);
+  const { createPlain, resolveProvider } = require('../lib/un-provider.cjs');
+  const git = (await exec('which', ['git'])).stdout.trim();
+  const bin = path.join(base, 'bin');
+  await fs.symlink(git, path.join(bin, 'git'));
+  const source = path.join(base, 'Lord source');
+  const script = path.join(source, 'bin', 'un');
+  await fs.mkdir(path.dirname(script), { recursive: true });
+  await fs.writeFile(script, '#!/bin/sh\ntest "$1" = nu && test -d "$2"\n', { mode: 0o755 });
+  await exec(git, ['init', '-q', source]);
+  await exec(git, ['-C', source, 'add', 'bin/un']);
+  await exec(git, ['-C', source, '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'Lord fixture']);
+  const env = { ...process.env, XDG_CACHE_HOME: path.join(base, 'cache'), YHWH_LORD_IS: source, PATH: bin };
+  const program = await resolveProvider({ env });
+  assert.equal(path.basename(program), 'un');
+  await fs.rename(source, path.join(base, 'source moved'));
+  const destination = path.join(base, 'my first universe');
+  assert.equal(await createPlain(destination, { env }), destination);
+  assert.deepEqual(await fs.readdir(destination), []);
 });

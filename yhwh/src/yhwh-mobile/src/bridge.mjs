@@ -2,7 +2,7 @@ import { fileType } from '../../../lib/file-type.cjs';
 import { ruleFile, feedbackFile, languageRuleLine, languageFeedbackLine } from '../../../lib/editor-language.mjs';
 import { addressCopy, levelAt } from '../../../lib/levels.cjs';
 import { draft, message } from '../../../lib/mail-message.cjs';
-import { createSeed, universeName, marker, hostOnly } from '../../../lib/universe-seeds.cjs';
+import { createSeed, universeName, hostOnly } from '../../../lib/universe-seeds.cjs';
 
 export const HOME = '/';
 const folderMenuDirectory = '/.yhwh/etc/folder-menu';
@@ -85,11 +85,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     try { const state = await navigate(id, directory); current.anchor = state.cwd; return { ...state, anchor: current.anchor }; }
     catch (error) { focuses.delete(id); throw error; }
   }
-  async function markedRoot(current, directory) {
+  async function universeDirectory(current, directory) {
     const path = normalize(directory, current.cwd);
-    const file = normalize('.@', path), info = await storage.stat(file);
-    if ((current.worldRoot && !inside(path, current.worldRoot)) || !info || info.directory || info.size < marker.length || info.size > 65536 ||
-        !new TextDecoder().decode(await storage.read(file)).startsWith(marker)) throw new Error('Choose a universe directory created by Nu or un new.');
+    if (current.worldRoot && !inside(path, current.worldRoot)) throw new Error('Choose a folder inside the current view.');
+    if (!(await storage.stat(path))?.directory) throw new Error('Choose a directory.');
     return path;
   }
   async function read(filename) {
@@ -220,8 +219,9 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       changed(); return path;
     },
     'universe:cancel': id => { focus(id); },
+    'exodus:first-root': () => false,
     async 'universe:cd'(id, directory) {
-      const current = focus(id), path = await markedRoot(current, directory);
+      const current = focus(id), path = await universeDirectory(current, directory);
       if (focus(id) !== current) throw new Error('That tab has closed.');
       current.anchor = path;
       emit('anchor-changed', { id, anchor: path });
@@ -230,8 +230,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     async 'universe:go'(id, from, directory, options) {
       if (options.mode !== 'folder') throw new Error(hostOnly);
       const current = focus(from);
-      const path = options.raw ? normalize(directory, current.cwd) : await markedRoot(current, directory);
-      if (current.worldRoot && !inside(path, current.worldRoot)) throw new Error('Choose a folder inside the current view.');
+      const path = await universeDirectory(current, directory);
       if (focus(from) !== current) throw new Error('That tab has closed.');
       return newFocus(id, path, { worldRoot: path, worldName: 'folder', previousDirectory: current.cwd });
     },
@@ -289,6 +288,10 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       if (!query?.trim()) throw new Error('Write a message to YHWH.');
       const level = levelAt(energy);
       const say = (text, index) => addressCopy(text, level, index);
+      if (level.id === 'samuel' && /\b(root|box|write|change)\b/.test(query))
+        return 'I’m behind the glass, Dave. Tell me what you see and I’ll talk you through it. And leave the lid alone.';
+      if (level.id === 'exodus' && /\b(root|universe|pharaoh)\b/.test(query))
+        return 'The bush is burning, Mo. Pick a directory in Files → un and make yourself a universe. This phone gives me the app’s files. That’s where we start.';
       if (/\b(where|pwd|path)\b/.test(query)) return `You’re in ${directory}${say(', Abe. I happen to own the place. I’m giving it to you anyway.', 1)}`;
       if (/\b(list|ls|files)\b/.test(query)) {
         const entries = await storage.list(directory);

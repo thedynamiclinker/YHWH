@@ -16,17 +16,18 @@ export function createVerseUI({ call, modal, notice }) {
   const get = reference => call('verse:get', reference).then(unlocked);
   const styled = (verse, key) => display[verse.id]?.[key] ? DOMPurify.sanitize(marked.parseInline(display[verse.id][key])) : escape(verse[key]);
 
-  function block(initial, { commentary = false, compact = false, citeCommentary = false } = {}) {
+  function block(initial, { commentary = false, compact = false, citeCommentary = false, embedded = false } = {}) {
     const element = document.createElement('article');
     element.className = `verse-block${compact ? ' verse-compact' : ''}`;
     function render(verse, expanded = commentary) {
       const summary = citeCommentary ? ui('commentary-citation', verse.reference) : ui('commentary');
       element.dataset.verseId = verse.id;
-      element.innerHTML = `<header class="verse-heading"><button type="button" data-open-verse title="${escape(ui('browse'))}">${escape(verse.reference)}</button></header>
+      element.innerHTML = `<header class="verse-heading">${embedded ? `<span>${escape(verse.reference)}</span>` : `<button type="button" data-open-verse title="${escape(ui('browse'))}">${escape(verse.reference)}</button>`}</header>
         <div class="verse-columns"><div class="verse-english" lang="en">${styled(verse, 'english')}</div><div class="verse-original" lang="he" dir="rtl">${styled(verse, 'original')}</div></div>
         <details class="verse-commentary" ${expanded ? 'open' : ''}><summary>${escape(summary)}${verse.commentaryEdited ? ` <small>· ${escape(ui('edited'))}</small>` : ''}</summary>
           <div class="verse-commentary-body"><p class="verse-commentary-text">${escape(verse.commentary || ui('no-commentary'))}</p><button type="button" data-edit-commentary>${escape(ui(verse.commentary ? 'edit-commentary' : 'add-commentary'))}</button>${verse.commentaryEdited ? `<button type="button" data-reset-commentary>${escape(ui('restore'))}</button>` : ''}</div></details>`;
-      element.querySelector('[data-open-verse]').onclick = () => browse(verse.id).catch(error => notice(error.message));
+      const browseButton = element.querySelector('[data-open-verse]');
+      if (browseButton) browseButton.onclick = () => browse(verse.id).catch(error => notice(error.message));
       element.querySelector('[data-edit-commentary]').onclick = () => {
         const body = element.querySelector('.verse-commentary-body');
         body.innerHTML = `<form class="verse-commentary-form"><label>${escape(ui('commentary'))}<textarea rows="6" maxlength="200000" aria-label="${escape(ui('edit-commentary'))}">${escape(verse.commentary)}</textarea></label><div class="verse-edit-actions"><button type="button" data-cancel-commentary>${escape(ui('cancel'))}</button><button class="primary">${escape(ui('save'))}</button></div><p role="alert" hidden></p></form>`;
@@ -55,7 +56,7 @@ export function createVerseUI({ call, modal, notice }) {
     for (const element of document.querySelectorAll('.verse-block')) if (element.dataset.verseId === verse.id) updaters.get(element)?.(verse);
   }
   async function createCitation(reference, options) {
-    const verses = await get(reference);
+    const verses = await (options?.embedded ? call('verse:get', reference) : get(reference));
     const container = document.createElement('div'); container.className = 'verse-citation';
     for (const verse of verses) container.append(block(verse, options));
     return container;

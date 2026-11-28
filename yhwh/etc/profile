@@ -12,8 +12,9 @@
 # yhwh_at_rc=.yhwh/etc/at
 # yhwh_cd_rc=.yhwh/etc/cd
 #
-# Start new Bash tabs with ~/.bashrc. Zsh uses the user's .zshrc.
+# Bash tabs use ~/.bshrc. When absent, opt in to ~/.bashrc with this setting.
 # yhwh_home_rc=yes
+# export YHWH_LORD_IS=https://github.com/thedynamiclinker/lord
 #
 # Commands and functions here run in the real shell.
 # yhwh_enter() { printf '@ %s\n' "$1"; }

@@ -25,7 +25,7 @@ ignore = [".git", ".venv", "node_modules", "__pycache__", "build"]
 search_limit = 20000
 
 [terminal]
-# Empty means $SHELL, then /bin/bash. Bash reads ~/.bashrc and prefix profiles.
+# Empty means $YHWH_SHELL, $YHWH_BASH, then /bin/bash. Bash reads ~/.bshrc and prefix profiles.
 shell = ""
 scrollback = 5000
 

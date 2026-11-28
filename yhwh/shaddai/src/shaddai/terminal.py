@@ -111,7 +111,7 @@ class Shell:
         elif interactive and name == "bash":
             self.startup = TemporaryDirectory(prefix="shaddai-shell-")
             rcfile = Path(self.startup.name) / "bashrc"
-            rcfile.write_text('[[ ! -r "$HOME/.bashrc" ]] || . "$HOME/.bashrc"\n' + "\n".join(interactive) + "\n")
+            rcfile.write_text('[[ ! -r "$HOME/.bshrc" ]] || . "$HOME/.bshrc"\n' + "\n".join(interactive) + "\n")
             self.argv[1:1] = ["--rcfile", str(rcfile)]
         self.on_directory = on_directory
         self.on_anchor = on_anchor

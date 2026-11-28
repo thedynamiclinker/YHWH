@@ -32,9 +32,11 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .paleo { font-family: Phoenician, serif; font-size: 30px; letter-spacing: 4px; color: var(--gold); direction: rtl; display: inline-block; }
 .window-title { flex: 1; font-size: .875rem; color: var(--faint); padding-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .personality { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: .875rem; }
-.personality input { width: 100px; padding: 0; height: 4px; accent-color: var(--purple); }
+.personality input { width: clamp(112px, 19vw, 264px); padding: 0; height: 4px; accent-color: var(--purple); }
 #mode-name { font-size: .8125rem; padding: 3px 6px; min-width: 65px; color: var(--purple); }
-.edition-glyph, body:is([data-level='pro'], [data-level='elite']) #mode-name { font-family: "YHWH Han", system-ui, sans-serif; }
+body[data-level='exodus'] .personality input { accent-color: var(--gold); }
+body[data-level='exodus'] #mode-name { color: var(--gold); }
+.edition-glyph, body:is([data-level='exodus'], [data-level='elite']) #mode-name { font-family: "YHWH Han", system-ui, sans-serif; }
 .edition-glyph { min-width: 32px; padding: 3px 6px; color: var(--purple); }
 .tab-strip { height: 39px; min-height: 39px; display: flex; align-items: center; background: var(--sidebar); border-bottom: 1px solid var(--line); padding: 0 8px 0 48px; gap: 6px; }
 #tabs { display: flex; min-width: 0; overflow: auto; scrollbar-width: none; gap: 3px; }
@@ -135,7 +137,7 @@ kbd { font: .8125rem monospace; padding: 2px 5px; background: var(--sidebar); bo
 .welcome h1 { font-weight: 550; font-size: 32px; letter-spacing: -.8px; margin: 8px 0 12px; }
 .welcome p { color: var(--muted); max-width: 450px; line-height: 1.85; }
 .welcome .level-greeting { color: var(--text); font-weight: 550; margin-bottom: 0; }
-body:is([data-level='pro'], [data-level='elite']) .welcome h1,
+body:is([data-level='exodus'], [data-level='elite']) .welcome h1,
 body[data-level='elite'] :is(.window-title, #file-filter) { font-family: "YHWH Han", Inter, 'Segoe UI', system-ui, sans-serif; }
 .level-copy { min-width: 0; }
 .level-copy p { margin: .25em 0; }
@@ -148,7 +150,7 @@ body[data-level='elite'] :is(.window-title, #file-filter) { font-family: "YHWH H
   unicode-bidi: isolate;
 }
 .level-poem code { font: inherit; }
-body:is([data-level='pro'], [data-level='elite']) .character-copy { font-family: "YHWH Han", Phoenician, system-ui, sans-serif; }
+body:is([data-level='exodus'], [data-level='elite']) .character-copy { font-family: "YHWH Han", Phoenician, system-ui, sans-serif; }
 .inline-edit { opacity: .3; font-size: .8125rem; padding: 2px 5px; color: var(--muted); vertical-align: middle; }
 .inline-edit:hover { opacity: 1; }
 .welcome-actions { display: flex; gap: 10px; margin: 26px 0 32px; }

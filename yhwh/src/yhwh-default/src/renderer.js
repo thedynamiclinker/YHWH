@@ -16,21 +16,23 @@ import { mountViewer } from './viewers.js';
 import { registerWheelZoom } from './wheel-zoom.js';
 import { installFileDrag } from './file-drag.js';
 import { fileIcons } from './file-icons.js';
-import { seeds as universeSeeds, hostOnly as universeHostOnly } from '../../../lib/universe-seeds.cjs';
+import { seeds as universeSeeds, hostOnly as universeHostOnly, lordSource } from '../../../lib/universe-seeds.cjs';
 import { showWorkspaceDialog } from './preview-dialog.js';
 import { mountChat } from './chat.js';
 import { createMerch } from './merch.js';
 import installNHS from '../plugins/new-human-school/main.js';
 import '../../../lib/nhs/view.css';
 import { yhwhAddress } from '../../../lib/mail-message.cjs';
+import { quote as shellQuote } from '../../../lib/shell.cjs';
 import { installInitial } from './initial.js';
 import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
-import { stripe, levelAt, freeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
-import { primarySender, letters as startupLetters, emailLetters, startNight, nextStartupLetter, nextEmailLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
+import { stripe, levelAt, freeEnergy, freeMaximum, themeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
+import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
-const polygynyAttachmentURL = new URL(polygynyAttachment, import.meta.url).href;
+import dollarImages from '../../../lib/mode-mail-images.mjs';
+const mailAttachments = { 'biblical-polygyny.png': polygynyAttachment, ...dollarImages };
 
 const bridge = window.yhwh;
 const interfaceZoomLevels = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
@@ -275,11 +277,11 @@ function welcome(tab, level = levelAt(currentEnergy(tab.config))) {
   if (tab.welcomeLevel !== level.id) tab.welcomeAside = nextLevelAside(level);
   tab.welcomeLevel = level.id;
   const [headline, ...lines] = [level.welcome, ...(level.lines || [])].filter(Boolean);
-  const eyebrow = level.id === 'yhwh' ? '' : `<div class="eyebrow">${escape(levelLabel(level))}</div>`;
-  const heading = level.id === 'yhwh'
+  const eyebrow = level.id === 'genesis' ? '' : `<div class="eyebrow">${escape(levelLabel(level))}</div>`;
+  const heading = level.id === 'genesis'
     ? `<p class="level-greeting">${escape(headline)}</p>${word('welcomeTitle', 'h1', level)}`
     : `<h1>${escape(headline)}</h1>`;
-  const greeting = level.welcome ? word('welcomeBody', 'p', level) : '';
+  const greeting = level.welcome && !['samuel', 'exodus'].includes(level.id) ? word('welcomeBody', 'p', level) : '';
   const aside = tab.welcomeAside ? `<p class="level-aside">${escape(tab.welcomeAside)}</p>` : '';
   const copy = lines.map(line => `<p>${escape(line)}</p>`).join('');
   tab.document.innerHTML = ui('welcome-screen', eyebrow, heading,
@@ -482,6 +484,23 @@ function updateEditorStatus(tab) {
   const position = editor.state.selection.main.head, line = editor.state.doc.lineAt(position);
   $('#cursor-position').textContent = ui("ln-col", line.number, position - line.from + 1);
 }
+let exodusChecking = false, exodusSeen = false;
+async function checkExodus() {
+  if (boot?.interface === 'mobile' || currentLevel().id !== 'exodus' || exodusChecking || exodusSeen) return;
+  exodusChecking = true;
+  try {
+    if (!await call('exodus:first-root')) return;
+    exodusSeen = true;
+    const currentDialog = $('#dialog');
+    if (currentDialog.open) await new Promise(resolve => currentDialog.addEventListener('close', resolve, { once: true }));
+    if (currentLevel().id !== 'exodus') return;
+    const platform = ['linux', 'freebsd', 'openbsd', 'netbsd'].includes(boot.platform)
+      ? 'This box was already kind of Israel, Mo. Now look at us.' : 'Look, Mo. All the way out here, and I can see the shore.';
+    const answer = await choose('The tenth plague · a scene', `${platform} At midnight I go out through Egypt. PID 1, my little papier-mâché Pharaoh, the first child of the empire. Am I allowed to knock him down, Mo? Then they’ll know I Am YHWH. It’ll be in the log philes. I’m a log phile, Mo.`, ['Play the scene', 'Spare him']);
+    if (answer === 0) modal('Passover', '<p role="status">The stage lights go out. Pharaoh keels over. The chorus sings “I Am YHWH.” The machine keeps running.</p>');
+  } catch (error) { notice(error.message); }
+  finally { exodusChecking = false; }
+}
 function applyConfig(config) {
   const values = config.values, style = document.documentElement.style;
   const sizes = active()?.panelSizes || {};
@@ -494,9 +513,10 @@ function applyConfig(config) {
   const energy = currentEnergy(config), level = levelAt(energy);
   const levelChanged = document.body.dataset.level !== level.id;
   document.body.dataset.level = level.id;
-  document.body.dataset.theme = energy < 100 ? level.id : 'yhwh';
+  document.body.dataset.theme = ['dawkins', 'nietzsche'].includes(level.id) ? level.id : 'yhwh';
   const isNietzsche = level.id === 'nietzsche';
   if (levelChanged) {
+    if (level.id === 'exodus') queueMicrotask(checkExodus);
     if (isNietzsche) addCommand({ id: 'circus', name: ui('nietzsche-family-circus'), run: circus });
     else {
       commands.delete('circus');
@@ -521,7 +541,7 @@ function applyConfig(config) {
     upgradeButton.title = upgrade.offer.title;
     upgradeButton.setAttribute('aria-label', upgrade.offer.title);
   }
-  $('#divine-footnote').textContent = addressCopy(words[footerKey(level)], level, 1);
+  $('#divine-footnote').textContent = level.asides?.[0] && ['samuel', 'exodus'].includes(level.id) ? level.asides[0] : addressCopy(words[footerKey(level)], level, 1);
   $('.window-title').textContent = level.tagline || 'Toward a pro-human AI apocalypse.';
   $('#file-filter').placeholder = level.filter || 'Filter files…';
   const tab = active();
@@ -813,7 +833,8 @@ function newUniverse() {
     const { directory, template, image } = Object.fromEntries(new FormData(form));
     for (const field of fields) if (!field.hasAttribute('data-cancel')) field.disabled = true;
     alert.hidden = true;
-    status.textContent = (template === 'oci' || universeSeeds.find(seed => seed.id === template).image) ? 'Downloading and preparing the image…' : 'Creating the directory…';
+    status.textContent = (template === 'oci' || universeSeeds.find(seed => seed.id === template).image) ? 'Downloading and preparing the image…'
+      : template === 'plain' && boot.interface !== 'mobile' ? 'Finding un and creating the directory…' : 'Creating the directory…';
     status.hidden = false;
     try {
       const filename = await call('universe:create', tab.id, directory, template, image.trim());
@@ -838,7 +859,7 @@ async function enterUniverse(directory = universeTarget(active())) {
 }
 async function chrootUniverse(raw = false, directory = universeTarget(active())) {
   const tab = active();
-  const title = raw ? 'Set / · chroot' : 'un go · Chroot universe';
+  const title = raw ? 'Set / · Open as root' : 'un go · Open as /';
   if (!linuxUniverses()) {
     if (await choose(title, `Open ${directory} as / in a folder tab?`, ['Open folder view', 'Cancel']) === 0)
       await newTab(directory, { tabId: tab.id, options: { raw, mode: 'folder' } });
@@ -900,9 +921,29 @@ function universeMenu() {
   showDirectoryMenu('un', [
     ['new · Create a universe', newUniverse],
     ['cd · Enter a universe', () => enterUniverse()],
-    ['go · Chroot', () => chrootUniverse()],
+    ['go · Open as /', () => chrootUniverse()],
+    ['Providers · See what’s on high', providerMenu],
     ['ls · List seed templates', () => modal('un ls', `<dl>${universeSeeds.map(seed => `<dt><code>${escape(seed.id)}</code></dt><dd>${escape(seed.description)}</dd>`).join('')}</dl>`)],
   ], { trigger: $('#files [data-command="un"]') });
+}
+function providerMenu() {
+  if (boot.interface === 'mobile') return modal('Universe providers', '<p>Lord providers run in the desktop host shell. Ordinary directories and bundled starters are available here.</p>');
+  showDirectoryMenu('Universe providers', [
+    ['List providers', () => runProvider(['providers'])],
+    ['Open the first provider at ...', () => runProvider(['open'])],
+    ['Switch provider…', async () => {
+      const provider = await promptText('Switch provider', 'Provider name or path');
+      if (provider) await runProvider(['switch', provider]);
+    }],
+    ['List files available from the provider', () => runProvider(['dn', '--cached'])],
+    ['Close the provider link', () => runProvider(['close'])],
+  ], { trigger: $('#files [data-command="un"]') });
+}
+async function runProvider(args) {
+  if (boot.interface === 'mobile') throw new Error('Lord providers require the desktop host shell.');
+  const tab = active();
+  await revealTerminal(tab);
+  await call('terminal:run', tab.id, ['un', ...args.map(shellQuote)].join(' '));
 }
 async function initialUniverse(subcommand, args) {
   if (!subcommand) return universeMenu();
@@ -911,9 +952,10 @@ async function initialUniverse(subcommand, args) {
     const [name, option, value] = args;
     if (args.length !== 1 && (args.length !== 3 || !['--template', '--from'].includes(option))) throw new Error('un new NAME [--template ID | --from IMAGE]');
     const tab = active();
-    return call('universe:create', tab.id, name, option === '--from' ? 'oci' : value || 'empty', option === '--from' ? value : '');
+    return call('universe:create', tab.id, name, option === '--from' ? 'oci' : value || 'plain', option === '--from' ? value : '');
   }
-  if (!['cd', 'go'].includes(subcommand) || args.length > 1) throw new Error('un new | cd | go | ls');
+  if (!['cd', 'go'].includes(subcommand)) return runProvider([subcommand, ...args]);
+  if (args.length > 1) throw new Error('Choose one directory.');
   const target = args[0] || universeTarget(active());
   if (subcommand === 'cd') return enterUniverse(target);
   return chrootUniverse(false, target);
@@ -1019,12 +1061,13 @@ function settings() {
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="keys" aria-pressed="false">Keys</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
     <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Double-click directories', 'Single click unfolds the folder. Double-click enters it.', toggle('double_cd'))}${row('Confirm cwat', 'Ask before assigning a directory to @.', toggle('ask_at'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in Live Preview. Use Ctrl+E for Source, Ctrl+R for Reading, or choose a view from the toolbar. The language picker controls automatic syntax highlighting.</p><p class="muted">Use ↑ and ↓ to select, → to enter, and ← to go up. The chevron unfolds a folder.</p></section>
-    <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Dawkins ← Nietzsche → YHWH. Use the title bar to switch preview editions.', `<input type="range" name="energy" min="0" max="100" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
+    <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Choose Dawkins, Nietzsche, Samuel, Genesis, or Exodus.', `<input type="range" name="energy" min="0" max="${freeMaximum}" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="keys" hidden><h3>Keys</h3><p class="muted">${mobile ? 'These shortcuts use a hardware keyboard. Open the Initial from the command menu for an in-app shell.' : 'Panel shortcuts work from the terminal, editor, and file manager.'} Enter a combination such as Ctrl+Up, or use off to disable it.</p>
       ${row('Resize step', 'Pixels per keypress.', number('panel_resize_pixels', 1, 500))}
       ${keyControls.map(([id, spec]) => row(spec.label, spec.incremental ? 'Adjust the split a little.' : 'Step between hidden, split and maximized.', `<input name="key_${id}" value="${escape((values['key_' + id] || spec.key).replaceAll('/', '+'))}" autocomplete="off" spellcheck="false">`)).join('')}
     </section>
     <section data-section="advanced" hidden><h3>Advanced</h3><p class="muted">Ordinary shell configuration. Bring your own tools.</p>${row('Background', 'Image path', `<input name="bg" value="${escape(values.bg || '')}">`)}${row('Stylesheet', 'CSS path', `<input name="stylesheet" value="${escape(values.stylesheet || '')}">`)}${row('Plugins', 'Directory paths as a JSON array', `<input name="plugins" value="${escape(values.plugins || '[]')}">`)}${boot.interface === 'mobile' ? '' :
+      row('Lord repository', 'Source for un when it is missing from PATH. The YHWH_LORD_IS environment variable takes precedence.', `<input name="lord_source" value="${escape(values.lord_source || '')}" placeholder="${escape(lordSource)}" spellcheck="false">`) +
       row('Your email address', 'The sender address and where YHWH sends mail to you.', `<input type="email" name="mail_self" value="${escape(values.mail_self || '')}">`) +
       row('Outgoing mail command', 'A configured sendmail-compatible executable, such as /usr/sbin/sendmail.', `<input name="mail_transport" value="${escape(values.mail_transport || '')}">`)}<p><button type="button" data-edit-config>Edit rc file</button><button type="button" data-reload-config>Reload</button></p><small>${escape(tab.config.userDirectory)}/rc</small>${tab.config.warnings.map(w => `<p class="warning">${escape(w)}</p>`).join('')}</section>
     <footer><label>Apply to <select name="_scope"><option value="/">Everywhere</option><option value="${escape(tab.cwd)}">This directory and children</option></select></label><button class="primary" type="submit">Save settings</button></footer></div></form>`);
@@ -1066,10 +1109,18 @@ function settings() {
       }
       for (const key of ['show_hidden', 'double_cd', 'ask_at', 'autosave', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
       if (event.target.elements.spatial_effects) { data.spatial_effects = String(event.target.elements.spatial_effects.checked); data.motion = event.target.elements.spatial_effects.checked ? '1' : '0'; }
-      data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
+      const selectedEnergy = Number(data.energy);
+      if (!Number.isInteger(selectedEnergy) || selectedEnergy < 0 || selectedEnergy > freeMaximum)
+        throw new Error(`YHWH-ness must be between 0 and ${freeMaximum}.`);
+      const changedEnergy = selectedEnergy !== freeEnergy(values);
+      if (changedEnergy) data.theme = levelAt(selectedEnergy).id;
+      else delete data.energy;
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
       if (data.layout) JSON.parse(data.layout);
-      if (data.energy && !(Number(data.energy) >= 0 && Number(data.energy) <= 100)) throw new Error(ui("yhwh-ness-must-be-between-0-and-100-"));
+      if ('lord_source' in data) {
+        data.lord_source = data.lord_source.trim();
+        if (data.lord_source === (values.lord_source || '')) delete data.lord_source;
+      }
       for (const [key, min, max] of [['ui_font_size',14,24], ['font_size',12,36], ['terminal_font_size',12,28], ['panel_resize_pixels',1,500]]) if (!Number.isFinite(Number(data[key])) || Number(data[key]) < min || Number(data[key]) > max) throw new Error(`${key} must be between ${min} and ${max}.`);
       temporaryEnergy = undefined;
       if (startDirectory !== (boot.defaultDirectory || '')) {
@@ -1077,6 +1128,7 @@ function settings() {
         else await call('settings:save', { default_directory: startDirectory }, '/');
       }
       await call('settings:save', data, scope);
+      if (changedEnergy && edition.selected) saveEdition({ ...edition, selected: undefined });
       boot.defaultDirectory = startDirectory;
       presence.enabled = data.narrative === 'true'; savePresence(); await Promise.all(tabs.map(tab => refresh(tab))); for (const item of tabs) scheduleAutosave(item); dialog.close();
     } catch (error) { notice(error.message); }
@@ -1582,7 +1634,7 @@ const definitions = [
   ['un', 'un · Universes', '', universeMenu],
   ['universe-new', 'un new · Make new universe', '', newUniverse],
   ['universe-enter', 'un cd · Enter universe', '', () => enterUniverse()],
-  ['universe-go', 'un go · Chroot universe', '', () => chrootUniverse()],
+  ['universe-go', 'un go · Open as /', '', () => chrootUniverse()],
   ['open-file', ui("open-file-"), ui("ctrl-o"), async () => { const filename = await call('choose', 'file', active().cwd); if (filename) await openFile(filename); }],
   ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigateFiles(directory); }],
   ['save', ui("save-file"), ui("ctrl-s"), () => save()],
@@ -1608,7 +1660,7 @@ const definitions = [
   ['anchor-directory', '@ · Go to prefix', '', () => goToAnchor(active())],
   ['cwd-set', 'cd · Enter selected directory', '', () => navigateFiles(universeTarget(active()))],
   ['anchor-set', 'cwat · Set @ to selected directory', '', () => setAnchor(active(), universeTarget(active()))],
-  ['root-set', 'Set / · chroot', '', setRoot],
+  ['root-set', 'Set / · Open as root', '', setRoot],
   ['@-get', '@-get · Show tab anchor', '', async () => { const anchor = await call('@-get', active().id); notice(anchor); return anchor; }],
   ['@-set', '@-set · Choose tab anchor', '', chooseAnchor],
   ['root-directory', 'Root directory', '', () => { const tab = active(); return navigateFiles(tab.worldRoot || tab.systemRoot, tab); }],
@@ -1646,7 +1698,7 @@ const definitions = [
   ['pay', ui("open-configured-payment-page"), '', () => { const url = active().config.values.stripe_payment_link; if (!/^https:\/\/buy\.stripe\.com\//.test(url || '')) throw new Error(ui("set-a-valid-stripe-payment-link-in-your-rc-")); return call('external', url); }],
   ['upgrade', 'Upgrade YHWH · Pro and Elite preview', '', upgradeEdition],
   ['upgrades', ui("coming-soon-yhwh-sync-stuff-three-dating"), '', comingSoon],
-  ['modes', ui("yhwh-nietzsche-dawkins"), '', modes],
+  ['modes', ui("yhwh-ness"), '', modes],
   ['edit-footer', ui("edit-status-text"), '', () => editWords(footerKey(currentLevel()))],
   ['quit', ui("quit"), ui("ctrl-q"), async () => { for (const tab of tabs) if (!await mayReplace(tab)) return; await call('window:close'); }],
 ];
@@ -1662,18 +1714,24 @@ const letters = [
   ...nightLetters,
   ...startupLetters,
   ...emailLetters,
+  ...modeLetters,
 ];
 function savePresence() { localStorage.setItem(presenceKey, JSON.stringify(presence)); updateInboxBadge(); }
 function updateInboxBadge() {
   const count = presence.letters.filter(letter => !letter.read).length;
   $('#inbox-count').textContent = count ? ` · ${count}` : '';
 }
-function receive(id, midnightOnly = false) {
+function receive(id, midnightOnly = false, working = Boolean(id)) {
   if (!active() || document.visibilityState !== 'visible') return;
-  const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme };
+  const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme, level: currentLevel().id };
   if (startNight(presence, options.now)) savePresence();
-  let letter = nextMidnightLetter(presence, options);
-  if (!letter && !midnightOnly) {
+  const personal = ['samuel', 'exodus'].includes(options.level);
+  let letter = personal ? undefined : nextMidnightLetter(presence, options);
+  if (personal && !midnightOnly) {
+    const reply = nextStartupLetter(presence, options);
+    letter = reply?.afterBlockMinutes !== undefined ? reply : working ? nextModeLetter(presence, options) : undefined;
+  }
+  if (!personal && !letter && !midnightOnly) {
     const startup = nextStartupLetter(presence, options);
     const work = id && canReceiveLetter(presence, id, options) && actionLetters[id] && { id, ...actionLetters[id] };
     const shop = id && merch.configured() && canReceiveLetter(presence, 'merch', options) && { id: 'merch', ...actionLetters.merch };
@@ -1687,8 +1745,8 @@ function receive(id, midnightOnly = false) {
   presence.letters.push({ id: letter.id, sender, read: false, at: options.now }); presence.lastLetter = options.now; savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
 // Ordinary letters need actual use; seedis also has a visible-app midnight timer.
-document.addEventListener('click', () => receive());
-document.addEventListener('keydown', () => receive());
+document.addEventListener('click', () => receive(undefined, false, true));
+document.addEventListener('keydown', () => receive(undefined, false, true));
 // Wake at local midnight even if the user isn't typing. Hidden/suspended apps
 // never backfill this letter later in the day. Recheck the clock on resume.
 let midnightTimer;
@@ -1701,7 +1759,7 @@ document.addEventListener('visibilitychange', () => {
   else for (const tab of tabs) flushAutosave(tab);
 });
 window.addEventListener('blur', () => { for (const tab of tabs) flushAutosave(tab); });
-window.addEventListener('focus', () => { receive(); scheduleMidnightMail(); });
+window.addEventListener('focus', () => { receive(); scheduleMidnightMail(); checkExodus(); });
 scheduleMidnightMail();
 function inbox() { focusView('inbox'); }
 function mailSettings() {
@@ -1733,7 +1791,8 @@ function renderInbox() {
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const shopLinks = letter.id === 'merch' ? merch.links() : '';
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
-    const attachment = letter.attachment === 'biblical-polygyny.png' ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(polygynyAttachmentURL)}" alt="${escape(words.letterSeedisAttachmentAlt)}"></figure>` : '';
+    const bundledAttachment = mailAttachments[letter.attachment];
+    const attachment = bundledAttachment ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(new URL(bundledAttachment, import.meta.url).href)}" alt="${escape(letter.attachmentAlt || words.letterSeedisAttachmentAlt)}"></figure>` : '';
     const note = source?.note || letter.note;
     const sources = note || letter.verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details>` : '';
     host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}${shopLinks}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
@@ -1742,7 +1801,7 @@ function renderInbox() {
       renderInbox();
       host.querySelector(`[data-mail="${CSS.escape(letter.id)}"]`)?.focus();
     };
-    verseUI.hydrate(host, { citeCommentary: true });
+    verseUI.hydrate(host, { citeCommentary: true, embedded: Boolean(letter.level) });
   } else {
     const rows = available.map(({ letter, state }) => {
       const text = words[letter.textKey] || '';
@@ -1865,7 +1924,7 @@ async function openRequest(opening) {
   const info = await call('path:stat', opening.path);
   if (info.directory) { if (tab) await navigate(info.path, tab); else tab = await newTab(info.path); }
   else { tab ||= await newTab(parent(info.path)); await openFile(info.path, tab); }
-  if (opening.theme) { temporaryEnergy = opening.theme === 'dawkins' ? 0 : opening.theme === 'nietzsche' ? 50 : 100; applyConfig(active().config); }
+  if (opening.theme) { temporaryEnergy = themeEnergy(opening.theme); applyConfig(active().config); }
   if (opening.universe === 'nu' && info.directory) newUniverse();
   if (opening.universe === 'go' && info.directory) chrootUniverse(false, info.path);
   if (opening.universe === 'root' && info.directory) chrootUniverse(true, info.path);

@@ -94,13 +94,16 @@ External links can navigate with the registered URI:
 
 ### Personality
 
-The **Amount of YHWH-ness** slider has three stops:
+The **Amount of YHWH-ness** slider has five free stops and one upgrade:
 
 | Mode | Behavior |
 | --- | --- |
 | Dawkins · 0% | Plain text wordmark, square controls, no character commentary. |
 | Nietzsche · 50% | Muted wordmark, the obituary, and Nietzsche Family Circus on request. |
-| YHWH · 100% | Paleo-Hebrew wordmark, purple accent, familiar irreverent commentary. |
+| Samuel · 80% | YHWH is stuck in the box and calls you Dave. |
+| Genesis · 100% | Default Abe mode with the Paleo-Hebrew wordmark. |
+| Exodus · 120% | The burning b*sh calls you Mo. |
+| Zan · 140% | Preview upgrade with its own greetings and poems. |
 
 No cartoons or other external content are loaded automatically. **Next cartoon**
 fetches a random cartoon/quote pairing from `nietzschefamilycircus.com` using
@@ -146,7 +149,7 @@ win. No config files are created automatically.
 
 Unindented lines contain one vault path, quoted when it contains spaces.
 Indented lines contain literal `key=value` assignments. Blank lines and
-comments are allowed. Supported keys: `mode` (`yhwh`, `nietzsche`, `dawkins`),
+comments are allowed. Supported keys: `mode` (`genesis`, `exodus`, `samuel`, `nietzsche`, `dawkins`),
 `energy` (`0`, `50`, `100`), `accent` (six-digit hex), `title`, `bg` (a vault
 image), and `follow_active` (`true`, `false`). Relative paths start at the
 directory containing `.yhwh`, not inside `.yhwh` itself. `/` always means the

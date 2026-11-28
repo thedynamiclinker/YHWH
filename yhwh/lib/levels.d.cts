@@ -1,5 +1,5 @@
 export type Level = {
-  id: 'dawkins' | 'nietzsche' | 'yhwh' | 'pro' | 'elite';
+  id: 'dawkins' | 'nietzsche' | 'samuel' | 'genesis' | 'exodus' | 'elite';
   energy: number;
   label: string;
   edition?: string;
@@ -16,6 +16,8 @@ export type Level = {
 };
 export type EditionState = { unlocked: number; selected?: number };
 export const stripe: { title: string; status: string; steps: string[]; links: Record<string, string> };
+export const freeMaximum: number;
+export function themeEnergy(theme: string): number | undefined;
 export function levelAt(energy: number): Level;
 export function unlockedLevels(energy: number): Level[];
 export function editionState(value?: unknown): EditionState;

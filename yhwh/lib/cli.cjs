@@ -58,8 +58,11 @@ async function main(args=process.argv.slice(2)) {
     if (subcommand === 'new') return universe('nu', values);
     if (subcommand === 'ls') return universe('nu', ['--list', ...values]);
     if (subcommand === 'cd' || subcommand === 'go') return universe(subcommand, values);
-    const usage = 'un new   Create a universe\nun cd    Enter a universe and set @\nun go    Run a shell with a new /\nun ls    List seed templates\nOther subcommands run un on PATH.';
-    if (subcommand && !['-h', '--help'].includes(subcommand)) return execute('un', rest);
+    const usage = 'un new   Create a universe\nun cd    Enter a universe and set @\nun go    Run a shell with a new /\nun ls    List seed templates\nOther subcommands use the installed or configured lord provider.';
+    if (subcommand && !['-h', '--help'].includes(subcommand)) {
+      const program = await require('./un-provider.cjs').resolveProvider({ configure: lordSourceSetting, output: chunk => process.stderr.write(chunk) });
+      return execute(program, rest, { env: { ...process.env, PATH: [path.dirname(program), process.env.PATH].filter(Boolean).join(path.delimiter) } });
+    }
     console.log(usage);
     return 0;
   }
@@ -70,15 +73,19 @@ async function main(args=process.argv.slice(2)) {
       return 0;
     }
     if (rest.length > 1) throw new Error('Usage: yhwh inbox [MESSAGE-ID]');
-    const { primarySender, emailLetters } = require('./inbox.cjs');
+    const { primarySender, emailLetters, modeLetters } = require('./inbox.cjs');
+    const correspondence = [...emailLetters, ...modeLetters];
     if (!rest.length) {
-      for (const letter of emailLetters) console.log(`${letter.id}\t${letter.title}`);
+      for (const letter of correspondence) console.log(`${letter.id}\t${letter.title}`);
       return 0;
     }
-    const letter = emailLetters.find(item => item.id === rest[0]);
+    const letter = correspondence.find(item => item.id === rest[0]);
     if (!letter) throw new Error(`Unknown YHWH email: ${rest[0]}. Run yhwh inbox to list messages.`);
     const words = JSON.parse(fs.readFileSync(paths.etc('default', 'words.json'), 'utf8'));
     console.log(`From: YHWH <${primarySender}>\nSubject: ${letter.title}\n\n${words[letter.textKey]}`);
+    if (letter.source && letter.level) console.log(`${letter.source.label} · ${letter.source.url}`);
+    if (letter.attachment) console.log(paths.etc('assets', 'mail', letter.attachment));
+    if (letter.verse) console.log(letter.verse);
     return 0;
   }
   if(command==='keys')return require('./keys-cli.cjs').main(rest);
@@ -103,13 +110,19 @@ async function main(args=process.argv.slice(2)) {
   }
   console.error(`yhwh: unknown command '${command}'. See 'yhwh --help'.`);return 127;
 }
+async function lordSourceSetting() {
+  const variant = process.env.YHWH_INTERFACE === 'three' ? 'three' : undefined;
+  const config = await require('../src/yhwh-default/app/config.cjs').resolveConfig(process.cwd(), { variant });
+  return config.environment.YHWH_LORD_IS || config.values.lord_source;
+}
+
 async function universe(command, args) {
   const { parseArgs } = require('node:util');
   const { seeds } = require('./universe-seeds.cjs');
   const universes = require('./universes.cjs');
   const help = {
     nu: 'Usage: yhwh nu DIRECTORY [--template ID | --from IMAGE]\n       yhwh nu --list',
-    cd: 'Usage: cd -- "$(yhwh cd DIRECTORY)"\nPrint the absolute path of a universe. The calling shell owns cd.',
+    cd: 'Usage: cd -- "$(yhwh cd DIRECTORY)"\nPrint the absolute path of a directory. The calling shell owns cd.',
     go: 'Usage: yhwh go [DIRECTORY] [--root] [--mount PATH ...] [--mount-rw PATH ...] [--network] [--sudo] [-- /absolute/guest/command ARG ...]\n       yhwh go [DIRECTORY] [--root] --native [-- /absolute/guest/command ARG ...]\n--native runs system chroot, using sudo when needed. Run guest code you trust as root.',
   };
   if (args.length === 1 && ['-h', '--help'].includes(args[0])) { console.log(help[command]); return 0; }
@@ -128,8 +141,8 @@ async function universe(command, args) {
     const stop = () => controller.abort();
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
     try {
-      console.log(await universes.create(positionals[0], values.from === undefined ? values.template : 'oci', values.from,
-        { signal: controller.signal, output: chunk => process.stderr.write(chunk) }));
+      console.log(await universes.create(positionals[0], values.from === undefined ? values.template || 'plain' : 'oci', values.from,
+        { signal: controller.signal, configure: lordSourceSetting, output: chunk => process.stderr.write(chunk) }));
       return 0;
     } finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); }
   }

@@ -18,6 +18,7 @@ const tabAnchor = require('../../../lib/tab-anchor.cjs');
 const folderMenu = require('./folder-menu.cjs');
 const universes = require('../../../lib/universes.cjs');
 const { universeName } = require('../../../lib/universe-seeds.cjs');
+const { firstRoot } = require('./exodus.cjs');
 
 const root = path.join(__dirname, '..');
 const worlds = require('./worlds.cjs');
@@ -306,7 +307,7 @@ async function shellPrefix(focus, action) {
     return profileFile;
   }
   if (action === 'home-rc') {
-    const filename = guestRoot ? path.join(guestRoot, 'root/.shrc') : path.join(os.homedir(), '.bashrc');
+    const filename = guestRoot ? path.join(guestRoot, 'root/.shrc') : path.join(os.homedir(), '.bshrc');
     const parent = await ensure(path.dirname(filename));
     await fs.writeFile(path.join(parent, path.basename(filename)), '', { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
     return filename;
@@ -357,6 +358,7 @@ async function launch() {
     loaded = true;
     return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial, defaultDirectory: configured, pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
+  handle('exodus:first-root', () => firstRoot(userDirectory(), url => shell.openExternal(url)));
   async function newFocus(id, directory, state = {}) {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
     const focus = { id, cwd: path.resolve(directory), ...state };
@@ -421,7 +423,24 @@ async function launch() {
     const directory = focus.cwd;
     try {
       universeName(name);
-      await universes.create(path.join(await worlds.physical(focus, directory), name), template, image, { signal: controller.signal });
+      const cwd = await worlds.physical(focus, directory);
+      const options = { signal: controller.signal };
+      if (template === 'plain') {
+        const config = await configFor(focus.guest ? userDirectory() : directory);
+        const runtime = !focus.guest && focus.terminalId
+          ? (await fs.readFile(path.join(path.dirname(focus.anchor.filename), 'shell'), 'utf8').catch(() => '')).split('\0')
+          : [];
+        options.cwd = cwd;
+        options.env = { ...config.environment };
+        if (runtime[0] === cwd && runtime[2] !== undefined) {
+          options.env.PATH = runtime[2];
+          const origin = runtime[6]?.match(/^__yhwh_lord_source=(.*)$/s)?.[1];
+          if (origin) options.env.YHWH_LORD_IS = origin;
+          else if (origin === '') delete options.env.YHWH_LORD_IS;
+        }
+        options.configure = () => config.values.lord_source;
+      }
+      await universes.create(path.join(cwd, name), template, image, options);
       return path.join(directory, name);
     } finally { focus.creatingUniverse = null; }
   });

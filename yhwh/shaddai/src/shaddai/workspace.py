@@ -835,7 +835,8 @@ class Workspace:
 
     def add_shell(self, directory):
         config = self.config["terminal"]
-        command = config["shell"] or os.environ.get("SHELL") or "/bin/bash"
+        command = (config["shell"] or os.environ.get("YHWH_SHELL") or os.environ.get("YHWH_BASH")
+                   or shutil.which("bash", path=self.config.yhwh.environment.get("PATH")) or "/bin/bash")
         library = self.config.library if self.config.library.etc else self.library
         anchor = self.anchor_file(self.tab)
         env = {**self.config.yhwh.environment,
@@ -1130,7 +1131,7 @@ class Workspace:
                 else:
                     raise ValueError("Choose a listed template.")
 
-            self.ask("Universe template", create, "empty", choices=list(choices), hints=choices)
+            self.ask("Universe template", create, "plain", choices=list(choices), hints=choices)
 
         self.ask("un new · Directory name", configure)
 
@@ -1184,6 +1185,9 @@ class Workspace:
             "new · Create a universe": self.new_universe,
             "cd · Enter a universe": self.enter_universe,
             "go · Chroot": self.chroot_universe,
+            "providers · List provider trees": lambda: self.run_shell("un providers"),
+            "open · Open the first provider": lambda: self.run_shell("un open"),
+            "dn · List available files": lambda: self.run_shell("dn --cached"),
             "ls · List seed templates": lambda: self.tty_command(self.universe_command("un", "ls"), pause=True),
         })
 
@@ -1236,7 +1240,7 @@ class Workspace:
             **{name: partial(folder, name, prefix, True) for name in ("bin", "lib", "etc")},
             **{f"~/.config/yhwh/{name}": partial(folder, name, self.config.yhwh.user) for name in ("bin", "lib", "etc")},
             "etc/profile": profile,
-            "~/.bashrc": lambda: self.open(Path.home() / ".bashrc"),
+            "~/.bshrc": lambda: self.open(Path.home() / ".bshrc"),
             "PATH": lambda: self.run_shell('printf "%s\\n" "$PATH"'),
         })
 
@@ -1526,6 +1530,10 @@ class Workspace:
     def read_letter(self, key):
         letter = self.services.letters[key]
         text = self.services.letter(key)
+        if letter.get("source") and letter.get("level"):
+            text += f"\n\n{letter['source']['label']} · {letter['source']['url']}"
+        if letter.get("attachment"):
+            text += f"\n\nAttachment: {self.config.library.etc / 'assets/mail' / letter['attachment']}"
         if not (letter.get("note") or letter.get("verse")):
             self.show(letter["title"], text, back=self.inbox)
             return
@@ -1635,7 +1643,7 @@ class Workspace:
                 position = choice(range(len(asides)))
             lines.append(asides[position])
             self.level_aside_positions[level["id"]] = (position + 1) % len(asides)
-        if level["id"] == "yhwh":
+        if level["id"] == "genesis":
             words = self.services.words
             title = words["welcomeTitle"]
             lines.insert(1, words["welcomeBody"])
@@ -1912,7 +1920,7 @@ class Workspace:
             (None, "un · Universes", self.universe_menu, False),
             (None, "un new · Make new universe", self.new_universe, False),
             (None, "un cd · Enter universe", self.enter_universe, False),
-            (None, "un go · Chroot universe", self.chroot_universe, False),
+            (None, "un go · Open as /", self.chroot_universe, False),
             (None, "--prefix · bin lib etc", self.prefix_menu, True),
             ("rename", "Rename selected file", self.browser.rename, False),
             ("trash", "Move selected file to Trash", self.browser.trash, False),

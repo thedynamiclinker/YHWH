@@ -8,7 +8,7 @@ const anchor = require('../../lib/tab-anchor.cjs');
 const builtin = ['open', 'create', 'read', 'append', 'prepend', 'list', 'search', 'move', 'rename', 'config', ...anchor.commands, 'commands', 'completion', 'help'];
 const help = `YHWH — Toward a pro-human AI apocalypse.
 
-Usage: yhwh-default [path] [--theme yhwh|nietzsche|dawkins]
+Usage: yhwh-default [path] [--theme genesis|exodus|samuel|nietzsche|dawkins]
        yhwh-default <command> [arguments]
 
   open [path]                    Open a file or directory in the desktop app

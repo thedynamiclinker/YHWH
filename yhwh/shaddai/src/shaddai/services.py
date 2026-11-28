@@ -52,9 +52,16 @@ class Services:
         return {message["id"]: message for message in messages}
 
     @cached_property
+    def mode_letters(self):
+        try:
+            return self.config.library.json("default/mode-mail.json")["messages"]
+        except FileNotFoundError:
+            return []
+
+    @cached_property
     def letters(self):
         work = self.config.library.json("default/action-letters.json") if self.config.library.etc else {}
-        return work | self.email_letters
+        return work | self.email_letters | {letter["id"]: letter for letter in self.mode_letters}
 
     @cached_property
     def levels(self):
@@ -63,9 +70,9 @@ class Services:
     def level_options(self, state=None):
         if state is None:
             state = self.state("edition")
-        unlocked = state.get("unlocked", 100)
-        paid = [level["energy"] for level in self.levels["levels"] if "offer" in level]
-        return [level for level in self.levels["levels"] if level["energy"] <= (unlocked if unlocked in paid else 100)]
+        levels = self.levels["levels"]
+        free = [level for level in levels if "offer" not in level]
+        return free + [level for level in levels if "offer" in level and level["energy"] == state.get("unlocked")]
 
     def current_level(self):
         state = self.state("edition")
@@ -79,18 +86,24 @@ class Services:
                 return level
         values = self.config.yhwh.values
         amount = self.energy(values)
-        return choices[0] if values.get("theme") == "dawkins" or amount == 0 else (
-            choices[1] if values.get("theme") == "nietzsche" or amount < 100 else choices[2])
+        theme = values.get("theme")
+        theme = {"pro": "exodus", "yhwh": "genesis"}.get(theme, theme)
+        if theme in ("samuel", "exodus"):
+            return next(level for level in choices if level["id"] == theme)
+        if theme == "dawkins" or amount == 0:
+            return choices[0]
+        return next(level for level in choices if level["id"] == ("nietzsche" if theme == "nietzsche" or amount < 100 else "genesis"))
 
     def select_level(self, level, *, unlock=False):
         def select(state):
             energy = level["energy"]
-            edition = next((item for item in self.levels["levels"] if item["energy"] > state.get("unlocked", 100)), None)
+            options = self.level_options(state)
+            edition = next((item for item in self.levels["levels"] if "offer" in item and item not in options), None)
             if unlock:
                 if edition != level:
                     raise ValueError("Reopen the upgrade preview to see the current offer.")
                 state["unlocked"] = energy
-            elif energy > state.get("unlocked", 100):
+            elif level not in options:
                 raise ValueError("That edition is locked.")
             state["selected"] = energy
             return True
@@ -104,10 +117,7 @@ class Services:
             previous = options[-2]
             state["unlocked"] = previous["energy"]
             if state.get("selected") == level["energy"]:
-                if "offer" in previous:
-                    state["selected"] = previous["energy"]
-                else:
-                    state.pop("selected")
+                state["selected"] = previous["energy"]
             return True
         self.update("edition", relock)
 
@@ -143,9 +153,14 @@ class Services:
         if not shared_config and not os.environ.get("YHWH_HOME"):
             return
         values = self.config.yhwh.values
-        energy = self.current_level().get("energy", self.energy(values))
+        if values.get("inbox") == "false":
+            return
+        level = self.current_level()
+        energy = level.get("energy", self.energy(values))
         pending = (key,) if shared_config and (energy >= 100 or (energy > 0 and key == "inspect")) else ()
-        if energy >= 100:
+        if level.get("id") in ("samuel", "exodus"):
+            pending = tuple(letter["id"] for letter in self.mode_letters if letter["level"] == level["id"])
+        elif energy >= 100:
             pending += tuple(self.email_letters)
         if not pending:
             return

@@ -13,7 +13,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile .titlebar .brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .is-mobile .titlebar [data-command="inbox"] { flex-shrink: 0; white-space: nowrap; }
 .is-mobile .personality label { font-size: .75rem; white-space: nowrap; }
-.is-mobile .personality input { width: clamp(38px, 12vw, 68px); }
+.is-mobile .personality input { width: clamp(52px, 18vw, 152px); }
 .is-mobile #mode-name { min-width: 0; }
 .is-mobile .edition-glyph { min-width: 44px; }
 @media (max-width: 365px) {

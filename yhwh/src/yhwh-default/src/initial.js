@@ -5,7 +5,7 @@ import { readGrid, serializeGrid } from '../../../lib/initial-grid.mjs';
 import { inInitialPreview } from './preview-dialog.js';
 import { renderMarkdown } from './editor.js';
 import { fileIcons } from './file-icons.js';
-import logosTutorial from '../../../../yamr/sacred-text/LOGOS.md';
+import logosTutorial from '../../../../var/yamr/sacred-text/LOGOS.md';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 const draftKey = 'yhwh:initial:draft';
@@ -186,7 +186,7 @@ export function installInitial(app, { home, mobile, call }) {
     modal('--prefix', `<dl><dt>@</dt><dd>${escape(anchor)}</dd>
       <dt>bin</dt><dd>${escape(dirs.bin)}</dd><dt>lib</dt><dd>${escape(dirs.lib)}</dd><dt>etc</dt><dd>${escape(dirs.etc)}</dd>
       <dt>User prefix</dt><dd>${escape(user)}</dd><dt>etc/profile</dt><dd>${escape(profile)}</dd></dl>
-      <div class="initial-tools">${buttons([['cwat', 'choose-at'], ['bin', 'user-bin'], ['lib', 'user-lib'], ['etc', 'user-etc'], [guest ? '/etc/yhwh/profile' : 'etc/profile', 'profile'], ...(!mobile ? [[guest ? '~/.shrc' : '~/.bashrc', 'home-rc'], ['@ rc', 'at-rc']] : [])])}</div>
+      <div class="initial-tools">${buttons([['cwat', 'choose-at'], ['bin', 'user-bin'], ['lib', 'user-lib'], ['etc', 'user-etc'], [guest ? '/etc/yhwh/profile' : 'etc/profile', 'profile'], ...(!mobile ? [[guest ? '~/.shrc' : '~/.bshrc', 'home-rc'], ['@ rc', 'at-rc']] : [])])}</div>
       ${mobile ? '<p>Shell files can be edited here. Running them requires a Unix host.</p>' : '<p>Source scripts with <code>.</code>. Put executables on <code>PATH</code>. Set <code>yhwh_bin</code>, <code>yhwh_lib</code>, or <code>yhwh_etc</code> in <code>etc/profile</code> to change their locations.</p>'}`, { back: shelf });
     bind({ 'choose-at': () => launchFull(() => app.run('@-set')), profile: () => openPrefix('profile', false),
       'user-bin': () => openPrefix('user-bin'), 'user-lib': () => openPrefix('user-lib'), 'user-etc': () => openPrefix('user-etc'),
@@ -343,7 +343,7 @@ export function installInitial(app, { home, mobile, call }) {
     modal(app.address('Start here, Abe', 2), `<div class="initial-guide">
       <p>Terminal → Initial. Same joy, different fingers.</p>
       <ul>
-        <li><strong>Letters</strong> are aliases in <code>~/.initialrc</code>, the Initial’s equivalent of <code>~/.bashrc</code>. Draw from the dot to use a trained mark.</li>
+        <li><strong>Letters</strong> are aliases in <code>~/.initialrc</code>, the Initial’s equivalent of <code>~/.bshrc</code>. Draw from the dot to use a trained mark.</li>
         <li><strong>Logos</strong> are saved commands in <code>~/bin</code>. Run a tile below and read <code>/dev/stdout</code> above. Drag tiles up to make a script. Tiles across a row pipe output. Rows run in order. Use <strong>＋</strong> to place tiles by tapping, or type a command.</li>
         <li><strong>Atomics</strong> (<code>/bin</code>) work with files and text. <strong>Builtins</strong> (<code>/usr/bin</code>) are actions already in YHWH. Tap <strong>⋯</strong> on a command for help and options.</li>
       </ul>

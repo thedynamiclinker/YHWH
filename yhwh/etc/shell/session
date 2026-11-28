@@ -148,11 +148,10 @@ un() {
         local target
         shift
         if [ "${YHWH_GUEST:-}" = 1 ]; then
-            local marker
             [ "$#" -le 1 ] || return 2
             target=${1:-.}
-            [ -f "$target/.@" ] && IFS= read -r marker < "$target/.@" && [ "$marker" = '# un root' ] || {
-                printf '%s\n' 'Choose a universe directory.' >&2
+            [ -d "$target" ] || {
+                printf '%s\n' 'Choose a directory.' >&2
                 return 1
             }
         else
@@ -165,9 +164,19 @@ un() {
     fi
     case ${1:-} in
         ''|-h|--help|new|cd|go|ls) command yhwh un "$@" ;;
-        *) command un "$@" ;;
+        *)
+            if [ "${YHWH_GUEST:-}" = 1 ]; then command un "$@"
+            else command yhwh un "$@"
+            fi ;;
     esac
 }
+
+if [ "${YHWH_GUEST:-}" != 1 ]; then
+    command -v dn >/dev/null 2>&1 || dn() { un dn "$@"; }
+    command -v up >/dev/null 2>&1 || up() { un up "$@"; }
+    command -v o >/dev/null 2>&1 || o() { un open "$@"; }
+
+fi
 
 __yhwh_uri() {
     local rest=$1 char
@@ -206,6 +215,7 @@ __yhwh_record() {
         (
             umask 077
             printf '%s\0' "$PWD" "$YHWH_CWAT" "$PATH" "$YHWH_BIN" "$YHWH_LIB" "$YHWH_ETC"
+            printf '%s\0' "__yhwh_lord_source=${YHWH_LORD_IS:-}"
             __yhwh_command_names
         ) > "$pending" && command mv -f -- "$pending" "$state"
     fi

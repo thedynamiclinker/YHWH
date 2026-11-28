@@ -143,10 +143,20 @@ The effective layout variables select those paths beneath each active prefix.
 Profiles execute with `YHWH_PREFIX` set to their prefix; legacy relative asset
 paths retain their previous base-directory behavior. `etc/profile` and legacy
 rc files follow the existing owner/permissions rules for shell configuration.
-Bash then sources prefix profiles, the selected bashrc files, and completion
-files in hierarchy order, after its normal user startup file. Other shells
-retain their existing startup handling; Bash-specific prefix completions
-are not sourced into zsh, fish, or PowerShell.
+On Unix, desktop and Shaddai start Bash by default. New tabs source
+`~/.bshrc` followed by prefix profiles, prefix bashrc files, and completion
+files in hierarchy order. To share an existing Bash setup, put this in
+`~/.bshrc`.
+
+```bash
+. "$HOME/.bashrc"
+```
+
+The Initial lists the active Bash aliases, functions, builtins and PATH
+programs. `YHWH_NO_SHELL_RC=1` skips the home rc. The existing
+`yhwh_home_rc=yes` option sources `~/.bashrc` when there is no `~/.bshrc`.
+`YHWH_SHELL` selects a different shell. Windows defaults to PowerShell.
+Bash-specific prefix completions are loaded only in Bash.
 
 This moves new configuration toward shell files and exported variables while
 preserving the current settings interface and explicit file saves. Existing

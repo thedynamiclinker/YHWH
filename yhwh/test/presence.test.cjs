@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { letterInterval, nightLetters, canReceiveLetter, nextNightLetter } = require('../lib/presence.cjs');
-const { editionState, nextUpgrade, unstealUpgrade } = require('../lib/levels.cjs');
+const { editionState, nextUpgrade, unstealUpgrade, unlockedLevels, freeEnergy, levelAt } = require('../lib/levels.cjs');
 const at = (hour, minute = 0) => new Date(2026, 10, 15, hour, minute).getTime();
 
 test('name letters use local night boundaries, including after midnight', () => {
@@ -39,15 +39,17 @@ test('inbox switch and modes suppress night mail without consuming the sequence'
   assert.equal(canReceiveLetter({ letters: [], lastLetter: now + 1 }, 'house', { now }), false);
 });
 
-test('unstealing a preview relocks one tier and preserves any lower selection', () => {
+test('Exodus is free and older preview unlocks and selections migrate', () => {
+  const free = editionState();
+  assert.deepEqual(unlockedLevels(free.unlocked).map(level => level.id), ['dawkins', 'nietzsche', 'samuel', 'genesis', 'exodus']);
+  assert.equal(nextUpgrade(free.unlocked).id, 'elite');
+  assert.equal(levelAt(freeEnergy({})).id, 'genesis');
+  assert.equal(levelAt(freeEnergy({ theme: 'nietzsche', energy: 90 })).id, 'nietzsche');
+  assert.equal(levelAt(freeEnergy({ theme: 'samuel' })).id, 'samuel');
+  assert.deepEqual(editionState({ unlocked: 120, selected: 120 }), { unlocked: 120, selected: 120 });
   for (const [selected, expected] of [[140, 120], [120, 120], [undefined, undefined]]) {
-    const pro = unstealUpgrade({ unlocked: 140, selected });
-    assert.deepEqual(pro, { unlocked: 120, selected: expected });
-    assert.equal(nextUpgrade(pro.unlocked).id, 'elite');
-
-    const free = unstealUpgrade(pro);
-    assert.deepEqual(editionState(JSON.parse(JSON.stringify(free))), { unlocked: 100, selected: undefined });
-    assert.equal(nextUpgrade(free.unlocked).id, 'pro');
-    assert.equal(unstealUpgrade(free), undefined);
+    const result = unstealUpgrade({ unlocked: 140, selected });
+    assert.deepEqual(result, { unlocked: 120, selected: expected });
+    assert.equal(unstealUpgrade(result), undefined);
   }
 });

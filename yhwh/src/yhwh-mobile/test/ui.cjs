@@ -6,7 +6,7 @@ const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const { output } = require('../../../lib/paths.cjs');
 const ui = output('mobile/ui'), artifacts = output('mobile/screenshots');
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
 async function main() {
   await fs.mkdir(artifacts, { recursive: true });
   const metadata = JSON.parse(await fs.readFile(output('mobile/metafile.json'), 'utf8'));

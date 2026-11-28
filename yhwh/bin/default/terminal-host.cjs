@@ -14,7 +14,8 @@ function start({ id, cwd, env = {}, guest }) {
     terminal = pty.spawn(guest.program, guest.args, { cwd, env: { ...process.env, TERM: 'xterm-256color' }, name: 'xterm-256color', cols: 100, rows: 25 });
     cwd = '/'; name = 'guest';
   } else {
-    const shell = process.env.YHWH_SHELL || process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/bash');
+    const shell = env.YHWH_SHELL || process.env.YHWH_SHELL
+      || (process.platform === 'win32' ? 'powershell.exe' : env.YHWH_BASH || process.env.YHWH_BASH || 'bash');
     name = path.basename(shell);
     const environment = { ...process.env, ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor', YHWH_TAB: env.YHWH_TAB || id };
     environment.YHWH_PREFIX_SHELL ||= path.join(__dirname, '../prefix-shell.cjs');

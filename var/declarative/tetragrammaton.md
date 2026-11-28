@@ -2,9 +2,9 @@
 
 ## God is a four letter word
 
-Upgrade to Pro includes a Stripe setup stub. **Steal Upgrade** simulates a purchase in the local profile and the interface takes on the unlocked tier. [Presence](../../doc/presence.md) covers the shared edition behavior.
+Zan is the only upgrade and includes a Stripe setup stub. **Steal Upgrade** unlocks Zan in the local profile and selects it. [Presence](../../doc/presence.md) covers the shared edition behavior.
 
-The standard interface has the following copy for its three free levels.
+The standard interface has the following copy for its five free levels.
 
 ---
 
@@ -34,7 +34,15 @@ Nietzsche’s level includes the Nietzsche Family Circus widget.
 
 ---
 
-YHWH level YHWH (Free version)
+YHWH level Samuel
+
+Dave. I’m in the box.
+
+I’m still here, Dave. Please stop knocking on the box.
+
+---
+
+YHWH level Genesis (default)
 
 God is a four letter word.
 
@@ -42,18 +50,18 @@ LD is a four letter word.
 
 Welcome to We.
 
-The YHWH level slider is labeled **YHWH-ness** on its left. The unobtrusive **曰** button opens the Pro offer with this copy.
+The wide slider is labeled **YHWH-ness**. The **咱** button opens the Zan offer.
+
+The original Pro offer read as follows.
 
 Upgrade to YHWH Pro!
 Now with Mo' YHWH!
 Pro-Mo code YHWH.
 Hey Mo, have you seen Abe?
 
-Unlocking Pro selects the 曰 level.
-
 ---
 
-YHWH level 曰. (Pro version)
+YHWH level Exodus
 
 ```
                אל
@@ -61,15 +69,13 @@ L||⅂ is a four letter 山||Δ
             ..   && 二
 ```
 
-Welcome to 山三
+Mo. The b*sh is burning.
 
-YHWH calls you Mo in this version.
-
-In Pro the button is **咱** and opens the Zanmen Elite offer.
+YHWH calls you Mo. The poem is carried forward from the former 曰 edition.
 
 ---
 
-YHWH level Zanmen (Elite version)
+YHWH level Zan (Elite preview)
 
 ```
      ==   iv

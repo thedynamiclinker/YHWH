@@ -127,3 +127,53 @@ test('the next midnight follows local calendar days across DST and fractional UT
   }
   assert.equal(nextMidnight(at(0)), at(0, 0, 16));
 });
+
+test('Samuel and Exodus deliver independent, editable series with bundled images and citations', async () => {
+  const { modeLetters, nextModeLetter, songOfTheSea } = require('../lib/inbox.cjs');
+  const { createVerseStore } = require('../lib/verses.cjs');
+  const { access } = require('node:fs/promises');
+  const { etc } = require('../lib/paths.cjs');
+  const verses = createVerseStore();
+  const state = { letters: [] };
+  let now = at(12);
+  assert.equal(nextModeLetter(state, { level: 'genesis', now }), undefined);
+  for (const [level, name, count] of [['samuel', 'Dave', 4], ['exodus', 'Mo', 8]]) {
+    const series = modeLetters.filter(letter => letter.level === level);
+    assert.equal(series.length, count);
+    for (const letter of series) {
+      const options = { level, now };
+      assert.equal(nextModeLetter(state, options), letter);
+      assert.equal(nextModeLetter(state, { ...options, inbox: false }), undefined);
+      assert.equal(nextModeLetter({ ...state, blockedYhwh: true }, options), undefined);
+      assert.equal(letter.to, name);
+      assert.match(words[letter.textKey], new RegExp(name));
+      if (letter.source) assert.equal(letter.source.url, songOfTheSea);
+      if (letter.attachment) await access(etc('assets', 'mail', letter.attachment));
+      if (letter.verse) assert.ok((await verses.get(letter.verse)).length, letter.verse);
+      state.letters.push({ id: letter.id, at: now });
+      state.lastLetter = now;
+      assert.equal(nextModeLetter(state, { ...options, now: now + 1 }), undefined);
+      now += letterInterval;
+    }
+    assert.equal(nextModeLetter(state, { level, now }), undefined);
+  }
+  assert.equal(modeLetters.filter(letter => letter.attachment).length, 7);
+});
+
+test('the first-root song opens once after privilege detection and retries a failed handoff', async t => {
+  const fs = require('node:fs/promises'), os = require('node:os'), path = require('node:path');
+  const { firstRoot } = require('../src/yhwh-default/app/exodus.cjs');
+  const { songOfTheSea } = require('../lib/inbox.cjs');
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'exodus-test-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const urls = [];
+  const open = url => urls.push(url);
+  assert.equal(await firstRoot(directory, open, () => false), false);
+  assert.deepEqual(urls, []);
+  await assert.rejects(firstRoot(directory, () => { throw new Error('browser failed'); }, () => true), /browser failed/);
+  const calls = await Promise.all([firstRoot(directory, open, () => true), firstRoot(directory, open, () => true)]);
+  assert.equal(calls.filter(Boolean).length, 1);
+  assert.deepEqual(urls, [songOfTheSea]);
+  assert.equal(new URL(urls[0]).searchParams.get('t'), '142');
+  assert.equal(await firstRoot(directory, open, () => true), false);
+});

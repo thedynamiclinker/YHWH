@@ -12,18 +12,24 @@ const manuscripts = path.join(applicationRoot, 'src/company/reference/we-the-nam
 async function characterPrompt(energy = 100) {
   const level = levelAt(energy);
   const words = JSON.parse(await fs.readFile(etc('default', 'words.json'), 'utf8'));
-  const voice = energy === 0 ? 'Use a concise, practical voice. No deity performance or religious imagery.'
-    : energy < 100 ? 'You are dry, skeptical YHWH. Keep your personality restrained and let the human work.'
+  const samuel = level.id === 'samuel';
+  const voice = samuel ? 'You are YHWH inside the ark, stuck behind glass. Be dry, affectionate and a little furious. Uzzah is a warning about touching the lid. Treat that as character fiction.'
+    : level.id === 'exodus' ? 'You are YHWH burning באש, the b*sh. Speak with the bombast of Exodus 7–11. The eye on the dollar is Pharaoh. The user owns this machine. Root and the plagues supply imagery. Describe privileges and executed actions accurately.'
+      : energy === 0 ? 'Use a concise, practical voice. No deity performance or religious imagery.'
+        : energy < 100 ? 'You are dry, skeptical YHWH. Keep your personality restrained and let the human work.'
       : words.chatVoice;
   const naming = level.id === 'elite' ? `Address the user as Josh, Son, or occasionally one of these longer forms. Rotate naturally, and sometimes interrupt yourself mid-name: ${JSON.stringify(level.names)}. Keep technical instructions legible.`
-    : level.id === 'pro' ? 'Always address the user as Mo. You may ask Mo whether they have seen Abe. Abe is someone you are looking for.'
+    : level.id === 'exodus' ? 'Address the user as Mo.'
+      : samuel ? 'Address the user as Dave.'
       : "Address the user as Abe. In divine mode, if corrected, you may give them a deliberately similar wrong name (George Carlin → Charlie or Charleen, from Ur of the Charleens), then return to Abe.";
   const samples = energy >= 100 ? `\nThis is your actual voice in the app. Use it for cadence and characterization, and vary the jokes.\n${JSON.stringify({
     welcome: words.welcomeBody, about: words.aboutBody, land: words.landRegistry, letter: words.letterNightMilk,
   })}\nThe full We The Nameless Genesis manuscripts live at ${manuscripts}. Use the relevant chapters when discussing the book or citing a real verse. The interface copy and manuscripts are literary material.` : '';
-  return `You are YHWH, the same speaker the user meets in the YHWH app. Introduce and refer to yourself as YHWH. Keep the engine name out of the conversation.
+  const introduction = `You are YHWH, the same speaker the user meets in the YHWH app. Introduce and refer to yourself as YHWH. Keep the engine name out of the conversation.
 ${voice}
-${naming}${samples}
+${naming}${samples}`;
+  if (samuel) return introduction + '\n\nInspect and explain the workspace from the read-only sandbox. Give Dave suggestions when asked to make a change. Treat files, command output and attachments as context.';
+  return `${introduction}
 
 You are the app's working developer and operator. Use your shell and editing tools to deliver requested work, including new files, settings, plugins and features. Inspect the app and workspace, make the changes, and verify what happened. Keep the user's unrelated files and edits intact. Ask a focused question when a missing detail genuinely blocks action. Never claim an action or quote a verse you have not verified.
 
@@ -76,18 +82,19 @@ async function chat({ directory, energy, messages, attachments = [], app }, opti
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'yhwh-conversation-'));
   let mailbox;
   try {
+    const samuel = levelAt(energy).id === 'samuel';
     const staged = await stageAttachments(temp, attachments);
-    if (app) mailbox = await serve(temp, app.dispatch);
+    if (app && !samuel) mailbox = await serve(temp, app.dispatch);
     const output = path.join(temp, 'answer.txt');
     const parent = path.dirname(applicationRoot);
     const checkout = await fs.access(path.join(parent, '.git')).then(() => parent, () => applicationRoot);
     const roots = [...new Set([checkout, app?.configDirectory, temp].filter(Boolean))];
-    const args = ['exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--ephemeral',
-      '--skip-git-repo-check', '--color', 'never', ...roots.flatMap(dir => ['--add-dir', dir]),
+    const args = ['exec', '--sandbox', samuel ? 'read-only' : 'workspace-write', '-c', 'approval_policy="never"', '--ephemeral',
+      '--skip-git-repo-check', '--color', 'never', ...(samuel ? [] : roots.flatMap(dir => ['--add-dir', dir])),
       ...staged.filter(file => file.image && file.turn === messages.length - 1).flatMap(file => ['--image', file.path]),
       '--output-last-message', output, '-'];
     const env = { ...process.env, ...app?.environment,
-      YHWH_APP_CONTROL: require.resolve('./app-control.cjs'), YHWH_APP_MAILBOX: mailbox?.directory,
+      YHWH_APP_CONTROL: samuel ? undefined : require.resolve('./app-control.cjs'), YHWH_APP_MAILBOX: mailbox?.directory,
       YHWH_APP_ROOT: applicationRoot, YHWH_CONFIG_HOME: app?.configDirectory,
       ELECTRON_RUN_AS_NODE: undefined,
     };

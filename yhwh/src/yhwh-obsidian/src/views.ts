@@ -1,3 +1,4 @@
+import { themeEnergy } from '../../../lib/levels.cjs';
 import { text as interfaceText } from '../../../lib/text.cjs';
 import interfaceCopy from '../../../etc/obsidian/text-views.json';
 const ui = interfaceText(interfaceCopy);
@@ -339,8 +340,10 @@ export class ConsoleView extends ItemView {
       this.write(files.slice(0, 200).map(f => f.path).join('\n') || ui("no-matching-paths-"));
       if (files.length > 200) this.write(ui("matches-showing-the-first-200-", files.length));
     } else if (command === 'mode') {
-      arity(1); if (!['yhwh', 'nietzsche', 'dawkins'].includes(args[0])) throw new Error(ui("choose-yhwh-nietzsche-or-dawkins-"));
-      await p.selectLevel(args[0] === 'yhwh' ? 100 : args[0] === 'nietzsche' ? 50 : 0);
+      arity(1);
+      const amount = themeEnergy(args[0]);
+      if (amount === undefined) throw new Error('Choose Dawkins, Nietzsche, Samuel, Genesis, or Exodus.');
+      await p.selectLevel(amount);
       this.write(ui("current-mode-folder-configuration-may-override-t", p.level().id));
     } else if (command === 'three') { arity(0); await p.show(ATLAS); }
     else if (command === 'hello') { arity(0); this.write(p.current.energy ? p.settings.copy.hello : ui("hello-world-")); }

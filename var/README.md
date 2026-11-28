@@ -51,3 +51,5 @@ content ID of its prompt. If that prompt is submitted directly again, read the
 ledger, ask multiple-choice questions grounded in the current app, and record
 the invocation before implementing another pass. The script asks first when
 run from a terminal and includes the answers in the request.
+
+The shell design notes and the Heisig catalogue live in the project archives. [The shell and the sign of the dollar](log/yhwh-sign-of-the-dollar/) · [New Human School](log/new-human-school/)

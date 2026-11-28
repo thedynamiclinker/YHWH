@@ -47,16 +47,31 @@ Reopen the menu to pick up changes. Android and iOS read `.txt` actions from
 
 ## Universes
 
-Use **un** in the Files pane to see `new`, `cd`, `go`, and `ls`. **new**
-chooses a starter, **cd** enters the universe and sets `@`, and **go**
-opens a separate tab rooted there. With no folder selected, use the current directory.
-A universe starts as
-an ordinary directory whose `.@` begins with `# un root`, the same marker
-used by `un new`. The bundled **Empty** and **Lord workshop** starters work
-offline. The workshop includes a TWO example, `un` recipes, and a `zan` manual page.
+Use **un** in Files to create or enter a universe, open it as `/`, see
+templates, or open a provider. **new** defaults to an ordinary empty directory.
+**cd** enters any directory and sets `@`. **go** opens a separate tab rooted
+there. With no folder selected, use the current directory. The bundled
+**Empty** and **Lord workshop** templates still create their historical
+`.@` files and work offline.
+
+On desktop, the ordinary directory template calls `un nu` using `un` from
+PATH. When no executable is found, YHWH clones the configured Lord repository
+into its user cache. **Settings → Advanced → Lord repository** sets the fallback
+source. `YHWH_LORD_IS` takes precedence and the default is
+`https://github.com/thedynamiclinker/lord`. The fallback runs on Unix hosts with
+Git and Python 3. Windows uses a native `un` on PATH when available and otherwise creates the directory locally. Android and iOS create ordinary directories in app storage.
+
+Export `UNPATH` in `~/.bshrc` to find provider directories. Export `UNROOT` if
+each provider should follow the current directory relative to a common
+root. In **Files → un → Providers**, open a provider at `...` or preview
+files available to bring down. In the tab shell, type `dn`, `up`, `o`, or
+`@ cat FILE`. These actions use Lord’s provider protocol and the live shell
+environment.
 
 ```sh
 yhwh un ls
+yhwh un new work
+un cd work
 yhwh un new workshop --template workshop
 un cd workshop
 yhwh un new ../alpine --template alpine
@@ -75,13 +90,11 @@ interpreters and model providers follow the guest's own installation and login
 setup. `lord` uses Bash, and `un` uses Python 3.
 
 **Folder view** uses a directory as `/` for the app’s file navigation. It
-works for empty universes, ordinary folders selected through **Set /**, and
-the Android and iOS app workspace. A desktop terminal in a folder tab is an
+works for ordinary directories, including the Android and iOS app workspace. A desktop terminal in a folder tab is an
 ordinary host shell. The Initial’s `chroot DIRECTORY` sets the folder root in
 the current tab and `chroot --leave` returns to the previous directory.
 
-The Linux guest mode uses **Bubblewrap** and runs `/bin/sh` by default. Use `--root` to use
-a Linux root directory without a universe marker. Use `-- /absolute/command`
+The Linux guest mode uses **Bubblewrap** and runs `/bin/sh` by default. It accepts an accessible Linux root directory. Use `-- /absolute/command`
 to run another guest command. Outer paths appear by basename under `/mnt/host`.
 Use `--mount` for read-only access and `--mount-rw` to let the guest change a
 host file or directory. Relative paths resolve from the outer working directory.

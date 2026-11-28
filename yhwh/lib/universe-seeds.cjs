@@ -1,6 +1,8 @@
 const marker = '# un root\n';
+const lordSource = 'https://github.com/thedynamiclinker/lord';
 const hostOnly = 'OCI imports and guest terminals require a Linux host.';
 const seeds = [
+  { id: 'plain', label: 'Ordinary directory', description: 'An empty directory. Add bin, lib, etc, or a provider when you need them.' },
   { id: 'empty', label: 'Empty', description: 'An ordinary directory with a universe marker.' },
   { id: 'workshop', label: 'Lord workshop', description: 'A .@ command file, a TWO example, and a zan manual page. Works offline.' },
   { id: 'alpine', label: 'Alpine + lord', image: 'docker.io/library/alpine:latest', tools: 'lord' },
@@ -31,7 +33,7 @@ function seedFiles(id) {
     ['zan/men/1/hello', 'hello — print a greeting\nRun `un hello` from the workshop. Use `un list` to see the .@ recipes.\n'],
     ['.@', marker + 'hello: printf "%s\\n" "hello from $PWD"\nmen: cat "$UN_SOURCE/zan/men/1/hello"\n'],
   ];
-  return [['.@', marker]];
+  return id === 'plain' ? [] : [['.@', marker]];
 }
 
 async function createSeed(root, id, { mkdir, write, remove }, join) {
@@ -57,4 +59,4 @@ async function createSeed(root, id, { mkdir, write, remove }, join) {
   return root;
 }
 
-module.exports = { seeds, seedFor, marker, hostOnly, universeName, createSeed };
+module.exports = { seeds, seedFor, marker, hostOnly, lordSource, universeName, createSeed };

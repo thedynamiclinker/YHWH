@@ -14,8 +14,29 @@ test('the agent takes its voice from the app, with Abraham and subdued modes', a
   assert.match(prompt, /Address the user as Abe/);
   assert.match(prompt, /George Carlin → Charlie or Charleen/);
   assert.match(await characterPrompt(0), /No deity performance/);
-  assert.match(await characterPrompt(120), /Always address the user as Mo/);
+  assert.match(await characterPrompt(80), /Address the user as Dave/);
+  assert.match(await characterPrompt(120), /Address the user as Mo/);
   assert.match(await characterPrompt(140), /Address the user as Josh, Son[\s\S]*Jesus 𐤇 Christ What Was Ur Name Again[\s\S]*XP[\s\S]*χLD人/);
+});
+
+test('Samuel uses the read-only runner without an app-control mailbox', async () => {
+  const spawn = (_command, args, options) => {
+    assert.equal(args[args.indexOf('--sandbox') + 1], 'read-only');
+    assert.equal(args.includes('--add-dir'), false);
+    assert.equal(options.env.YHWH_APP_CONTROL, undefined);
+    assert.equal(options.env.YHWH_APP_MAILBOX, undefined);
+    const output = args[args.indexOf('--output-last-message') + 1];
+    const child = new EventEmitter();
+    child.kill = () => {};
+    child.stdin = new Writable({
+      write(_chunk, _encoding, done) { done(); },
+      final(done) { fs.writeFile(output, 'Still in here, Dave.').then(() => { done(); child.emit('close', 0); }, done); },
+    });
+    return child;
+  };
+  const app = { configDirectory: '/tmp', dispatch: () => assert.fail('Samuel opened app-control') };
+  const reply = await chat({ directory: '/tmp', energy: 80, app, messages: [{ role: 'user', content: 'Are you there?' }] }, { spawn });
+  assert.equal(reply, 'Still in here, Dave.');
 });
 
 test('conversation uses stdin and a writable workspace, stages uploads and reports failures', async () => {

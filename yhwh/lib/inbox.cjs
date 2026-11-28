@@ -1,5 +1,6 @@
 // Local literary mail, shared by the desktop, Three and mobile renderers.
 const { sender: primarySender, messages: emailLetters } = require('../etc/default/yhwh-emails.json');
+const { songOfTheSea, messages: modeLetters } = require('../etc/default/mode-mail.json');
 const alternateSenders = ['jewvacation@gmail.com', 'yhwvacation@gmail.com', 'admin@yahoo.com'];
 const { canReceiveLetter } = require('./presence.cjs');
 const minute = 60000;
@@ -73,6 +74,11 @@ function nextEmailLetter(state, options) {
   return emailLetters.find(letter => canReceiveLetter(state, letter.id, options));
 }
 
+function nextModeLetter(state, options) {
+  if (state.blockedYhwh) return;
+  return modeLetters.find(letter => letter.level === options.level && canReceiveLetter(state, letter.id, options));
+}
+
 function senderFor(state, letter) {
   if (letter.sender) return letter.sender;
   if (!state.blockedYhwh) return primarySender;
@@ -83,4 +89,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, emailLetters, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, senderFor };
+module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, senderFor };
