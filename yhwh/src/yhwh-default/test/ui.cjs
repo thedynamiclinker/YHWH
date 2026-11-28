@@ -340,19 +340,18 @@ process.stdin.on('end', () => {
     assert.equal(await parentRow.locator('.file-name').textContent(), '..');
     assert.equal(await page.locator('#files [data-command="parent"]').count(), 0);
     const nestedRow = page.locator('#file-list [data-path]').filter({ hasText: 'nested' });
-    await nestedRow.click();
-    assert.equal(await nestedRow.getAttribute('aria-selected'), 'true');
+    await nestedRow.locator('[data-expand-folder]').click();
     assert.equal(await page.evaluate(() => window.YHWH.active().cwd), directory);
     assert.equal(await page.evaluate(() => window.YHWH.active().file), null);
     await page.waitForFunction(() => !!document.querySelector('[data-children] .file-name'));
     assert.equal(await nestedRow.getAttribute('aria-expanded'), 'true');
     assert.equal(await page.locator('#file-list .file-name').filter({ hasText: 'child.txt' }).count(), 1);
-    await page.keyboard.press('ArrowLeft');
+    await nestedRow.locator('[data-expand-folder]').click();
     assert.equal(await nestedRow.getAttribute('aria-expanded'), 'false');
-    await page.keyboard.press('ArrowRight');
+    await nestedRow.locator('[data-expand-folder]').click();
     await page.waitForFunction(() => !!document.querySelector('[data-children] .file-name'));
     assert.equal(await page.evaluate(() => window.YHWH.active().cwd), directory);
-    await nestedRow.dblclick();
+    await nestedRow.click();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, nested);
     await page.waitForFunction(() => document.activeElement === document.querySelector('#file-list') && document.querySelector('#file-list .selected .file-name')?.textContent === 'child.txt');
     await run('toggle-terminal');
@@ -383,7 +382,7 @@ process.stdin.on('end', () => {
     await page.locator('#file-filter').fill('no matching files');
     assert.equal(await page.locator('#file-list .file-row').count(), 1);
     assert.equal(await parentRow.getAttribute('data-path'), directory);
-    await parentRow.dblclick();
+    await parentRow.click();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, directory);
     const notesRow = page.locator('#file-list [data-path]').filter({ hasText: 'notes.md' });
     await notesRow.click();
@@ -393,7 +392,7 @@ process.stdin.on('end', () => {
     await notesRow.dblclick();
     await page.waitForFunction(() => window.YHWH.active().file?.name === 'notes.md');
     assert.equal(await page.locator('#document').isVisible(), true);
-    console.log('✓ single-click selects; double-click navigates files and shell or opens the focus document');
+    console.log('✓ chevrons expand in place and single-click directories synchronize files and shell');
 
     await page.keyboard.press('Control+Shift+e'); await page.locator('#files').waitFor({ state: 'hidden' });
     await page.keyboard.press('Control+Shift+e'); await page.locator('#files').waitFor({ state: 'visible' });

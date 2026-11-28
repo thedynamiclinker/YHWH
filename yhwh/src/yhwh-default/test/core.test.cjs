@@ -155,11 +155,18 @@ test('MIME attachments stay outside the editor, while PDF preview survives a mis
  });
  test('real shell cd and file-manager cd share cwd; navigation waits for a foreground command', { timeout: 12000 }, async t => {
   const base = await fixture(t), other = path.join(base, "quoted ' %20 # directory"); await fs.mkdir(other);
-  const child = spawn(process.execPath, [path.join(root, '../../bin/default/terminal-host.cjs')], { env: { ...process.env, YHWH_SHELL: require('node:child_process').execFileSync('which', ['bash'], { encoding: 'utf8' }).trim(), YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' }, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const state = path.join(base, 'tab'), profile = path.join(base, 'configuration');
+  await fs.mkdir(state); await fs.mkdir(path.join(profile, 'etc'), { recursive: true });
+  await fs.writeFile(path.join(profile, 'etc/profile'), 'yhwh_at_rc=.at\nyhwh_cd() { printf "hook:%s\\n" "$PWD"; }\n');
+  await fs.mkdir(path.join(other, 'bin'));
+  await fs.writeFile(path.join(other, '.at'), 'abe() { printf "from-at\\n"; }\n');
+  const anchorFile = path.join(state, '@');
+  await fs.writeFile(anchorFile, base);
+  const child = spawn(process.execPath, [path.join(root, '../../bin/default/terminal-host.cjs')], { env: { ...process.env, YHWH_SHELL: 'bash', YHWH_NO_SHELL_RC: '1', YHWH_SYSTEM_CONFIG: path.join(base, 'system'), YHWH_CONFIG_HOME: profile, HISTFILE: '/dev/null' }, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
   t.after(() => { if (child.connected) child.disconnect(); });
   const messages = []; let stderr = ''; child.stderr.on('data', data => stderr += data); child.on('message', message => messages.push(message));
   async function until(predicate) { for (let i = 0; i < 150; i++) { if (predicate()) return; if (child.exitCode !== null) throw new Error(stderr || 'Shell host exited'); await new Promise(resolve => setTimeout(resolve, 40)); } throw new Error('Timed out waiting for shell event'); }
-  child.send({ type: 'start', id: 'one', cwd: base });
+  child.send({ type: 'start', id: 'one', cwd: base, env: { YHWH_TAB_ANCHOR: anchorFile } });
   await until(() => messages.some(message => message.data?.includes('133;A')));
   child.send({ type: 'write', id: 'one', data: `cd -- ${quote(other)}\r` });
   await until(() => messages.some(message => message.type === 'cwd' && message.cwd === other));
@@ -169,6 +176,14 @@ test('MIME attachments stay outside the editor, while PDF preview survives a mis
   await until(() => messages.some(message => message.type === 'cwd' && message.cwd === base));
   assert.equal(messages.some(message => message.data?.includes('finished')), true);
   assert.equal(messages.some(message => message.type === 'error'), false);
+  await fs.writeFile(anchorFile, other);
+  child.send({ type: 'anchor', id: 'one' });
+  child.send({ type: 'run', id: 'one', source: 'abe\nprintf "%s\\n" "$YHWH_BIN"\ncd @' });
+  await until(() => messages.filter(message => message.type === 'cwd' && message.cwd === other).length === 1);
+  const data = messages.map(message => message.data || '').join('');
+  assert.match(data, /from-at/);
+  assert.ok(data.includes(path.join(other, 'bin')));
+  assert.ok(data.includes('hook:' + other));
  });
 
  test('world views merge shared directories and read both live book sources', async () => {

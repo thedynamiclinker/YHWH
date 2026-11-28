@@ -85,10 +85,9 @@ async function main() {
       await page.getByRole('button', { name: 'Hello world', exact: true }).tap();
       assert.equal((await page.locator('#dialog[open] pre').textContent()).trim(), 'Hello world!');
       await page.keyboard.press('Escape');
-      await page.getByRole('button', { name: 'Tab anchor', exact: true }).tap();
-      await page.getByRole('button', { name: 'Go to @', exact: true }).tap();
+      await page.getByRole('button', { name: 'Go to tab prefix', exact: true }).tap();
       await page.waitForFunction(() => window.YHWH.active().cwd === '/Empty folder');
-      await page.getByRole('button', { name: 'Root directory', exact: true }).tap();
+      await page.getByRole('button', { name: 'Go to root directory', exact: true }).tap();
       await page.waitForFunction(() => window.YHWH.active().cwd === '/' && window.YHWH.active().anchor === '/Empty folder');
       await page.locator('#file-list [data-path="/notes.md"]').tap();
       await page.waitForFunction(() => window.YHWH.active()?.file?.name === 'notes.md');

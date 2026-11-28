@@ -8,15 +8,7 @@ __yhwh_command_names() {
     for name in "${(@k)aliases}" "${(@k)functions}" "${(@k)builtins}"; do printf '%s\0' "$name"; done
 }
 . "$YHWH_SHELL_LIB"
-function cd {
-    local target=${1:-}
-    if [[ "$target" == -- ]]; then target=${2:-}; fi
-    if [[ "$target" == @ || "$target" == @/* ]]; then
-        target=$(__yhwh_expand_at "$target") && builtin cd -- "${target%.}" || return
-    else
-        builtin cd "$@" || return
-    fi
-}
+function cd { __yhwh_cd "$@"; }
 function @-set { cwat "$@"; }
 
 zle -N __yhwh_at

@@ -1,0 +1,9 @@
+# ENV for a host POSIX shell. Select Bash or Zsh for in-process name discovery.
+if [ "${YHWH_NO_SHELL_RC:-}" != 1 ] && [ "${yhwh_home_rc:-no}" = yes ] && [ -r "$HOME/.shrc" ]; then . "$HOME/.shrc"; fi
+if [ -f "${YHWH_PREFIX_SHELL:-}" ]; then
+    eval "$("${YHWH_NODE:-node}" "$YHWH_PREFIX_SHELL" --sh)"
+fi
+__yhwh_command_names() { :; }
+. "$YHWH_SHELL_LIB"
+cd() { __yhwh_cd "$@" && __yhwh_cd_hook; }
+PS1='$(__yhwh_prompt)$ '

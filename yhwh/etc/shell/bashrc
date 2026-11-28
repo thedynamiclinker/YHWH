@@ -11,15 +11,8 @@ __yhwh_command_names() {
 }
 . "$YHWH_SHELL_LIB"
 
-cd() {
-    local target=${1:-}
-    if [[ "$target" == -- ]]; then target=${2:-}; fi
-    if [[ "$target" == @ || "$target" == @/* ]]; then
-        target=$(__yhwh_expand_at "$target") && builtin cd -- "${target%.}" || return
-    else
-        builtin cd "$@" || return
-    fi
-    __yhwh_cd_hook
+function cd {
+    __yhwh_cd "$@" && __yhwh_cd_hook
 }
 function @-set { cwat "$@"; }
 

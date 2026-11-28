@@ -65,6 +65,7 @@ __yhwh_set_at() {
         if [ -f "$rc" ] && [ -r "$rc" ]; then . "$rc"; fi
     fi
     if command -v yhwh_enter >/dev/null 2>&1; then yhwh_enter "$next" "$old"; fi
+    if [ "${YHWH_GUEST:-}" = 1 ]; then __yhwh_report; fi
     return 0
 }
 
@@ -72,7 +73,19 @@ __yhwh_cd_hook() {
     local previous=${__yhwh_previous_pwd:-$PWD}
     __yhwh_previous_pwd=$PWD
     if command -v yhwh_cd >/dev/null 2>&1; then yhwh_cd "$PWD" "$previous"; fi
+    if [ "${YHWH_GUEST:-}" = 1 ]; then __yhwh_report; fi
     return 0
+}
+
+__yhwh_cd() {
+    local target=${1:-}
+    __yhwh_at
+    if [ "$target" = -- ]; then target=${2:-}; fi
+    case $target in
+        @|@/*)
+            target=$(__yhwh_expand_at "$target") && command cd -- "${target%.}" || return ;;
+        *) command cd "$@" || return ;;
+    esac
 }
 
 __yhwh_expand_at() {
@@ -167,8 +180,15 @@ __yhwh_report() {
     if [ "${YHWH_GUEST:-}" = 1 ]; then
         printf '\007\033]697;at='
         __yhwh_uri "$YHWH_CWAT"
+        printf '\007\033]697;prefix='
+        local value delimiter=
+        for value in "$PATH" "$YHWH_BIN" "$YHWH_LIB" "$YHWH_ETC" "${yhwh_at_rc:-}"; do
+            printf '%s' "$delimiter"
+            __yhwh_uri "$value"
+            delimiter=';'
+        done
     fi
-    printf '\007\033]133;A\007'
+    printf '\007'
 }
 
 __yhwh_prompt() {
@@ -184,6 +204,7 @@ __yhwh_prompt() {
         ) > "$pending" && command mv -f -- "$pending" "$state"
     fi
     __yhwh_report
+    printf '\033]133;A\007'
 }
 
 if [ "${YHWH_GUEST:-}" != 1 ]; then

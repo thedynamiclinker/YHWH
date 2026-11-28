@@ -65,6 +65,17 @@ test('Nu and Cd use the shared starter format inside mobile storage', async () =
   assert.equal(root, '/Workshop');
   assert.match(new TextDecoder().decode((await storage.stat('/Workshop/.@')).bytes), /^# un root\nhello:/);
   assert.equal(await call('universe:cd', 'one', root), root);
+  assert.equal(await call('@-get', 'one'), root);
+  const state = await call('list', 'one');
+  assert.equal(state.cwd, '/');
+  assert.equal(state.systemRoot, '/');
+  assert.equal(await call('shell:prefix', 'one', 'bin'), '/Workshop/bin');
+  assert.ok((await storage.stat('/Workshop/bin')).directory);
+  const profile = await call('shell:prefix', 'one', 'profile');
+  assert.equal(profile, '/.yhwh/etc/profile');
+  await storage.write(profile, new TextEncoder().encode('yhwh_bin=tools\n'));
+  await call('shell:prefix', 'one', 'profile');
+  assert.equal((await call('file:read', profile)).content, 'yhwh_bin=tools\n');
   await assert.rejects(call('universe:create', 'one', 'Workshop', 'empty'), /already exists/);
   await assert.rejects(call('universe:create', 'one', '../escape', 'empty'), /without slashes/);
   await assert.rejects(call('universe:create', 'one', 'Alpine', 'alpine'), /Linux/);

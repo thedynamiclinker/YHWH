@@ -30,6 +30,10 @@ function start({ id, cwd, env = {}, guest }) {
       args = ['-i'];
     } else if (/fish/.test(name)) args = ['-i', '--init-command', 'function __yhwh_cwd --on-event fish_prompt; printf "\\e]7;file://localhost%s\\a\\e]133;A\\a" "$PWD"; end'];
     else if (/powershell|pwsh/.test(name)) args = ['-NoLogo', '-NoExit', '-Command', 'function global:prompt { [Console]::Write("`e]7;file://localhost" + $PWD.Path + "`a`e]133;A`a"); "PS $($PWD)> " }'];
+    else if (/^(sh|dash|ash|ksh)$/.test(name)) {
+      environment.ENV = require('../../lib/paths.cjs').etc('shell', 'shrc');
+      args = ['-i'];
+    }
     terminal = pty.spawn(shell, args, { cwd, env: environment, name: 'xterm-256color', cols: 100, rows: 25 });
   }
   const session = { terminal, cwd, name, pending: null, ready: false, hooked: Boolean(guest), tail: '' };
@@ -45,7 +49,10 @@ function start({ id, cwd, env = {}, guest }) {
     if (latest) {
       try { latest = decodeURIComponent(latest); } catch {}
       if (process.platform === 'win32' && /^\/[A-Z]:/i.test(latest)) latest = latest.slice(1);
-      if (latest !== session.cwd) { session.cwd = latest; send({ type: 'cwd', id, cwd: latest }); }
+      if (latest !== session.cwd) {
+        session.cwd = latest;
+        if (!session.pending || session.pending === latest) send({ type: 'cwd', id, cwd: latest });
+      }
     }
     if (session.tail.includes('\x1b]133;A\x07')) {
       session.ready = true; session.hooked = true;
@@ -61,6 +68,14 @@ function start({ id, cwd, env = {}, guest }) {
             }
           } catch {}
         }
+        const layouts = [...session.tail.matchAll(/\x1b\]697;prefix=([^\x07\x1b]*)\x07/g)];
+        const layout = layouts.at(-1)?.[1];
+        if (layout && layout !== session.layout) {
+          try {
+            session.layout = layout;
+            send({ type: 'layout', id, values: layout.split(';').map(decodeURIComponent) });
+          } catch {}
+        }
       }
       session.tail = '';
       flush(session);
@@ -74,8 +89,8 @@ function start({ id, cwd, env = {}, guest }) {
 }
 
 function changeDirectory(session, cwd) {
-  if (cwd === session.cwd) { session.pending = null; return; }
   if (!session.ready) { session.pending = cwd; return; }
+  if (cwd === session.cwd) { session.pending = null; return; }
   session.pending = null; session.ready = false;
   let command = ` cd -- ${quote(cwd)}`;
   if (/powershell|pwsh/.test(session.name)) command = `Set-Location -LiteralPath '${cwd.replace(/'/g, "''")}'`;
@@ -106,7 +121,7 @@ function flush(session) {
   const command = /[\x00-\x1f\x7f]/.test(source)
     ? `__yhwh_source=$(printf '%b.' ${quote(Array.from(Buffer.from(source), byte => '\\0' + byte.toString(8).padStart(3, '0')).join(''))}); eval "\${__yhwh_source%.}"`
     : `eval ${quote(source)}`;
-  session.terminal.write(`\x15 ${refresh}${command}\r`);
+  session.terminal.write(`\x15 ${refresh}${command}${session.name === 'guest' ? '; __yhwh_report' : ''}\r`);
 }
 
 process.on('message', message => {
@@ -123,7 +138,7 @@ process.on('message', message => {
       flush(session);
     }
     if (message.type === 'run') {
-      if (!/bash|zsh|guest/.test(session.name || '')) throw new Error('Use Bash or Zsh for Initial → Run in shell.');
+      if (!/^(bash|zsh|guest|sh|dash|ash|ksh)$/.test(session.name || '')) throw new Error('Use sh, Bash, or Zsh for Initial → Run in shell.');
       (session.commands ||= []).push(message.source);
       flush(session);
     }

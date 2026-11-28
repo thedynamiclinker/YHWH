@@ -456,7 +456,7 @@ class Workspace:
         return parts
 
     def shell_bar(self):
-        parts = [("class:heading", " / " if self.tab.guest_args else " Shell ")]
+        parts = [("class:heading", " Terminal / " if self.tab.guest_args else " Terminal ")]
         for index, shell in enumerate(self.shells):
             style = "class:active" if shell is self.shell else ""
             mark = " (exited)" if shell.exited else ""
@@ -487,10 +487,10 @@ class Workspace:
             details = ("Reading   Esc Back   Enter Toggle   Alt+G Actions" if self.reader_actions
                        else "Reading   Esc Back   Alt+G Links")
         elif self.pane == "files":
-            details = self.shell_paths()
+            details = f"{len(self.browser.tree.rows) - 1} items   / Filter   │   {self.shell_paths()}"
         elif self.pane == "terminal":
             details = ("Shell exited   Enter Restart" if self.shell and self.shell.exited
-                       else self.shell_paths())
+                       else f"{self.hint('new_shell')} New shell   │   {self.shell_paths()}")
         else:
             cursor = self.tab.editor.document
             mode = self.config.preferred_editor or "emacs"

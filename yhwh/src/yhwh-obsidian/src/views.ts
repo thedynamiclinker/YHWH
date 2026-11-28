@@ -6,6 +6,7 @@ import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import type YHWH from './main';
 import { parent, resolvePath, words } from './core';
 import { ATLAS } from './atlas';
+import { seeds } from '../../../lib/universe-seeds.cjs';
 
 export const NAV = 'yhwh-navigator', CONSOLE = 'yhwh-console', TEXT = 'yhwh-text';
 export function button(el: HTMLElement, text: string, title: string, click: () => unknown): HTMLButtonElement {
@@ -103,9 +104,31 @@ export class Navigator extends ItemView {
     button(tools, ui("3d"), ui("open-3d-directory"), () => p.run(() => p.show(ATLAS)));
     const universe = el.createDiv({ cls: 'yhwh-tools yhwh-universe-tools', attr: { role: 'group', 'aria-label': 'Universe controls' } });
     const target = () => { const selected = this.visible[this.index]; return selected instanceof TFolder ? selected.path : p.folder; };
-    fileButton(universe, 'New universe', 'Nu · Make new universe', 'orbit', () => p.universeDialog());
-    fileButton(universe, 'Enter', 'Cd · Enter universe', 'door-open', () => p.run(() => p.enterUniverse(target())));
-    fileButton(universe, 'Chroot', 'Go · Chroot universe', 'terminal', () => p.run(() => p.chrootUniverse(target())));
+    const un = fileButton(universe, 'un ▾', 'un · Universe commands', 'orbit', () => {
+      const menu = new Menu();
+      menu.addItem(item => item.setTitle('new · Create a universe').onClick(() => p.universeDialog()));
+      menu.addItem(item => item.setTitle('cd · Enter a universe').onClick(() => p.run(() => p.enterUniverse(target()))));
+      menu.addItem(item => item.setTitle('go · Chroot').onClick(() => p.run(() => p.chrootUniverse(target()))));
+      menu.addItem(item => item.setTitle('ls · List seed templates').onClick(() => {
+        const modal = new Modal(this.app);
+        modal.setTitle('un ls');
+        modal.contentEl.createEl('pre', { text: seeds.map(seed => `${seed.id}\t${seed.image || seed.description}`).join('\n') });
+        modal.open();
+      }));
+      const bounds = un.getBoundingClientRect();
+      menu.showAtPosition({ x: bounds.left, y: bounds.bottom });
+    });
+    el.createDiv({ text: `. /${p.folder}   @ /${p.anchor}   / /`, cls: 'yhwh-muted' });
+    const go = el.createDiv({ cls: 'yhwh-tools', attr: { role: 'group', 'aria-label': 'Go to shell directories' } });
+    go.createSpan({ text: 'go' });
+    button(go, '.', 'Go to current directory', () => p.run(() => p.go(p.folder)));
+    button(go, '@', 'Go to tab prefix', () => p.run(() => p.go(p.anchor)));
+    button(go, '/', 'Go to vault root', () => p.run(() => p.go('')));
+    const set = el.createDiv({ cls: 'yhwh-tools', attr: { role: 'group', 'aria-label': 'Set shell directories' } });
+    set.createSpan({ text: 'set' });
+    button(set, '.', 'Set current directory', () => p.run(() => p.go(target())));
+    button(set, '@', 'Set tab prefix', () => p.run(() => p.setAnchor(target())));
+    button(set, '/', 'Set root directory', () => p.run(() => p.chrootUniverse(target(), true)));
     const crumbs = el.createDiv('yhwh-breadcrumbs');
     this.dropTarget(button(crumbs, '/', ui("vault-root"), () => p.run(() => p.go(''))), '');
     let path = '';
@@ -185,7 +208,7 @@ export class Navigator extends ItemView {
   async onClose() { this.unsubscribe?.(); }
 }
 
-const HELP = ui("vault-commands-quote-paths-containing-spaces-hel") + '\nnu NAME [TEMPLATE] · create a universe\ngo [DIRECTORY] · open the chroot dialog';
+const HELP = ui("vault-commands-quote-paths-containing-spaces-hel") + '\ncwat [DIRECTORY] · print or set @\nun [new | cd | go | ls]';
 
 export class ConsoleView extends ItemView {
   private unsubscribe?: () => void;
@@ -237,6 +260,12 @@ export class ConsoleView extends ItemView {
       if (/\s$/.test(this.input.value)) tokens.push('');
       if (tokens.length < 2) return;
       const value = tokens.at(-1)!;
+      if (tokens[0] === 'un' && tokens.length === 2) {
+        const matches = ['new', 'cd', 'go', 'ls'].filter(command => command.startsWith(value));
+        if (matches.length === 1) this.input.value = `un ${matches[0]} `;
+        else if (matches.length) this.write(matches.join('  '));
+        return;
+      }
       const slash = value.lastIndexOf('/');
       const prefix = slash < 0 ? '' : value.slice(0, slash + 1);
       const directory = resolvePath(this.plugin.folder, prefix);
@@ -251,7 +280,10 @@ export class ConsoleView extends ItemView {
   }
   async execute(line: string) {
     const p = this.plugin, [command, ...args] = words(line);
-    const at = (i = 0) => resolvePath(p.folder, args[i] ?? '');
+    const at = (i = 0) => {
+      const value = args[i] ?? '';
+      return value === '@' || value.startsWith('@/') ? resolvePath(p.anchor, value.slice(2)) : resolvePath(p.folder, value);
+    };
     const entry = (i = 0) => {
       if (!args[i]) throw new Error(ui("a-path-is-required-"));
       const file = this.app.vault.getAbstractFileByPath(at(i));
@@ -262,6 +294,7 @@ export class ConsoleView extends ItemView {
     if (command === 'help') { arity(0); this.write(HELP); }
     else if (command === 'clear') { arity(0); this.output.empty(); }
     else if (command === 'pwd') { arity(0); this.write('/' + p.folder); }
+    else if (command === 'cwat') { arity(0, 1); if (args.length) p.setAnchor(at()); else this.write('/' + p.anchor); }
     else if (command === 'cd') { arity(0, 1); await p.go(args.length ? at() : ''); }
     else if (command === 'ls') {
       arity(0, 1); const folder = this.app.vault.getAbstractFileByPath(at() || '/');
@@ -275,6 +308,19 @@ export class ConsoleView extends ItemView {
       arity(1); const file = await this.app.vault.create(at(), ''); await p.open(file, true); this.write(ui("created") + file.path);
     } else if (command === 'mkdir') {
       arity(1); await this.app.vault.createFolder(at()); this.write(ui("created") + at());
+    } else if (command === 'un') {
+      const action = args.shift();
+      if (action === 'new') {
+        arity(0, 2);
+        if (args.length) this.write(await p.makeUniverse(args[0], args[1]));
+        else p.universeDialog();
+      } else if (action === 'cd') {
+        arity(0, 1); await p.enterUniverse(at());
+      } else if (action === 'go') {
+        arity(0, 1); await p.chrootUniverse(at());
+      } else if (action === 'ls') {
+        arity(0); this.write(seeds.map(seed => `${seed.id}\t${seed.image || seed.description}`).join('\n'));
+      } else this.write('un new   un cd   un go   un ls');
     } else if (command === 'nu') {
       arity(1, 2); this.write(await p.makeUniverse(args[0], args[1]));
     } else if (command === 'go') {

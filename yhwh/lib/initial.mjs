@@ -270,7 +270,14 @@ export function createInitial(host) {
     const requireArgs = count => { if (args.length < count) throw new Error(`Choose ${count} argument${count===1?'':'s'} for ${name}. ${help(name).split('\n')[1]}`); };
     if (context.preview && ['mkdir', 'touch', 'cp', 'mv', 'trash'].includes(name)) requireRun(`execute ${name}`);
     if (name==='pwd') return text(context.root ? context.cwd.slice(context.root.length) || '/' : context.cwd);
-    if (name === 'cwat') name = args.length ? '@-set' : '@-get';
+    if (name === 'cwat') {
+      if (args.length === 1 && ['-r', '--reload'].includes(args[0])) {
+        if (context.capture || context.preview) requireRun('reload the shell profile');
+        await host.reloadShell();
+        return text('');
+      }
+      name = args.length ? '@-set' : '@-get';
+    }
     if (name === 'un') {
       const [subcommand, ...options] = args;
       if (subcommand === 'ls' && !options.length) return text(seedLibrary.seeds.map(seed => `${seed.id}\t${seed.image || seed.description}`).join('\n'));

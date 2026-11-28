@@ -1848,6 +1848,7 @@ async function openRequest(opening) {
   if (opening.theme) { temporaryEnergy = opening.theme === 'dawkins' ? 0 : opening.theme === 'nietzsche' ? 50 : 100; applyConfig(active().config); }
   if (opening.universe === 'nu' && info.directory) newUniverse();
   if (opening.universe === 'go' && info.directory) chrootUniverse();
+  if (opening.universe === 'root' && info.directory) chrootUniverse(true, info.path);
 }
 
 function followLink({ href, wiki, newTab, anchor }) {

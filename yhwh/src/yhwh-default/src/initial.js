@@ -70,6 +70,10 @@ export function installInitial(app, { home, mobile, call }) {
     navigate: path => app.navigate(path), open: path => app.openFile(path), view: showView,
     anchor: path => path === undefined ? call('@-get', app.active().id) : app.setAnchor(app.active(), path),
     universe: (subcommand, args) => launchFull(() => app.universe(subcommand, args)),
+    reloadShell: () => {
+      if (mobile) throw new Error('Sourcing a shell profile requires a Unix host.');
+      return runShell('cwat --reload');
+    },
     builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface', '@-get', '@-set'].includes(item.id)),
     chroot: async path => {
       const tab = app.active();
@@ -178,11 +182,11 @@ export function installInitial(app, { home, mobile, call }) {
     });
   }
   async function showPrefix() {
-    const { anchor, user, dirs, profile } = await prefix('layout');
+    const { anchor, user, dirs, profile, guest } = await prefix('layout');
     modal('--prefix', `<dl><dt>@</dt><dd>${escape(anchor)}</dd>
       <dt>bin</dt><dd>${escape(dirs.bin)}</dd><dt>lib</dt><dd>${escape(dirs.lib)}</dd><dt>etc</dt><dd>${escape(dirs.etc)}</dd>
       <dt>User prefix</dt><dd>${escape(user)}</dd><dt>etc/profile</dt><dd>${escape(profile)}</dd></dl>
-      <div class="initial-tools">${buttons([['cwat', 'choose-at'], ['bin', 'user-bin'], ['lib', 'user-lib'], ['etc', 'user-etc'], ['etc/profile', 'profile'], ...(!mobile ? [['~/.bashrc', 'home-rc'], ['@ rc', 'at-rc']] : [])])}</div>
+      <div class="initial-tools">${buttons([['cwat', 'choose-at'], ['bin', 'user-bin'], ['lib', 'user-lib'], ['etc', 'user-etc'], [guest ? '/etc/yhwh/profile' : 'etc/profile', 'profile'], ...(!mobile ? [[guest ? '~/.shrc' : '~/.bashrc', 'home-rc'], ['@ rc', 'at-rc']] : [])])}</div>
       ${mobile ? '<p>Shell files can be edited here. Running them requires a Unix host.</p>' : '<p>Source scripts with <code>.</code>. Put executables on <code>PATH</code>. Set <code>yhwh_bin</code>, <code>yhwh_lib</code>, or <code>yhwh_etc</code> in <code>etc/profile</code> to change their locations.</p>'}`, { back: shelf });
     bind({ 'choose-at': () => launchFull(() => app.run('@-set')), profile: () => openPrefix('profile', false),
       'user-bin': () => openPrefix('user-bin'), 'user-lib': () => openPrefix('user-lib'), 'user-etc': () => openPrefix('user-etc'),

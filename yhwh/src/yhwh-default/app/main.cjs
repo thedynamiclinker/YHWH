@@ -247,24 +247,33 @@ async function startTerminal(focus, id) {
 
 async function shellPrefix(focus, action) {
   if (!focus) throw new Error('Closed tab.');
-  const user = userDirectory(), anchor = await tabAnchor.read(focus.anchor.filename);
-  const config = await configFor(focus.guest ? user : focus.cwd);
+  const guestRoot = focus.guest?.cwd;
+  const user = guestRoot ? path.join(guestRoot, 'etc/yhwh') : userDirectory();
+  const anchor = await tabAnchor.read(focus.anchor.filename);
+  const config = await configFor(guestRoot ? userDirectory() : focus.cwd);
   const runtime = !focus.guest && focus.terminalId
     ? (await fs.readFile(path.join(path.dirname(focus.anchor.filename), 'shell'), 'utf8').catch(() => '')).split('\0')
     : [];
   const live = runtime[1] === anchor && runtime.length >= 7;
-  const dirs = Object.fromEntries(['bin', 'lib', 'etc'].map((name, i) =>
-    [name, path.resolve(anchor, live ? runtime[i + 3] : config.values[name] || name)]));
-  const profileFile = path.join(user, 'etc/profile');
-  const pathValue = live ? runtime[2] : focus.guest ? '/usr/local/bin:/usr/bin:/bin' : config.environment.PATH || '';
-  if (action === 'layout') return { anchor, user, dirs, profile: profileFile, path: pathValue };
+  const guestLocation = filename => path.join(guestRoot, path.posix.resolve('/', filename));
+  const guestLayout = focus.guestLayout;
+  const dirs = Object.fromEntries(['bin', 'lib', 'etc'].map((name, i) => {
+    const filename = guestRoot ? guestLayout?.[i + 1] : live ? runtime[i + 3] : config.values[name];
+    return [name, guestRoot && filename ? guestLocation(filename) : path.resolve(anchor, filename || name)];
+  }));
+  const profileFile = path.join(user, guestRoot ? 'profile' : 'etc/profile');
+  const pathValue = live ? runtime[2] : guestRoot ? guestLayout?.[0] ?? '/usr/local/bin:/usr/bin:/bin' : config.environment.PATH || '';
+  if (action === 'layout') return { anchor, user, dirs, profile: profileFile, path: pathValue, guest: Boolean(guestRoot) };
+  const ensure = directory => guestRoot
+    ? universes.guestPath(guestRoot, path.relative(guestRoot, directory), true)
+    : fs.mkdir(directory, { recursive: true }).then(() => directory);
   if (action === 'commands') {
     const names = new Set(live ? runtime.slice(6).filter(name => name && !/^_{1,2}yhwh_/.test(name)) : []);
-    const from = async folder => {
+    const from = async (folder, resolve = filename => filename) => {
       const entries = await fs.readdir(folder, { withFileTypes: true }).catch(() => []);
       await Promise.all(entries.filter(entry => entry.isFile() || entry.isSymbolicLink()).map(async entry => {
-        const filename = path.join(folder, entry.name);
         try {
+          const filename = await resolve(path.join(folder, entry.name));
           await fs.access(filename, require('node:fs').constants.X_OK);
           if (!entry.isSymbolicLink() || (await fs.stat(filename)).isFile()) names.add(entry.name);
         } catch {}
@@ -273,30 +282,37 @@ async function shellPrefix(focus, action) {
     const folders = pathValue === '' && !live ? [] : [...new Set(pathValue.split(path.delimiter))];
     await Promise.all(folders.map(async folder => {
       const location = path.resolve(focus.cwd, folder);
-      if (focus.guest) {
-        const resolved = await universes.guestPath(focus.guest.cwd, folder || '/').catch(() => null);
-        if (resolved) await from(resolved);
+      if (guestRoot) {
+        const directory = path.posix.resolve('/' + path.relative(guestRoot, focus.cwd), folder);
+        const resolve = part => universes.guestPath(guestRoot, path.posix.join(directory, path.basename(part)));
+        const resolved = await universes.guestPath(guestRoot, directory).catch(() => null);
+        if (resolved) await from(resolved, resolve);
       } else await from(location);
     }));
     return [...names].sort((a, b) => a.localeCompare(b)).slice(0, 6000);
   }
   if (/^(?:user-)?(?:bin|lib|etc)$/.test(action)) {
     const directory = action.startsWith('user-') ? path.join(user, action.slice(5)) : dirs[action];
-    const target = focus.guest && !action.startsWith('user-') ? await destination(directory) : directory;
-    await fs.mkdir(target, { recursive: true });
+    await ensure(directory);
     return directory;
   }
   if (action === 'profile') {
     const source = await fs.readFile(paths.etc('profile'), 'utf8');
-    await fs.writeFile(profileFile, source, { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+    const parent = await ensure(path.dirname(profileFile));
+    await fs.writeFile(path.join(parent, path.basename(profileFile)), source, { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
     return profileFile;
   }
-  if (action === 'home-rc') return path.join(os.homedir(), '.bashrc');
-  const rc = action === 'at-rc' && config.values.at_rc;
+  if (action === 'home-rc') {
+    const filename = guestRoot ? path.join(guestRoot, 'root/.shrc') : path.join(os.homedir(), '.bashrc');
+    const parent = await ensure(path.dirname(filename));
+    await fs.writeFile(path.join(parent, path.basename(filename)), '', { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+    return filename;
+  }
+  const rc = action === 'at-rc' && (guestRoot ? guestLayout?.[4] : config.values.at_rc);
   if (rc) {
-    const filename = path.resolve(anchor, rc);
-    await fs.mkdir(path.dirname(filename), { recursive: true });
-    await fs.appendFile(filename, '', { mode: 0o600 });
+    const filename = guestRoot ? guestLocation(path.posix.resolve('/' + path.relative(guestRoot, anchor), rc)) : path.resolve(anchor, rc);
+    const parent = await ensure(path.dirname(filename));
+    await fs.writeFile(path.join(parent, path.basename(filename)), '', { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
     return filename;
   }
   throw new Error('Set yhwh_at_rc in etc/profile to choose a file to source at @.');
@@ -328,6 +344,9 @@ async function launch() {
     if (message.type === 'anchor' && focus?.guest && focus.terminalId === message.id && path.isAbsolute(message.directory)) {
       try { await accessAnchor(focus.id, path.join(focus.guest.cwd, message.directory)); }
       catch {}
+    }
+    if (message.type === 'layout' && focus?.guest && focus.terminalId === message.id && message.values.length === 5) {
+      focus.guestLayout = message.values;
     }
   });
   handle('bootstrap', async () => {

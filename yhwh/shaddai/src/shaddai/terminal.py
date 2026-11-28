@@ -95,7 +95,8 @@ class Shell:
         self.argv = argv or [command, "-i"]
         self.startup = None
         name = os.path.basename(command)
-        self.hooked = bool(argv or (startup and name in ("bash", "zsh")))
+        self.hooked = bool(argv or (startup and name in ("bash", "zsh", "sh", "dash", "ash", "ksh")))
+        self.read_line_hook = name in ("bash", "zsh")
         if startup and name == "bash":
             self.argv[1:1] = ["--rcfile", str(startup / "bashrc")]
         elif startup and name == "zsh":
@@ -105,6 +106,8 @@ class Shell:
             self.environment = {**self.environment,
                                 "YHWH_ZDOTDIR": self.environment.get("ZDOTDIR") or str(Path.home()),
                                 "ZDOTDIR": self.startup.name}
+        elif startup and self.hooked and not argv:
+            self.environment = {**self.environment, "ENV": str(startup / "shrc")}
         elif interactive and name == "bash":
             self.startup = TemporaryDirectory(prefix="shaddai-shell-")
             rcfile = Path(self.startup.name) / "bashrc"
@@ -244,14 +247,14 @@ class Shell:
     def navigate(self, directory):
         if not self.hooked:
             return
-        self.navigation = str(directory) if str(directory) != self.cwd else None
+        self.navigation = str(directory)
         self.push_command()
 
     def refresh_anchor(self, directory=None):
         if self.guest:
             self.guest_anchor = directory
             self.push_command()
-        elif self.hooked:
+        elif self.hooked and self.read_line_hook:
             self.anchor_changed = True
             self.push_command()
 
@@ -266,6 +269,8 @@ class Shell:
             self.anchor_changed = False
             self.write("\x1b[277~")
         anchor, self.guest_anchor = self.guest_anchor, None
+        if self.navigation == self.cwd:
+            self.navigation = None
         if anchor is not None and anchor != self.anchor:
             command = "__yhwh_set_at " + quote(anchor)
         elif self.navigation is not None:

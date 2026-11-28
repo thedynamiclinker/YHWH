@@ -16,6 +16,7 @@ export default class YHWH extends Plugin {
   settings!: Settings;
   current!: Settings;
   folder = '';
+  anchor = '';
   circus?: CircusPair;
   circusBusy = false;
   circusError = '';
@@ -36,6 +37,7 @@ export default class YHWH extends Plugin {
     this.settings = settings(await this.loadData());
     this.current = { ...this.settings };
     this.folder = this.app.vault.getAbstractFileByPath(this.settings.folder) instanceof TFolder ? this.settings.folder : '';
+    this.anchor = this.folder;
     this.registerView(NAV, leaf => new Navigator(leaf, this));
     this.registerView(CONSOLE, leaf => new ConsoleView(leaf, this));
     this.registerView(TEXT, leaf => new TextView(leaf, this));
@@ -249,15 +251,21 @@ export default class YHWH extends Plugin {
     if (info?.type !== 'file' || info.size > 65536 || !(await adapter.read(file)).startsWith(marker))
       throw new Error('Choose a universe directory created by Nu or un new.');
     await this.go(directory);
+    this.setAnchor(directory);
   }
-  async chrootUniverse(directory: string) {
+  setAnchor(directory: string) {
+    if (!(this.app.vault.getAbstractFileByPath(directory || '/') instanceof TFolder)) throw new Error('Choose an existing directory for @.');
+    this.anchor = directory;
+    this.changed();
+  }
+  async chrootUniverse(directory: string, raw = false) {
     const adapter = this.linuxAdapter;
     if (!adapter) throw new Error(hostOnly);
-    await this.hostCommand(['open', 'default', '--open', adapter.getFullPath(directory), '--universe=go']);
+    await this.hostCommand(['open', 'default', '--open', adapter.getFullPath(directory), raw ? '--universe=root' : '--universe=go']);
   }
   universeDialog() {
     const modal = new Modal(this.app), form = modal.contentEl.createEl('form', { cls: 'yhwh-universe-form' });
-    modal.setTitle('Nu · Make new universe');
+    modal.setTitle('un new · Make new universe');
     const name = form.createEl('label', { text: 'Directory name' }).createEl('input', { type: 'text', attr: { required: '' } });
     const template = form.createEl('label', { text: 'Template' }).createEl('select');
     const description = form.createEl('p'), imageLabel = form.createEl('label', { text: 'OCI image' });

@@ -177,7 +177,7 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Local Markdown images | Native WebView URLs into the app's workspace; remote images stay blocked by CSP |
 | Background / resume | Refreshes directory listings on resume. unsaved buffers remain; recovery drafts survive WebView eviction where local storage is available |
 | Plugins | Shared bundled hello-world plugin; arbitrary user JS plugins need a mobile distribution/trust design |
-| Configuration | Native JSON settings with global/directory scopes, local CSS/backgrounds; Bash rc evaluation and rc editing require desktop |
+| Configuration | Native JSON UI settings with global/directory scopes and local CSS/backgrounds. Shell profile files are editable in the Initial. Desktop evaluates them in its shell. |
 | External vaults and sync | App-owned workspace only; no Android SAF folder grants, iCloud vault selection, Obsidian Sync or cross-device sync yet |
 | Initial · in-app shell | Shared Atomics, Builtins, Letters and Logos. Drag tiles into the 5×5 script grid, select a tile to edit its options, and see the preview update above the grid. Use Run for file writes or app actions. |
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |

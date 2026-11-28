@@ -5,6 +5,7 @@ Usage: yhwh <command> [arguments]
 
   open [default|three|obsidian] [PATH]  Open an interface (default: default)
   inbox [MESSAGE-ID]  List or read bundled YHWH emails
+  un                 List universe commands: new, cd, go, ls
   nu DIRECTORY       Make a new universe. Use nu --list for templates.
   cd [DIRECTORY]     Print the path to a universe for the calling shell.
   go [DIRECTORY]     Chroot into a universe on Linux.

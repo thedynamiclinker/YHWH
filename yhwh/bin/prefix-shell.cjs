@@ -8,8 +8,10 @@ const path = require('node:path');
     if (!await fs.stat(prefix).then(stat => stat.isDirectory(), () => false)) continue;
     lines.push(`export YHWH_PREFIX=${quote(prefix)}`);
     const profile = path.join(prefix, 'etc/profile');
-    lines.push(`[[ ! -f ${quote(profile)} ]] || . ${quote(profile)}`);
-    if (process.argv.includes('--zsh')) {
+    lines.push(`[ ! -f ${quote(profile)} ] || . ${quote(profile)}`);
+    if (process.argv.includes('--sh')) {
+      lines.push('[ ! -f "$YHWH_PREFIX/${yhwh_shrc_file:-etc/shrc}" ] || . "$YHWH_PREFIX/${yhwh_shrc_file:-etc/shrc}"');
+    } else if (process.argv.includes('--zsh')) {
       lines.push('[[ ! -f "$YHWH_PREFIX/${yhwh_zshrc_file:-etc/zshrc}" ]] || . "$YHWH_PREFIX/${yhwh_zshrc_file:-etc/zshrc}"');
     } else {
       lines.push('[[ ! -f "$YHWH_PREFIX/${yhwh_bashrc_file:-etc/bashrc}" ]] || . "$YHWH_PREFIX/${yhwh_bashrc_file:-etc/bashrc}"');

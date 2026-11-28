@@ -108,7 +108,12 @@ export function createWorkbench({ catalog, token, run, runShell, details, save, 
     event.preventDefault();
     const value = search.value.trim();
     if (adding) action(() => place(value))();
-    else execute(matches.length === 1 && !/\s/.test(value) ? token(matches[0]) : value);
+    else {
+      const name = value.split(/\s/, 1)[0], items = catalog();
+      const native = items.find(item => item.name === name && item.kind === 'PATH');
+      if (native && !items.some(item => item.name === name && item.kind !== 'PATH')) action(() => runShell(value))();
+      else execute(matches.length === 1 && !/\s/.test(value) ? token(matches[0]) : value);
+    }
   };
   $('[data-layout]').onclick = () => {
     list = !list;
