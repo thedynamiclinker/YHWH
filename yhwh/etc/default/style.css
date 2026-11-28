@@ -89,7 +89,10 @@ body[data-level='exodus'] #mode-name { color: var(--gold); }
 .directory-menu button { display: block; width: 100%; padding: 6px 12px; text-align: left; }
 .directory-menu button:is(:hover, :focus-visible) { background: var(--purple-bg); color: var(--purple); }
 @supports not selector(:popover-open) { .directory-menu { display: none; } }
-@media (pointer: coarse) { .directory-shortcuts button { min-width: 44px; min-height: 44px; } }
+@media (pointer: coarse) {
+  .directory-shortcuts button { min-height: 44px; }
+  .directory-shortcuts .directory-more { min-width: 44px; }
+}
 #file-list { overflow: auto; padding: 0 8px 20px; flex: 1; outline-offset: -2px; }
 .file-row { display: flex; align-items: center; gap: 8px; padding: 5px 9px; border-radius: 4px; cursor: default; min-height: 29px; color: var(--muted); }
 .file-row:hover { background: #ffffff05; }

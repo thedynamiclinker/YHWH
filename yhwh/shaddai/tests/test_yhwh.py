@@ -4,6 +4,7 @@ from pathlib import Path
 import shlex
 import socket
 from tempfile import TemporaryDirectory
+from time import time
 import unittest
 
 from test_workspace import LAUNCHER, WorkspaceTTY, F10
@@ -80,6 +81,27 @@ class YhwhTTYTests(unittest.TestCase):
         self.assertEqual(self.opened.read_text().strip(), "https://youtu.be/tH2w6Oxx0kQ")
         self.assertEqual({key: item["read"] for key, item in json.loads(inbox.read_text())["letters"].items()},
                          {"covenant": True, "qohelet": True})
+
+    def test_dave_letter_can_arrive_during_genesis_work(self):
+        defaults = LAUNCHER.parents[2] / "etc/default"
+        library = self.data / "yhwh/etc/default"
+        for name in ("mode-mail.json", "levels.json"):
+            (library / name).symlink_to(defaults / name)
+        (library / "words.json").write_text((defaults / "words.json").read_text())
+        put(self.user / "rc", "/\n    terminal=false\n")
+        inbox = Path(self.env["SHADDAI_PREFIX"]) / "var/inbox.json"
+        first = time() - 1800
+        put(inbox, json.dumps({"letters": {"covenant": {"read": True, "at": first}}, "last": first}))
+        tty = self.launch()
+        self.command(tty, "New app tab")
+        self.command(tty, "Inbox")
+        tty.shows("* Re: return shipping")
+        tty.send(b"Re: return shipping\r")
+        tty.shows("To: Dave")
+        tty.shows("five gold mice")
+        received = json.loads(inbox.read_text())
+        self.assertTrue(received["letters"]["samuel-return-shipping"]["read"])
+        self.assertEqual(received["last_misdelivery"], received["last"])
 
     def test_panel_shortcuts_cycle_and_resize_from_inside_the_shell(self):
         put(self.user / "rc", "/\n    terminal=false\n")

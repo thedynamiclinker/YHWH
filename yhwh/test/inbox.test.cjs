@@ -138,7 +138,7 @@ test('Samuel and Exodus deliver independent, editable series with bundled images
   const state = { letters: [] };
   let now = at(12);
   assert.equal(nextModeLetter(state, { level: 'genesis', now }), undefined);
-  for (const [level, name, count] of [['samuel', 'Dave', 4], ['exodus', 'Mo', 11]]) {
+  for (const [level, name, count] of [['samuel', 'Dave', 12], ['exodus', 'Mo', 12]]) {
     const series = modeLetters.filter(letter => letter.level === level);
     assert.equal(series.length, count);
     for (const letter of series) {
@@ -161,12 +161,51 @@ test('Samuel and Exodus deliver independent, editable series with bundled images
     }
     assert.equal(nextModeLetter(state, { level, now }), undefined);
   }
+  const finale = modeLetters.filter(letter => letter.level === 'exodus').at(-1);
+  assert.equal(finale.id, 'exodus-milk-and-honey');
+  assert.match(words[finale.textKey], /\/mnt\/sinai[\s\S]*Linux Mint[\s\S]*MILK AND HONEY SAUCE/);
   assert.equal(modeLetters.filter(letter => letter.attachment).length, 7);
   for (const letter of emailLetters.slice(-2)) {
     assert.equal(letter.to, 'Abe');
     assert.equal(attachmentsFor(letter).length, 2);
     for (const attachment of attachmentsFor(letter)) await access(etc('assets', 'mail', attachment.name));
   }
+});
+
+test('only selected Dave letters can go astray, with a shared cooldown across modes and restarts', () => {
+  const { modeLetters, nextModeLetter, nextMisdeliveredLetter } = require('../lib/inbox.cjs');
+  const ids = ['samuel-return-shipping', 'samuel-cedar-revised', 'samuel-donkey-report'];
+  assert.deepEqual(modeLetters.filter(letter => letter.mayMisdeliver).map(letter => letter.id), ids);
+  let state = { letters: [], lastLetter: at(12) };
+  const next = (level, now, flags = {}) => nextMisdeliveredLetter(state, { level, now, ...flags });
+  assert.equal(next('genesis', at(12, 30)), undefined);
+  state.letters.push({ id: 'house', at: at(12), read: true });
+  assert.equal(next('genesis', at(12, 30) - 1), undefined);
+  for (const level of ['dawkins', 'nietzsche', 'samuel']) assert.equal(next(level, at(12, 30)), undefined);
+  for (const flags of [{ inbox: false }, { theme: 'dawkins' }, { theme: 'nietzsche' }]) {
+    assert.equal(next('genesis', at(12, 30), flags), undefined);
+  }
+  state.blockedYhwh = true;
+  assert.equal(next('genesis', at(12, 30)), undefined);
+  state.blockedYhwh = false;
+  state.lastLetter = at(12, 26);
+  assert.equal(next('genesis', at(12, 30)), undefined);
+
+  for (const [index, level] of ['genesis', 'exodus', 'elite'].entries()) {
+    const now = at(12, 31) + index * 30 * 60000;
+    const letter = next(level, now);
+    assert.equal(letter.id, ids[index]);
+    assert.equal(letter.to, 'Dave');
+    state.letters.push({ id: letter.id, at: now, read: index === 0 });
+    state.lastLetter = state.lastMisdelivery = now;
+    state = JSON.parse(JSON.stringify(state));
+    assert.equal(next('elite', now + 30 * 60000 - 1), undefined);
+  }
+  assert.equal(next('genesis', at(15)), undefined);
+  const preceding = modeLetters.slice(0, modeLetters.findIndex(letter => letter.id === ids[0]));
+  state.letters.push(...preceding.map(letter => ({ id: letter.id, at: at(12) })));
+  assert.equal(nextModeLetter(state, { level: 'samuel', now: at(15) }).id, 'samuel-saul-armor');
+  assert.equal(state.letters.find(letter => letter.id === ids[0]).read, true);
 });
 
 test('the first-root song opens once after privilege detection and retries a failed handoff', async t => {

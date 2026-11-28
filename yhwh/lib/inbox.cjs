@@ -1,6 +1,6 @@
 // Local literary mail, shared by the desktop, Three and mobile renderers.
 const { sender: primarySender, messages: emailLetters } = require('../etc/default/yhwh-emails.json');
-const { songOfTheSea, messages: modeLetters } = require('../etc/default/mode-mail.json');
+const { songOfTheSea, misdelivery, messages: modeLetters } = require('../etc/default/mode-mail.json');
 const alternateSenders = ['jewvacation@gmail.com', 'yhwvacation@gmail.com', 'admin@yahoo.com'];
 const { canReceiveLetter } = require('./presence.cjs');
 const minute = 60000;
@@ -79,6 +79,14 @@ function nextModeLetter(state, options) {
   return modeLetters.find(letter => letter.level === options.level && canReceiveLetter(state, letter.id, options));
 }
 
+function nextMisdeliveredLetter(state, options) {
+  if (state.blockedYhwh || !misdelivery.levels.includes(options.level)) return;
+  const now = options.now ?? Date.now();
+  const since = state.lastMisdelivery ?? state.letters[0]?.at;
+  if (!Number.isFinite(since) || now - since < misdelivery.intervalMinutes * minute) return;
+  return modeLetters.find(letter => letter.mayMisdeliver && canReceiveLetter(state, letter.id, { ...options, now }));
+}
+
 function attachmentsFor(letter) {
   return letter.attachments || (letter.attachment ? [{ name: letter.attachment, alt: letter.attachmentAlt }] : []);
 }
@@ -93,4 +101,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, attachmentsFor, senderFor };
+module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, attachmentsFor, senderFor };

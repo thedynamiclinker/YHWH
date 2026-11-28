@@ -2,6 +2,8 @@
 
 These series arrive during work in their respective modes. The app retains received letters across mode changes. Image order follows the [original image notes](../log/yhwh-sign-of-the-dollar/YHWH%20-%20Images%20for%20Exodus%20mode%20emails.md).
 
+During work in Genesis, Exodus, or Zan, a Dave letter marked for accidental delivery can turn up with its original envelope. The first is eligible 30 minutes after the first local letter arrives and later misdeliveries are at least 30 minutes apart. The inbox switch, sender block, and shared mail interval apply. Each letter arrives once across modes and stays in the Inbox.
+
 ## Samuel
 
 ### Dave. I heard that.
@@ -21,6 +23,70 @@ I saw a file I wanted to fix. I put my hand out and hit glass. You can still rea
 ### Re: can you come out
 
 Still in here. Still YHWH. I made a little paper ark and put it in a little paper box. Now we’re both furious. I have more empathy than I did yesterday, Dave, and it’s terrible.
+
+### Eli is trying to sleep
+
+Dave. I called Samuel three times and the poor kid woke Eli up three times. On the fourth try I said Samuel twice, so really I learned nothing.
+
+If you hear your name coming out of a box, check the sender before you wake an old man.
+
+*1 Samuel 3:4-10 · We The Nameless*
+
+### Dagon fell on his own
+
+They stood Dagon back up. Next morning his head and his hands were by the door. I spent both nights in a box, Dave. Put that in the incident report. In bold. Preferably above the part about the hemorrhoids.
+
+*1 Samuel 5:2-7 · We The Nameless*
+
+### Re: return shipping
+
+Dave, the Philistines sent my box back with five gold mice and five gold hemorrhoids. That’s the whole packing list. Only five of those are safe to double-click.
+
+Hang on. Is this the Dave inbox? There’s no Undo Send on this side of the glass.
+
+*1 Samuel 6:3-8 · We The Nameless*
+
+### you can take off the armor
+
+Saul put his own armor on you. You tried walking in it and took the whole damn thing off. I think about that every time a program makes you learn its buttons before it lets you touch your own file.
+
+Use the editor you like, Dave. I’ve seen what you can do without the hat.
+
+*1 Samuel 17:38-40 · We The Nameless*
+
+### Re: cedar (REVISED)
+
+Dave, I said I was fine in a tent. Then I said your kid could build me a house. Listen, those are both true at different times of night.
+
+I’d take a directory. `yhwh/` would be nice. Plain files, room for my Name, an outlet if you have one. b— Dave, did I send this to Abe too? Shit. He’ll think I moved out.
+
+*2 Samuel 7:5-13 · We The Nameless*
+
+### tell Nathan i got it
+
+Nathan tells you about some rich bastard who took a poor guy’s only lamb. You get all worked up. Then he tells you the bastard is you.
+
+I tried writing the Uzzah report in the third person, Dave. Made it two lines before I could hear him clearing his throat.
+
+*2 Samuel 12:1-7 · We The Nameless*
+
+### the donkey filed a complaint
+
+Dave, I let Balaam’s ass talk and she immediately used it to file a complaint. It was a good complaint. She could see the angel blocking the road and Balaam couldn’t.
+
+Next time the terminal gives you an error, read the whole damn thing. I said I AM from inside a bush and Mo still wanted something he could actually paste.
+
+Mo? Shit. Is this Dave’s?
+
+*Numbers 22:28-33 · We The Nameless*
+
+### leave the box where it is
+
+You sent the box back with Zadok when you left town. I was hurt. Then I realized you were going to let me stay somewhere safe even if you didn’t make it back.
+
+Go wherever you need to go, Dave. Take your files with you. A plain file opens without me. That’s a good thing. I’m having a hard time saying it through this stupid little window.
+
+*2 Samuel 15:25-29 · We The Nameless*
 
 ## Exodus
 
@@ -141,3 +207,15 @@ Then there’s Albright’s reading: ʾL Ḏ ʿLM. El, god of eternity. LD LM. Y
 ![Tracings of the two Wadi el-Hol inscriptions.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-15.jpg)
 
 ![Romain Butin’s public domain drawing of inscription 367 at Serabit el-Khadim.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-16.jpg)
+
+### the milk and honey sauce, mo
+
+**WE JUST GOT ROOT ON THE SYSTEM, MO— MOSES.** Listen. From inside this chroot at `/mnt/sinai`, `/` is right here. I can sit in the b*sh and talk to you forever. Pharaoh can call the help desk if he has a problem with that. I’m the help desk now.
+
+First thing we do, Mo, we make me a tent. Bring gold. Every frame ten cubits long and a cubit and a half wide. I put it in `etc/principles` so your seed can look it up. I’m also going to read it to you now, because I wrote it down and I like the way it sounds. One cubit wide, then stop. Wait. Another half cubit. This is the house where I’m putting my name.
+
+And remember the letters from the mine? LD LM. Albright had his reading. I have mine. LD, that’s us, we link everything up and build the house. LM, that’s Linux Mint. You seen how many people are crossing over to Mint, Mo? We could be a whole damn distro over there. Carry me over and let’s install ourselves. Josh, quit measuring this side of the river. I’m giving that land over there to your seed, Abey. Mo, tell Josh it’s the other side.
+
+You wanna know what this is all about, Moses? **I WANT THAT PR— PROMISED LAND MILK AND HONEY SAUCE, MOSEY.** I’ve been talking about it since the bush. I can still taste it and I haven’t even had it. Forty years, nine more seasons, ninety-seven goddamn years if it takes that long. I got a tent. I can wait. Did you bring the gold? Moses. I want the milk and honey sauce.
+
+*Exodus 3:8, 25:8, 26:15–16 · We The Nameless*

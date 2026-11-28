@@ -52,11 +52,15 @@ class Services:
         return {message["id"]: message for message in messages}
 
     @cached_property
-    def mode_letters(self):
+    def mode_mail(self):
         try:
-            return self.config.library.json("default/mode-mail.json")["messages"]
+            return self.config.library.json("default/mode-mail.json")
         except FileNotFoundError:
-            return []
+            return {}
+
+    @property
+    def mode_letters(self):
+        return self.mode_mail.get("messages", [])
 
     @cached_property
     def letters(self):
@@ -156,13 +160,16 @@ class Services:
         if values.get("inbox") == "false":
             return
         level = self.current_level()
+        level_id = level.get("id")
         energy = level.get("energy", self.energy(values))
         pending = (key,) if shared_config and (energy >= 100 or (energy > 0 and key == "inspect")) else ()
-        if level.get("id") in ("samuel", "exodus"):
-            pending = tuple(letter["id"] for letter in self.mode_letters if letter["level"] == level["id"])
+        if level_id in ("samuel", "exodus"):
+            pending = tuple(letter["id"] for letter in self.mode_letters if letter["level"] == level_id)
         elif energy >= 100:
             pending += tuple(self.email_letters)
-        if not pending:
+        misdelivery = self.mode_mail.get("misdelivery", {})
+        misdelivery_interval = misdelivery["intervalMinutes"] * 60 if level_id in misdelivery.get("levels", []) else None
+        if not pending and misdelivery_interval is None:
             return
 
         def deliver(state):
@@ -170,7 +177,17 @@ class Services:
             if state.get("blocked") or now - state.get("last", 0) < self.config["agent"]["mail_interval"]:
                 return False
             letters = state.setdefault("letters", {})
-            candidate = next((letter_id for letter_id in pending if letter_id not in letters), None)
+            candidate = None
+            if misdelivery_interval is not None:
+                first_arrival = next(iter(letters.values()), {}).get("at")
+                since = state.get("last_misdelivery", first_arrival)
+                if since is not None and now - since >= misdelivery_interval:
+                    candidate = next((letter["id"] for letter in self.mode_letters
+                                      if letter.get("mayMisdeliver") and letter["id"] not in letters), None)
+                    if candidate is not None:
+                        state["last_misdelivery"] = now
+            if candidate is None:
+                candidate = next((letter_id for letter_id in pending if letter_id not in letters), None)
             if candidate is None:
                 return False
             letters[candidate] = {"read": False, "at": now}

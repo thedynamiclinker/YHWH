@@ -34,6 +34,7 @@ from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.lexers import DynamicLexer, Lexer, PygmentsLexer, SimpleLexer
 from prompt_toolkit.search import start_search
 from prompt_toolkit.styles import DynamicStyle, Style
+from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.widgets import SearchToolbar, TextArea
 from pygments.lexers import get_lexer_for_filename
 from pygments.util import ClassNotFound
@@ -243,8 +244,8 @@ class Workspace:
                          preview_visible),
                 ]),
             ]),
-            bar(self.go_bar),
-            bar(self.set_bar),
+            bar(self.directory_bar),
+            bar(partial(self.directory_bar, names=True)),
         ])
         document = HSplit([
             bar(self.document_bar, lambda: self.tab_position(self.document_bar())),
@@ -411,19 +412,38 @@ class Workspace:
         return " ".join(f"{name} {label(path)}" for name, path in
                         ((".", self.browser.cwd), ("@", self.tab.anchor), ("/", self.shell_root)))
 
-    def go_bar(self):
-        return [("class:muted", " go  "),
-                ("", " . ", clickable(self.browser.refresh)),
-                ("", " @ ", clickable(lambda: self.browser.navigate(self.tab.anchor))),
-                ("", " / ", clickable(lambda: self.browser.navigate(self.shell_root))),
-                ("class:heading", " un ", clickable(self.universe_menu))]
+    def directory_bar(self, names=False):
+        world = self.browser.tree.world
+        home = Path.home()
+        if isinstance(world, Guest):
+            home = world.root / "root"
+        elif world and world.name == "God":
+            home = world.root / "home/yhwh"
+        elif world:
+            home = world.directory(home)
+        width = self.columns if self.zoom == "files" or self.columns < 56 else min(self.tree_width, self.columns - 30)
+        cell = max(1, min(14, (width - 7) // 3))
+        parts = []
+        for symbol, path in (("~", home), ("@", self.tab.anchor), ("/", self.shell_root)):
+            text = label(path.name or path) if names else symbol
+            if get_cwidth(text) > cell:
+                while get_cwidth(text) >= cell:
+                    text = text[:-1]
+                text += "…"
+            text = text.center(cell + len(text) - get_cwidth(text))
+            parts.append(("class:muted" if names else "class:heading", text, clickable(partial(self.browser.navigate, path))))
+        if not names:
+            parts.extend([("class:muted", " … ", clickable(self.directory_actions)),
+                          ("class:heading", " un ", clickable(self.universe_menu))])
+        return parts
 
-    def set_bar(self):
-        return [("class:muted", " set "),
-                ("", " . ", clickable(lambda: self.browser.navigate(self.universe_target()))),
-                ("", " @ ", clickable(lambda: self.attempt(self.set_anchor, self.universe_target()))),
-                ("", " / ", clickable(lambda: self.attempt(self.chroot_universe, True))),
-                ("", " --prefix ", clickable(self.prefix_menu))]
+    def directory_actions(self):
+        self.pick("Shell directory actions", {
+            "cd · Enter selected directory": lambda: self.browser.navigate(self.universe_target()),
+            "cwat · Set @ to selected directory": lambda: self.attempt(self.set_anchor, self.universe_target()),
+            "Set / · Open as root": lambda: self.attempt(self.chroot_universe, True),
+            "--prefix · bin lib etc": self.prefix_menu,
+        })
 
     def places(self):
         places = [("Workspace", self.browser.root), ("Home", Path.home())]
@@ -1923,6 +1943,7 @@ class Workspace:
             ("reload", "Refresh files and configuration", self.refresh, True),
             ("new_file", "Create file", lambda: self.browser.create(directory=False), False),
             ("new_directory", "Create folder", lambda: self.browser.create(directory=True), False),
+            (None, "Shell directory actions", self.directory_actions, False),
             (None, "un · Universes", self.universe_menu, False),
             (None, "un new · Make new universe", self.new_universe, False),
             (None, "un cd · Enter universe", self.enter_universe, False),

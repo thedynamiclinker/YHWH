@@ -29,7 +29,7 @@ import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, freeMaximum, themeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
-import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMidnightLetter, nextMidnight, attachmentsFor, senderFor } from '../../../lib/inbox.cjs';
+import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMisdeliveredLetter, nextMidnightLetter, nextMidnight, attachmentsFor, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
 import mailImages from '../../../lib/mode-mail-images.mjs';
 const mailAttachments = { 'biblical-polygyny.png': polygynyAttachment, ...mailImages };
@@ -603,13 +603,15 @@ const navigateFiles = (directory, tab = active(), history = true) => navigate(di
 function homeDirectory(tab) {
   const root = tab.worldRoot || tab.systemRoot;
   if (tab.guestMode) return join(root, 'root');
+  if (tab.worldName === 'yhwh') return join(root, 'home/yhwh');
   return tab.worldRoot && !withinPath(boot.home, root) ? root : boot.home;
 }
 function renderShellDirectories(tab) {
   const root = tab.worldRoot || tab.systemRoot;
   for (const [command, directory] of [['home', homeDirectory(tab)], ['anchor-directory', tab.anchor], ['root-directory', root]]) {
     const button = $(`.directory-shortcuts [data-command="${command}"]`);
-    button.querySelector('small').textContent = basename(directory);
+    const name = boot.platform === 'win32' ? basename(directory) : directory.split('/').filter(Boolean).at(-1) || directory;
+    button.querySelector('small').textContent = name;
     button.title = `${button.getAttribute('aria-label')} (${button.firstElementChild.textContent})\n${directory}`;
     button.setAttribute('aria-description', directory);
   }
@@ -1289,6 +1291,7 @@ function showDirectoryMenu(title, items, { trigger, point } = {}) {
   if (boot.interface === 'mobile' || !menu.showPopover || (!trigger && !point)) {
     const dialog = modal(title, ui('template-5', items.map(([label], i) => `<button data-menu="${i}">${escape(label)}</button>`).join('')));
     if (trigger?.hasAttribute('aria-expanded')) {
+      trigger.setAttribute('aria-haspopup', 'dialog');
       trigger.setAttribute('aria-expanded', 'true');
       dialog.addEventListener('close', () => trigger.setAttribute('aria-expanded', 'false'), { once: true });
     }
@@ -1765,22 +1768,24 @@ function receive(id, midnightOnly = false, working = Boolean(id)) {
   const options = { now: Date.now(), inbox: active().config.values.inbox !== 'false', theme: document.body.dataset.theme, level: currentLevel().id };
   if (startNight(presence, options.now)) savePresence();
   const personal = ['samuel', 'exodus'].includes(options.level);
+  const misdelivered = working && !midnightOnly ? nextMisdeliveredLetter(presence, options) : undefined;
   let letter = personal ? undefined : nextMidnightLetter(presence, options);
   if (personal && !midnightOnly) {
     const reply = nextStartupLetter(presence, options);
-    letter = reply?.afterBlockMinutes !== undefined ? reply : working ? nextModeLetter(presence, options) : undefined;
+    letter = reply?.afterBlockMinutes !== undefined ? reply : misdelivered || (working && nextModeLetter(presence, options));
   }
   if (!personal && !letter && !midnightOnly) {
     const startup = nextStartupLetter(presence, options);
     const work = id && canReceiveLetter(presence, id, options) && actionLetters[id] && { id, ...actionLetters[id] };
     const shop = id && merch.configured() && canReceiveLetter(presence, 'merch', options) && { id: 'merch', ...actionLetters.merch };
-    // Address changes take priority; the name, overnight and work letters keep their slots.
+    // Keep the timed arcs ahead of work mail, including Dave's wayward letters.
     letter = startup?.afterBlockMinutes !== undefined ? startup
-      : nextNightLetter(presence, options) || startup || work || shop || (id && nextEmailLetter(presence, options));
+      : nextNightLetter(presence, options) || startup || misdelivered || work || shop || (id && nextEmailLetter(presence, options));
   }
   if (!letter || !canReceiveLetter(presence, letter.id, options)) return;
   const sender = senderFor(presence, letter);
   if (!sender) return;
+  if (letter === misdelivered) presence.lastMisdelivery = options.now;
   presence.letters.push({ id: letter.id, sender, read: false, at: options.now }); presence.lastLetter = options.now; savePresence(); if (active().focusView === 'inbox' && !active().mailId) renderInbox();
 }
 // Ordinary letters need actual use; seedis also has a visible-app midnight timer.

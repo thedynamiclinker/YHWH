@@ -1,5 +1,9 @@
 {
   "songOfTheSea": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
+  "misdelivery": {
+    "levels": ["genesis", "exodus", "elite"],
+    "intervalMinutes": 30
+  },
   "messages": [
     {
       "id": "samuel-first-knock",
@@ -37,6 +41,89 @@
       "textKey": "letterSamuelArkStatus",
       "format": "markdown",
       "note": "Original fictional correspondence from YHWH."
+    },
+    {
+      "id": "samuel-eli-asleep",
+      "level": "samuel",
+      "title": "Eli is trying to sleep",
+      "to": "Dave",
+      "textKey": "letterSamuelEliAsleep",
+      "format": "markdown",
+      "verse": "1 Samuel 3:4-10",
+      "note": "Samuel mistakes YHWH’s voice for Eli’s until Eli realizes who is calling."
+    },
+    {
+      "id": "samuel-dagon-incident",
+      "level": "samuel",
+      "title": "Dagon fell on his own",
+      "to": "Dave",
+      "textKey": "letterSamuelDagonIncident",
+      "format": "markdown",
+      "verse": "1 Samuel 5:2-7",
+      "note": "Dagon falls twice beside the ark at Ashdod. In We The Nameless, the affliction that follows is hemorrhoids."
+    },
+    {
+      "id": "samuel-return-shipping",
+      "level": "samuel",
+      "title": "Re: return shipping",
+      "to": "Dave",
+      "textKey": "letterSamuelReturnShipping",
+      "format": "markdown",
+      "verse": "1 Samuel 6:3-8",
+      "note": "The Philistine diviners send gold replicas of the mice and hemorrhoids along with the ark.",
+      "mayMisdeliver": true
+    },
+    {
+      "id": "samuel-saul-armor",
+      "level": "samuel",
+      "title": "you can take off the armor",
+      "to": "Dave",
+      "textKey": "letterSamuelSaulArmor",
+      "format": "markdown",
+      "verse": "1 Samuel 17:38-40",
+      "note": "David tries Saul’s armor and takes it off in favor of his familiar tools."
+    },
+    {
+      "id": "samuel-cedar-revised",
+      "level": "samuel",
+      "title": "Re: cedar (REVISED)",
+      "to": "Dave",
+      "textKey": "letterSamuelCedarRevised",
+      "format": "markdown",
+      "verse": "2 Samuel 7:5-13",
+      "note": "YHWH recalls traveling in a tent and says that David’s son will build a house for his name.",
+      "mayMisdeliver": true
+    },
+    {
+      "id": "samuel-nathan-lamb",
+      "level": "samuel",
+      "title": "tell Nathan i got it",
+      "to": "Dave",
+      "textKey": "letterSamuelNathanLamb",
+      "format": "markdown",
+      "verse": "2 Samuel 12:1-7",
+      "note": "Nathan confronts David through a parable about a rich man taking a poor man’s only lamb."
+    },
+    {
+      "id": "samuel-donkey-report",
+      "level": "samuel",
+      "title": "the donkey filed a complaint",
+      "to": "Dave",
+      "textKey": "letterSamuelDonkeyReport",
+      "format": "markdown",
+      "verse": "Numbers 22:28-33",
+      "note": "Balaam’s donkey sees the angel before Balaam does. YHWH’s argument with Mo recalls the burning bush in Exodus 3.",
+      "mayMisdeliver": true
+    },
+    {
+      "id": "samuel-leave-the-box",
+      "level": "samuel",
+      "title": "leave the box where it is",
+      "to": "Dave",
+      "textKey": "letterSamuelLeaveTheBox",
+      "format": "markdown",
+      "verse": "2 Samuel 15:25-29",
+      "note": "David sends Zadok and the ark back to Jerusalem as he flees the city."
     },
     {
       "id": "exodus-the-eye",
@@ -222,6 +309,16 @@
         }
       ],
       "level": "exodus"
+    },
+    {
+      "id": "exodus-milk-and-honey",
+      "level": "exodus",
+      "title": "the milk and honey sauce, mo",
+      "to": "Mo",
+      "textKey": "letterExodusMilkAndHoney",
+      "format": "markdown",
+      "verse": "Exodus 3:8",
+      "note": "Fictional correspondence from Sinai. The dwelling and frame measurements come from Exodus 25:8 and 26:15–16. Linux Mint is YHWH’s own reading of LM."
     }
   ]
 }

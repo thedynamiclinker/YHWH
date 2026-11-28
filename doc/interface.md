@@ -19,12 +19,17 @@
 
 ## Directory shortcuts and folder actions
 
-The prompt shows `.` (the working directory), `@` (the tab’s current
-prefix), and `/` (the root). The **go** row visits each location. The
-**set** row assigns the selected folder, or the current folder when none is
-selected. `cd` updates only `.`. Setting `@` preserves `.` and `/`. A
-new tab starts with `@` set to its opening directory. The `/` setter opens
-the universe mode picker for the selected directory.
+The location field shows `.` (the working directory). Below it, `~` visits
+home, `@` visits the tab’s current prefix, and `/` visits the root. Their
+directory names appear in muted text beneath the symbols, with full paths
+in tooltips. A guest’s `~` uses `/root` inside the guest. The God view uses
+YHWH’s `/home/yhwh`. A folder view whose home is outside its root uses the
+view’s root as home. The Obsidian navigator uses the vault root as home.
+
+The **…** menu assigns the selected folder, or the current folder when none
+is selected. `cd` updates only `.`. Setting `@` preserves `.` and `/`. A new
+tab starts with `@` set to its opening directory. The `/` setter opens the
+universe mode picker for the selected directory.
 
 `cwat` prints `@`; `cwat DIRECTORY` sets it. `cd @` and `cd @/subdir`
 work in the tab shell and the Initial. The location field uses the same
