@@ -59,7 +59,7 @@ In Exodus mode he sends you sign of the dollar pics and rants and talks about ho
 
 ![[Screenshot_20261128_035438_Adobe Acrobat.jpg]]
 
-![[yhwh-sign-of-the-dollar-06.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-06.jpg]]
 
-![[yhwh-sign-of-the-dollar-02.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-02.jpg]]
 
