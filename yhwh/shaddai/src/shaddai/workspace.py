@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 from urllib.parse import unquote, urlencode, urlsplit
 from uuid import uuid4
 
@@ -44,7 +45,7 @@ from .fonts import ConsoleFonts
 from .navigation import serve_paths
 from .terminal import Shell, TerminalControl
 from .services import SENDER, WALK, Services, web_links
-from .yhwh import Prefixes, World, save_setting
+from .yhwh import Guest, Prefixes, World, save_setting
 
 
 PANES = ("files", "editor", "terminal")
@@ -125,6 +126,9 @@ class Tab:
     pending_save: asyncio.TimerHandle | None = None
     save_paused: bool = False
     autosave: bool = False
+    anchor: Path | None = None
+    shell_state: TemporaryDirectory | None = None
+    guest_args: list[str] | None = None
 
     @property
     def dirty(self):
@@ -134,6 +138,7 @@ class Tab:
 class Workspace:
     def __init__(self, root: Path, config: Config, file: Path | None = None):
         self.config = config
+        self.library = config.library
         self.services = Services(config)
         self.fonts = ConsoleFonts()
         self.chat_pending = set()
@@ -144,8 +149,8 @@ class Workspace:
         self.tree_visible = config["ui"]["tree_visible"]
         self.terminal_visible = config["ui"]["terminal_visible"]
         self.zoom = None
-        self.pane = "editor" if file or not self.tree_visible else "files"
-        self.upper_pane = self.pane
+        self.upper_pane = "editor" if file or not self.tree_visible else "files"
+        self.pane = "terminal" if self.terminal_visible and not file and config.yhwh.values.get("shell_first") == "true" else self.upper_pane
         self.columns, self.rows = 80, 24
         self.message = next(iter(config.yhwh.warnings), "")
         self.question = ""
@@ -319,6 +324,8 @@ class Workspace:
             for tab in self.tabs:
                 for shell in tab.shells:
                     shell.close()
+                if tab.shell_state:
+                    tab.shell_state.cleanup()
             self.fonts.close()
 
     def sync_editor_keys(self, app):
@@ -337,11 +344,8 @@ class Workspace:
         if self.terminal.size and self.visible("terminal"):
             if self.shell is None:
                 self.add_shell(self.browser.cwd)
-            if self.shell.exited:
-                self.close_shell()
-                app.invalidate()
-                return
-            self.shell.fit(*self.terminal.size, app.invalidate)
+            if not self.shell.exited:
+                self.shell.fit(*self.terminal.size, app.invalidate)
 
     def hint(self, action):
         if action is None:
@@ -398,10 +402,31 @@ class Workspace:
 
     def universe_bar(self):
         return [
-            ("class:heading", " +Nu ", clickable(lambda: self.attempt(self.new_universe))),
-            ("", " Cd Enter ", clickable(lambda: self.attempt(self.enter_universe))),
-            ("", " Go Chroot ", clickable(lambda: self.attempt(self.chroot_universe))),
+            *self.go_bar(), *self.set_bar(),
+            ("class:heading", " un ", clickable(self.universe_menu)),
+            ("", " --prefix ", clickable(self.prefix_menu)),
         ]
+
+    @property
+    def shell_root(self):
+        world = self.browser.tree.world
+        return world.root if world else Path("/")
+
+    def shell_paths(self):
+        return " ".join(f"{name} {label(path)}" for name, path in
+                        ((".", self.browser.cwd), ("@", self.tab.anchor), ("/", self.shell_root)))
+
+    def go_bar(self):
+        return [("class:muted", " go  "),
+                ("", " . ", clickable(self.browser.refresh)),
+                ("", " @ ", clickable(lambda: self.browser.navigate(self.tab.anchor))),
+                ("", " / ", clickable(lambda: self.browser.navigate(self.shell_root)))]
+
+    def set_bar(self):
+        return [("class:muted", " set "),
+                ("", " . ", clickable(lambda: self.browser.navigate(self.universe_target()))),
+                ("", " @ ", clickable(lambda: self.attempt(self.set_anchor, self.universe_target()))),
+                ("", " / ", clickable(lambda: self.attempt(self.chroot_universe, True)))]
 
     def places(self):
         places = [("Workspace", self.browser.root), ("Home", Path.home())]
@@ -431,7 +456,7 @@ class Workspace:
         return parts
 
     def shell_bar(self):
-        parts = [("class:heading", " Terminal ")]
+        parts = [("class:heading", " / " if self.tab.guest_args else " Shell ")]
         for index, shell in enumerate(self.shells):
             style = "class:active" if shell is self.shell else ""
             mark = " (exited)" if shell.exited else ""
@@ -462,10 +487,10 @@ class Workspace:
             details = ("Reading   Esc Back   Enter Toggle   Alt+G Actions" if self.reader_actions
                        else "Reading   Esc Back   Alt+G Links")
         elif self.pane == "files":
-            details = f"{len(self.browser.tree.rows) - 1} items   / Filter   Enter Open"
+            details = self.shell_paths()
         elif self.pane == "terminal":
             details = ("Shell exited   Enter Restart" if self.shell and self.shell.exited
-                       else f"{self.hint('new_shell')} New shell   Shift+PgUp Scrollback")
+                       else self.shell_paths())
         else:
             cursor = self.tab.editor.document
             mode = self.config.preferred_editor or "emacs"
@@ -602,7 +627,7 @@ class Workspace:
     def add_tab(self, document):
         tab = Tab(document, self.editor(document), self.browser.snapshot(clone=True),
                   self.config["ui"]["tree_visible"], self.config["ui"]["terminal_visible"],
-                  autosave=self.autosave_for(document))
+                  autosave=self.autosave_for(document), anchor=self.browser.cwd, guest_args=self.tab.guest_args if self.tabs else None)
         tab.editor.buffer.on_text_changed += lambda _: self.schedule_save(tab)
         self.tabs.append(tab)
 
@@ -711,11 +736,15 @@ class Workspace:
                 tab.pending_save.cancel()
             for shell in tab.shells:
                 shell.close()
+            if tab.shell_state:
+                tab.shell_state.cleanup()
             if tab.document.path:
                 self.closed.append((tab.document.path, self.browser.snapshot(clone=True)))
                 del self.closed[:-20]
             self.tabs.remove(tab)
             if not self.tabs:
+                if isinstance(self.browser.tree.world, Guest):
+                    self.browser.change_world(None)
                 self.add_tab(Document())
             self.activate_tab(min(self.tab_index, len(self.tabs) - 1))
 
@@ -808,16 +837,88 @@ class Workspace:
     def add_shell(self, directory):
         config = self.config["terminal"]
         command = config["shell"] or os.environ.get("SHELL") or "/bin/bash"
+        library = self.config.library if self.config.library.etc else self.library
+        anchor = self.anchor_file(self.tab)
         env = {**self.config.yhwh.environment,
-               "YHWH_TAB": self.tab.identifier, "YHWH_INTERFACE": "tty", "YHWH_TTY_SOCKET": self.open_socket}
-        if (yhwh := self.config.library.command) and Path(yhwh).name == "yhwh" and Path(yhwh).is_absolute():
+               "YHWH_TAB": self.tab.identifier, "YHWH_INTERFACE": "tty", "YHWH_TTY_SOCKET": self.open_socket,
+               "YHWH_TAB_ANCHOR": str(anchor), "YHWH_CWAT": str(self.tab.anchor), "YHWH_ROOT": "/"}
+        if (yhwh := library.command) and Path(yhwh).name == "yhwh" and Path(yhwh).is_absolute():
             env["PATH"] = os.pathsep.join((str(Path(yhwh).parent), env.get("PATH", os.defpath)))
+        startup = library.etc / "shell" if library.etc else None
+        if startup and (startup / "session").is_file():
+            env.update(YHWH_SHELL_LIB=str(startup / "session"),
+                       YHWH_PREFIX_SHELL=str(library.etc.parent / "bin/prefix-shell.cjs"),
+                       YHWH_BUNDLED_COMPLETION=str(library.etc / "completions/yhwh.bash"))
+        else:
+            startup = None
+        argv = self.tab.guest_args
+        tab = self.tab
+        if argv:
+            command, startup = argv[0], None
         self.shell_number += 1
         self.shells.append(Shell(self.shell_number, command, self.browser.physical(directory),
                                  config["scrollback"], environment=env,
-                                 interactive=self.config.yhwh.interactive()))
+                                 interactive=self.config.yhwh.interactive() if not startup and not argv else (),
+                                 startup=startup, argv=argv,
+                                 on_directory=lambda shell, cwd: self.shell_directory(tab, shell, cwd),
+                                 on_anchor=lambda value: self.shell_anchor(tab, value)))
         self.shell_index = len(self.shells) - 1
+        if argv:
+            self.shell.refresh_anchor(str(Path("/") / tab.anchor.relative_to(self.shell_root)))
+            self.sync_shell_directory()
         self.letter("inspect")
+
+    def anchor_file(self, tab):
+        if tab.shell_state is None:
+            tab.shell_state = TemporaryDirectory(prefix="shaddai-tab-")
+            (Path(tab.shell_state.name) / "@").write_bytes(os.fsencode(tab.anchor))
+        return Path(tab.shell_state.name) / "@"
+
+    def shell_directory(self, tab, shell, cwd):
+        self.sync_anchor(tab)
+        if self.tab is tab and self.shell is shell:
+            directory = self.shell_root / cwd.lstrip("/") if shell.guest else Path(cwd)
+            if directory != self.browser.cwd and self.browser.physical(directory).is_dir():
+                self.browser.navigate(directory, from_shell=True)
+
+    def shell_anchor(self, tab, value):
+        if self.tab is tab and isinstance(self.browser.tree.world, Guest):
+            directory = Path(os.path.abspath(self.shell_root / value.lstrip("/")))
+            if directory.is_relative_to(self.shell_root) and self.browser.physical(directory).is_dir():
+                self.write_anchor(tab, directory)
+
+    def write_anchor(self, tab, path):
+        if tab.anchor == path:
+            return
+        state = self.anchor_file(tab)
+        tmp = state.with_name(uuid4().hex)
+        try:
+            tmp.write_bytes(os.fsencode(path))
+            tmp.replace(state)
+        finally:
+            tmp.unlink(missing_ok=True)
+        self.sync_anchor(tab)
+
+    def sync_anchor(self, tab):
+        if tab.shell_state:
+            try:
+                anchor = Path(os.fsdecode(self.anchor_file(tab).read_bytes()))
+                guest = tab.guest_args and self.tab is tab
+                if anchor.is_absolute() and anchor != tab.anchor and (self.browser.physical(anchor) if guest else anchor).is_dir():
+                    tab.anchor = anchor
+                    for shell in tab.shells:
+                        shell.refresh_anchor(str(Path("/") / anchor.relative_to(self.shell_root)) if guest else None)
+            except (OSError, ValueError):
+                pass
+
+    def sync_shell_directory(self):
+        if self.tabs and self.shell and not self.shell.exited:
+            directory = self.browser.cwd
+            if self.shell.guest:
+                directory = Path("/") / directory.relative_to(self.shell_root)
+            else:
+                directory = self.browser.physical(directory)
+            self.shell.navigate(directory)
 
     def new_shell(self):
         self.add_shell(self.browser.cwd)
@@ -825,6 +926,9 @@ class Workspace:
 
     def switch_shell(self, index):
         self.shell_index = index % len(self.shells)
+        shell = self.shell
+        if shell.hooked:
+            self.shell_directory(self.tab, shell, shell.cwd)
         self.focus("terminal")
 
     def close_shell(self):
@@ -998,13 +1102,13 @@ class Workspace:
         run_in_terminal(run)
 
     def universe_command(self, *args):
-        executable = self.config.library.command
+        executable = self.config.library.command or self.library.command
         if not executable:
             raise ValueError("Install yhwh on PATH to use universe commands.")
         return [executable, *args]
 
     def new_universe(self):
-        output = subprocess.check_output(self.universe_command("nu", "--list"), text=True)
+        output = subprocess.check_output(self.universe_command("un", "ls"), text=True)
         choices = {}
         for line in output.splitlines():
             name, title, description = line.split("\t", 2)
@@ -1018,16 +1122,16 @@ class Workspace:
             def create(template):
                 if template == "oci":
                     self.ask("OCI image", lambda image: self.tty_command(
-                        self.universe_command("nu", destination, "--from", image), finished=self.browser.refresh))
+                        self.universe_command("un", "new", destination, "--from", image), finished=self.browser.refresh))
                 elif template in choices:
-                    self.tty_command(self.universe_command("nu", destination, "--template", template),
+                    self.tty_command(self.universe_command("un", "new", destination, "--template", template),
                                      finished=self.browser.refresh)
                 else:
                     raise ValueError("Choose a listed template.")
 
             self.ask("Universe template", create, "empty", choices=list(choices), hints=choices)
 
-        self.ask("Nu · New universe directory name", configure)
+        self.ask("un new · Directory name", configure)
 
     def universe_target(self):
         selected = self.browser.selected
@@ -1035,19 +1139,96 @@ class Workspace:
             return selected
         return self.browser.cwd
 
-    def enter_universe(self):
-        target = self.universe_target()
-        result = subprocess.run(self.universe_command("cd", str(self.browser.physical(target))),
+    def enter_universe(self, target=None):
+        target = target or self.universe_target()
+        result = subprocess.run(self.universe_command("un", "cd", str(self.browser.physical(target))),
                                 text=True, capture_output=True)
         if result.returncode:
             raise ValueError(result.stderr.strip() or "Choose a universe directory.")
-        self.browser.navigate(target)
+        self.set_anchor(target, after=partial(self.browser.navigate, target))
 
-    def chroot_universe(self):
-        directory = str(self.browser.physical(self.universe_target()))
-        self.ask("Go · Chroot universe · optional outer paths (shell quoting)", lambda answer: self.tty_command(
-            self.universe_command("go", directory, "--sudo",
-                                  *(arg for path in shlex.split(answer) for arg in ("--mount", path)))))
+    def chroot_universe(self, raw=False, target=None):
+        directory = self.browser.physical(target or self.universe_target()).resolve()
+        if not directory.is_dir():
+            raise ValueError("Choose an existing directory for /.")
+        if not (directory / "bin/sh").exists() and not (directory / "bin/sh").is_symlink():
+            raise ValueError("Choose a Linux root with /bin/sh.")
+
+        def mount(answer):
+            argv = self.universe_command("un", "go", str(directory), "--sudo", *(("--root",) if raw else ()),
+                                        *(arg for path in shlex.split(answer) for arg in ("--mount", path)))
+            self.add_tab(Document())
+            self.switch_tab(len(self.tabs) - 1)
+            self.tab.guest_args = argv
+            self.tab.anchor = directory
+            self.browser.change_world(Guest(directory))
+            self.focus("terminal")
+
+        def confirm(answer):
+            if answer.strip().lower() in ("y", "yes"):
+                self.ask("Outer read-only paths (optional, shell quoting)", mount)
+
+        self.ask(f"Set / to {label(directory)} in a new shell tab? [y/N]", confirm)
+
+    def universe_menu(self):
+        self.pick("un", {
+            "new · Create a universe": self.new_universe,
+            "cd · Enter a universe": self.enter_universe,
+            "go · Chroot": self.chroot_universe,
+            "ls · List seed templates": lambda: self.tty_command(self.universe_command("un", "ls"), pause=True),
+        })
+
+    def shell_path(self, value):
+        if value == "@" or value.startswith("@/"):
+            path = self.tab.anchor / value[2:]
+        elif value.startswith("/") and self.shell_root != Path("/") and not Path(value).is_relative_to(self.shell_root):
+            path = self.shell_root / value.lstrip("/")
+        else:
+            path = self.browser.cwd / Path(value).expanduser()
+        return Path(os.path.abspath(path))
+
+    def set_anchor(self, path, *, after=None):
+        if not self.browser.physical(path).is_dir() or not path.is_relative_to(self.shell_root):
+            raise ValueError("Choose an existing directory for @.")
+
+        def set_current():
+            self.write_anchor(self.tab, path)
+            if after:
+                after()
+
+        if self.config.yhwh.values.get("ask_at") == "true" and path != self.tab.anchor:
+            self.ask(f"Set @ to {label(path)}? [y/N]",
+                     lambda answer: set_current() if answer.strip().lower() in ("y", "yes") else None)
+        else:
+            set_current()
+
+    def prefix_menu(self):
+        prefix = self.tab.anchor
+
+        def folder(name, base, configured=False):
+            relative = (self.config.yhwh.values.get(name) or name) if configured else name
+            path = base / relative
+            self.browser.physical(path).mkdir(parents=True, exist_ok=True)
+            self.browser.navigate(path)
+
+        def profile():
+            path = self.config.yhwh.user / "etc/profile"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                source = (self.config.library if self.config.library.etc else self.library).data("profile").read_text()
+                with path.open("x") as file:
+                    file.write(source)
+            except FileExistsError:
+                pass
+            self.open(path)
+
+        self.pick(f"--prefix {label(prefix)}", {
+            **{name: partial(folder, name, prefix, True) for name in ("bin", "lib", "etc")},
+            **{f"~/.config/yhwh/{name}": partial(folder, name, self.config.yhwh.user) for name in ("bin", "lib", "etc")},
+            "etc/profile": profile,
+            "~/.bashrc": lambda: self.open(Path.home() / ".bashrc"),
+            "PATH": lambda: self.run_shell('printf "%s\\n" "$PATH"'),
+        })
 
     def external(self, target):
         if isinstance(target, Path):
@@ -1085,7 +1266,7 @@ class Workspace:
 
     def refresh_config(self, directory=None):
         previous = self.config.library
-        self.config.reload(directory)
+        self.config.reload(Path.home() if isinstance(self.browser.tree.world, Guest) else directory)
         if previous != self.config.library:
             self.services.__dict__.pop("verses", None)
         self.keys = self.workspace_keys()
@@ -1244,13 +1425,19 @@ class Workspace:
             }),
             "Files and editor": lambda: self.pick("Files and editor", {
                 "Default directory": self.default_directory,
+                "Double-click directories": partial(self.shared_setting, "double_cd", "Double-click directories", "false", booleans),
+                "Confirm cwat": partial(self.shared_setting, "ask_at", "Confirm cwat", "false", booleans),
                 "Show hidden files": partial(self.shared_setting, "show_hidden", "Show hidden files", "false", booleans),
                 "Show file manager": partial(self.shared_setting, "file_manager", "Show file manager", "true", booleans),
                 "Autosave": partial(self.shared_setting, "autosave", "Autosave", "true", booleans),
                 "Editor keys": self.editor_modes,
             }),
             "Keys": self.panel_key_settings,
-            "Terminal": lambda: self.shared_setting("terminal", "Show terminal at startup", "false", booleans),
+            "Terminal": lambda: self.pick("Shell", {
+                "Show terminal at startup": partial(self.shared_setting, "terminal", "Show terminal at startup", "false", booleans),
+                "Focus shell at startup": partial(self.shared_setting, "shell_first", "Focus shell at startup", "false", booleans),
+                "--prefix": self.prefix_menu,
+            }),
             "Presence": lambda: self.pick("Presence", {
                 "Amount of YHWH (0–100)": partial(self.shared_setting, "energy", "Amount of YHWH", "100"),
                 "Inbox letters": partial(self.shared_setting, "inbox", "Inbox letters", "true", booleans),
@@ -1281,6 +1468,9 @@ class Workspace:
             self.letter("seed")
 
     def leave_world(self):
+        if isinstance(self.browser.tree.world, Guest):
+            self.close_document()
+            return
         self.browser.change_world(None)
         self.focus("files")
 
@@ -1531,13 +1721,32 @@ class Workspace:
             raise FileNotFoundError("Install the yhwh command or set YHWH_COMMAND.")
         self.tty_command([self.config.library.command, name], pause=True)
 
+    def run_shell(self, source):
+        self.focus("terminal")
+        if self.shell and self.shell.exited:
+            self.close_shell()
+            self.focus("terminal")
+        if not self.shell:
+            self.add_shell(self.browser.cwd)
+        if not self.shell.hooked:
+            self.tty_command([self.shell.command, "-c", source], pause=True)
+            return
+        self.shell.run_command(source)
+
     def command_line(self):
         def run(line):
             command, _, argument = line.strip().partition(" ")
             if command == "cd":
-                self.browser.navigate(self.browser.cwd / Path(argument or "~").expanduser())
+                self.browser.navigate(self.shell_path(argument or ("/" if self.tab.guest_args else "~")))
+            elif command in ("cwat", "@-set"):
+                if argument or command == "@-set":
+                    self.set_anchor(self.shell_path(argument or "."))
+                else:
+                    self.message = str(self.tab.anchor)
+            elif command == "--prefix":
+                self.prefix_menu()
             elif command == "open" and argument:
-                self.open(self.browser.cwd / Path(argument).expanduser())
+                self.open(self.shell_path(argument))
             elif command == "mkdir" and argument:
                 self.browser.write_path(Path(os.path.abspath(self.browser.cwd / argument))).mkdir()
                 self.browser.refresh()
@@ -1547,20 +1756,29 @@ class Workspace:
                 else:
                     self.new_universe()
             elif command == "go":
-                if argument:
-                    self.tty_command(self.universe_command("go", "--sudo", *shlex.split(argument)))
+                self.chroot_universe(target=self.shell_path(argument) if argument else None)
+            elif command == "un":
+                action, _, value = argument.partition(" ")
+                if not action:
+                    self.universe_menu()
+                elif action == "cd":
+                    self.enter_universe(self.shell_path(value) if value else None)
+                elif action == "go":
+                    self.chroot_universe(target=self.shell_path(value) if value else None)
+                elif action == "new" and not value:
+                    self.new_universe()
                 else:
-                    self.chroot_universe()
+                    self.run_shell(line)
             elif command == "set" and "=" in argument:
                 key, value = argument.split("=", 1)
                 save_setting(self.browser.cwd, key.strip(), value.strip())
                 self.refresh()
             elif command.startswith("!"):
-                self.tty_command([os.environ.get("SHELL") or "/bin/sh", "-c", line.lstrip()[1:]], pause=True)
+                self.run_shell(line.lstrip()[1:])
             elif command:
-                raise ValueError("Use :cd, :open, :mkdir, :nu, :go, :set key=value, or :! command. Ctrl+P lists actions.")
+                self.run_shell(line)
 
-        self.ask(":", run)
+        self.ask("sh", run)
 
     def prefix_command(self, binding):
         aliases = {
@@ -1674,9 +1892,11 @@ class Workspace:
             ("reload", "Refresh files and configuration", self.refresh, True),
             ("new_file", "Create file", lambda: self.browser.create(directory=False), False),
             ("new_directory", "Create folder", lambda: self.browser.create(directory=True), False),
-            (None, "Nu · Make new universe", self.new_universe, False),
-            (None, "Cd · Enter universe", self.enter_universe, False),
-            (None, "Go · Chroot universe", self.chroot_universe, False),
+            (None, "un · Universes", self.universe_menu, False),
+            (None, "un new · Make new universe", self.new_universe, False),
+            (None, "un cd · Enter universe", self.enter_universe, False),
+            (None, "un go · Chroot universe", self.chroot_universe, False),
+            (None, "--prefix · bin lib etc", self.prefix_menu, True),
             ("rename", "Rename selected file", self.browser.rename, False),
             ("trash", "Move selected file to Trash", self.browser.trash, False),
             ("toggle_hidden", "Toggle hidden files", self.browser.toggle_hidden, False),

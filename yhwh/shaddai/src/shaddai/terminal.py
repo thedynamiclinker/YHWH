@@ -6,10 +6,13 @@ from functools import lru_cache
 from itertools import groupby
 import os
 import pty
+import re
 import signal
+from shlex import quote
 from tempfile import TemporaryDirectory
 from pathlib import Path
 import termios
+from urllib.parse import unquote_to_bytes
 
 import pyte
 from pyte import modes
@@ -85,16 +88,39 @@ class TerminalStream(pyte.ByteStream):
 
 
 class Shell:
-    def __init__(self, number, command, directory, history, *, environment=None, interactive=()):
+    def __init__(self, number, command, directory, history, *, environment=None, interactive=(), startup=None,
+                 argv=None, on_directory=None, on_anchor=None):
         self.number, self.command, self.directory, self.history = number, command, directory, history
         self.environment = environment if environment is not None else os.environ
-        self.argv = [command, "-i"]
+        self.argv = argv or [command, "-i"]
         self.startup = None
-        if interactive and os.path.basename(command) == "bash":
+        name = os.path.basename(command)
+        self.hooked = bool(argv or (startup and name in ("bash", "zsh")))
+        if startup and name == "bash":
+            self.argv[1:1] = ["--rcfile", str(startup / "bashrc")]
+        elif startup and name == "zsh":
+            self.startup = TemporaryDirectory(prefix="shaddai-zsh-")
+            rcfile = Path(self.startup.name) / ".zshrc"
+            rcfile.write_bytes((startup / "zshrc").read_bytes())
+            self.environment = {**self.environment,
+                                "YHWH_ZDOTDIR": self.environment.get("ZDOTDIR") or str(Path.home()),
+                                "ZDOTDIR": self.startup.name}
+        elif interactive and name == "bash":
             self.startup = TemporaryDirectory(prefix="shaddai-shell-")
             rcfile = Path(self.startup.name) / "bashrc"
             rcfile.write_text('[[ ! -r "$HOME/.bashrc" ]] || . "$HOME/.bashrc"\n' + "\n".join(interactive) + "\n")
             self.argv[1:1] = ["--rcfile", str(rcfile)]
+        self.on_directory = on_directory
+        self.on_anchor = on_anchor
+        self.guest = bool(argv)
+        self.cwd = "/" if self.guest else str(directory)
+        self.anchor = None
+        self.guest_anchor = None
+        self.prompt_tail = b""
+        self.ready = False
+        self.navigation = None
+        self.commands = []
+        self.anchor_changed = False
         self.loop = self.invalidate = self.terminal = self.stream = None
         self.fd = self.pid = None
         self.size = None
@@ -178,6 +204,8 @@ class Shell:
         except OSError:
             data = b""
         if data:
+            if self.hooked:
+                self.read_prompt(data)
             lines = len(self.terminal.normal.history.top)
             self.stream.feed(data)
             if self.scroll_offset:
@@ -186,6 +214,69 @@ class Shell:
         else:
             self.disconnect()
         self.invalidate()
+
+    def read_prompt(self, data):
+        self.prompt_tail = (self.prompt_tail + data)[-32768:]
+        marker = b"\x1b]133;A\x07"
+        end = self.prompt_tail.rfind(marker)
+        if end < 0:
+            return
+        prompt = self.prompt_tail[:end]
+        reports = re.findall(rb"\x1b\]7;file://[^/]*([^\x07\x1b]*)(?:\x07|\x1b\\)", prompt)
+        self.prompt_tail = self.prompt_tail[end + len(marker):]
+        self.ready = True
+        if self.guest:
+            anchors = re.findall(rb"\x1b\]697;at=([^\x07\x1b]*)\x07", prompt)
+            if anchors:
+                anchor = os.fsdecode(unquote_to_bytes(anchors[-1]))
+                if anchor.startswith("/") and "\0" not in anchor and anchor != self.anchor:
+                    self.anchor = anchor
+                    if self.guest_anchor is None and self.on_anchor:
+                        self.on_anchor(anchor)
+        if reports:
+            cwd = os.fsdecode(unquote_to_bytes(reports[-1]))
+            if cwd.startswith("/") and "\0" not in cwd:
+                self.cwd = cwd
+                if self.navigation is None and self.on_directory:
+                    self.on_directory(self, cwd)
+        self.push_command()
+
+    def navigate(self, directory):
+        if not self.hooked:
+            return
+        self.navigation = str(directory) if str(directory) != self.cwd else None
+        self.push_command()
+
+    def refresh_anchor(self, directory=None):
+        if self.guest:
+            self.guest_anchor = directory
+            self.push_command()
+        elif self.hooked:
+            self.anchor_changed = True
+            self.push_command()
+
+    def run_command(self, command):
+        self.commands.append(command)
+        self.push_command()
+
+    def push_command(self):
+        if not self.ready:
+            return
+        if self.anchor_changed:
+            self.anchor_changed = False
+            self.write("\x1b[277~")
+        anchor, self.guest_anchor = self.guest_anchor, None
+        if anchor is not None and anchor != self.anchor:
+            command = "__yhwh_set_at " + quote(anchor)
+        elif self.navigation is not None:
+            command = "cd -- " + quote(self.navigation)
+            self.navigation = None
+        elif self.commands:
+            command = self.commands.pop(0)
+        else:
+            return
+        self.ready = False
+        self.write("\x15 " + command + "\r")
 
     def disconnect(self):
         if self.fd is not None:
@@ -243,6 +334,8 @@ class Shell:
                     data = "\x1b[200~" + data + "\x1b[201~"
             elif 1 << 5 in screen.mode and data in ("\x1b[A", "\x1b[B", "\x1b[C", "\x1b[D", "\x1b[H", "\x1b[F"):
                 data = "\x1bO" + data[-1]
+            if "\r" in data or "\n" in data:
+                self.ready = False
             self.write(data)
 
     def scroll(self, up):

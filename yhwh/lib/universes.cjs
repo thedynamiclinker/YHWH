@@ -161,9 +161,9 @@ async function create(destination, id = 'empty', ref, options = {}) {
   }
 }
 
-async function go(directory, { mounts = [], writableMounts = [], mountBase = process.cwd(), network = false, sudo = false, command = ['/bin/sh', '-i'] } = {}) {
+async function go(directory, { mounts = [], writableMounts = [], mountBase = process.cwd(), network = false, sudo = false, raw = false, startup, command = ['/bin/sh', '-i'] } = {}) {
   if (process.platform !== 'linux') throw new Error(hostOnly);
-  const root = await enter(directory);
+  const root = raw ? await fs.realpath(directory) : await enter(directory);
   if (root === '/') throw new Error('Choose a universe directory other than the host root.');
   if (!Array.isArray(command) || !command.length || command.some(item => typeof item !== 'string') || !command[0].startsWith('/'))
     throw new Error('Give an absolute guest command such as /bin/sh.');
@@ -184,6 +184,9 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   const args = ['--die-with-parent', '--new-session', '--cap-drop', 'ALL', '--clearenv', '--setenv', 'PATH', '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin',
     '--setenv', 'HOME', '/root', '--setenv', 'TERM', process.env.TERM || 'xterm-256color',
     '--bind', root, '/', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--chdir', '/'];
+  if (startup) args.push('--ro-bind', startup, '/tmp/.yhwh-shrc',
+    '--ro-bind', path.join(path.dirname(startup), 'session'), '/tmp/.yhwh-session',
+    '--setenv', 'ENV', '/tmp/.yhwh-shrc', '--setenv', 'YHWH_ROOT', '/', '--setenv', 'YHWH_CWAT', '/');
   if (network) args.push('--ro-bind-try', '/etc/resolv.conf', '/etc/resolv.conf');
   if (mounts.length || writableMounts.length) args.push('--tmpfs', '/mnt/host');
   const names = new Set();
@@ -217,4 +220,4 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   return { program, args: [...prefix, ...isolation, ...args, '--', ...command], cwd: root };
 }
 
-module.exports = { create, enter, go, isImported };
+module.exports = { create, enter, go, isImported, guestPath };

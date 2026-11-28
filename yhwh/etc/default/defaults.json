@@ -3,6 +3,8 @@
   "energy": "100",
   "font_size": "18",
   "show_hidden": "false",
+  "double_cd": "false",
+  "ask_at": "false",
   "sidebar_width": "258",
   "terminal_height": "240",
   "panel_resize_pixels": "24",

@@ -90,7 +90,7 @@ class Browser:
         self.preview_cache = None
         self.workspace.message = next(iter(self.tree.errors), "")
 
-    def navigate(self, directory, *, record=True, force=False):
+    def navigate(self, directory, *, record=True, force=False, from_shell=False):
         directory = Path(os.path.abspath(directory))
         if self.tree.world:
             directory = self.tree.world.directory(directory)
@@ -117,6 +117,8 @@ class Browser:
             self.history[self.visit + 1:] = [directory]
             self.visit = len(self.history) - 1
             self.workspace.attempt(self.workspace.services.walk, "navigate")
+        if not from_shell:
+            self.workspace.sync_shell_directory()
         return True
 
     def step_history(self, step):
@@ -127,8 +129,7 @@ class Browser:
     def location(self):
         def go(text):
             if text.strip():
-                path = self.cwd / Path(text).expanduser()
-                path = Path(os.path.abspath(path))
+                path = self.workspace.shell_path(text)
                 if self.physical(path).is_dir():
                     self.navigate(path)
                 else:
@@ -168,6 +169,10 @@ class Browser:
         previous = self.last_click
         self.workspace.focus("files")
         self.select(index)
+        if self.tree.current and self.tree.current[2] and self.workspace.config.yhwh.values.get("double_cd") != "true":
+            self.last_click = None
+            self.open()
+            return
         self.last_click = self.selected, now
         if previous and previous[0] == self.selected and now - previous[1] < 0.4:
             self.last_click = None
@@ -237,8 +242,7 @@ class Browser:
         bind("home g", lambda: self.select(0))
         bind("end G", lambda: self.select(len(self.tree.rows) - 1))
         bind("left h backspace", lambda: self.navigate(self.cwd.parent))
-        bind("right", self.expand)
-        bind("l enter", self.open)
+        bind("right l enter", self.open)
         bind(":", self.workspace.command_line)
         bind("space", self.expand)
         bind("/", self.filter)

@@ -55,7 +55,12 @@ export function installInitial(app, { home, mobile, call }) {
     }
   }
 
-  const root = () => app.active()?.initialRoot || app.active()?.worldRoot;
+  const root = () => {
+    const tab = app.active();
+    return tab?.initialRoot || tab?.worldRoot || (tab?.systemRoot !== '/' ? tab?.systemRoot : null);
+  };
+  const prefix = action => call('shell:prefix', app.active().id, action);
+  let shellCommands = [];
   const host = {
     home, cwd: () => app.active().cwd, root,
     read: path => call('file:read', path), save: (...args) => call('file:save', ...args),
@@ -63,7 +68,8 @@ export function installInitial(app, { home, mobile, call }) {
     list: path => call('directory:list', app.active().id, path),
     copy: (...args) => call('file:copy', ...args), move: (...args) => call('file:move', ...args), trash: path => call('file:trash', path),
     navigate: path => app.navigate(path), open: path => app.openFile(path), view: showView,
-    anchor: path => path === undefined ? call('@-get', app.active().id) : call('@-set', app.active().id, path),
+    anchor: path => path === undefined ? call('@-get', app.active().id) : app.setAnchor(app.active(), path),
+    universe: (subcommand, args) => launchFull(() => app.universe(subcommand, args)),
     builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface', '@-get', '@-set'].includes(item.id)),
     chroot: async path => {
       const tab = app.active();
@@ -79,7 +85,7 @@ export function installInitial(app, { home, mobile, call }) {
 
   function commandToken(item) {
     const first = library.catalog().find(entry => entry.name === item.name || entry.names?.includes(item.name));
-    const name = !first || first.kind === item.kind || item.kind === 'Initials' ? item.name : locations[item.kind] + '/' + item.name;
+    const name = !first || first.kind === item.kind || item.kind === 'Initials' || item.kind === 'PATH' ? item.name : locations[item.kind] + '/' + item.name;
     return /^[\p{L}\p{N}_.\/~\-]+$/u.test(name) ? name : quote(name);
   }
   async function execute(source, back = shelf) {
@@ -106,8 +112,13 @@ export function installInitial(app, { home, mobile, call }) {
   }
 
   const workbench = createWorkbench({
-    catalog: () => library.catalog(), token: commandToken, run: runInWorkbench, details: manual, save: saveGrid,
-    actions: { compose: () => compose(scratch), alias: () => aliasEditor(), draw: () => draw(), guide, tutorial },
+    catalog: () => [...library.catalog(), ...shellCommands.map(name => ({ name, kind: 'PATH', label: 'Shell · PATH, alias or function', detail: 'Run in the tab shell' }))],
+    token: commandToken, run: runInWorkbench, runShell, details: manual, save: saveGrid, mobile,
+    actions: {
+      compose: () => compose(scratch), alias: () => aliasEditor(), draw: () => draw(), guide, tutorial,
+      prefix: showPrefix, bin: () => openPrefix('bin'), lib: () => openPrefix('lib'), etc: () => openPrefix('etc'),
+      profile: () => openPrefix('profile', false), path: showPath,
+    },
     report: showError, address: app.address,
     readDraft: () => {
       try {
@@ -126,6 +137,7 @@ export function installInitial(app, { home, mobile, call }) {
   async function shelf() {
     await library.reload();
     workbench.renderCatalog();
+    if (!mobile) refreshShellCommands().catch(showError);
     if (docked) {
       if (document.querySelector('#terminal-panel').hidden) await app.run('focus-terminal');
       embedded.append(workbench.shell);
@@ -135,6 +147,52 @@ export function installInitial(app, { home, mobile, call }) {
     modal('The Initial', '');
     dialog.classList.add('initial-shell-dialog');
     dialog.insertBefore(workbench.shell, dialog.querySelector('[data-error]'));
+  }
+
+  async function refreshShellCommands() {
+    const tab = app.active(), names = await prefix('commands');
+    if (app.active() !== tab) return;
+    shellCommands = names;
+    workbench.renderCatalog();
+  }
+  for (const event of ['navigate', 'tab', 'anchor']) app.on(event, () => {
+    shellCommands = [];
+    if (docked && !mobile) refreshShellCommands().catch(showError);
+  });
+  async function runShell(source) {
+    if (!source.trim()) throw new Error('Enter a command to run in the tab shell.');
+    return launchFull(async () => {
+      selectTerminal(false);
+      const tab = app.active();
+      await app.focusTerminal(tab);
+      await call('terminal:run', tab.id, source);
+    });
+  }
+  async function openPrefix(action, directory = true) {
+    const path = await prefix(action), boundary = root();
+    return launchFull(async () => {
+      const outside = boundary && path !== boundary && !path.startsWith(boundary.replace(/\/$/, '') + '/');
+      const tab = outside ? await app.newTab() : app.active();
+      if (directory) await app.navigate(path, tab);
+      else await app.openFile(path, tab, { edit: true });
+    });
+  }
+  async function showPrefix() {
+    const { anchor, user, dirs, profile } = await prefix('layout');
+    modal('--prefix', `<dl><dt>@</dt><dd>${escape(anchor)}</dd>
+      <dt>bin</dt><dd>${escape(dirs.bin)}</dd><dt>lib</dt><dd>${escape(dirs.lib)}</dd><dt>etc</dt><dd>${escape(dirs.etc)}</dd>
+      <dt>User prefix</dt><dd>${escape(user)}</dd><dt>etc/profile</dt><dd>${escape(profile)}</dd></dl>
+      <div class="initial-tools">${buttons([['cwat', 'choose-at'], ['bin', 'user-bin'], ['lib', 'user-lib'], ['etc', 'user-etc'], ['etc/profile', 'profile'], ...(!mobile ? [['~/.bashrc', 'home-rc'], ['@ rc', 'at-rc']] : [])])}</div>
+      ${mobile ? '<p>Shell files can be edited here. Running them requires a Unix host.</p>' : '<p>Source scripts with <code>.</code>. Put executables on <code>PATH</code>. Set <code>yhwh_bin</code>, <code>yhwh_lib</code>, or <code>yhwh_etc</code> in <code>etc/profile</code> to change their locations.</p>'}`, { back: shelf });
+    bind({ 'choose-at': () => launchFull(() => app.run('@-set')), profile: () => openPrefix('profile', false),
+      'user-bin': () => openPrefix('user-bin'), 'user-lib': () => openPrefix('user-lib'), 'user-etc': () => openPrefix('user-etc'),
+      'home-rc': () => openPrefix('home-rc', false), 'at-rc': () => openPrefix('at-rc', false) });
+  }
+  async function showPath() {
+    const { path } = await prefix('layout');
+    modal('PATH', `<pre class="initial-output">${escape(mobile ? '~/bin:/bin:/usr/bin' : path)}</pre>
+      <div class="initial-tools">${buttons([['etc/profile', 'profile']])}</div>`, { back: shelf });
+    bind({ profile: () => openPrefix('profile', false) });
   }
 
   function switchInterface() {

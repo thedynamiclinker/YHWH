@@ -17,6 +17,7 @@ export const unavailable = {
   'window:close': 'Use your device’s app switcher to leave YHWH. Save any edits first.',
   'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
+  'terminal:run': 'This device uses the Initial interpreter. Bash, Zsh, and native executables require the desktop host.',
   'universe:go': hostOnly,
 };
 export function normalize(input, cwd = HOME) {
@@ -134,6 +135,29 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       emit('anchor-changed', { id, anchor });
       return anchor;
     },
+    async 'shell:prefix'(id, action) {
+      const { anchor } = focus(id), user = '/.yhwh';
+      const dirs = Object.fromEntries(['bin', 'lib', 'etc'].map(name => [name, normalize(name, anchor)]));
+      const profile = '/.yhwh/etc/profile';
+      if (action === 'layout') return { anchor, user, dirs, profile, path: '' };
+      if (action === 'commands') return [];
+      const ensure = async name => {
+        if (await storage.stat(name)) return;
+        await ensure(normalize('..', name));
+        await storage.mkdir(name);
+      };
+      if (/^(?:user-)?(?:bin|lib|etc)$/.test(action)) {
+        const path = action.startsWith('user-') ? normalize(action.slice(5), user) : dirs[action];
+        await ensure(path);
+        return path;
+      }
+      if (action === 'profile') {
+        await ensure('/.yhwh/etc');
+        if (!(await storage.stat(profile))) await storage.write(profile, new TextEncoder().encode('# Shell profile for use on a Unix host.\n'));
+        return profile;
+      }
+      throw new Error('Shell startup files run on the desktop host.');
+    },
     async 'folder-menu:list'() {
       const names = [...(await folderActions()).keys()];
       return names.sort((a, b) => a.localeCompare(b)).map(name => ({ name, label: name.slice(0, -4) }));
@@ -189,6 +213,9 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       const file = normalize('.@', path), info = await storage.stat(file);
       if ((current.worldRoot && !inside(path, current.worldRoot)) || !info || info.directory || info.size < marker.length || info.size > 65536 ||
           !new TextDecoder().decode(await storage.read(file)).startsWith(marker)) throw new Error('Choose a universe directory created by Nu or un new.');
+      if (focus(id) !== current) throw new Error('That tab has closed.');
+      current.anchor = path;
+      emit('anchor-changed', { id, anchor: path });
       return path;
     },
     async 'file:move'(source, destination) {
@@ -266,7 +293,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     'verse:get': reference => verses.get(reference), 'verse:random': () => verses.random('Genesis'),
     'verse:commentary': (...args) => verses.saveCommentary(...args),
   };
-  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave', 'editor:language-rule', 'editor:language-feedback', 'universe:create']);
+  const mutations = new Set(['file:save', 'file:create', 'file:move', 'file:copy', 'file:trash', 'settings:save', 'words:save', 'world:enter', 'world:leave', 'editor:language-rule', 'editor:language-feedback', 'universe:create', 'shell:prefix']);
   return {
     // Parity tests require an explicit decision for every shared operation.
     supports: channel => Object.hasOwn(handlers, channel) || Object.hasOwn(unavailable, channel),

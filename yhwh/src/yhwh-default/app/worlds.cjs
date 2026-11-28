@@ -11,16 +11,23 @@ async function enter(name) {
 }
 function directory(focus, target) {
   target = path.resolve(focus.cwd, target);
+  if (focus.guest) return inside(focus.guest.cwd, target) ? target : focus.guest.cwd;
   if (!focus.worldRoot) return target;
   if (inside(shared, target)) return path.join(focus.worldRoot, path.relative(shared, target));
   return inside(focus.worldRoot, target) ? target : focus.worldRoot;
 }
 async function physical(focus, target = focus.cwd) {
+  if (focus.guest) return require('../../../lib/universes.cjs').guestPath(focus.guest.cwd, path.relative(focus.guest.cwd, directory(focus, target)));
   if (!focus.worldRoot) return target;
   const overlay = path.join(shared, path.relative(focus.worldRoot, target));
   try { await fs.access(overlay); return overlay; } catch (error) { if (error.code !== 'ENOENT') throw error; return target; }
 }
 async function list(focus, hidden) {
+  if (focus.guest) {
+    const physicalDirectory = await physical(focus);
+    const entries = await files.list(physicalDirectory, hidden, filename => physical(focus, path.join(focus.cwd, path.basename(filename))));
+    return entries.map(row => ({ ...row, path: path.join(focus.cwd, row.name) }));
+  }
   if (!focus.worldRoot) return files.list(focus.cwd, hidden);
   const overlay = path.join(shared, path.relative(focus.worldRoot, focus.cwd));
   const entries = new Map();

@@ -12,7 +12,7 @@ const element = (tag, text, className) => {
   return node;
 };
 
-export function createWorkbench({ catalog, token, run, details, save, readDraft, writeDraft, actions, report, address }) {
+export function createWorkbench({ catalog, token, run, runShell, details, save, readDraft, writeDraft, actions, report, address, mobile }) {
   const shell = element('section', null, 'initial-workbench');
   shell.innerHTML = `<section class="initial-preview" aria-label="Initial workspace">
       <header class="initial-preview-bar">
@@ -23,11 +23,19 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
       <div class="initial-screen"></div>
     </section>
     <section class="initial-launcher" aria-label="Command launcher">
+      <nav class="initial-prefix" aria-label="Shell prefix">
+        <button type="button" data-tool="prefix" title="Current @ and user prefix">--prefix</button>
+        <button type="button" data-tool="bin">bin</button><button type="button" data-tool="lib">lib</button>
+        <button type="button" data-tool="etc">etc</button>
+        <button type="button" data-tool="profile">etc/profile</button>
+        <button type="button" data-tool="path">PATH</button>
+      </nav>
       <nav class="initial-categories" aria-label="Command locations"></nav>
       <div class="initial-search">
         <input type="search" data-search aria-label="Find or type a command" placeholder="Find or type a command" autocomplete="off" autocapitalize="off" spellcheck="false">
         <button type="button" data-layout aria-pressed="false" aria-label="List view">☷</button>
         <button type="button" data-add aria-pressed="false" title="Add tiles to your script">＋</button>
+        ${mobile ? '' : '<button type="button" data-unix title="Run the entered command in the tab shell">Run in shell</button>'}
       </div>
       <div class="initial-shelf" aria-label="Commands"></div>
       <footer class="initial-workbench-tools">
@@ -83,6 +91,7 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
     return search.value.trimStart().match(/(?:^|[|;]\s*)([\p{L}\p{N}_.\/~\-]+)$/u)?.[1] || '';
   }
   search.oninput = () => renderCatalog();
+  if (!mobile) $('[data-unix]').onclick = action(() => runShell(search.value));
   search.onkeydown = event => {
     if (event.isComposing) return;
     if (event.key === 'ArrowDown' && matches.length) { event.preventDefault(); shelf.querySelector('.initial-tile')?.focus(); }
@@ -122,7 +131,12 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
   function renderCatalog() {
     const query = (fragment() || search.value.trim()).toLocaleLowerCase();
     for (const tab of shell.querySelectorAll('[data-kind]')) tab.setAttribute('aria-pressed', String(tab.dataset.kind === category));
-    matches = catalog().filter(item => query ? [item.name, item.label, item.detail].join(' ').toLocaleLowerCase().includes(query) : item.kind === category);
+    const catalogItems = catalog();
+    const known = new Set(catalogItems.filter(item => item.kind !== 'PATH').map(item => item.name));
+    matches = catalogItems.filter(item => query
+      ? [item.name, item.label, item.detail].join(' ').toLocaleLowerCase().includes(query)
+        && (item.kind !== 'PATH' || !known.has(item.name) || query === item.name.toLocaleLowerCase())
+      : item.kind === category).slice(0, 120);
     shelf.classList.toggle('as-list', list);
     shelf.replaceChildren();
     if (!query && category === 'Initials') {
@@ -132,18 +146,26 @@ export function createWorkbench({ catalog, token, run, details, save, readDraft,
     if (!matches.length) shelf.append(element('p', 'No matching commands.', 'initial-empty'));
     for (const item of matches) {
       const card = element('article', null, 'initial-command' + (item.kind === 'Initials' ? '' : ' is-command'));
-      const tile = button('', () => adding ? place(token(item)) : execute(token(item), item));
+      const tile = button('', () => {
+        if (item.kind !== 'PATH') return adding ? place(token(item)) : execute(token(item), item);
+        search.value = token(item) + ' ';
+        search.focus();
+        setStatus('Add arguments, then Run in shell.');
+      });
       tile.className = 'initial-tile';
       tile.title = item.detail;
       const name = element('b', item.name); name.dir = 'auto';
       tile.append(name);
       if (item.kind !== 'Initials' || list) tile.append(element('span', item.kind === 'Words' ? item.detail : item.label));
       else tile.setAttribute('aria-label', item.name + ' · ' + item.label);
-      const menu = button('⋯', () => details(item), 'Details for ' + item.name);
-      menu.className = 'initial-details';
-      card.append(tile, menu);
+      card.append(tile);
+      if (item.kind !== 'PATH') {
+        const menu = button('⋯', () => details(item), 'Details for ' + item.name);
+        menu.className = 'initial-details';
+        card.append(menu);
+        draggable(tile, { command: token(item), label: item.name });
+      }
       shelf.append(card);
-      draggable(tile, { command: token(item), label: item.name });
     }
   }
 

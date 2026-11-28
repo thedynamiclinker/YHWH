@@ -188,9 +188,12 @@ async function navigate(id, directory, fromShell = false) {
   if (!stat.isDirectory()) throw new Error(ui("choose-a-directory-"));
   focus.cwd = directory;
   await watchDirectory(focus);
-  if (!fromShell && focus.terminalId) host.send({ type: 'cd', id: focus.terminalId, cwd: await worlds.physical(focus, directory) });
-  const config = await configFor(directory);
-  return { worldRoot: focus.worldRoot || null, systemRoot: path.parse(directory).root, cwd: directory, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config };
+  if (!fromShell && focus.terminalId) {
+    const cwd = focus.guest ? '/' + path.relative(focus.guest.cwd, directory) : await worlds.physical(focus, directory);
+    host.send({ type: 'cd', id: focus.terminalId, cwd });
+  }
+  const config = await configFor(focus.guest ? userDirectory() : directory);
+  return { worldRoot: focus.worldRoot || null, systemRoot: focus.guest?.cwd || path.parse(directory).root, cwd: directory, entries: await worlds.list({ ...focus, cwd: directory }, config.values.show_hidden === 'true'), config };
 }
 
 async function accessAnchor(id, directory) {
@@ -199,38 +202,109 @@ async function accessAnchor(id, directory) {
   if (directory === undefined) return tabAnchor.read(focus.anchor.filename);
   if (typeof directory !== 'string' || !path.isAbsolute(directory)) throw new Error('Choose an existing directory for @.');
   const anchor = path.resolve(directory);
+  if (focus.guest && worlds.directory(focus, anchor) !== anchor) throw new Error('Choose a directory inside the current /.');
   const target = worlds.directory(focus, anchor) === anchor ? await worlds.physical(focus, anchor) : anchor;
   if (!(await fs.stat(target).catch(() => null))?.isDirectory()) throw new Error(`Choose an existing directory for @. ${anchor}`);
   if (focuses.get(id) !== focus) throw new Error('That tab has closed.');
-  await tabAnchor.write(focus.anchor.filename, anchor);
+  if (await tabAnchor.read(focus.anchor.filename) !== anchor) await tabAnchor.write(focus.anchor.filename, anchor);
   return anchor;
 }
 
 async function sourcePath(filename) {
-  const focus = [...focuses.values()].find(item => item.worldRoot && (filename === item.worldRoot || filename.startsWith(item.worldRoot + path.sep)));
+  const focus = [...focuses.values()].find(item => {
+    const root = item.guest?.cwd || item.worldRoot;
+    return root && (filename === root || filename.startsWith(root + path.sep));
+  });
   return focus ? worlds.physical(focus, filename) : filename;
 }
 
 async function destination(filename) {
-  const focus = [...focuses.values()].find(item => item.worldRoot && (filename === item.worldRoot || filename.startsWith(item.worldRoot + path.sep)));
+  const focus = [...focuses.values()].find(item => {
+    const root = item.guest?.cwd || item.worldRoot;
+    return root && filename.startsWith(root + path.sep);
+  });
   if (!focus) return filename;
   return path.join(await worlds.physical(focus, path.dirname(filename)), path.basename(filename));
 }
 
 async function startTerminal(focus, id) {
   if (typeof id !== 'string' || terminals.has(id)) throw new Error('Invalid terminal.');
-  const config = await configFor(focus.cwd);
+  const config = await configFor(focus.guest ? userDirectory() : focus.cwd);
   const cwd = await worlds.physical(focus);
   if (focuses.get(focus.id) !== focus) throw new Error('Closed tab.');
   if (terminals.has(id)) throw new Error('Invalid terminal.');
   if ([...terminals.values()].includes(focus.id)) throw new Error('This app tab already has a shell.');
   terminals.set(id, focus.id); focus.terminalId = id;
-  host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_TAB_ANCHOR: focus.anchor.filename, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });
+  if (focus.guest) {
+    host.send({ type: 'start', id, cwd: focus.guest.cwd, guest: focus.guest });
+    const anchor = await tabAnchor.read(focus.anchor.filename);
+    if (anchor !== focus.guest.cwd) host.send({ type: 'anchor', id, directory: '/' + path.relative(focus.guest.cwd, anchor) });
+    if (focus.cwd !== focus.guest.cwd) host.send({ type: 'cd', id, cwd: '/' + path.relative(focus.guest.cwd, focus.cwd) });
+    return;
+  }
+  host.send({ type: 'start', id, cwd, env: { ...config.environment, YHWH_TAB: focus.id, YHWH_TAB_ANCHOR: focus.anchor.filename, YHWH_CWAT: await tabAnchor.read(focus.anchor.filename), YHWH_ROOT: path.parse(cwd).root, YHWH_PREFIX_SHELL: path.join(root, '../../bin/prefix-shell.cjs'), YHWH_INTERFACE: three ? 'three' : 'default', YHWH_THREE_DATA_DIR: three ? profile : '', PATH: `${path.join(root, '../../bin')}${path.delimiter}${path.join(root, 'bin')}${path.delimiter}${config.environment.PATH || process.env.PATH}` } });
+}
+
+async function shellPrefix(focus, action) {
+  if (!focus) throw new Error('Closed tab.');
+  const user = userDirectory(), anchor = await tabAnchor.read(focus.anchor.filename);
+  const config = await configFor(focus.guest ? user : focus.cwd);
+  const runtime = !focus.guest && focus.terminalId
+    ? (await fs.readFile(path.join(path.dirname(focus.anchor.filename), 'shell'), 'utf8').catch(() => '')).split('\0')
+    : [];
+  const live = runtime[1] === anchor && runtime.length >= 7;
+  const dirs = Object.fromEntries(['bin', 'lib', 'etc'].map((name, i) =>
+    [name, path.resolve(anchor, live ? runtime[i + 3] : config.values[name] || name)]));
+  const profileFile = path.join(user, 'etc/profile');
+  const pathValue = live ? runtime[2] : focus.guest ? '/usr/local/bin:/usr/bin:/bin' : config.environment.PATH || '';
+  if (action === 'layout') return { anchor, user, dirs, profile: profileFile, path: pathValue };
+  if (action === 'commands') {
+    const names = new Set(live ? runtime.slice(6).filter(name => name && !/^_{1,2}yhwh_/.test(name)) : []);
+    const from = async folder => {
+      const entries = await fs.readdir(folder, { withFileTypes: true }).catch(() => []);
+      await Promise.all(entries.filter(entry => entry.isFile() || entry.isSymbolicLink()).map(async entry => {
+        const filename = path.join(folder, entry.name);
+        try {
+          await fs.access(filename, require('node:fs').constants.X_OK);
+          if (!entry.isSymbolicLink() || (await fs.stat(filename)).isFile()) names.add(entry.name);
+        } catch {}
+      }));
+    };
+    const folders = pathValue === '' && !live ? [] : [...new Set(pathValue.split(path.delimiter))];
+    await Promise.all(folders.map(async folder => {
+      const location = path.resolve(focus.cwd, folder);
+      if (focus.guest) {
+        const resolved = await universes.guestPath(focus.guest.cwd, folder || '/').catch(() => null);
+        if (resolved) await from(resolved);
+      } else await from(location);
+    }));
+    return [...names].sort((a, b) => a.localeCompare(b)).slice(0, 6000);
+  }
+  if (/^(?:user-)?(?:bin|lib|etc)$/.test(action)) {
+    const directory = action.startsWith('user-') ? path.join(user, action.slice(5)) : dirs[action];
+    const target = focus.guest && !action.startsWith('user-') ? await destination(directory) : directory;
+    await fs.mkdir(target, { recursive: true });
+    return directory;
+  }
+  if (action === 'profile') {
+    const source = await fs.readFile(paths.etc('profile'), 'utf8');
+    await fs.writeFile(profileFile, source, { mode: 0o600, flag: 'wx' }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+    return profileFile;
+  }
+  if (action === 'home-rc') return path.join(os.homedir(), '.bashrc');
+  const rc = action === 'at-rc' && config.values.at_rc;
+  if (rc) {
+    const filename = path.resolve(anchor, rc);
+    await fs.mkdir(path.dirname(filename), { recursive: true });
+    await fs.appendFile(filename, '', { mode: 0o600 });
+    return filename;
+  }
+  throw new Error('Set yhwh_at_rc in etc/profile to choose a file to source at @.');
 }
 
 async function launch() {
   await fs.mkdir(profile, { recursive: true });
-  await fs.mkdir(userDirectory(), { recursive: true });
+  await Promise.all(['bin', 'lib', 'etc'].map(name => fs.mkdir(path.join(userDirectory(), name), { recursive: true })));
   const configured = await defaultDirectory();
   const initial = await request(process.argv, process.cwd(), configured);
   const initialConfig = await resolveConfig(initial.path, configOptions);
@@ -247,8 +321,13 @@ async function launch() {
     const focus = focuses.get(terminals.get(message.id));
     if (message.type === 'exit') { terminals.delete(message.id); if (focus?.terminalId === message.id) focus.terminalId = null; }
     if (message.type === 'cwd' && focus?.terminalId === message.id) {
-      try { send('navigation', { id: focus.id, ...await navigate(focus.id, message.cwd, true) }); }
-      catch (error) { send('error', error.message); }
+      const directory = focus.guest ? path.join(focus.guest.cwd, message.cwd) : message.cwd;
+      try { send('navigation', { id: focus.id, ...await navigate(focus.id, directory, true) }); }
+      catch (error) { if (!focus.guest || error.code !== 'ENOENT') send('error', error.message); }
+    }
+    if (message.type === 'anchor' && focus?.guest && focus.terminalId === message.id && path.isAbsolute(message.directory)) {
+      try { await accessAnchor(focus.id, path.join(focus.guest.cwd, message.directory)); }
+      catch {}
     }
   });
   handle('bootstrap', async () => {
@@ -257,15 +336,16 @@ async function launch() {
   });
   async function newFocus(id, directory, guest) {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
-    const focus = { id, cwd: path.resolve(directory) };
+    const focus = { id, cwd: path.resolve(directory), guest };
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
-      focus.anchor = await tabAnchor.create(result.cwd, anchor => send('anchor-changed', { id, anchor }));
-      if (guest) {
-        terminals.set(id, focus.id);
-        host.send({ type: 'start', id, cwd: guest.cwd, guest: { program: guest.program, args: guest.args } });
-      } else await startTerminal(focus, id);
+      focus.anchor = await tabAnchor.create(result.cwd, anchor => {
+        if (focus.terminalId) host.send({ type: 'anchor', id: focus.terminalId,
+          directory: focus.guest ? '/' + path.relative(focus.guest.cwd, anchor) : undefined });
+        send('anchor-changed', { id, anchor });
+      });
+      await startTerminal(focus, id);
       return { ...result, anchor: result.cwd };
     } catch (error) { focus.anchor?.close(); focus.watcher?.close(); clearTimeout(focus.watchTimer); focuses.delete(id); throw error; }
   }
@@ -289,6 +369,7 @@ async function launch() {
       mounts: options.mounts, writableMounts: options.writableMounts,
       mountBase: await worlds.physical(focus),
       network: options.network === true, sudo: options.sudo === true,
+      raw: options.raw === true, startup: paths.etc('shell', 'guest'),
     });
     if (focuses.get(from) !== focus) throw new Error('Closed tab.');
     return newFocus(id, guest.cwd, guest);
@@ -298,6 +379,7 @@ async function launch() {
     if (!focus) throw new Error('Closed tab.');
     directory = worlds.directory(focus, directory);
     await universes.enter(await worlds.physical(focus, directory));
+    await accessAnchor(id, directory);
     return directory;
   });
   handle('universe:create', async (id, name, template, image) => {
@@ -331,6 +413,13 @@ async function launch() {
     terminals.delete(terminalId); host.send({ type: 'close', id: terminalId });
     if (focuses.get(id)?.terminalId === terminalId) focuses.get(id).terminalId = null;
   });
+  handle('shell:prefix', (id, action) => shellPrefix(focuses.get(id), action));
+  handle('terminal:run', async (id, source) => {
+    const focus = focuses.get(id);
+    if (!focus?.terminalId) throw new Error('Open this tab’s shell first.');
+    if (typeof source !== 'string' || !source.trim() || source.includes('\0') || Buffer.byteLength(source) > 16000) throw new Error('Enter a shell command up to 16 KB.');
+    host.send({ type: 'run', id: focus.terminalId, source });
+  });
   handle('world:enter', async (id, name) => {
     const focus = focuses.get(id);
     const directory = await worlds.enter(name);
@@ -349,11 +438,11 @@ async function launch() {
   handle('verse:random', () => verses.random('Genesis'));
   handle('verse:commentary', (id, text) => verses.saveCommentary(id, text));
   handle('navigate', navigate);
-  handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });
+  handle('list', async id => { const focus = focuses.get(id); if (!focus) throw new Error(ui("closed-tab-")); const config = await configFor(focus.guest ? userDirectory() : focus.cwd); return { cwd: focus.cwd, entries: await worlds.list(focus, config.values.show_hidden === 'true'), config }; });
   handle('directory:list', async (id, directory) => {
     const focus = focuses.get(id); if (!focus) throw new Error('Closed tab.');
     const cwd = worlds.directory(focus, directory);
-    const config = await configFor(cwd);
+    const config = await configFor(focus.guest ? userDirectory() : cwd);
     return worlds.list({ ...focus, cwd }, config.values.show_hidden === 'true');
   });
   handle('chat', async (tabId, thread, messages, attachments, selectedEnergy) => {
@@ -388,7 +477,7 @@ async function launch() {
   handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values, config.languageRules), config }; });
   handle('editor:language-rule', (filename, language, scope) => appendEditorRecord(ruleFile, languageRuleLine(path.resolve(filename), language, scope)));
   handle('editor:language-feedback', feedback => appendEditorRecord(feedbackFile, languageFeedbackLine(feedback)));
-  handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(absolute); return { path: absolute, directory: stat.isDirectory() }; });
+  handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(await sourcePath(absolute)); return { path: absolute, directory: stat.isDirectory() }; });
   handle('file:save', async (filename, ...args) => files.save(await destination(filename), ...args));
   handle('file:create', async (filename, directory) => files.create(await destination(filename), directory));
   handle('file:move', async (source, target) => files.move(await sourcePath(source), await destination(target)));

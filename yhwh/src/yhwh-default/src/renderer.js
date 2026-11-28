@@ -199,7 +199,7 @@ async function newTab(directory = active()?.cwd || boot.home, guest) {
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
   tab.terminals = [];
-  if (guest) { tab.guestDirectory = state.cwd; tab.showTerminal = true; }
+  if (guest) tab.showTerminal = true;
   if (boot.capabilities?.terminal !== false) createTerminal(tab, id, Boolean(guest));
   tabs.push(tab); welcome(tab); activate(id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
@@ -335,7 +335,6 @@ function renderFiles() {
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
   renderAnchor(tab);
   $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
-  $('#terminal-cwd').textContent = tab.terminals.some(session => session.guest) ? `Chroot · ${tab.guestDirectory}` : tab.cwd;
   $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
@@ -573,11 +572,24 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
 }
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
 function renderAnchor(tab) {
-  $('#files [data-command="anchor-menu"]').title = `@ → ${tab.anchor}`;
+  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
+  for (const [id, value] of [['cwd', tab.cwd], ['anchor', tab.anchor], ['root', root]]) {
+    const element = $('#path-' + id);
+    element.textContent = value; element.title = value;
+  }
+  $('#terminal-cwd').textContent = `. ${tab.cwd}   @ ${tab.anchor}   / ${root}`;
+  $('#terminal-cwd').title = $('#terminal-cwd').textContent;
+  $('#files [data-command="anchor-directory"]').title = tab.anchor;
+}
+async function confirmAnchor(tab, directory) {
+  return tab.config.values.ask_at !== 'true' || directory === tab.anchor ||
+    await choose('cwat', `Set @ to ${directory}?`, ['Set @', 'Cancel']) === 0;
 }
 async function setAnchor(tab, directory) {
+  if (!await confirmAnchor(tab, directory)) return tab.anchor;
   const anchor = await call('@-set', tab.id, directory);
-  if (tab === active()) notice(`@ → ${anchor}`);
+  tab.anchor = anchor;
+  if (tab === active()) renderAnchor(tab);
   return anchor;
 }
 async function chooseAnchor(tab = active()) {
@@ -586,7 +598,7 @@ async function chooseAnchor(tab = active()) {
 }
 async function goToAnchor(tab, suffix = '') {
   const anchor = await call('@-get', tab.id);
-  const root = tab.initialRoot || tab.worldRoot;
+  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
   if (root && !withinPath(anchor, root)) throw new Error('@ is outside the current folder root.');
   return navigateFiles(suffix ? join(anchor, `./${suffix}`) : anchor, tab);
 }
@@ -768,7 +780,7 @@ function newUniverse() {
   const tab = active();
   const available = linuxUniverses();
   const options = universeSeeds.map(seed => `<option value="${seed.id}" ${!available && (seed.image || seed.id === 'oci') ? 'disabled' : ''}>${escape(seed.label)}</option>`).join('');
-  const dialog = modal('Nu · Make new universe', `<form class="universe-form">
+  const dialog = modal('un new · Make new universe', `<form class="universe-form">
     <label class="field"><span>Directory name</span><input name="directory" required autofocus></label>
     <label class="field"><span>Template</span><select name="template">${options}</select></label>
     <p data-template-description></p>
@@ -816,15 +828,16 @@ function newUniverse() {
     }
   };
 }
-async function enterUniverse() {
+async function enterUniverse(directory = universeTarget(active())) {
   const tab = active();
-  const directory = await call('universe:cd', tab.id, universeTarget(tab));
-  await navigate(directory, tab);
+  if (!await confirmAnchor(tab, directory)) return;
+  tab.anchor = await call('universe:cd', tab.id, directory);
+  await navigateFiles(directory, tab);
 }
-function chrootUniverse() {
+function chrootUniverse(raw = false, directory = universeTarget(active())) {
   if (!linuxUniverses()) throw new Error(universeHostOnly);
-  const tab = active(), directory = universeTarget(tab);
-  const dialog = modal('Go · Chroot universe', `<form class="universe-form">
+  const tab = active();
+  const dialog = modal(raw ? 'Set / · chroot' : 'un go · Chroot universe', `<form class="universe-form">
     <p>${escape(directory)}</p>
     <label class="field"><span>Read-only outer paths · one per line</span><textarea name="mounts" placeholder="~/src"></textarea></label>
     <label class="field"><span>Writable outer paths · one per line</span><textarea name="writableMounts"></textarea></label>
@@ -845,7 +858,7 @@ function chrootUniverse() {
     button.disabled = true; alert.hidden = true;
     try {
       const { mounts, writableMounts, network, sudo } = form.elements;
-      const guest = await newTab(directory, { tabId: tab.id, options: { mounts: lines(mounts), writableMounts: lines(writableMounts), network: network.checked, sudo: sudo.checked } });
+      const guest = await newTab(directory, { tabId: tab.id, options: { raw, mounts: lines(mounts), writableMounts: lines(writableMounts), network: network.checked, sudo: sudo.checked } });
       if (form.isConnected && dialog.open) dialog.close();
       window.YHWH?.initial?.switchToUnix?.();
       focusTerminal(guest);
@@ -855,6 +868,37 @@ function chrootUniverse() {
     } finally { button.disabled = false; }
   };
 }
+async function setRoot() {
+  if (boot.interface !== 'mobile') return chrootUniverse(true);
+  const tab = active(), directory = universeTarget(tab);
+  if (await choose('Set /', `Use ${directory} as this tab’s file root?`, ['Set /', 'Cancel']) !== 0) return;
+  Object.assign(tab, await call('world:enter', tab.id, directory));
+  tab.history = [tab.cwd]; tab.historyIndex = 0;
+  await navigateFiles(tab.cwd, tab);
+}
+function universeMenu() {
+  showDirectoryMenu('un', [
+    ['new · Create a universe', newUniverse],
+    ['cd · Enter a universe', () => enterUniverse()],
+    ['go · Chroot', () => chrootUniverse()],
+    ['ls · List seed templates', () => modal('un ls', `<dl>${universeSeeds.map(seed => `<dt><code>${escape(seed.id)}</code></dt><dd>${escape(seed.description)}</dd>`).join('')}</dl>`)],
+  ], { trigger: $('#files [data-command="un"]') });
+}
+async function initialUniverse(subcommand, args) {
+  if (!subcommand) return universeMenu();
+  if (subcommand === 'new') {
+    if (!args.length) return newUniverse();
+    const [name, option, value] = args;
+    if (args.length !== 1 && (args.length !== 3 || !['--template', '--from'].includes(option))) throw new Error('un new NAME [--template ID | --from IMAGE]');
+    const tab = active();
+    return call('universe:create', tab.id, name, option === '--from' ? 'oci' : value || 'empty', option === '--from' ? value : '');
+  }
+  if (!['cd', 'go'].includes(subcommand) || args.length > 1) throw new Error('un new | cd | go | ls');
+  const target = args[0] || universeTarget(active());
+  if (subcommand === 'cd') return enterUniverse(target);
+  return chrootUniverse(false, target);
+}
+
 async function renameFile(filename = active()?.file?.path) {
   if (!filename) return;
   const name = await promptText(ui("rename"), ui("name"), basename(filename));
@@ -954,7 +998,7 @@ function settings() {
   const toggle = key => `<input type="checkbox" role="switch" name="${key}" ${(key === 'narrative' ? presence.enabled || values[key] === 'true' : values[key] === 'true') ? 'checked' : ''}>`;
   const dialog = modal('Settings', `<form id="settings-form" class="settings-layout"><nav aria-label="Settings categories"><button type="button" data-category="appearance" aria-pressed="true">Appearance</button><button type="button" data-category="files" aria-pressed="false">Files & editor</button><button type="button" data-category="keys" aria-pressed="false">Keys</button><button type="button" data-category="presence" aria-pressed="false">Presence</button><button type="button" data-category="advanced" aria-pressed="false">Advanced</button></nav><div class="settings-content">
     <section data-section="appearance"><h3>Appearance</h3>${row('Interface size', 'Text throughout the app, in pixels.', number('ui_font_size',14,24))}${row('Editor size', 'Give your words some room.', number('font_size',12,36))}${row('Terminal size', 'Shell text, in pixels.', number('terminal_font_size',12,28))}${window.YHWH?.three ? row('Impossible surfaces', 'Brief melting type and elastic windows. Paused while typing; respects reduced motion.', `<input type="checkbox" role="switch" name="spatial_effects" ${values.spatial_effects !== 'false' && !['0','false'].includes(values.motion) ? 'checked' : ''}>`) : ''}</section>
-    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in Live Preview. Use Ctrl+E for Source, Ctrl+R for Reading, or choose a view from the toolbar. The language picker controls automatic syntax highlighting.</p><p class="muted">Click a folder to unfold it. Double-click or Enter to go there. Arrow keys unfold and collapse.</p></section>
+    <section data-section="files" hidden><h3>Files & editor</h3>${row('Hidden files', 'Show names beginning with a dot.', toggle('show_hidden'))}${row('Double-click directories', 'Single click unfolds the folder. Double-click enters it.', toggle('double_cd'))}${row('Confirm cwat', 'Ask before assigning a directory to @.', toggle('ask_at'))}${row('Autosave', 'Save edits after a short pause. Conflicts pause autosave for review.', toggle('autosave'))}${row('Open PDFs', 'Choose once for all PDFs, or ask each time. Double-click or Ctrl+click uses the system app.', `<select name="pdf_open">${[['ask','Ask each time'],['preview','Preview here'],['external','System app']].map(([value,label]) => `<option value="${value}" ${values.pdf_open === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}<p class="muted">Other attachments open with your system’s preferred app.</p><p class="muted">Markdown opens in Live Preview. Use Ctrl+E for Source, Ctrl+R for Reading, or choose a view from the toolbar. The language picker controls automatic syntax highlighting.</p><p class="muted">Use ↑ and ↓ to select, → to enter, and ← to go up. The chevron unfolds a folder.</p></section>
     <section data-section="presence" hidden><h3>Presence</h3>${row('Free YHWH-ness', 'Dawkins ← Nietzsche → YHWH. Use the title bar to switch preview editions.', `<input type="range" name="energy" min="0" max="100" value="${freeEnergy(values)}" aria-label="Free YHWH-ness">`)}${row('Inbox messages', 'Occasional letters while you work. No popups.', toggle('inbox'))}${row('Take a walk', 'An optional story through files, shell, and the world underneath.', toggle('narrative'))}<p><button type="button" data-command="narrative">Continue the walk →</button></p><details class="divine-aside"><summary>Land registry</summary>${word('landRegistry')}</details></section>
     <section data-section="keys" hidden><h3>Keys</h3><p class="muted">${mobile ? 'These shortcuts use a hardware keyboard. Open the Initial from the command menu for an in-app shell.' : 'Panel shortcuts work from the terminal, editor, and file manager.'} Enter a combination such as Ctrl+Up, or use off to disable it.</p>
       ${row('Resize step', 'Pixels per keypress.', number('panel_resize_pixels', 1, 500))}
@@ -1000,7 +1044,7 @@ function settings() {
         if (combo === (values[name] || key)) delete data[name];
         else data[name] = combo === key ? '' : combo;
       }
-      for (const key of ['show_hidden', 'autosave', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
+      for (const key of ['show_hidden', 'double_cd', 'ask_at', 'autosave', 'inbox', 'narrative']) data[key] = String(event.target.elements[key].checked);
       if (event.target.elements.spatial_effects) { data.spatial_effects = String(event.target.elements.spatial_effects.checked); data.motion = event.target.elements.spatial_effects.checked ? '1' : '0'; }
       data.theme = Number(data.energy) === 0 ? 'dawkins' : Number(data.energy) < 100 ? 'nietzsche' : 'yhwh';
       if (data.plugins) { const parsed = JSON.parse(data.plugins); if (!Array.isArray(parsed)) throw new Error(ui("plugins-must-be-a-json-array-")); }
@@ -1182,16 +1226,6 @@ function showDirectoryMenu(title, items, { trigger, point } = {}) {
   buttons[0].focus({ preventScroll: true });
 
   function invoke(index) { Promise.resolve().then(items[index][1]).catch(error => notice(error.message)); }
-}
-function anchorMenu() {
-  const tab = active();
-  const path = [...tab.selected][0];
-  const folder = tab.selected.size === 1 && $('#file-list').querySelector(`[data-path="${CSS.escape(path)}"][data-directory="true"][data-parent="false"]`);
-  showDirectoryMenu(`@ → ${tab.anchor}`, [
-    ['Go to @', () => goToAnchor(tab)],
-    [folder ? `Set @ to ${basename(path)}` : 'Set @ to this directory', () => setAnchor(tab, folder ? path : tab.cwd)],
-    ['Choose @ folder…', () => chooseAnchor(tab)],
-  ], { trigger: $('#files [data-command="anchor-menu"]') });
 }
 async function fileMenu(filename = active()?.file?.path, { folder = false, point } = {}) {
   if (!filename) return;
@@ -1525,9 +1559,10 @@ const definitions = [
   ['previous-tab', ui("previous-tab"), ui("ctrl-shift-tab-ctrl-pageup"), () => activate(tabs[(tabs.indexOf(active()) + tabs.length - 1) % tabs.length].id)],
   ['new-file', ui("new-file"), ui("ctrl-n"), () => newFile()],
   ['new-directory', ui("new-directory"), '', () => newFile(true)],
-  ['universe-new', 'Nu · Make new universe', '', newUniverse],
-  ['universe-enter', 'Cd · Enter universe', '', enterUniverse],
-  ['universe-go', 'Go · Chroot universe', '', chrootUniverse],
+  ['un', 'un · Universes', '', universeMenu],
+  ['universe-new', 'un new · Make new universe', '', newUniverse],
+  ['universe-enter', 'un cd · Enter universe', '', () => enterUniverse()],
+  ['universe-go', 'un go · Chroot universe', '', () => chrootUniverse()],
   ['open-file', ui("open-file-"), ui("ctrl-o"), async () => { const filename = await call('choose', 'file', active().cwd); if (filename) await openFile(filename); }],
   ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigateFiles(directory); }],
   ['save', ui("save-file"), ui("ctrl-s"), () => save()],
@@ -1549,7 +1584,11 @@ const definitions = [
   ['focus-terminal', ui("focus-terminal"), 'Ctrl+Alt+3', () => { active().expanded = ''; return revealTerminal(); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
   ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
-  ['anchor-menu', 'Tab anchor menu', '', anchorMenu],
+  ['cwd-directory', '. · Current directory', '', () => navigateFiles(active().cwd)],
+  ['anchor-directory', '@ · Go to prefix', '', () => goToAnchor(active())],
+  ['cwd-set', 'cd · Enter selected directory', '', () => navigateFiles(universeTarget(active()))],
+  ['anchor-set', 'cwat · Set @ to selected directory', '', () => setAnchor(active(), universeTarget(active()))],
+  ['root-set', 'Set / · chroot', '', setRoot],
   ['@-get', '@-get · Show tab anchor', '', async () => { const anchor = await call('@-get', active().id); notice(anchor); return anchor; }],
   ['@-set', '@-set · Choose tab anchor', '', chooseAnchor],
   ['root-directory', 'Root directory', '', () => { const tab = active(); return navigateFiles(tab.initialRoot || tab.worldRoot || tab.systemRoot, tab); }],
@@ -1785,6 +1824,7 @@ bridge.on('anchor-changed', ({ id, anchor }) => {
   const tab = tabs.find(item => item.id === id); if (!tab) return;
   tab.anchor = anchor;
   if (tab === active()) renderAnchor(tab);
+  emit('anchor', { id, anchor });
 });
 bridge.on('error', notice);
 let appRefresh = Promise.resolve();
@@ -1883,7 +1923,7 @@ $('#file-list').onclick = event => {
   const tab = active();
   if (event.target.closest('[data-expand-folder]')) { toggleFolder(row).catch(error => notice(error.message)); return; }
   if (event.target.closest('[data-row-menu]')) { fileMenu(row.dataset.path, { folder: row.dataset.directory === 'true' }).catch(error => notice(error.message)); return; }
-  if (boot.interface === 'mobile' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+  if (!event.ctrlKey && !event.metaKey && !event.shiftKey && (row.dataset.directory === 'true' ? tab.config.values.double_cd !== 'true' : boot.interface === 'mobile')) {
     const openRow = row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path);
     openRow.catch(error => notice(error.message)); return;
   }
@@ -1909,9 +1949,9 @@ $('#file-list').onclick = event => {
   if (event.detail === 1 && !event.ctrlKey && !event.metaKey && !event.shiftKey) toggleFolder(row).catch(error => notice(error.message));
 };
 $('#file-list').ondblclick = event => {
-  if (boot.interface === 'mobile') return;
   clearTimeout(pdfClickTimer);
   const row = event.target.closest('[data-path]'); if (!row) return;
+  if (row.dataset.directory === 'true' ? active().config.values.double_cd !== 'true' : boot.interface === 'mobile') return;
   (row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path, active(), { external: /\.pdf$/i.test(row.dataset.path) })).catch(error => notice(error.message));
 };
 $('#file-list').onauxclick = event => {
@@ -1946,8 +1986,8 @@ $('#file-list').onkeydown = event => {
   if (event.key === ui("arrowdown") || event.key === ui("arrowup") || event.key === ui("home") || event.key === ui("end")) {
     const next = event.key === ui("home") ? 0 : event.key === ui("end") ? rows.length - 1 : Math.max(0, Math.min(rows.length - 1, current + (event.key === ui("arrowdown") ? 1 : -1)));
     tab.selected = new Set([rows[next]?.dataset.path]); renderFiles(); $('#file-list').querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
-  } else if (event.key === 'ArrowRight' && rows[current]?.dataset.directory === 'true' && rows[current].dataset.parent !== 'true') action = () => toggleFolder(rows[current], true);
-  else if (event.key === 'ArrowLeft' && rows[current]?.getAttribute('aria-expanded') === 'true') action = () => toggleFolder(rows[current], false);
+  } else if (event.key === 'ArrowRight' && event.shiftKey && rows[current]?.dataset.directory === 'true' && rows[current].dataset.parent !== 'true') action = () => toggleFolder(rows[current], true);
+  else if (event.key === 'ArrowLeft' && event.shiftKey && rows[current]?.getAttribute('aria-expanded') === 'true') action = () => toggleFolder(rows[current], false);
   else if ([ui("arrowleft"), ui("backspace")].includes(event.key)) action = () => navigateFiles(parent(tab.cwd));
   else if (event.key === ui("enter") || event.key === ui("arrowright")) { const row = rows[current]; if (row) action = () => row.dataset.directory === 'true' ? navigateFiles(row.dataset.path) : openFile(row.dataset.path); }
   else if (!control && !event.altKey && event.key.length === 1) {
@@ -1962,7 +2002,9 @@ $('#location-form').onsubmit = event => {
   const tab = active();
   let directory = $('#location').value;
   if (directory === '@' || directory.startsWith('@/')) { goToAnchor(tab, directory.slice(2)).catch(error => notice(error.message)); return; }
+  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
   if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1);
+  else if (directory.startsWith('/') && root !== '/' && !withinPath(directory, root)) directory = join(root, '.' + directory);
   if (tab.worldRoot && directory.startsWith('/')) directory = tab.worldRoot + directory;
   navigateFiles(directory, tab).catch(error => notice(error.message));
 };
@@ -2050,7 +2092,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
   pendingTerminal.clear();
   // A small public surface for plugins and interactive inspection. No Node in
   // the renderer; disk operations still cross the explicit preload boundary.
-  window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile };
+  window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile, setAnchor, focusTerminal: revealTerminal, universe: initialUniverse };
   window.YHWH.initial = installInitial(window.YHWH, { home: boot.home, mobile: boot.interface === 'mobile', call });
   window.dispatchEvent(new Event('yhwh:ready'));
   if (boot.interface === 'three') {

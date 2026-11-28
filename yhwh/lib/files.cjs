@@ -7,11 +7,11 @@ const { fileType } = require('./file-type.cjs');
 const { createHash } = require('node:crypto');
 const version = (stat, bytes) => `${stat.mtimeMs}:${stat.size}:${createHash('sha256').update(bytes).digest('hex')}`;
 
-async function list(directory, hidden = false) {
+async function list(directory, hidden = false, resolve = filename => filename) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
   return (await Promise.all(entries.filter(item => hidden || !item.name.startsWith('.')).map(async item => {
     const filename = path.join(directory, item.name);
-    try { const stat = await fs.stat(filename); return { name: item.name, path: filename, directory: stat.isDirectory(), symlink: item.isSymbolicLink(), size: stat.size, modified: stat.mtimeMs }; }
+    try { const stat = await fs.stat(await resolve(filename)); return { name: item.name, path: filename, directory: stat.isDirectory(), symlink: item.isSymbolicLink(), size: stat.size, modified: stat.mtimeMs }; }
     catch { return { name: item.name, path: filename, directory: false, broken: true, size: 0, modified: 0 }; }
   }))).sort((a, b) => Number(b.directory) - Number(a.directory) || a.name.localeCompare(b.name, undefined, { numeric: true }));
 }

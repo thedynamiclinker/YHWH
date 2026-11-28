@@ -469,3 +469,11 @@ body .verse-block .highlight-c { background-color: #3b454d !important; }
 #center-panels > [data-panel='yhwh-chat'] { width: auto; max-width: none; }
 
 .reading-view:focus-visible, .document-content:focus-visible { outline: 1px solid var(--purple); outline-offset: -2px; }
+
+.path-state { display: grid; gap: 2px; margin: 4px 12px; color: var(--muted); font: .77rem/1.4 monospace; }
+.path-state span { display: grid; grid-template-columns: 1rem minmax(0, 1fr); }
+.path-state b { color: var(--purple); }
+.path-state code { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.directory-shortcuts { align-items: center; }
+.directory-shortcuts small { width: 2rem; color: var(--muted); font: .75rem monospace; }
+@media (pointer: coarse) { .directory-shortcuts button { min-width: 44px; min-height: 44px; } }

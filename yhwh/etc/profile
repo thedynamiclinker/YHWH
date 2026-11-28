@@ -3,3 +3,21 @@
 # export yhwh_keys_directory=etc/keys
 # export yhwh_bashrc_file=etc/bashrc
 # export yhwh_completions_directory=lib/bash/completions
+
+# @ is a tab's shell prefix. Relative paths follow @. Absolute paths are fixed.
+# yhwh_bin=bin
+# yhwh_lib=lib
+# yhwh_etc=etc
+# yhwh_at_path=yes
+# yhwh_at_rc=.yhwh/etc/at
+#
+# Start new Bash tabs with ~/.bashrc. Zsh uses the user's .zshrc.
+# yhwh_home_rc=yes
+#
+# Commands and functions here run in the real shell.
+# yhwh_enter() { printf '@ %s\n' "$1"; }
+# yhwh_leave() { :; }  # $1 old @, $2 new @
+# yhwh_cd() { printf '. %s\n' "$1"; }  # $1 new PWD, $2 previous PWD
+#
+# Source this profile again and refresh @ with: cwat --reload
+# Shell-first Shaddai startup: yhwh_shell_first=true

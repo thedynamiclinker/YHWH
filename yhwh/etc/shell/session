@@ -1,0 +1,193 @@
+# Shared startup for Bash, Zsh and the guest sh. The tab @ file holds a directory.
+__yhwh_path() {
+    case $1 in
+        /*) printf '%s' "$1" ;;
+        *) printf '%s/%s' "${YHWH_CWAT%/}" "$1" ;;
+    esac
+}
+
+__yhwh_prepend() {
+    [ -d "$1" ] || return 0
+    case ":$PATH:" in
+        *":$1:"*) ;;
+        *) export PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
+__yhwh_add_bin() {
+    case ${yhwh_at_path:-yes} in no|false|off) return ;; esac
+    [ -d "$YHWH_BIN" ] || return 0
+    case ":$PATH:" in
+        *":$YHWH_BIN:"*) ;;
+        *) __yhwh_at_bin=$YHWH_BIN; __yhwh_prepend "$YHWH_BIN" ;;
+    esac
+}
+
+__yhwh_at() {
+    local next=${YHWH_CWAT:-$PWD}
+    if [ -r "${YHWH_TAB_ANCHOR:-}" ]; then
+        # Preserve trailing newlines in a directory name.
+        next=$(command cat -- "$YHWH_TAB_ANCHOR" && printf '.') || return
+        next=${next%.}
+    fi
+    __yhwh_set_at "$next"
+}
+
+__yhwh_set_at() {
+    local next=$1 old
+    if [ "$next" = "${__yhwh_previous_at:-}" ]; then __yhwh_add_bin; return; fi
+    old=${__yhwh_previous_at:-}
+    if [ -n "$old" ] && command -v yhwh_leave >/dev/null 2>&1; then
+        yhwh_leave "$old" "$next"
+    fi
+    if [ -n "${__yhwh_at_bin:-}" ]; then
+        # Remove the one entry we inserted, preserving edits made by the user.
+        case ":$PATH:" in
+            *":$__yhwh_at_bin:"*)
+                local entries=:$PATH: before after
+                before=${entries%%":$__yhwh_at_bin:"*}
+                after=${entries#*":$__yhwh_at_bin:"}
+                entries="$before:$after"
+                entries=${entries#:}
+                PATH=${entries%:} ;;
+        esac
+    fi
+    unset __yhwh_at_bin
+    __yhwh_previous_at=$next
+    export YHWH_CWAT="$next" YHWH_PREFIX="$next" YHWH_ROOT="${YHWH_ROOT:-/}"
+    export YHWH_BIN="$(__yhwh_path "${yhwh_bin:-bin}")"
+    export YHWH_LIB="$(__yhwh_path "${yhwh_lib:-lib}")"
+    export YHWH_ETC="$(__yhwh_path "${yhwh_etc:-etc}")"
+    __yhwh_add_bin
+    if [ -n "${yhwh_at_rc:-}" ]; then
+        local rc
+        rc=$(__yhwh_path "$yhwh_at_rc")
+        if [ -f "$rc" ] && [ -r "$rc" ]; then . "$rc"; fi
+    fi
+    if command -v yhwh_enter >/dev/null 2>&1; then yhwh_enter "$next" "$old"; fi
+    return 0
+}
+
+__yhwh_cd_hook() {
+    local previous=${__yhwh_previous_pwd:-$PWD}
+    __yhwh_previous_pwd=$PWD
+    if command -v yhwh_cd >/dev/null 2>&1; then yhwh_cd "$PWD" "$previous"; fi
+    return 0
+}
+
+__yhwh_expand_at() {
+    case $1 in
+        @|@/*) printf '%s.' "$YHWH_CWAT${1#@}" ;;
+        *) printf '%s.' "$1" ;;
+    esac
+}
+
+__yhwh_reload() {
+    if [ "${YHWH_GUEST:-}" = 1 ]; then
+        [ ! -r /etc/yhwh/profile ] || . /etc/yhwh/profile
+    else
+        local profile="${YHWH_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yhwh}/etc/profile"
+        if [ -r "$profile" ]; then
+            export YHWH_PREFIX="${profile%/etc/profile}"
+            . "$profile"
+        fi
+    fi
+    unset __yhwh_previous_at
+    __yhwh_at
+}
+
+cwat() {
+    case $# in
+        0) __yhwh_at; printf '%s\n' "$YHWH_CWAT" ;;
+        *)
+            case $1 in
+                -r|--reload) [ "$#" = 1 ] && __yhwh_reload; return ;;
+                -h|--help) printf '%s\n' 'cwat [DIRECTORY] | cwat --reload'; return ;;
+            esac
+            if [ "${yhwh_ask_at:-false}" = true ] && [ -t 0 ] && [ "${1:-}" != --help ] && [ "${1:-}" != -h ]; then
+                local answer
+                printf 'Set @? [y/N] ' >&2
+                read -r answer
+                case $answer in y|Y|yes|YES) ;; *) return 1 ;; esac
+            fi
+            if [ "${YHWH_GUEST:-}" = 1 ]; then
+                [ "$1" != -- ] || shift
+                [ "$#" = 1 ] || return 2
+                local target
+                target=$(CDPATH= command cd -- "$1" && printf '%s.' "$PWD") || return
+                __yhwh_set_at "${target%.}"
+            else
+                command yhwh @-set "$@" && __yhwh_at
+            fi ;;
+    esac
+}
+
+un() {
+    if [ "${1:-}" = cd ] && [ "${2:-}" != --help ] && [ "${2:-}" != -h ]; then
+        local target
+        shift
+        if [ "${YHWH_GUEST:-}" = 1 ]; then
+            local marker
+            [ "$#" -le 1 ] || return 2
+            target=${1:-.}
+            [ -f "$target/.@" ] && IFS= read -r marker < "$target/.@" && [ "$marker" = '# un root' ] || {
+                printf '%s\n' 'Choose a universe directory.' >&2
+                return 1
+            }
+        else
+            target=$(command yhwh un cd "$@" && printf '.') || return
+            target=${target%.}
+            target=${target%?}
+        fi
+        cwat -- "$target" && cd -- "$target"
+        return
+    fi
+    case ${1:-} in
+        ''|-h|--help|new|cd|go|ls) command yhwh un "$@" ;;
+        *) command un "$@" ;;
+    esac
+}
+
+__yhwh_uri() {
+    local rest=$1 char
+    while [ -n "$rest" ]; do
+        char=${rest%"${rest#?}"}
+        rest=${rest#?}
+        case $char in
+            [a-zA-Z0-9/._~-]) printf '%s' "$char" ;;
+            *) printf '%%%02X' "'$char" ;;
+        esac
+    done
+}
+
+__yhwh_report() {
+    local LC_ALL=C
+    printf '\033]7;file://localhost'
+    __yhwh_uri "$PWD"
+    if [ "${YHWH_GUEST:-}" = 1 ]; then
+        printf '\007\033]697;at='
+        __yhwh_uri "$YHWH_CWAT"
+    fi
+    printf '\007\033]133;A\007'
+}
+
+__yhwh_prompt() {
+    __yhwh_at
+    if [ "${__yhwh_previous_pwd:-$PWD}" != "$PWD" ]; then __yhwh_cd_hook; fi
+    if [ -n "${YHWH_TAB_ANCHOR:-}" ]; then
+        local state="${YHWH_TAB_ANCHOR%/*}/shell" pending
+        pending="$state.$$"
+        (
+            umask 077
+            printf '%s\0' "$PWD" "$YHWH_CWAT" "$PATH" "$YHWH_BIN" "$YHWH_LIB" "$YHWH_ETC"
+            __yhwh_command_names
+        ) > "$pending" && command mv -f -- "$pending" "$state"
+    fi
+    __yhwh_report
+}
+
+if [ "${YHWH_GUEST:-}" != 1 ]; then
+    __yhwh_prepend "${YHWH_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/yhwh}/bin"
+fi
+__yhwh_previous_pwd=$PWD
+__yhwh_at

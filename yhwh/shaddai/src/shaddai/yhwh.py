@@ -319,3 +319,47 @@ class World:
                 if source == overlay and not entries and not directory.is_dir() and not overlay.is_dir():
                     raise
         return entries.values()
+
+
+@dataclass(frozen=True)
+class Guest:
+    root: Path
+    name = "chroot"
+
+    @property
+    def shared(self):
+        return self.root
+
+    def directory(self, path):
+        return path if path.is_relative_to(self.root) else self.root
+
+    def physical(self, path):
+        if not path.is_relative_to(self.root):
+            return path
+        current = self.root
+        pending = list(path.relative_to(self.root).parts)
+        links = 0
+        while pending:
+            name = pending.pop(0)
+            if name == "..":
+                if current != self.root:
+                    current = current.parent
+                continue
+            if name in ("", "."):
+                continue
+            child = current / name
+            if child.is_symlink():
+                links += 1
+                if links > 40:
+                    raise OSError(f"Too many links in {path}")
+                target = child.readlink()
+                if target.is_absolute():
+                    current = self.root
+                    target = target.relative_to("/")
+                pending[:0] = target.parts
+            else:
+                current = child
+        return current
+
+    def entries(self, directory):
+        return self.physical(directory).iterdir()

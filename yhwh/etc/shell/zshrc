@@ -1,14 +1,28 @@
-[[ "$YHWH_NO_SHELL_RC" != 1 && -f "$YHWH_ZDOTDIR/.zshrc" ]] && source "$YHWH_ZDOTDIR/.zshrc"
-function __yhwh_prompt() {
-    local __yhwh_cwd="${PWD//%/%25}"
-    __yhwh_cwd="${__yhwh_cwd// /%20}"
-    __yhwh_cwd="${__yhwh_cwd//#/%23}"
-    __yhwh_cwd="${__yhwh_cwd//\?/%3F}"
-    __yhwh_cwd="${__yhwh_cwd//$'\n'/%0A}"
-    __yhwh_cwd="${__yhwh_cwd//$'\r'/%0D}"
-    __yhwh_cwd="${__yhwh_cwd//$'\a'/%07}"
-    __yhwh_cwd="${__yhwh_cwd//$'\e'/%1B}"
-    printf '\033]7;file://localhost%s\007\033]133;A\007' "$__yhwh_cwd"
+if [[ "$YHWH_NO_SHELL_RC" != 1 && "${yhwh_home_rc:-no}" == yes && -r "$YHWH_ZDOTDIR/.zshrc" ]]; then . "$YHWH_ZDOTDIR/.zshrc"; fi
+if [[ -f "$YHWH_PREFIX_SHELL" ]]; then
+    eval "$("${YHWH_NODE:-node}" "$YHWH_PREFIX_SHELL" --zsh)"
+fi
+
+__yhwh_command_names() {
+    local name
+    for name in "${(@k)aliases}" "${(@k)functions}" "${(@k)builtins}"; do printf '%s\0' "$name"; done
 }
+. "$YHWH_SHELL_LIB"
+function cd {
+    local target=${1:-}
+    if [[ "$target" == -- ]]; then target=${2:-}; fi
+    if [[ "$target" == @ || "$target" == @/* ]]; then
+        target=$(__yhwh_expand_at "$target") && builtin cd -- "${target%.}" || return
+    else
+        builtin cd "$@" || return
+    fi
+}
+function @-set { cwat "$@"; }
+
+zle -N __yhwh_at
+bindkey -M emacs '^[[277~' __yhwh_at
+bindkey -M viins '^[[277~' __yhwh_at
+bindkey -M vicmd '^[[277~' __yhwh_at
 autoload -Uz add-zsh-hook
+add-zsh-hook chpwd __yhwh_cd_hook
 add-zsh-hook precmd __yhwh_prompt

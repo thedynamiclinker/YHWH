@@ -251,3 +251,7 @@ dialog:is(#dialog, #mobile-dialog).initial-pane-dialog::backdrop { background: t
   color: var(--text); background: var(--sidebar); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; box-shadow: 0 4px 12px #0006; font-size: .8rem;
 }
 #initial-gesture-result button { min-height: 36px; }
+
+.initial-prefix { display: flex; flex-wrap: wrap; gap: 4px; }
+.initial-prefix button { font-family: var(--mono, monospace); }
+@media (pointer: coarse) { .initial-prefix button { min-height: 40px; } }

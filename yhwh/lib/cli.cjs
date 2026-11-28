@@ -51,8 +51,18 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','inbox','keys','nu','cd','go',...anchor.commands,...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys','un','nu','cd','go',...anchor.commands,...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
   if (anchor.commands.includes(command)) { await anchor.cli(command, rest); return 0; }
+  if (command === 'un') {
+    const [subcommand, ...values] = rest;
+    if (subcommand === 'new') return universe('nu', values);
+    if (subcommand === 'ls') return universe('nu', ['--list', ...values]);
+    if (subcommand === 'cd' || subcommand === 'go') return universe(subcommand, values);
+    const usage = 'un new   Create a universe\nun cd    Enter a universe and set @\nun go    Run a shell with a new /\nun ls    List seed templates';
+    if (subcommand && !['-h', '--help'].includes(subcommand)) throw new Error(usage);
+    console.log(usage);
+    return 0;
+  }
   if (['nu', 'cd', 'go'].includes(command.toLowerCase())) return universe(command.toLowerCase(), rest);
   if (command === 'inbox') {
     if (rest.length === 1 && ['-h', '--help'].includes(rest[0])) {
@@ -100,13 +110,13 @@ async function universe(command, args) {
   const help = {
     nu: 'Usage: yhwh nu DIRECTORY [--template ID | --from IMAGE]\n       yhwh nu --list',
     cd: 'Usage: cd -- "$(yhwh cd DIRECTORY)"\nPrint the absolute path of a universe. The calling shell owns cd.',
-    go: 'Usage: yhwh go [DIRECTORY] [--mount PATH ...] [--mount-rw PATH ...] [--network] [--sudo] [-- /absolute/guest/command ARG ...]',
+    go: 'Usage: yhwh go [DIRECTORY] [--root] [--mount PATH ...] [--mount-rw PATH ...] [--network] [--sudo] [-- /absolute/guest/command ARG ...]',
   };
   if (args.length === 1 && ['-h', '--help'].includes(args[0])) { console.log(help[command]); return 0; }
   const delimiter = args.indexOf('--');
   const cut = command === 'go' && delimiter >= 0 ? delimiter : args.length;
   const options = command === 'nu' ? { list: { type: 'boolean' }, template: { type: 'string' }, from: { type: 'string' } } :
-    command === 'go' ? { mount: { type: 'string', multiple: true }, 'mount-rw': { type: 'string', multiple: true }, network: { type: 'boolean' }, sudo: { type: 'boolean' } } : {};
+    command === 'go' ? { mount: { type: 'string', multiple: true }, 'mount-rw': { type: 'string', multiple: true }, network: { type: 'boolean' }, sudo: { type: 'boolean' }, root: { type: 'boolean' } } : {};
   const { values, positionals } = parseArgs({ args: args.slice(0, cut), options, allowPositionals: true });
   if (command === 'nu') {
     if (values.list && args.length === 1) {
@@ -126,7 +136,8 @@ async function universe(command, args) {
   if (positionals.length > 1) throw new Error(help[command]);
   if (command === 'cd') { console.log(await universes.enter(positionals[0] || '.')); return 0; }
   const target = await universes.go(positionals[0] || '.', {
-    mounts: values.mount, writableMounts: values['mount-rw'], network: values.network, sudo: values.sudo,
+    mounts: values.mount, writableMounts: values['mount-rw'], network: values.network, sudo: values.sudo, raw: values.root,
+    startup: cut === args.length ? paths.etc('shell', 'guest') : undefined,
     command: cut < args.length ? args.slice(cut + 1) : undefined,
   });
   return execute(target.program, target.args, { cwd: target.cwd });

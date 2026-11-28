@@ -1,0 +1,18 @@
+# ENV for the Linux guest. The shell and its startup files live inside /.
+export YHWH_GUEST=1
+[ ! -r "$HOME/.shrc" ] || . "$HOME/.shrc"
+[ ! -r /etc/yhwh/profile ] || . /etc/yhwh/profile
+. /tmp/.yhwh-session
+
+cd() {
+    local target=${1:-}
+    if [ "$target" = -- ]; then target=${2:-}; fi
+    case $target in
+        @|@/*)
+            target=$(__yhwh_expand_at "$target") && command cd -- "${target%.}" || return ;;
+        *) command cd "$@" || return ;;
+    esac
+    __yhwh_cd_hook
+}
+
+PS1='$(__yhwh_report)$ '

@@ -1,4 +1,6 @@
-// The Initial is an in-app shell. It never evaluates JavaScript or spawns a process.
+import seedLibrary from './universe-seeds.cjs';
+
+// The Initial's in-app commands. The desktop PTY is exposed separately.
 export const alphabets = {
   Latin: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(letter => [letter, letter.toLowerCase()]),
   Greek: [...'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'].map((letter, i) => [letter, 'alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega'.split(' ')[i]]),
@@ -12,6 +14,8 @@ const text = value => ({ kind: 'text', text: String(value ?? '') });
 const nameOK = name => typeof name === 'string' && name.length > 0 && name.length < 100 && !/[\s/\\\0|;<>$'"#]/u.test(name);
 export const atomics = [
   ['pwd', 'Where am I?', 'pwd', 'Print the current folder.'],
+  ['cwat', 'Current @', 'cwat [folder]', 'Print @, or assign a new directory to it.'],
+  ['un', 'Universes', 'un [new | cd | go | ls]', 'Create, enter, and list universe templates.'],
   ['@-get', 'Print tab anchor', '@-get', 'Print the directory assigned to @ in this tab.'],
   ['@-set', 'Set tab anchor', '@-set [folder]', 'Assign a directory to @ in this tab. Omit the folder to use the current directory.'],
   ['ls', 'List files', 'ls [folder]', 'Produce a fixed list of files. Pipe to view to browse it.'],
@@ -239,7 +243,14 @@ export function createInitial(host) {
     if (atomicPath) name=name.slice(5);
     if (name === 'man') name='help';
     if (args.includes('--help')) return text(help(name));
-    const path = value => resolvePath(value, context.cwd, home, context.root);
+    const anchor = args.some(value => value === '@' || value.startsWith('@/')) && await host.anchor?.();
+    const path = value => {
+      if (anchor && (value === '@' || value.startsWith('@/'))) {
+        if (context.root && anchor !== context.root && !anchor.startsWith(context.root + '/')) throw new Error('@ is outside the current folder root.');
+        value = anchor.replace(/\/$/, '') + (value.slice(1) || '/');
+      }
+      return resolvePath(value, context.cwd, home, context.root);
+    };
     const matchesAlias = alias => alias.name === name || alias.names.includes(name);
     const alias = !atomicPath && (aliases.find(matchesAlias) || context.tutorialLetters?.find(matchesAlias));
     const namedWord = word => word.name === name || name === `~/bin/${word.name}` || name === `${bin}/${word.name}`;
@@ -259,6 +270,16 @@ export function createInitial(host) {
     const requireArgs = count => { if (args.length < count) throw new Error(`Choose ${count} argument${count===1?'':'s'} for ${name}. ${help(name).split('\n')[1]}`); };
     if (context.preview && ['mkdir', 'touch', 'cp', 'mv', 'trash'].includes(name)) requireRun(`execute ${name}`);
     if (name==='pwd') return text(context.root ? context.cwd.slice(context.root.length) || '/' : context.cwd);
+    if (name === 'cwat') name = args.length ? '@-set' : '@-get';
+    if (name === 'un') {
+      const [subcommand, ...options] = args;
+      if (subcommand === 'ls' && !options.length) return text(seedLibrary.seeds.map(seed => `${seed.id}\t${seed.image || seed.description}`).join('\n'));
+      if (context.capture || context.preview) requireRun('open universe commands');
+      if (['cd', 'go'].includes(subcommand) && options.length) options[0] = path(options[0]);
+      const result = await host.universe(subcommand, options);
+      context.cwd = host.cwd();
+      return text(typeof result === 'string' ? result : '');
+    }
     if (name === '@-get') {
       if (args.length) throw new Error('Usage: @-get');
       return text(await host.anchor());

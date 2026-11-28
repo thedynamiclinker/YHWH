@@ -145,13 +145,19 @@ class FileTree:
     def entries(self, directory):
         entries = self.world.entries(directory) if self.world else directory.iterdir()
         return sorted(
-            ((directory / p.name, p.is_dir()) for p in entries
+            ((directory / p.name, self.directory_entry(directory / p.name)) for p in entries
              if (self.hidden or not p.name.startswith(".")) and p.name not in self.ignore),
             key=lambda entry: (not entry[1], entry[0].name.casefold(), entry[0].name),
         )
 
     def physical(self, path):
         return self.world.physical(path) if self.world else path
+
+    def directory_entry(self, path):
+        try:
+            return self.physical(path).is_dir()
+        except OSError:
+            return False
 
     def refresh(self):
         selected = self.current
