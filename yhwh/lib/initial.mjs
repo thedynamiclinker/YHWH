@@ -315,7 +315,16 @@ export function createInitial(host) {
     if (name==='wc') return text(input.kind==='entries' ? input.entries.length : asText(input).split('\n').filter(Boolean).length);
     if (name==='view' || name==='fm') { if (context.capture) throw new Error('Choose a command with output inside $(), such as pwd or cat.'); const target=path(args[0] || '.'); if (name==='fm' && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); await (context.display?.view || host.view)(name==='fm' ? { kind:'live', path:target, root:context.root } : { ...input, kind:input.kind==='entries'?'snapshot':'text', root:context.root }); return {kind:'displayed',text:''}; }
     if (name==='open') { requireArgs(1); if (context.capture) throw new Error('open displays a document; use cat inside $().'); await (context.display?.open || host.open)(path(args[0])); return text(''); }
-    if (name==='chroot') { if (context.capture) throw new Error('Change the folder root outside $().'); const target=args[0]==='--leave'?null:path(args[0] || '.'); if (target && !(await host.stat(target)).directory) throw new Error('Choose a folder.'); if (!context.preview) await host.chroot(target); context.root=target; context.cwd=target || home; return text(target ? 'This folder is now /. Use chroot --leave to return.' : 'Returned to the workspace.'); }
+    if (name==='chroot') {
+      if (args.length > 1) throw new Error('Usage: chroot [folder | --leave]');
+      if (context.capture) throw new Error('Change the folder root outside $().');
+      const target = args[0] === '--leave' ? null : path(args[0] || '.');
+      if (target && !(await host.stat(target)).directory) throw new Error('Choose a folder.');
+      const cwd = context.preview ? null : await host.chroot(target);
+      context.root = context.preview ? target : host.root?.() || target;
+      context.cwd = cwd || target || home;
+      return text(target ? 'This folder is now /. Use chroot --leave to return.' : 'Returned to the workspace.');
+    }
     if (name==='help') return text(args[0] ? help(args[0]) : 'The Initial · a terminal for fingers.\nTap tiles, type names, or draw your own gestures.\nLetters live in ~/.initialrc. Logos are files in ~/bin.\nPATH: ~/bin → /bin Atomics → /usr/bin Builtins.\nUse | to pass output, a new line to do the next thing, > to save output, and $() to use output as an argument.\n\n' + atomics.map(([name,label])=>`${name} — ${label}`).join('\n'));
     const builtin=host.builtins().find(item=>item.id===name || `/usr/bin/${item.id}`===name);
     if (builtin) { if (context.capture) throw new Error('App actions do not produce text for $().'); if (context.preview) requireRun(`open ${builtin.name}`); await (context.display?.builtin ? context.display.builtin(builtin) : builtin.run()); return text(''); }

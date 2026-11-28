@@ -92,14 +92,15 @@ export function mountChat(element, { active, address, level, energy, mobile, cal
   toggleHistory(!mobile && !matchMedia('(max-width: 850px)').matches);
   toggle.onclick = () => toggleHistory(history.hidden);
 
+  const conversationRoot = tab => tab.worldName === 'folder' ? null : tab.worldRoot || null;
   function makeThread(tab) {
-    return { id: crypto.randomUUID(), directory: tab.cwd, worldRoot: tab.worldRoot || null, messages: [], files: [], draft: '' };
+    return { id: crypto.randomUUID(), directory: tab.cwd, worldRoot: conversationRoot(tab), messages: [], files: [], draft: '' };
   }
   function current() {
     const tab = active();
     if (!tab) return;
     if (!tab.chatThread) {
-      const previous = [...threads.values()].filter(thread => thread.directory === tab.cwd && thread.worldRoot === (tab.worldRoot || null))
+      const previous = [...threads.values()].filter(thread => thread.directory === tab.cwd && thread.worldRoot === conversationRoot(tab))
         .sort((a, b) => (b.updated || 0) - (a.updated || 0))[0];
       tab.chatThread = previous || makeThread(tab);
     }

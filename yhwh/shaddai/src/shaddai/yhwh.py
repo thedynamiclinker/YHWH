@@ -257,7 +257,7 @@ class Library:
                 homes.append(Path(on_path).resolve().parent.parent)
         mount = etc = None
         for home in homes:
-            if not mount and (home / "mnt/root").is_dir() and (home / "mnt/yhwh").is_dir():
+            if not mount and (home / "mnt/roots").is_dir() and (home / "mnt/sinai").is_dir():
                 mount = home / "mnt"
             for base in (home / "yhwh", home):
                 if (base / "etc/default/words.json").is_file():
@@ -282,7 +282,7 @@ class Library:
     def books(self, name):
         if not self.mount:
             raise FileNotFoundError("YHWH mnt/ is unavailable. Set YHWH_HOME to the directory containing it.")
-        source = self.mount / {"Sinai": "yhwh/mnt/sinai/README.md", "Horeb": "root/mnt/horeb/READWE.md"}[name]
+        source = self.mount / {"Sinai": "sinai/mnt/sinai/README.md", "Horeb": "roots/mnt/horeb/READWE.md"}[name]
         items = []
         for line in source.read_text().splitlines():
             if match := re.fullmatch(r"\d+\.\s+(?:\[([^\]]+)\]\((https?://[^)]+)\)|(.+))", line.strip()):
@@ -322,9 +322,9 @@ class World:
 
 
 @dataclass(frozen=True)
-class Guest:
+class FolderRoot:
     root: Path
-    name = "chroot"
+    name = "folder"
 
     @property
     def shared(self):
@@ -332,6 +332,16 @@ class Guest:
 
     def directory(self, path):
         return path if path.is_relative_to(self.root) else self.root
+
+    def physical(self, path):
+        return path
+
+    def entries(self, directory):
+        return self.physical(directory).iterdir()
+
+
+class Guest(FolderRoot):
+    name = "chroot"
 
     def physical(self, path):
         if not path.is_relative_to(self.root):
@@ -360,6 +370,3 @@ class Guest:
             else:
                 current = child
         return current
-
-    def entries(self, directory):
-        return self.physical(directory).iterdir()

@@ -24,8 +24,8 @@ class YhwhTTYTests(unittest.TestCase):
         self.work = root / "work"
         self.work.mkdir()
         self.user, self.data = root / "config", root / "data"
-        (self.data / "mnt/root").mkdir(parents=True)
-        (self.data / "mnt/yhwh/mnt/sinai").mkdir(parents=True)
+        (self.data / "mnt/roots").mkdir(parents=True)
+        (self.data / "mnt/sinai/mnt/sinai").mkdir(parents=True)
         put(self.data / "yhwh/etc/default/words.json", json.dumps({
             "letterHouse": "House letter", "letterInspect": "Shell letter", "letterSeed": "World letter",
             "booksUnavailable": "Coming soon",
@@ -37,8 +37,8 @@ class YhwhTTYTests(unittest.TestCase):
         fixture_data = self.data / "yhwh/etc"
         for name in ("default/action-letters.json", "default/text-verses.json", "verses"):
             (fixture_data / name).symlink_to(app_data / name)
-        put(self.data / "mnt/yhwh/mnt/sinai/README.md", "1. [Genesis](https://example.org/genesis)\n2. Exodus\n")
-        put(self.data / "mnt/yhwh/readme.md", "world file\n")
+        put(self.data / "mnt/sinai/mnt/sinai/README.md", "1. [Genesis](https://example.org/genesis)\n2. Exodus\n")
+        put(self.data / "mnt/sinai/readme.md", "world file\n")
         put(self.data / "mnt/we/readme.md", "shared world overlay\n")
         put(self.data / "mnt/we/extra/folder.md", "only here\n")
         self.opened = root / "last-uri"
@@ -107,6 +107,20 @@ class YhwhTTYTests(unittest.TestCase):
         put(destination / "launch-marker.md", "# Launcher")
         put(self.user / "rc", f"/\n    default_directory={shlex.quote(str(destination))}\n")
         self.launch(args=["--launcher"]).shows("launch-marker.md")
+
+    def test_chroot_opens_an_ordinary_directory_as_a_folder_tab(self):
+        put(self.work / "unfinished/inner.txt", "inside")
+        put(self.work / "outside.txt", "outside")
+        tty = self.launch()
+        self.command(tty, "Focus files")
+        tty.send(b":chroot unfinished\r")
+        tty.shows("Folder view")
+        tty.send(b"Folder view\r")
+        tty.shows("inner.txt")
+        tty.send(b":cd ..\r")
+        tty.wait_for(lambda lines: any("inner.txt" in line for line in lines) and not any("outside.txt" in line for line in lines))
+        self.command(tty, "Close document tab")
+        tty.shows("outside.txt")
 
     def test_level_preview_can_be_unlocked_and_relocked_across_restarts(self):
         app_root = Path(__file__).resolve().parents[2]

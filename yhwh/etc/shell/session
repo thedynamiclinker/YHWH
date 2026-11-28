@@ -72,6 +72,14 @@ __yhwh_set_at() {
 __yhwh_cd_hook() {
     local previous=${__yhwh_previous_pwd:-$PWD}
     __yhwh_previous_pwd=$PWD
+    if [ -n "${yhwh_cd_rc:-}" ]; then
+        local rc=$yhwh_cd_rc
+        case $rc in /*) ;; *) rc="$PWD/$rc" ;; esac
+        if [ -f "$rc" ] && [ -r "$rc" ]; then
+            set -- "$PWD" "$previous"
+            . "$rc"
+        fi
+    fi
     if command -v yhwh_cd >/dev/null 2>&1; then yhwh_cd "$PWD" "$previous"; fi
     if [ "${YHWH_GUEST:-}" = 1 ]; then __yhwh_report; fi
     return 0

@@ -45,7 +45,7 @@ from .fonts import ConsoleFonts
 from .navigation import serve_paths
 from .terminal import Shell, TerminalControl
 from .services import SENDER, WALK, Services, web_links
-from .yhwh import Guest, Prefixes, World, save_setting
+from .yhwh import FolderRoot, Guest, Prefixes, World, save_setting
 
 
 PANES = ("files", "editor", "terminal")
@@ -129,6 +129,7 @@ class Tab:
     anchor: Path | None = None
     shell_state: TemporaryDirectory | None = None
     guest_args: list[str] | None = None
+    native_guest: bool = False
 
     @property
     def dirty(self):
@@ -623,7 +624,9 @@ class Workspace:
     def add_tab(self, document):
         tab = Tab(document, self.editor(document), self.browser.snapshot(clone=True),
                   self.config["ui"]["tree_visible"], self.config["ui"]["terminal_visible"],
-                  autosave=self.autosave_for(document), anchor=self.browser.cwd, guest_args=self.tab.guest_args if self.tabs else None)
+                  autosave=self.autosave_for(document), anchor=self.browser.cwd,
+                  guest_args=self.tab.guest_args if self.tabs else None,
+                  native_guest=self.tab.native_guest if self.tabs else False)
         tab.editor.buffer.on_text_changed += lambda _: self.schedule_save(tab)
         self.tabs.append(tab)
 
@@ -855,11 +858,11 @@ class Workspace:
         self.shells.append(Shell(self.shell_number, command, self.browser.physical(directory),
                                  config["scrollback"], environment=env,
                                  interactive=self.config.yhwh.interactive() if not startup and not argv else (),
-                                 startup=startup, argv=argv,
+                                 startup=startup, argv=argv, native=tab.native_guest,
                                  on_directory=lambda shell, cwd: self.shell_directory(tab, shell, cwd),
                                  on_anchor=lambda value: self.shell_anchor(tab, value)))
         self.shell_index = len(self.shells) - 1
-        if argv:
+        if argv and not tab.native_guest:
             self.shell.refresh_anchor(str(Path("/") / tab.anchor.relative_to(self.shell_root)))
             self.sync_shell_directory()
         self.letter("inspect")
@@ -874,6 +877,8 @@ class Workspace:
         self.sync_anchor(tab)
         if self.tab is tab and self.shell is shell:
             directory = self.shell_root / cwd.lstrip("/") if shell.guest else Path(cwd)
+            if isinstance(self.browser.tree.world, FolderRoot) and not directory.is_relative_to(self.shell_root):
+                return
             if directory != self.browser.cwd and self.browser.physical(directory).is_dir():
                 self.browser.navigate(directory, from_shell=True)
 
@@ -1147,24 +1152,32 @@ class Workspace:
         directory = self.browser.physical(target or self.universe_target()).resolve()
         if not directory.is_dir():
             raise ValueError("Choose an existing directory for /.")
-        if not (directory / "bin/sh").exists() and not (directory / "bin/sh").is_symlink():
-            raise ValueError("Choose a Linux root with /bin/sh.")
+        if not raw:
+            result = subprocess.run(self.universe_command("un", "cd", str(directory)), text=True, capture_output=True)
+            if result.returncode:
+                raise ValueError(result.stderr.strip() or "Choose a universe directory.")
 
-        def mount(answer):
-            argv = self.universe_command("un", "go", str(directory), "--sudo", *(("--root",) if raw else ()),
-                                        *(arg for path in shlex.split(answer) for arg in ("--mount", path)))
+        def open_root(mode, mounts=()):
+            argv = None
+            if mode != "folder":
+                argv = self.universe_command("un", "go", str(directory),
+                                             "--native" if mode == "native" else "--sudo",
+                                             *(("--root",) if raw else ()),
+                                             *(arg for path in mounts for arg in ("--mount", path)))
             self.add_tab(Document())
             self.switch_tab(len(self.tabs) - 1)
             self.tab.guest_args = argv
+            self.tab.native_guest = mode == "native"
             self.tab.anchor = directory
-            self.browser.change_world(Guest(directory))
-            self.focus("terminal")
+            self.browser.change_world(Guest(directory) if argv else FolderRoot(directory))
+            self.focus("terminal" if argv else "files")
 
-        def confirm(answer):
-            if answer.strip().lower() in ("y", "yes"):
-                self.ask("Outer read-only paths (optional, shell quoting)", mount)
-
-        self.ask(f"Set / to {label(directory)} in a new shell tab? [y/N]", confirm)
+        modes = {"Folder view": partial(open_root, "folder")}
+        if sys.platform == "linux":
+            modes["Linux guest (Bubblewrap)"] = lambda: self.ask(
+                "Outer read-only paths (optional, shell quoting)", lambda answer: open_root("bubblewrap", shlex.split(answer)))
+            modes["System chroot (sudo, runs guest code as root)"] = partial(open_root, "native")
+        self.pick(f"Set / to {label(directory)}", modes)
 
     def universe_menu(self):
         self.pick("un", {
@@ -1460,7 +1473,7 @@ class Workspace:
         mount = self.config.library.mount
         if not mount:
             raise FileNotFoundError("YHWH mnt/ is unavailable. Set YHWH_HOME to the directory containing it.")
-        if self.browser.change_world(World(name, mount / {"God": "yhwh", "Man": "root"}[name], mount / "we")):
+        if self.browser.change_world(World(name, mount / {"God": "sinai", "Man": "roots"}[name], mount / "we")):
             self.focus("files")
             self.letter("seed")
 
@@ -1719,6 +1732,8 @@ class Workspace:
         self.tty_command([self.config.library.command, name], pause=True)
 
     def run_shell(self, source):
+        if self.tab.native_guest:
+            raise ValueError("Enter commands directly in the chroot terminal.")
         self.focus("terminal")
         if self.shell and self.shell.exited:
             self.close_shell()
@@ -1752,6 +1767,11 @@ class Workspace:
                     self.tty_command(self.universe_command("nu", *shlex.split(argument)), finished=self.browser.refresh)
                 else:
                     self.new_universe()
+            elif command == "chroot":
+                if argument == "--leave":
+                    self.leave_world()
+                else:
+                    self.chroot_universe(raw=True, target=self.shell_path(argument) if argument else None)
             elif command == "go":
                 self.chroot_universe(target=self.shell_path(argument) if argument else None)
             elif command == "un":

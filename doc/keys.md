@@ -19,8 +19,8 @@ Tab changes and directory navigation select the corresponding configuration.
 **Reload keys**, F5, or **Reload configuration and keys** in the command palette
 reread external changes without closing the app or discarding editor buffers.
 Profile changes are included in that reload. Shells source their prefix startup
-files when they start and when their working directory changes; existing shell
-environments retain normal shell semantics when leaving a directory.
+files when they start and can source additional files through a directory hook.
+The shell environment retains its ordinary lifetime when leaving a directory.
 
 Shaddai supplies its own terminal defaults and reads the same system, user
 and ancestor overrides. Executable bindings receive tab-separated context on
@@ -152,6 +152,12 @@ This moves new configuration toward shell files and exported variables while
 preserving the current settings interface and explicit file saves. Existing
 JSON-based editor settings, themes, plugins, and application state have not all
 been migrated.
+
+To source a file on each successful `cd`, set `yhwh_cd_rc=.yhwh/etc/cd` in
+your shell profile. Relative paths are resolved in the new working directory.
+The sourced file receives the new and previous directories as `$1` and
+`$2`, and can change the live shell environment. Enable this for directories
+whose shell files you trust. The existing `yhwh_cd` function runs afterward.
 
 ## Default changes and platform boundaries
 

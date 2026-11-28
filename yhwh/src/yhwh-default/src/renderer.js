@@ -199,8 +199,9 @@ async function newTab(directory = active()?.cwd || boot.home, guest) {
   tab.terminalElement = document.createElement('div'); tab.terminalElement.className = 'terminal-instance'; tab.terminalElement.dataset.tab = id;
   $('#terminals').append(tab.terminalElement);
   tab.terminals = [];
-  if (guest) tab.showTerminal = true;
-  if (boot.capabilities?.terminal !== false) createTerminal(tab, id, Boolean(guest));
+  if (tab.guestMode) tab.showTerminal = true;
+  if (tab.worldName === 'folder') tab.showFiles = true;
+  if (boot.capabilities?.terminal !== false) createTerminal(tab, id, Boolean(tab.guestMode));
   tabs.push(tab); welcome(tab); activate(id);
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
   pendingTerminal.delete(id);
@@ -234,7 +235,7 @@ async function startTerminal(tab) {
   startingTerminals.add(id);
   try { await call('terminal:open', tab.id, id); }
   catch (error) { startingTerminals.delete(id); pendingTerminal.delete(id); throw error; }
-  const session = createTerminal(tab, id);
+  const session = createTerminal(tab, id, Boolean(tab.guestMode));
   for (const message of pendingTerminal.get(id) || []) terminalMessage(message);
   pendingTerminal.delete(id);
   startingTerminals.delete(id);
@@ -317,7 +318,8 @@ let renderedFileRows;
 function renderFiles() {
   const tab = active(); if (!tab) return;
   const filter = $('#file-filter').value.toLocaleLowerCase();
-  const rows = [{ name: '..', path: tab.cwd === tab.worldRoot ? tab.cwd : parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
+  const root = tab.worldRoot || tab.systemRoot;
+  const rows = [{ name: '..', path: tab.cwd === root ? tab.cwd : parent(tab.cwd), directory: true, parent: true }, ...tab.entries.filter(entry => entry.name.toLocaleLowerCase().includes(filter))];
   const list = $('#file-list');
   const oldControl = list.contains(document.activeElement) && document.activeElement !== list ? document.activeElement : null;
   const html = rows.map(entry => fileRow(tab, entry)).join('');
@@ -334,7 +336,8 @@ function renderFiles() {
   hiddenToggle.setAttribute('aria-pressed', String(hiddenFiles));
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
   renderAnchor(tab);
-  $('#location').value = tab.worldRoot ? tab.cwd.slice(tab.worldRoot.length) || '/' : tab.cwd;
+  const fileRoot = tab.worldRoot || (tab.guestMode && root);
+  $('#location').value = fileRoot ? '/' + tab.cwd.slice(fileRoot.length).replace(/^\/+/, '') : tab.cwd;
   $('#shell-state').textContent = ui("-files");
 }
 function fileRow(tab, entry, depth = 0) {
@@ -558,7 +561,6 @@ async function refresh(tab = active()) {
   emit('refresh', tab);
 }
 async function navigate(directory, tab = active(), history = true, focusFiles = false) {
-  if (tab.initialRoot && directory !== tab.initialRoot && !directory.startsWith(tab.initialRoot + '/')) directory = tab.initialRoot;
   const state = await call('navigate', tab.id, directory);
   Object.assign(tab, state); tab.selected.clear(); tab.filesFilter = ''; tab.filesScroll = 0;
   const session = tab.terminals.find(item => item.id === tab.terminalId); if (session) session.cwd = tab.cwd;
@@ -572,7 +574,7 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
 }
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
 function renderAnchor(tab) {
-  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
+  const root = tab.worldRoot || tab.systemRoot;
   for (const [id, value] of [['cwd', tab.cwd], ['anchor', tab.anchor], ['root', root]]) {
     const element = $('#path-' + id);
     element.textContent = value; element.title = value;
@@ -598,7 +600,7 @@ async function chooseAnchor(tab = active()) {
 }
 async function goToAnchor(tab, suffix = '') {
   const anchor = await call('@-get', tab.id);
-  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
+  const root = tab.worldRoot || tab.systemRoot;
   if (root && !withinPath(anchor, root)) throw new Error('@ is outside the current folder root.');
   return navigateFiles(suffix ? join(anchor, `./${suffix}`) : anchor, tab);
 }
@@ -834,23 +836,44 @@ async function enterUniverse(directory = universeTarget(active())) {
   tab.anchor = await call('universe:cd', tab.id, directory);
   await navigateFiles(directory, tab);
 }
-function chrootUniverse(raw = false, directory = universeTarget(active())) {
-  if (!linuxUniverses()) throw new Error(universeHostOnly);
+async function chrootUniverse(raw = false, directory = universeTarget(active())) {
   const tab = active();
-  const dialog = modal(raw ? 'Set / · chroot' : 'un go · Chroot universe', `<form class="universe-form">
+  const title = raw ? 'Set / · chroot' : 'un go · Chroot universe';
+  if (!linuxUniverses()) {
+    if (await choose(title, `Open ${directory} as / in a folder tab?`, ['Open folder view', 'Cancel']) === 0)
+      await newTab(directory, { tabId: tab.id, options: { raw, mode: 'folder' } });
+    return;
+  }
+  const dialog = modal(title, `<form class="universe-form">
     <p>${escape(directory)}</p>
-    <label class="field"><span>Read-only outer paths · one per line</span><textarea name="mounts" placeholder="~/src"></textarea></label>
-    <label class="field"><span>Writable outer paths · one per line</span><textarea name="writableMounts"></textarea></label>
-    <p>Outer paths appear under /mnt/host.</p>
-    <div class="universe-options">
-      <label><input type="checkbox" name="network"> Share the host network</label>
-      <label><input type="checkbox" name="sudo" checked> Ask for sudo if Linux requires it</label>
+    <label class="field"><span>Mode</span><select name="mode">
+      <option value="folder">Folder view</option>
+      <option value="bubblewrap">Linux guest (Bubblewrap)</option>
+      <option value="native">System chroot (sudo)</option>
+    </select></label>
+    <p data-mode="folder">Browse this directory as /. The terminal runs as your usual user.</p>
+    <div data-mode="bubblewrap" hidden>
+      <label class="field"><span>Read-only outer paths · one per line</span><textarea name="mounts" placeholder="~/src"></textarea></label>
+      <label class="field"><span>Writable outer paths · one per line</span><textarea name="writableMounts"></textarea></label>
+      <p>Outer paths appear under /mnt/host.</p>
+      <div class="universe-options">
+        <label><input type="checkbox" name="network"> Share the host network</label>
+        <label><input type="checkbox" name="sudo" checked> Ask for sudo if Linux requires it</label>
+      </div>
     </div>
+    <p data-mode="native" hidden>The terminal runs this system as root and has its own working directory. Use a root filesystem you trust.</p>
     <p role="alert" hidden></p>
     <div class="dialog-actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Chroot</button></div>
   </form>`);
   const form = dialog.querySelector('form'), button = form.querySelector('[type="submit"]'), alert = form.querySelector('[role="alert"]');
   const lines = field => field.value.split('\n').map(line => line.trim()).filter(Boolean);
+  const mode = form.elements.mode;
+  const describe = () => {
+    for (const section of form.querySelectorAll('[data-mode]')) section.hidden = section.dataset.mode !== mode.value;
+    button.textContent = { folder: 'Open folder view', bubblewrap: 'Open Linux guest', native: 'Run sudo chroot' }[mode.value];
+    alert.hidden = true;
+  };
+  mode.onchange = describe; describe();
   form.querySelector('[data-cancel]').onclick = () => dialog.close();
   form.onsubmit = async event => {
     event.preventDefault();
@@ -858,24 +881,21 @@ function chrootUniverse(raw = false, directory = universeTarget(active())) {
     button.disabled = true; alert.hidden = true;
     try {
       const { mounts, writableMounts, network, sudo } = form.elements;
-      const guest = await newTab(directory, { tabId: tab.id, options: { raw, mounts: lines(mounts), writableMounts: lines(writableMounts), network: network.checked, sudo: sudo.checked } });
+      const options = { raw, mode: mode.value };
+      if (mode.value === 'bubblewrap') Object.assign(options, { mounts: lines(mounts), writableMounts: lines(writableMounts), network: network.checked, sudo: sudo.checked });
+      const guest = await newTab(directory, { tabId: tab.id, options });
       if (form.isConnected && dialog.open) dialog.close();
-      window.YHWH?.initial?.switchToUnix?.();
-      focusTerminal(guest);
+      if (guest.guestMode) {
+        window.YHWH?.initial?.switchToUnix?.();
+        focusTerminal(guest);
+      }
     } catch (error) {
       if (form.isConnected && dialog.open) { alert.textContent = error.message; alert.hidden = false; }
       else notice(error.message);
     } finally { button.disabled = false; }
   };
 }
-async function setRoot() {
-  if (boot.interface !== 'mobile') return chrootUniverse(true);
-  const tab = active(), directory = universeTarget(tab);
-  if (await choose('Set /', `Use ${directory} as this tab’s file root?`, ['Set /', 'Cancel']) !== 0) return;
-  Object.assign(tab, await call('world:enter', tab.id, directory));
-  tab.history = [tab.cwd]; tab.historyIndex = 0;
-  await navigateFiles(tab.cwd, tab);
-}
+const setRoot = () => chrootUniverse(true);
 function universeMenu() {
   showDirectoryMenu('un', [
     ['new · Create a universe', newUniverse],
@@ -1591,7 +1611,7 @@ const definitions = [
   ['root-set', 'Set / · chroot', '', setRoot],
   ['@-get', '@-get · Show tab anchor', '', async () => { const anchor = await call('@-get', active().id); notice(anchor); return anchor; }],
   ['@-set', '@-set · Choose tab anchor', '', chooseAnchor],
-  ['root-directory', 'Root directory', '', () => { const tab = active(); return navigateFiles(tab.initialRoot || tab.worldRoot || tab.systemRoot, tab); }],
+  ['root-directory', 'Root directory', '', () => { const tab = active(); return navigateFiles(tab.worldRoot || tab.systemRoot, tab); }],
   ['back', ui("back"), ui("alt-left"), async () => { const tab = active(); if (tab.historyIndex > 0) { tab.historyIndex--; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['forward', ui("forward"), ui("alt-right"), async () => { const tab = active(); if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; await navigateFiles(tab.history[tab.historyIndex], tab, false); } }],
   ['location', 'Clear focused terminal / edit location', ui("ctrl-l"), () => { if (keyContext() === 'terminal' && !$('#terminal-panel').hidden && !$('#terminals').hidden && active().terminalId) { active().terminal?.clear(); active().terminal?.focus(); bridge.terminal('write', { id: active().terminalId, data: '\x0c' }); return; } active().showFiles = true; update(); $('#location').focus(); $('#location').select(); }],
@@ -1768,7 +1788,7 @@ async function showChat() {
         workspaceRoot(directory) {
           if (boot.interface === 'mobile') return null;
           const mount = join(parent(parent(parent(boot.root))), 'mnt');
-          return ['root', 'yhwh'].map(name => join(mount, name))
+          return ['roots', 'sinai', 'root', 'yhwh'].map(name => join(mount, name))
             .find(root => directory === root || directory.startsWith(root + '/')) || null;
         },
       });
@@ -2003,10 +2023,9 @@ $('#location-form').onsubmit = event => {
   const tab = active();
   let directory = $('#location').value;
   if (directory === '@' || directory.startsWith('@/')) { goToAnchor(tab, directory.slice(2)).catch(error => notice(error.message)); return; }
-  const root = tab.initialRoot || tab.worldRoot || tab.systemRoot;
+  const root = tab.worldRoot || tab.systemRoot;
   if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1);
   else if (directory.startsWith('/') && root !== '/' && !withinPath(directory, root)) directory = join(root, '.' + directory);
-  if (tab.worldRoot && directory.startsWith('/')) directory = tab.worldRoot + directory;
   navigateFiles(directory, tab).catch(error => notice(error.message));
 };
 $('#file-filter').oninput = renderFiles;

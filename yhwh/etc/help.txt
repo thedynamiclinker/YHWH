@@ -8,7 +8,7 @@ Usage: yhwh <command> [arguments]
   un                 List universe commands: new, cd, go, ls
   nu DIRECTORY       Make a new universe. Use nu --list for templates.
   cd [DIRECTORY]     Print the path to a universe for the calling shell.
-  go [DIRECTORY]     Chroot into a universe on Linux.
+  go [DIRECTORY]     Start a Linux guest. Use --native for system chroot.
   @-get              Print the calling tab’s directory anchor.
   @-set [DIRECTORY]  Set the calling tab’s anchor, defaulting to the shell directory.
   begin [TODO]     Generate a draft and implementation questions in tmp/

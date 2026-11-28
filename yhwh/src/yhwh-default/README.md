@@ -204,7 +204,7 @@ The UI checks cover Markdown editing/renaming, pane toggles, app tabs, shell syn
 
 ## Need Some Help? and the mounted file views
 
-The single grey “Need Some Help?” button in the status bar opens Man and God, with confirmation before opening a new file-view tab rooted at the checkout’s `mnt/root` or `mnt/yhwh`. `mnt/we` overlays both roots at the same relative paths; shared entries take precedence on collisions, and directories merge. Files stay in their source trees, so reopening reads current content. Parent navigation stops at the selected view root. This is an app file view, not an OS chroot; terminals keep the user’s permissions. Return to ordinary files exits the view.
+The single grey “Need Some Help?” button in the status bar opens Man and God, with confirmation before opening a new file-view tab rooted at the checkout’s `mnt/roots` or `mnt/sinai`. `mnt/we` overlays both roots at the same relative paths; shared entries take precedence on collisions, and directories merge. Files stay in their source trees, so reopening reads current content. Parent navigation stops at the selected view root. This is an app file view, not an OS chroot; terminals keep the user’s permissions. Return to ordinary files exits the view.
 
 The command palette also exposes fan mail, an email composer for `root@thedynamiclinker.com`, and the Sinai and Horeb book lists. Preparing email opens a draft in the configured desktop mail app; sending remains in that app. The book lists are parsed on each opening from their original Markdown files, including the Genesis link; unlinked titles are marked coming soon.
 

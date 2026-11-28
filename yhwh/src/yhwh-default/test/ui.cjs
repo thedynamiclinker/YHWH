@@ -250,7 +250,7 @@ process.stdin.on('end', () => {
     assert.deepEqual(await page.locator('#dialog [data-command]').allTextContents(), ['God', 'Man']);
     await page.locator('[data-command="be-root"]').click();
     await page.locator('[data-choice="0"]').click();
-    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/root'));
+    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/roots'));
     await page.waitForFunction(() => document.querySelector('#location').value === '/');
     await page.evaluate(() => window.YHWH.run('parent'));
     assert.equal(await page.locator('#location').inputValue(), '/');
@@ -258,14 +258,14 @@ process.stdin.on('end', () => {
     await run('higher-help');
     await page.locator('[data-command="be-yhwh"]').click();
     await page.locator('[data-choice="0"]').click();
-    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/yhwh'));
+    await page.waitForFunction(() => window.YHWH.active().worldRoot?.endsWith('/mnt/sinai'));
     await page.waitForFunction(() => document.querySelector('#location').value === '/');
     await page.locator('#file-list .file-row[data-path$="/media"]').dblclick();
     await page.waitForFunction(() => document.querySelector('#location').value === '/media');
     await page.waitForFunction(() => window.YHWH.active().entries.length === 1 && window.YHWH.active().entries[0].name === 'On The Lamb');
     assert.deepEqual(await page.evaluate(() => window.YHWH.active().entries.map(entry => entry.name)), ['On The Lamb']);
     await page.locator('#file-list [data-path]').filter({ hasText: 'On The Lamb' }).dblclick();
-    const documentation = path.resolve(root, '../../../mnt/yhwh/boot/kernel/Documentation');
+    const documentation = path.resolve(root, '../../../mnt/sinai/boot/kernel/Documentation');
     await page.waitForFunction(filename => window.YHWH.active().file?.path === filename, path.join(documentation, 'FOLLOWME.md'));
     assert.equal(await page.evaluate(() => window.YHWH.active().file.language), 'markdown');
     assert.equal(await page.locator('#location').inputValue(), '/boot/kernel/Documentation');
@@ -278,7 +278,7 @@ process.stdin.on('end', () => {
       await loadedImages(1);
       await page.locator('.reading-view:visible a').filter({ hasText: /^FOLLOWME$/ }).click();
       await page.waitForFunction(filename => window.YHWH.active().file?.path === filename, path.join(documentation, next, 'FOLLOWME.md'));
-      assert.equal(await page.evaluate(() => window.YHWH.active().worldRoot?.endsWith('/mnt/yhwh')), true);
+      assert.equal(await page.evaluate(() => window.YHWH.active().worldRoot?.endsWith('/mnt/sinai')), true);
     }
     // The imported videos remain online; the local documentation test needs no network.
     await page.route('https://fukkot.com/**', route => route.abort());

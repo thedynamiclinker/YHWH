@@ -18,7 +18,6 @@ export const unavailable = {
   'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
   'terminal:run': 'This device uses the Initial interpreter. Bash, Zsh, and native executables require the desktop host.',
-  'universe:go': hostOnly,
 };
 export function normalize(input, cwd = HOME) {
   if (typeof input !== 'string' || input.includes('\0') || input.includes('\\')) throw new Error('Invalid path.');
@@ -79,6 +78,20 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     if (!stat?.directory) throw new Error('Choose a directory.');
     const state = await list(id, path); focus(id).cwd = path; return state;
   }
+  async function newFocus(id, directory, root) {
+    if (typeof id !== 'string' || focuses.has(id)) throw new Error('Invalid tab.');
+    const current = { cwd: HOME, ...root };
+    focuses.set(id, current);
+    try { const state = await navigate(id, directory); current.anchor = state.cwd; return { ...state, anchor: current.anchor }; }
+    catch (error) { focuses.delete(id); throw error; }
+  }
+  async function markedRoot(current, directory) {
+    const path = normalize(directory, current.cwd);
+    const file = normalize('.@', path), info = await storage.stat(file);
+    if ((current.worldRoot && !inside(path, current.worldRoot)) || !info || info.directory || info.size < marker.length || info.size > 65536 ||
+        !new TextDecoder().decode(await storage.read(file)).startsWith(marker)) throw new Error('Choose a universe directory created by Nu or un new.');
+    return path;
+  }
   async function read(filename) {
     const path = normalize(filename), stat = await storage.stat(path);
     if (!stat) throw new Error('ENOENT: file not found.');
@@ -118,13 +131,7 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       }
       return { root: HOME, interface: 'mobile', home: HOME, defaultDirectory, platform, initial, pending: [], words: { ...words, ...customWords }, capabilities: { terminal: false, chat: false } };
     },
-    async 'focus:new'(id, directory) {
-      if (typeof id !== 'string' || focuses.has(id)) throw new Error('Invalid tab.');
-      const current = { cwd: HOME };
-      focuses.set(id, current);
-      try { const state = await navigate(id, directory); current.anchor = state.cwd; return { ...state, anchor: current.anchor }; }
-      catch (error) { focuses.delete(id); throw error; }
-    },
+    'focus:new': (id, directory) => newFocus(id, directory),
     'focus:close': id => focuses.delete(id), navigate,
     '@-get': id => focus(id).anchor,
     async '@-set'(id, directory) {
@@ -174,10 +181,15 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
       if (name === 'root' || name === 'yhwh') throw new Error('Use an existing folder as the root on mobile.');
       const path = normalize(name || current.cwd, current.cwd);
       if (!(await storage.stat(path))?.directory) throw new Error('Choose a folder for this view’s root.');
+      current.previousDirectory ??= current.cwd;
       current.worldRoot = path; current.worldName = 'folder';
       return navigate(id, path);
     },
-    'world:leave': async id => { const current = focus(id); current.worldRoot = null; current.worldName = null; return navigate(id, HOME); },
+    'world:leave': async id => {
+      const current = focus(id), previous = current.previousDirectory;
+      current.worldRoot = current.worldName = current.previousDirectory = null;
+      return navigate(id, previous && (await storage.stat(previous))?.directory ? previous : HOME);
+    },
     list: id => list(id),
     'directory:list': async (id, directory) => (await list(id, directory)).entries,
     'path:stat': async filename => { const path = normalize(filename), stat = await storage.stat(path); if (!stat) throw new Error('ENOENT: path not found.'); return { ...stat, path }; },
@@ -209,14 +221,19 @@ export function createMobileBridge({ storage, defaults, words, verses, builtinPl
     },
     'universe:cancel': id => { focus(id); },
     async 'universe:cd'(id, directory) {
-      const current = focus(id), path = normalize(directory, current.cwd);
-      const file = normalize('.@', path), info = await storage.stat(file);
-      if ((current.worldRoot && !inside(path, current.worldRoot)) || !info || info.directory || info.size < marker.length || info.size > 65536 ||
-          !new TextDecoder().decode(await storage.read(file)).startsWith(marker)) throw new Error('Choose a universe directory created by Nu or un new.');
+      const current = focus(id), path = await markedRoot(current, directory);
       if (focus(id) !== current) throw new Error('That tab has closed.');
       current.anchor = path;
       emit('anchor-changed', { id, anchor: path });
       return path;
+    },
+    async 'universe:go'(id, from, directory, options) {
+      if (options.mode !== 'folder') throw new Error(hostOnly);
+      const current = focus(from);
+      const path = options.raw ? normalize(directory, current.cwd) : await markedRoot(current, directory);
+      if (current.worldRoot && !inside(path, current.worldRoot)) throw new Error('Choose a folder inside the current view.');
+      if (focus(from) !== current) throw new Error('That tab has closed.');
+      return newFocus(id, path, { worldRoot: path, worldName: 'folder', previousDirectory: current.cwd });
     },
     async 'file:move'(source, destination) {
       source = normalize(source); destination = normalize(destination);

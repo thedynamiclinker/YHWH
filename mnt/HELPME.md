@@ -14,14 +14,14 @@ Clicking Man should open a dialogue saying:
 
 You will now see things as root.
 
-- Chroot into `/mnt/root`?
+- Chroot into `/mnt/roots`?
 
 Clicking God should open a dialogue saying
 
 You will now see things as yhwh.
 
-- Chroot into `/mnt/yhwh`?
+- Chroot into `/mnt/sinai`?
 
-Once the user chroots into either of those places, their file manager view should change so that it shows the contents of the hierarchies we have here in `./mnt/root/` and `./mnt/yhwh/` respectively, and anything in `./mnt/we/` should appear as if it were bind mounted at that location in both chroots, so anything in `./mnt/we/` is effectively shared between the two chroots.
+Once the user chroots into either of those places, their file manager view should change so that it shows the contents of the hierarchies we have here in `./mnt/roots/` and `./mnt/sinai/` respectively, and anything in `./mnt/we/` should appear as if it were bind mounted at that location in both chroots, so anything in `./mnt/we/` is effectively shared between the two chroots.
 
 If we change anything in `./mnt/we` or the other two `./mnt/` subdirs, the changes should automatically appear the next time we open the app.

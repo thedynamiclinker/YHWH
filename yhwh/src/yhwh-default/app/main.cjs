@@ -188,12 +188,14 @@ async function navigate(id, directory, fromShell = false) {
   if (!stat.isDirectory()) throw new Error(ui("choose-a-directory-"));
   focus.cwd = directory;
   await watchDirectory(focus);
-  if (!fromShell && focus.terminalId) {
+  if (!fromShell && focus.terminalId && !focus.guest?.native) {
     const cwd = focus.guest ? '/' + path.relative(focus.guest.cwd, directory) : await worlds.physical(focus, directory);
     host.send({ type: 'cd', id: focus.terminalId, cwd });
   }
   const config = await configFor(focus.guest ? userDirectory() : directory);
-  return { worldRoot: focus.worldRoot || null, systemRoot: focus.guest?.cwd || path.parse(directory).root, cwd: directory, entries: await worlds.list({ ...focus, cwd: directory }, config.values.show_hidden === 'true'), config };
+  return { worldRoot: focus.worldRoot || null, worldName: focus.worldName || null,
+    guestMode: focus.guest ? (focus.guest.native ? 'native' : 'bubblewrap') : null,
+    systemRoot: focus.guest?.cwd || path.parse(directory).root, cwd: directory, entries: await worlds.list({ ...focus, cwd: directory }, config.values.show_hidden === 'true'), config };
 }
 
 async function accessAnchor(id, directory) {
@@ -212,7 +214,7 @@ async function accessAnchor(id, directory) {
 
 async function sourcePath(filename) {
   const focus = [...focuses.values()].find(item => {
-    const root = item.guest?.cwd || item.worldRoot;
+    const root = item.guest?.cwd || (item.worldName !== 'folder' && item.worldRoot);
     return root && (filename === root || filename.startsWith(root + path.sep));
   });
   return focus ? worlds.physical(focus, filename) : filename;
@@ -220,7 +222,7 @@ async function sourcePath(filename) {
 
 async function destination(filename) {
   const focus = [...focuses.values()].find(item => {
-    const root = item.guest?.cwd || item.worldRoot;
+    const root = item.guest?.cwd || (item.worldName !== 'folder' && item.worldRoot);
     return root && filename.startsWith(root + path.sep);
   });
   if (!focus) return filename;
@@ -237,6 +239,7 @@ async function startTerminal(focus, id) {
   terminals.set(id, focus.id); focus.terminalId = id;
   if (focus.guest) {
     host.send({ type: 'start', id, cwd: focus.guest.cwd, guest: focus.guest });
+    if (focus.guest.native) return;
     const anchor = await tabAnchor.read(focus.anchor.filename);
     if (anchor !== focus.guest.cwd) host.send({ type: 'anchor', id, directory: '/' + path.relative(focus.guest.cwd, anchor) });
     if (focus.cwd !== focus.guest.cwd) host.send({ type: 'cd', id, cwd: '/' + path.relative(focus.guest.cwd, focus.cwd) });
@@ -338,6 +341,7 @@ async function launch() {
     if (message.type === 'exit') { terminals.delete(message.id); if (focus?.terminalId === message.id) focus.terminalId = null; }
     if (message.type === 'cwd' && focus?.terminalId === message.id) {
       const directory = focus.guest ? path.join(focus.guest.cwd, message.cwd) : message.cwd;
+      if (focus.worldName === 'folder' && worlds.directory(focus, directory) !== directory) return;
       try { send('navigation', { id: focus.id, ...await navigate(focus.id, directory, true) }); }
       catch (error) { if (!focus.guest || error.code !== 'ENOENT') send('error', error.message); }
     }
@@ -353,14 +357,14 @@ async function launch() {
     loaded = true;
     return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial, defaultDirectory: configured, pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
-  async function newFocus(id, directory, guest) {
+  async function newFocus(id, directory, state = {}) {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
-    const focus = { id, cwd: path.resolve(directory), guest };
+    const focus = { id, cwd: path.resolve(directory), ...state };
     focuses.set(id, focus);
     try {
       const result = await navigate(id, focus.cwd, true);
       focus.anchor = await tabAnchor.create(result.cwd, anchor => {
-        if (focus.terminalId) host.send({ type: 'anchor', id: focus.terminalId,
+        if (focus.terminalId && !focus.guest?.native) host.send({ type: 'anchor', id: focus.terminalId,
           directory: focus.guest ? '/' + path.relative(focus.guest.cwd, anchor) : undefined });
         send('anchor-changed', { id, anchor });
       });
@@ -384,14 +388,21 @@ async function launch() {
     const focus = focuses.get(from);
     if (!focus) throw new Error('Closed tab.');
     directory = worlds.directory(focus, directory);
-    const guest = await universes.go(await worlds.physical(focus, directory), {
+    const physical = await worlds.physical(focus, directory);
+    if (options.mode === 'folder') {
+      const root = await universes.openRoot(physical, options.raw === true);
+      const previousDirectory = await worlds.physical(focus);
+      if (focuses.get(from) !== focus) throw new Error('Closed tab.');
+      return newFocus(id, root, { worldRoot: root, worldName: 'folder', previousDirectory });
+    }
+    const guest = await universes.go(physical, {
       mounts: options.mounts, writableMounts: options.writableMounts,
       mountBase: await worlds.physical(focus),
       network: options.network === true, sudo: options.sudo === true,
-      raw: options.raw === true, startup: paths.etc('shell', 'guest'),
+      raw: options.raw === true, native: options.mode === 'native', startup: paths.etc('shell', 'guest'), term: 'xterm-256color',
     });
     if (focuses.get(from) !== focus) throw new Error('Closed tab.');
-    return newFocus(id, guest.cwd, guest);
+    return newFocus(id, guest.cwd, { guest });
   });
   handle('universe:cd', async (id, directory) => {
     const focus = focuses.get(id);
@@ -436,18 +447,33 @@ async function launch() {
   handle('terminal:run', async (id, source) => {
     const focus = focuses.get(id);
     if (!focus?.terminalId) throw new Error('Open this tab’s shell first.');
+    if (focus.guest?.native) throw new Error('Enter commands directly in the chroot terminal.');
     if (typeof source !== 'string' || !source.trim() || source.includes('\0') || Buffer.byteLength(source) > 16000) throw new Error('Enter a shell command up to 16 KB.');
     host.send({ type: 'run', id: focus.terminalId, source });
   });
   handle('world:enter', async (id, name) => {
     const focus = focuses.get(id);
-    const directory = await worlds.enter(name);
+    if (!focus) throw new Error('Closed tab.');
+    const folder = path.isAbsolute(name);
+    if (focus.guest && !folder) throw new Error('Open this world in a new tab.');
+    const target = folder ? worlds.directory(focus, name) : null;
+    const physical = folder ? await universes.openRoot(await worlds.physical(focus, target), true) : await worlds.enter(name);
+    const directory = focus.guest ? target : physical;
+    const previous = { worldRoot: focus.worldRoot, worldName: focus.worldName, previousDirectory: focus.previousDirectory };
+    focus.previousDirectory ??= focus.cwd;
     focus.worldRoot = directory;
-    return navigate(id, directory);
+    focus.worldName = folder ? 'folder' : name;
+    try { return await navigate(id, directory); }
+    catch (error) { Object.assign(focus, previous); throw error; }
   });
   handle('world:leave', async id => {
-    const focus = focuses.get(id); focus.worldRoot = null;
-    return navigate(id, os.homedir());
+    const focus = focuses.get(id);
+    if (!focus) throw new Error('Closed tab.');
+    if (focus.guest && focus.worldName !== 'folder') return navigate(id, focus.guest.cwd);
+    let directory = focus.worldName === 'folder' ? focus.previousDirectory : null;
+    focus.worldRoot = focus.worldName = focus.previousDirectory = null;
+    if (directory && !await worlds.physical(focus, directory).then(path => fs.stat(path)).then(stat => stat.isDirectory(), () => false)) directory = null;
+    return navigate(id, directory || focus.guest?.cwd || os.homedir());
   });
   handle('world:books', name => worlds.books(name));
   handle('world:quotes', () => fs.readFile(require('../../../lib/paths.cjs').etc('default', 'fan-mail.json'), 'utf8').then(JSON.parse));
@@ -474,11 +500,7 @@ async function launch() {
       // A resumed conversation keeps its original directory, regardless of
       // which file or tab is currently open.
       const focus = { cwd: path.resolve(thread.directory) };
-      if (thread.worldRoot) {
-        const world = await worlds.enter(path.basename(thread.worldRoot));
-        if (thread.worldRoot !== world || worlds.directory({ ...focus, worldRoot: world }, focus.cwd) !== focus.cwd) throw new Error('Invalid conversation world.');
-        focus.worldRoot = world;
-      }
+      if (thread.worldRoot) Object.assign(focus, await worlds.conversation(thread.worldRoot, focus.cwd));
       const physical = await worlds.physical(focus);
       if (!await fs.stat(physical).then(stat => stat.isDirectory(), () => false)) throw new Error('This conversation’s directory is unavailable. Start a new chat to work in another directory.');
       const directory = await fs.realpath(physical);

@@ -1,5 +1,5 @@
 const marker = '# un root\n';
-const hostOnly = 'OCI images and chroot sessions require the Linux YHWH host.';
+const hostOnly = 'OCI imports and guest terminals require a Linux host.';
 const seeds = [
   { id: 'empty', label: 'Empty', description: 'An ordinary directory with a universe marker.' },
   { id: 'workshop', label: 'Lord workshop', description: 'A .@ command file, a TWO example, and a zan manual page. Works offline.' },

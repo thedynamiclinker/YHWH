@@ -10,6 +10,7 @@
 # yhwh_etc=etc
 # yhwh_at_path=yes
 # yhwh_at_rc=.yhwh/etc/at
+# yhwh_cd_rc=.yhwh/etc/cd
 #
 # Start new Bash tabs with ~/.bashrc. Zsh uses the user's .zshrc.
 # yhwh_home_rc=yes
@@ -18,6 +19,7 @@
 # yhwh_enter() { printf '@ %s\n' "$1"; }
 # yhwh_leave() { :; }  # $1 old @, $2 new @
 # yhwh_cd() { printf '. %s\n' "$1"; }  # $1 new PWD, $2 previous PWD
+# yhwh_cd_rc is sourced on cd, with those same arguments. Enable it for directories you trust.
 #
 # Source this profile again and refresh @ with: cwat --reload
 # Shell-first Shaddai startup: yhwh_shell_first=true

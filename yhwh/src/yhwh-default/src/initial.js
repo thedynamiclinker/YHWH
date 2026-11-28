@@ -57,7 +57,7 @@ export function installInitial(app, { home, mobile, call }) {
 
   const root = () => {
     const tab = app.active();
-    const directory = tab?.initialRoot || tab?.worldRoot || tab?.systemRoot;
+    const directory = tab?.worldRoot || tab?.systemRoot;
     return directory === '/' ? null : directory;
   };
   const prefix = action => call('shell:prefix', app.active().id, action);
@@ -78,11 +78,10 @@ export function installInitial(app, { home, mobile, call }) {
     builtins: () => [...app.commands.values()].filter(item => !['initial', 'initial-draw', 'initial-new', 'initial-rc', 'terminal-interface', '@-get', '@-set'].includes(item.id)),
     chroot: async path => {
       const tab = app.active();
-      tab.initialRoot = mobile ? null : path;
-      if (mobile) Object.assign(tab, await call(path ? 'world:enter' : 'world:leave', tab.id, path || undefined));
-      await app.navigate(path || home);
+      await folderRoot(tab, path);
       tab.history = [tab.cwd];
       tab.historyIndex = 0;
+      return tab.cwd;
     },
   };
   const library = createInitial(host);
@@ -597,11 +596,16 @@ export function installInitial(app, { home, mobile, call }) {
     await render();
   }
 
+  async function folderRoot(tab, path) {
+    const state = await call(path ? 'world:enter' : 'world:leave', tab.id, path || undefined);
+    Object.assign(tab, state);
+    await app.navigate(state.cwd, tab);
+  }
+
   async function showView(value) {
     if (dialog?.open) dialog.close();
     const tab = await app.newTab(value.path || app.active().cwd);
-    tab.initialRoot = mobile ? null : value.root;
-    if (mobile && value.root) Object.assign(tab, await call('world:enter', tab.id, value.root));
+    if (value.root) await folderRoot(tab, value.root);
     if (value.path) await app.navigate(value.path, tab);
     tab.initialView = { value, query: '', grid: true, selecting: false };
     tab.customTitle = value.kind === 'live' ? 'Files · ' + (value.path.split('/').at(-1) || '/') : 'Command output';
@@ -617,7 +621,7 @@ export function installInitial(app, { home, mobile, call }) {
     const cwd = tab.cwd;
     const entries = live ? await call('directory:list', tab.id, cwd) : value.entries;
     if (tab.initialView !== state || tab.cwd !== cwd || !app.tabs.includes(tab)) return;
-    const boundary = tab.initialRoot || tab.worldRoot;
+    const boundary = tab.worldRoot;
     const key = JSON.stringify([cwd, boundary, entries, state.grid, state.selecting, [...tab.selected]]);
     if (key === state.rendered) return;
     state.rendered = key;

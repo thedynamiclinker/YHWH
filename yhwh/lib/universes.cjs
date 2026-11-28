@@ -7,7 +7,7 @@ const { promisify } = require('node:util');
 const { seedFor, marker, hostOnly, createSeed } = require('./universe-seeds.cjs');
 
 const exec = promisify(execFile);
-const systemDirs = ['/run/wrappers/bin', '/run/current-system/sw/bin', '/usr/bin', '/bin'];
+const systemDirs = ['/run/wrappers/bin', '/run/current-system/sw/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin'];
 
 async function executable(name, directories = (process.env.PATH || '').split(path.delimiter)) {
   for (const directory of directories) {
@@ -161,9 +161,15 @@ async function create(destination, id = 'empty', ref, options = {}) {
   }
 }
 
-async function go(directory, { mounts = [], writableMounts = [], mountBase = process.cwd(), network = false, sudo = false, raw = false, startup, command = ['/bin/sh', '-i'] } = {}) {
-  if (process.platform !== 'linux') throw new Error(hostOnly);
+async function openRoot(directory, raw = false) {
   const root = raw ? await fs.realpath(directory) : await enter(directory);
+  if (!(await fs.stat(root)).isDirectory()) throw new Error('Choose an existing directory for /.');
+  return root;
+}
+
+async function go(directory, { mounts = [], writableMounts = [], mountBase = process.cwd(), network = false, sudo = false, raw = false, native = false, startup, term = process.env.TERM || 'xterm-256color', command = ['/bin/sh', '-i'] } = {}) {
+  if (process.platform !== 'linux') throw new Error(hostOnly);
+  const root = await openRoot(directory, raw);
   if (root === '/') throw new Error('Choose a universe directory other than the host root.');
   if (!Array.isArray(command) || !command.length || command.some(item => typeof item !== 'string') || !command[0].startsWith('/'))
     throw new Error('Give an absolute guest command such as /bin/sh.');
@@ -172,9 +178,20 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
     if (!(await fs.stat(filename)).isFile()) throw new Error('Expected a regular file.');
     await fs.access(filename, constants.X_OK);
   }
-  catch { throw new Error(`This universe has no executable ${command[0]}. Use Cd to browse it or import a Linux root filesystem with Nu.`); }
+  catch { throw new Error(`This universe has no executable ${command[0]}. Use Folder view to browse it or import a Linux root filesystem with un new.`); }
   if (![mounts, writableMounts].every(list => Array.isArray(list) && list.every(item => typeof item === 'string' && item && !/[\x00-\x1f]/.test(item))))
     throw new Error('Use one outer path per mount.');
+
+  if (native) {
+    if (mounts.length || writableMounts.length || network)
+      throw new Error('Mount and network options apply only to the Bubblewrap guest.');
+    const [env, chroot] = await Promise.all([executable('env', systemDirs), executable('chroot', systemDirs)]);
+    const args = ['-i', 'HOME=/root', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      `TERM=${term}`, chroot, '--', root, ...command];
+    if (process.getuid() === 0) return { program: env, args, cwd: root, native };
+    const sudo = await executable('sudo', systemDirs);
+    return { program: sudo, args: ['--', env, ...args], cwd: root, native };
+  }
 
   let program = await executable('bwrap');
   const bwrap = program;
@@ -182,7 +199,7 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   if (!network) namespaces.push('--unshare-net');
   let isolation = ['--unshare-user', '--uid', '0', '--gid', '0', ...namespaces];
   const args = ['--die-with-parent', '--new-session', '--cap-drop', 'ALL', '--clearenv', '--setenv', 'PATH', '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin',
-    '--setenv', 'HOME', '/root', '--setenv', 'TERM', process.env.TERM || 'xterm-256color',
+    '--setenv', 'HOME', '/root', '--setenv', 'TERM', term,
     '--bind', root, '/', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--chdir', '/'];
   if (startup) args.push('--ro-bind', startup, '/tmp/.yhwh-shrc',
     '--ro-bind', path.join(path.dirname(startup), 'session'), '/tmp/.yhwh-session',
@@ -220,4 +237,4 @@ async function go(directory, { mounts = [], writableMounts = [], mountBase = pro
   return { program, args: [...prefix, ...isolation, ...args, '--', ...command], cwd: root };
 }
 
-module.exports = { create, enter, go, isImported, guestPath };
+module.exports = { create, enter, openRoot, go, isImported, guestPath };

@@ -81,6 +81,13 @@ test('Nu and Cd use the shared starter format inside mobile storage', async () =
   await assert.rejects(call('universe:create', 'one', 'Alpine', 'alpine'), /Linux/);
   assert.equal(await storage.stat('/Alpine'), null);
   await assert.rejects(call('universe:go', 'guest', 'one', root, {}), /Linux/);
+  await assert.rejects(call('universe:go', 'folder', 'one', '/', { mode: 'folder' }), /un new/);
+  const folder = await call('universe:go', 'folder', 'one', root, { mode: 'folder' });
+  assert.equal(folder.worldRoot, root);
+  assert.equal(folder.anchor, root);
+  assert.equal((await call('navigate', 'folder', '/')).cwd, root);
+  assert.equal((await call('list', 'one')).worldRoot, null);
+  assert.equal((await call('world:leave', 'folder')).cwd, '/');
 });
 test('files preserve UTF-8 and CRLF and reject conflicting changes even at the same timestamp', async () => {
   const { storage, call } = await fixture();

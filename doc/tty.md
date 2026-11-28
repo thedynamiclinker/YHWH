@@ -15,7 +15,9 @@ shortcuts depend on the outer terminal sending the modified arrow keys.
 
 The status line shows `.`, `@`, and `/`. The file bar groups shortcuts as
 `go . @ /` and `set . @ /`. `un` opens the same universe commands as the
-desktop, including Linux guests in a separate tab. Type `:` in Files for a
+desktop, including folder roots, Bubblewrap guests, and system chroots in a
+separate tab. Type `:chroot DIRECTORY` for the same picker on an ordinary
+directory. Type `:` in Files for a
 command line. Native commands run in the embedded shell, so aliases,
 functions and exports remain in that shell. The **--prefix** menu opens the
 real `bin`, `lib`, `etc`, `etc/profile`, and `~/.bashrc`, or prints

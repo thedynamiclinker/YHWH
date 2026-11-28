@@ -159,13 +159,10 @@ export function installMobile(app, storage) {
   });
   command('burnt', 'Connect YHWH · Codex setup', () => app.run('mobile-connect'));
   command('leave-world', 'Leave folder root', async () => {
-    const tab = app.active(); tab.initialRoot = null; Object.assign(tab, await window.yhwh.call('world:leave', tab.id));
+    const tab = app.active(); Object.assign(tab, await window.yhwh.call('world:leave', tab.id));
     tab.history = [tab.cwd]; tab.historyIndex = 0; await app.navigate(tab.cwd);
   });
-  command('mobile-root', 'Use this folder as /', async () => {
-    const tab = app.active(); Object.assign(tab, await window.yhwh.call('world:enter', tab.id, tab.cwd));
-    tab.history = [tab.cwd]; tab.historyIndex = 0; await app.refresh(); app.notice('This folder is now /. Leave the folder root to return.');
-  });
+  command('mobile-root', 'Use this folder as /', () => app.run('root-set'));
   command('mobile-share', 'Export or share file', () => app.active().file ? window.yhwh.call('file:external', app.active().file.path) : app.notice('Open and save a file first.'));
   command('mobile-import', 'Import files from device', () => {
     const input = document.createElement('input'); input.type = 'file'; input.multiple = true;

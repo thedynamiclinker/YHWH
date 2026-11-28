@@ -89,13 +89,13 @@ class TerminalStream(pyte.ByteStream):
 
 class Shell:
     def __init__(self, number, command, directory, history, *, environment=None, interactive=(), startup=None,
-                 argv=None, on_directory=None, on_anchor=None):
+                 argv=None, native=False, on_directory=None, on_anchor=None):
         self.number, self.command, self.directory, self.history = number, command, directory, history
         self.environment = environment if environment is not None else os.environ
         self.argv = argv or [command, "-i"]
         self.startup = None
         name = os.path.basename(command)
-        self.hooked = bool(argv or (startup and name in ("bash", "zsh", "sh", "dash", "ash", "ksh")))
+        self.hooked = not native and bool(argv or (startup and name in ("bash", "zsh", "sh", "dash", "ash", "ksh")))
         self.read_line_hook = name in ("bash", "zsh")
         if startup and name == "bash":
             self.argv[1:1] = ["--rcfile", str(startup / "bashrc")]

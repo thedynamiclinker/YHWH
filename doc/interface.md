@@ -23,8 +23,8 @@ The prompt shows `.` (the working directory), `@` (the tab’s current
 prefix), and `/` (the root). The **go** row visits each location. The
 **set** row assigns the selected folder, or the current folder when none is
 selected. `cd` updates only `.`. Setting `@` preserves `.` and `/`. A
-new tab starts with `@` set to its opening directory. The `/` setter asks
-before opening a guest tab on Linux or a folder view on mobile.
+new tab starts with `@` set to its opening directory. The `/` setter opens
+the universe mode picker for the selected directory.
 
 `cwat` prints `@`; `cwat DIRECTORY` sets it. `cd @` and `cd @/subdir`
 work in the tab shell and the Initial. The location field uses the same
@@ -49,7 +49,7 @@ Reopen the menu to pick up changes. Android and iOS read `.txt` actions from
 
 Use **un** in the Files pane to see `new`, `cd`, `go`, and `ls`. **new**
 chooses a starter, **cd** enters the universe and sets `@`, and **go**
-opens a separate chroot tab. With no folder selected, use the current directory.
+opens a separate tab rooted there. With no folder selected, use the current directory.
 A universe starts as
 an ordinary directory whose `.@` begins with `# un root`, the same marker
 used by `un new`. The bundled **Empty** and **Lord workshop** starters work
@@ -62,6 +62,7 @@ un cd workshop
 yhwh un new ../alpine --template alpine
 yhwh un new ../from-docker-hub --from docker.io/library/alpine:latest
 yhwh un go ../alpine --mount "$PWD" --mount-rw "$HOME/scratch" --sudo
+yhwh un go ../alpine --native
 ```
 
 On Linux, OCI imports use **Skopeo** and **umoci**. They download and unpack a
@@ -73,7 +74,13 @@ choice includes Node and adds the YHWH CLI and its prefix files. Guest
 interpreters and model providers follow the guest's own installation and login
 setup. `lord` uses Bash, and `un` uses Python 3.
 
-Go uses **Bubblewrap** and runs `/bin/sh` by default. Use `--root` to use
+**Folder view** uses a directory as `/` for the app’s file navigation. It
+works for empty universes, ordinary folders selected through **Set /**, and
+the Android and iOS app workspace. A desktop terminal in a folder tab is an
+ordinary host shell. The Initial’s `chroot DIRECTORY` sets the folder root in
+the current tab and `chroot --leave` returns to the previous directory.
+
+The Linux guest mode uses **Bubblewrap** and runs `/bin/sh` by default. Use `--root` to use
 a Linux root directory without a universe marker. Use `-- /absolute/command`
 to run another guest command. Outer paths appear by basename under `/mnt/host`.
 Use `--mount` for read-only access and `--mount-rw` to let the guest change a
@@ -82,8 +89,19 @@ Mounts belong to the session. Use `--network` to share host networking.
 `--sudo` permits a retry after an unprivileged namespace failure. This route
 requires system-installed Bubblewrap, util-linux `unshare` and sudo. The guest
 root identity maps to the invoking user, and sudo authenticates on the terminal.
-Desktop Go offers both options in its dialog. Imported shell settings are
-available inside the guest. The host skips imported directory prefixes.
+Imported shell settings are available inside the guest. The host skips imported
+directory prefixes.
+
+**System chroot (sudo)** or `--native` calls Linux’s system `chroot`, using sudo
+for an unprivileged caller. It requires a runnable guest shell and executes
+guest code as root. Use a root filesystem you trust. Mounts and networking
+use the host’s existing setup. The native terminal has its own working directory
+and accepts direct terminal input.
+
+The Man and God file views open the checkout’s `mnt/roots` and `mnt/sinai`
+with shared files from `mnt/we`. These directories can be browsed before they
+have a Linux shell. The separately built system from `make world` lives at
+`/mnt/sinai`.
 
 Shaddai offers `un` in Files and Commands. Its `:` prompt accepts the same
 commands and passes other input to the running shell. The Obsidian plugin uses
@@ -91,7 +109,10 @@ its vault for offline starters.
 On Linux it delegates OCI imports and the Go dialog to the installed `yhwh`
 command. Company and THWH open the shared desktop workflow from **File →
 Universes**. Android and iOS create and browse offline starter directories
-inside the app workspace. OCI import and Go require the Linux host.
+inside the app workspace. OCI import and guest process execution require the Linux host.
+
+The shell runs `up` and `dn` from PATH with ordinary arguments and streams.
+`yhwh un` passes recipe subcommands through to the installed `un`.
 
 ## Editing keys
 

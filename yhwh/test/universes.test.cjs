@@ -35,7 +35,7 @@ async function fixture(t) {
 }
 
 test('Nu installs starter files, preserves an existing name, and interoperates with un roots', async t => {
-  const { base, command } = await fixture(t);
+  const { base, command, tool } = await fixture(t);
   assert.match((await command('nu', '--list')).stdout, /workshop\tLord workshop/);
   await command('Nu', 'test universe', '--template', 'workshop');
   const root = path.join(base, 'test universe');
@@ -47,6 +47,30 @@ test('Nu installs starter files, preserves an existing name, and interoperates w
   await fs.writeFile(path.join(base, 'external/.@'), '# un root\n');
   await command('cd', 'external');
   await assert.rejects(command('cd', '.'));
+  await tool('un', 'printf "<%s>\\n" "$@"');
+  assert.equal((await command('un', 'hello', 'one argument')).stdout, '<hello>\n<one argument>\n');
+});
+
+test('native Go uses system chroot and preserves the guest argument vector', { skip: process.platform !== 'linux' }, async t => {
+  const { base, command } = await fixture(t);
+  await command('un', 'new', 'guest root');
+  const root = path.join(base, 'guest root');
+  await assert.rejects(go(root, { native: true }), /no executable \/bin\/sh/);
+  await fs.mkdir(path.join(root, 'bin'));
+  await fs.writeFile(path.join(root, 'bin/sh'), '', { mode: 0o755 });
+  await assert.rejects(go(root, { native: true, network: true }), /Bubblewrap/);
+  const argv = ['/bin/sh', '-c', 'printf "%s\\n" "$1"', 'sh', 'one argument'];
+  let guest;
+  try { guest = await go(root, { native: true, command: argv }); }
+  catch (error) {
+    if (!/^Install (env|chroot|sudo) /.test(error.message)) throw error;
+    return t.skip(error.message);
+  }
+  assert.equal(guest.native, true);
+  assert.equal(guest.cwd, root);
+  assert.equal(path.basename(guest.program), process.getuid() === 0 ? 'env' : 'sudo');
+  assert.equal(path.basename(guest.args.at(-argv.length - 3)), 'chroot');
+  assert.deepEqual(guest.args.slice(-argv.length - 2), ['--', root, ...argv]);
 });
 
 test('OCI imports stage before publishing, install the selected tools, and keep guest profiles out of the host', { skip: process.platform !== 'linux' }, async t => {

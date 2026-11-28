@@ -183,9 +183,9 @@ shares only workspace files and cache files; no storage-wide permission is neede
 | Unix processes / PTYs | Require desktop APIs; mobile shell shortcuts open the Initial |
 | Panel keys | Hardware keyboards can hide, show, maximize or incrementally resize the file drawer. Configure the combinations and pixel step in Settings → Keys. The Initial opens as a sheet on mobile. |
 | Talk to YHWH | Shared composer and local left-side History for offline workspace help. Live chat setup opens the desktop connection guide. Live agent writes, chat attachments, and direct mail delivery require the desktop host. Electronic Mail can open a draft in the device’s mail app. |
-| Folder roots | Optional per-tab navigation into an existing folder using Use this folder as /. |
+| Folder roots | **Set /** opens an existing folder as / in a new tab. The Initial’s `chroot` sets the current tab’s folder root. |
 | Shell directories and prefix | Shared `.`, `@`, and `/` banner with go/set controls. The Initial supports `cwat`, `cd @`, and editing files under `--prefix`, including `/.yhwh/etc/profile`. Sourcing shell files, executable hooks, and native PATH require a Unix host. The folder row menu still reads text actions from `/.yhwh/etc/folder-menu`. |
-| Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. OCI import and `un go` need a Linux host with process and namespace access. |
+| Universes | `un new` creates the bundled Empty and Lord workshop starters in the workspace. `un cd` enters a marked directory and sets `@`. `un go` opens the universe as a folder root. OCI import, Bubblewrap, and system chroot require a Linux host with process and namespace access. |
 | Sinai/Horeb, fan mail and desktop overlays | Desktop mounted source trees are not bundled |
 | Nietzsche Family Circus | Available in Nietzsche mode. The shared widget loads pairings via native HTTPS. The browser preview links to the original site. |
 | Desktop source-copy editing, process quit/reveal, piece offering | Require desktop services/files; explicit unavailable results or mobile equivalents |
