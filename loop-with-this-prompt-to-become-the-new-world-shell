@@ -10,8 +10,7 @@ set -eu
 checkout=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 cd "$checkout"
 ledger=var/log/new-world-shell-runs
-digest=$(prompt | sha256sum)
-digest=${digest%% *}
+digest=$(prompt | git hash-object --stdin)
 exec 9<var/log
 flock 9
 runs=$(awk -v digest="$digest" '$1 == digest { count++ } END { print count+0 }' "$ledger")
