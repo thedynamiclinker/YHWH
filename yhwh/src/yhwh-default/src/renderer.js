@@ -29,10 +29,10 @@ import actionLetters from '../../../etc/default/action-letters.json';
 import { nightLetters, canReceiveLetter, nextNightLetter } from '../../../lib/presence.cjs';
 import { ORIGIN as circusOrigin } from '../../../lib/circus.cjs';
 import { stripe, levelAt, freeEnergy, freeMaximum, themeEnergy, unlockedLevels, editionState, nextUpgrade, unstealUpgrade, createLevelAsides, addressCopy } from '../../../lib/levels.cjs';
-import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMidnightLetter, nextMidnight, senderFor } from '../../../lib/inbox.cjs';
+import { primarySender, letters as startupLetters, emailLetters, modeLetters, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, nextMidnightLetter, nextMidnight, attachmentsFor, senderFor } from '../../../lib/inbox.cjs';
 import polygynyAttachment from '../../../etc/assets/mail/biblical-polygyny.png';
-import dollarImages from '../../../lib/mode-mail-images.mjs';
-const mailAttachments = { 'biblical-polygyny.png': polygynyAttachment, ...dollarImages };
+import mailImages from '../../../lib/mode-mail-images.mjs';
+const mailAttachments = { 'biblical-polygyny.png': polygynyAttachment, ...mailImages };
 
 const bridge = window.yhwh;
 const interfaceZoomLevels = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
@@ -286,6 +286,7 @@ function welcome(tab, level = levelAt(currentEnergy(tab.config))) {
   const copy = lines.map(line => `<p>${escape(line)}</p>`).join('');
   tab.document.innerHTML = ui('welcome-screen', eyebrow, heading,
     `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${aside}${levelPoem(level.poem)}</div>`);
+  if (level.energy < 80) tab.document.querySelector('.welcome-bottom')?.remove();
 }
 function activate(id) {
   const tab = tabs.find(item => item.id === id);
@@ -438,6 +439,7 @@ async function moveSplit({ panel, step, incremental }) {
 }
 function update() {
   const tab = active(); if (!tab) return;
+  if (tab.focusView === 'chat' && currentLevel().energy < 80) tab.focusView = 'document';
   tabTitles(); renderFiles();
   const view = tab.focusView || 'document';
   $('#document').hidden = view !== 'document';
@@ -516,6 +518,11 @@ function applyConfig(config) {
   document.body.dataset.theme = ['dawkins', 'nietzsche'].includes(level.id) ? level.id : 'yhwh';
   const isNietzsche = level.id === 'nietzsche';
   if (levelChanged) {
+    const canChat = level.energy >= 80;
+    const ribbon = $('.ribbon [data-command="chat"]');
+    if (ribbon) ribbon.hidden = !canChat;
+    if (canChat) addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
+    else commands.delete('chat');
     if (level.id === 'exodus') queueMicrotask(checkExodus);
     if (isNietzsche) addCommand({ id: 'circus', name: ui('nietzsche-family-circus'), run: circus });
     else {
@@ -1352,8 +1359,23 @@ function piece() {
   modal(words.pieceTitle, ui("recipient-yhwh-thedynamiclinker-com-no-file-is-u", editButton('pieceTitle'), word('pieceBody')));
 }
 function about() {
-  const notes = (currentLevel().about || []).map(line => `<p class="muted">${escape(line)}</p>`).join('');
-  modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes + merch.links()));
+  const level = currentLevel();
+  const notes = (level.about || []).map(line => `<p class="muted">${escape(line)}</p>`).join('');
+  const pitch = ['genesis', 'exodus'].includes(level.id) ? '<p><button type="button" data-ld-lm>LD / LM</button></p>' : '';
+  const dialog = modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes + pitch + merch.links()));
+  if (pitch) dialog.querySelector('[data-ld-lm]').onclick = () => showLdLm(level);
+}
+function showLdLm(level) {
+  const demo = 'yhwh ld request.md context.md > plan\ncat plan\nyhwh lm plan';
+  const letter = emailLetters.find(item => item.id === 'genesis-ld-lm');
+  const platform = boot.interface === 'mobile' ? 'Run these commands on a Unix host with YHWH and Lord installed.' : 'Run from your shell with Lord installed.';
+  const key = level.id === 'exodus' ? 'ldlmExodusPitch' : 'ldlmGenesisPitch';
+  const inscription = attachmentsFor(letter).at(-1);
+  const dialog = modal('LD / LM', `${word(key, 'p', level)}<p>LD links a request and its context into an English script. LM runs it through Lord with the shell user’s permissions.</p><p>${escape(platform)}</p><pre><code>${escape(demo)}</code></pre><button type="button" data-copy-demo>Copy commands</button>${mailAttachmentFigures([inscription])}`);
+  dialog.querySelector('[data-copy-demo]').onclick = async () => {
+    try { await navigator.clipboard.writeText(demo); notice('Commands copied.'); }
+    catch (error) { notice(error.message); }
+  };
 }
 function aboutUs() {
   modal('About Us', `<div class="publisher-signature"><span class="ld-mark" aria-hidden="true"></span><strong>The Dynamic Linker</strong></div><div class="menu-list"><button data-command="our-team">Our Team <span>Meet the people</span></button><button data-command="roadmap">Roadmap <span>A few very large promises</span></button><button data-url="https://thedynamiclinker.com">The Dynamic Linker ↗</button></div>`);
@@ -1780,6 +1802,12 @@ function mailMarkdown(text) {
     .replace(/\[\^(\d+)\]/g, (_, number) => `<sup><a href="#mail-footnote-${number}" aria-label="Footnote ${number}">${number}</a></sup>`);
   return renderMarkdown(footnotes);
 }
+function mailAttachmentFigures(attachments) {
+  return attachments.map(({ name, alt }) => {
+    const bundled = mailAttachments[name];
+    return bundled ? `<figure class="mail-attachment"><figcaption>${escape(alt || words.letterSeedisAttachmentAlt)}</figcaption><img src="${escape(new URL(bundled, import.meta.url).href)}" alt="${escape(alt || words.letterSeedisAttachmentAlt)}" loading="lazy"></figure>` : '';
+  }).join('');
+}
 function renderInbox() {
   const host = $('#mail-content'), tab = active();
   const available = [...presence.letters].sort((a, b) => b.at - a.at).map(state => ({ state, letter: letters.find(item => item.id === state.id) })).filter(item => item.letter);
@@ -1791,8 +1819,7 @@ function renderInbox() {
     const body = letter.format === 'markdown' ? `<div class="mail-markdown">${mailMarkdown(words[letter.textKey] || '')}</div>${editButton(letter.textKey)}` : word(letter.textKey);
     const shopLinks = letter.id === 'merch' ? merch.links() : '';
     const recipients = `<span>to ${escape(letter.to || address('Abe'))}</span>${letter.cc ? `<span>CC: ${letter.cc.map(escape).join(', ')}</span>` : ''}${letter.bcc ? `<span>BCC: ${letter.bcc.map(escape).join(', ')}</span>` : ''}`;
-    const bundledAttachment = mailAttachments[letter.attachment];
-    const attachment = bundledAttachment ? `<figure class="mail-attachment"><figcaption>Attachment: ${escape(letter.attachment)}</figcaption><img src="${escape(new URL(bundledAttachment, import.meta.url).href)}" alt="${escape(letter.attachmentAlt || words.letterSeedisAttachmentAlt)}"></figure>` : '';
+    const attachment = mailAttachmentFigures(attachmentsFor(letter));
     const note = source?.note || letter.note;
     const sources = note || letter.verse ? `<details class="mail-source" open><summary>${escape(verseCopy['mail-sources'])}</summary><p>${escape(note)}</p>${letter.verse ? `<div data-citation="${escape(letter.verse)}"></div>` : ''}</details>` : '';
     host.innerHTML = `<article class="mail-message"><button type="button" data-mail-back>← Inbox</button><h1>${escape(letter.title)}</h1><div class="mail-envelope"><strong>YHWH</strong><span class="mail-address">&lt;${escape(state.sender || primarySender)}&gt;</span>${recipients}<time datetime="${escape(new Date(state.at).toISOString())}">${escape(new Date(state.at).toLocaleString())}</time></div><div class="mail-body">${body}${source ? `<p><a href="${escape(source.url)}">${escape(source.label)}</a></p>` : ''}${shopLinks}</div>${attachment}${letter.command ? `<p><button data-command="${letter.command}">${escape(letter.action)}</button></p>` : ''}${sources}</article>`;
@@ -1839,6 +1866,7 @@ function progressWalk(id) {
 }
 let chatPanel, chatView;
 async function showChat() {
+  if (currentLevel().energy < 80) return;
   if (active().focusView === 'chat') { focusView('document'); return; }
   if (!chatPanel) {
     chatPanel = addPanel({ id: 'yhwh-chat', title: 'Conversation', area: 'center', render(element) {
@@ -1862,7 +1890,6 @@ async function showChat() {
 function renderChat() { chatView?.render(); }
 addCommand({ id: 'focus-document', name: 'Focus document', run: () => focusView('document') });
 addCommand({ id: 'margins', name: 'In the margins · Genesis', run: () => focusView(active().focusView === 'margins' ? 'document' : 'margins') });
-addCommand({ id: 'chat', name: 'Talk to YHWH', run: showChat });
 addCommand({ id: 'verses', name: 'Browse We The Nameless · chapter and verse', run: () => verseUI.browse() });
 addCommand({ id: 'inbox', name: 'Inbox · letters from YHWH', run: inbox });
 addCommand({ id: 'narrative', name: 'Take a walk · optional narrative', run: narrative });

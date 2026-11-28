@@ -127,7 +127,13 @@ export function installMobile(app, storage) {
   });
   function menu(title, entries) {
     const dialog = sheet(title), content = dialog.querySelector('.mobile-sheet-content');
-    for (const [label, id] of entries) { const button = document.createElement('button'); button.textContent = label; button.onclick = () => { dialog.close(); app.run(id); }; content.append(button); }
+    for (const [label, id] of entries) {
+      if (id === 'chat' && !app.commands.has(id)) continue;
+      const button = document.createElement('button');
+      button.textContent = label;
+      button.onclick = () => { dialog.close(); app.run(id); };
+      content.append(button);
+    }
     return content;
   }
   command('mobile-create', 'Create or find note', () => menu('Create or find note', [['New note', 'new-file'], ['Find a file', 'open-file'], ['New folder', 'new-directory'], ['Make new universe', 'universe-new'], ['Import files…', 'mobile-import']]));

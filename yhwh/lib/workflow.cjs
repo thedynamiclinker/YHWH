@@ -80,10 +80,14 @@ async function todos(ctx) {
   const linked=new Set(out.filter(t=>t.link).map(t=>t.link.replace(/\.md$/,'')));
   return out.filter(t=>t.card||!linked.has(t.path.replace(/\.md$/,'')));
 }
-function resolveName(items,name) {
-  if(!name||path.isAbsolute(name)||name.split(/[\\/]/).includes('..'))throw new Error('Use a listed task name, without traversal.');
+function matchingTasks(items,name) {
   let matches=items.filter(x=>x.id===name||x.name===name||x.title===name||x.path===name);
   if(!matches.length)matches=items.filter(x=>path.basename(x.name)===name||path.basename(x.name,path.extname(x.name))===name||slug(x.title||'')===name);
+  return matches;
+}
+function resolveName(items,name) {
+  if(!name||path.isAbsolute(name)||name.split(/[\\/]/).includes('..'))throw new Error('Use a listed task name, without traversal.');
+  const matches=matchingTasks(items,name);
   if(matches.length!==1)throw new Error(matches.length?`Ambiguous name '${name}': ${matches.map(x=>x.name+' ['+x.id+']').join(', ')}`:`No eligible task named '${name}'. Use --list.`);
   return matches[0];
 }
@@ -366,4 +370,11 @@ async function main(command,args) {
     if(command==='commit')return commit(ctx,names);
   });
 }
-module.exports={main,complete,promptBody};
+async function isAddTask(name) {
+  const ctx = await context().catch(() => null);
+  if (!ctx) return false;
+  const phases = ['succeeded','accepted','documented','committing','committed'];
+  return matchingTasks((await records(ctx)).filter(task => phases.includes(task.status)),name).length > 0;
+}
+
+module.exports={main,complete,promptBody,isAddTask};

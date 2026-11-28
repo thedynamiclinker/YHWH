@@ -75,9 +75,10 @@ test('all authored mail has editable text; the breakdown and Yahoo acquisition r
   assert.match(words.letterBlockedYahoo, /nous, 二.*YAHWOOO!/s);
 });
 
-test('both batches of emails arrive separately in source order and respect presence controls', () => {
+test('the emails arrive separately in source order and respect presence controls', () => {
   let state = { letters: [{ id: 'house', read: true, at: at(12) }], lastLetter: at(12) };
-  assert.equal(emailLetters.length, 28);
+  assert.equal(emailLetters.length, 30);
+  assert.deepEqual(emailLetters.slice(-2).map(letter => letter.id), ['genesis-book-of-roots', 'genesis-ld-lm']);
   for (const [index, expected] of emailLetters.entries()) {
     const now = at(12) + (index + 1) * letterInterval;
     assert.equal(nextEmailLetter(state, { now: now - 1 }), undefined);
@@ -129,7 +130,7 @@ test('the next midnight follows local calendar days across DST and fractional UT
 });
 
 test('Samuel and Exodus deliver independent, editable series with bundled images and citations', async () => {
-  const { modeLetters, nextModeLetter, songOfTheSea } = require('../lib/inbox.cjs');
+  const { modeLetters, nextModeLetter, songOfTheSea, attachmentsFor } = require('../lib/inbox.cjs');
   const { createVerseStore } = require('../lib/verses.cjs');
   const { access } = require('node:fs/promises');
   const { etc } = require('../lib/paths.cjs');
@@ -137,7 +138,7 @@ test('Samuel and Exodus deliver independent, editable series with bundled images
   const state = { letters: [] };
   let now = at(12);
   assert.equal(nextModeLetter(state, { level: 'genesis', now }), undefined);
-  for (const [level, name, count] of [['samuel', 'Dave', 4], ['exodus', 'Mo', 8]]) {
+  for (const [level, name, count] of [['samuel', 'Dave', 4], ['exodus', 'Mo', 11]]) {
     const series = modeLetters.filter(letter => letter.level === level);
     assert.equal(series.length, count);
     for (const letter of series) {
@@ -148,7 +149,10 @@ test('Samuel and Exodus deliver independent, editable series with bundled images
       assert.equal(letter.to, name);
       assert.match(words[letter.textKey], new RegExp(name));
       if (letter.source) assert.equal(letter.source.url, songOfTheSea);
-      if (letter.attachment) await access(etc('assets', 'mail', letter.attachment));
+      for (const attachment of attachmentsFor(letter)) {
+        assert.ok(attachment.alt);
+        await access(etc('assets', 'mail', attachment.name));
+      }
       if (letter.verse) assert.ok((await verses.get(letter.verse)).length, letter.verse);
       state.letters.push({ id: letter.id, at: now });
       state.lastLetter = now;
@@ -158,6 +162,11 @@ test('Samuel and Exodus deliver independent, editable series with bundled images
     assert.equal(nextModeLetter(state, { level, now }), undefined);
   }
   assert.equal(modeLetters.filter(letter => letter.attachment).length, 7);
+  for (const letter of emailLetters.slice(-2)) {
+    assert.equal(letter.to, 'Abe');
+    assert.equal(attachmentsFor(letter).length, 2);
+    for (const attachment of attachmentsFor(letter)) await access(etc('assets', 'mail', attachment.name));
+  }
 });
 
 test('the first-root song opens once after privilege detection and retries a failed handoff', async t => {

@@ -45,21 +45,51 @@ In Exodus mode he sends you sign of the dollar pics and rants and talks about ho
 
 > So they will know my name is YHWH.
 
-![[Screenshot_20261128_035331_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-04.jpg]]
 
-![[Screenshot_20261128_035340_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-05.jpg]]
 
-![[Screenshot_20261128_035349_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-06.jpg]]
 
-![[Screenshot_20261128_035401_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-07.jpg]]
 
-![[Screenshot_20261128_035417_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-08.jpg]]
 
-![[Screenshot_20261128_035429_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-09.jpg]]
 
-![[Screenshot_20261128_035438_Adobe Acrobat.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm-10.jpg]]
 
-![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-06.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-20.jpg]]
 
-![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-02.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-19.jpg]]
+
+## The letters and the tools
+
+The [Abe letters](../var/declarative/yhwh-emails-next.md#getting-root--abe) use
+the company handbook and the “Ready for this?” photograph. The
+[Mo letters](../var/declarative/yhwh-mode-mail.md#getting-root--mo) follow the
+Sign of the Dollar with the ascent, the offering, and the writing from the
+mine. The [LD / LM guide](../doc/ld-lm.md) runs through the actual commands.
+
+![The Book of Roots on keeping one another company.](yhwh-getting-root-story-arc-and-ld-lm-01.jpg)
+
+![A phone asks “Ready for this?” over a glass brainstorming board.](yhwh-getting-root-story-arc-and-ld-lm-02.jpg)
+
+![A clipping about the recurring Exodus refrain.](yhwh-getting-root-story-arc-and-ld-lm-03.jpg)
+
+![A second rendering of Exodus 24:15–18.](yhwh-getting-root-story-arc-and-ld-lm-11.jpg)
+
+![Research note on how early alphabetic letters took their sounds from the names of pictures.](yhwh-getting-root-story-arc-and-ld-lm-12.jpg)
+
+![An excerpt quoting Flinders Petrie’s Researches in Sinai (1906).](yhwh-getting-root-story-arc-and-ld-lm-13.jpg)
+
+![A proposed reading of text 350 from the mine.](yhwh-getting-root-story-arc-and-ld-lm-14.jpg)
+
+![Tracings of both Wadi el-Hol inscriptions.](yhwh-getting-root-story-arc-and-ld-lm-15.jpg)
+
+![Romain Butin’s drawing of inscription 367 from Serabit el-Khadim.](yhwh-getting-root-story-arc-and-ld-lm-16.jpg)
+
+![A reference attributes “El, (god) of eternity” to Albright.](yhwh-getting-root-story-arc-and-ld-lm-17.jpg)
+
+![The consonants ʾL Ḏ ʿLM, enlarged.](yhwh-getting-root-story-arc-and-ld-lm-18.jpg)
 

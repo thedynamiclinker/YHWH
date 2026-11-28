@@ -79,6 +79,10 @@ function nextModeLetter(state, options) {
   return modeLetters.find(letter => letter.level === options.level && canReceiveLetter(state, letter.id, options));
 }
 
+function attachmentsFor(letter) {
+  return letter.attachments || (letter.attachment ? [{ name: letter.attachment, alt: letter.attachmentAlt }] : []);
+}
+
 function senderFor(state, letter) {
   if (letter.sender) return letter.sender;
   if (!state.blockedYhwh) return primarySender;
@@ -89,4 +93,4 @@ function senderFor(state, letter) {
   }
 }
 
-module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, senderFor };
+module.exports = { primarySender, alternateSenders, letters, emailLetters, modeLetters, songOfTheSea, midnightLetter, nextMidnightLetter, nextMidnight, startNight, nextStartupLetter, nextEmailLetter, nextModeLetter, attachmentsFor, senderFor };

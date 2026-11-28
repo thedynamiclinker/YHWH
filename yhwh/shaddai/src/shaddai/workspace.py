@@ -1534,6 +1534,9 @@ class Workspace:
             text += f"\n\n{letter['source']['label']} · {letter['source']['url']}"
         if letter.get("attachment"):
             text += f"\n\nAttachment: {self.config.library.etc / 'assets/mail' / letter['attachment']}"
+        for attachment in letter.get("attachments", []):
+            filename = self.config.library.etc / "assets/mail" / attachment["name"]
+            text += f"\n\n{attachment['alt']}\n{filename}"
         if not (letter.get("note") or letter.get("verse")):
             self.show(letter["title"], text, back=self.inbox)
             return
@@ -1697,6 +1700,9 @@ class Workspace:
                   back=partial(self.verse_list, verse["book"], verse["chapter"]))
 
     def conversation(self):
+        if self.services.current_level().get("id") in ("dawkins", "nietzsche"):
+            self.message = "YHWH conversation is available from Samuel onward."
+            return
         directory = self.browser.physical(self.browser.cwd)
         state = self.services.conversation(directory)
         text = "\n\n".join(f'## {item["role"].capitalize()}\n{item["content"]}'

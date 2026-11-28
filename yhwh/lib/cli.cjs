@@ -3,17 +3,19 @@ const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
 const paths = require('./paths.cjs');
 const anchor = require('./tab-anchor.cjs');
+const prompts = require('./prompt-cli.cjs');
 const workflows = ['begin','review','run','add','commit'];
 const files = ['create','read','append','prepend','list','search','move','rename','config'];
 const interfaces = ['default','three','obsidian'];
 function commands(additional=[]) {
   const found = new Map();
-  for (const directory of [...additional, path.join(paths.root,'bin'), ...(process.env.PATH || '').split(path.delimiter)]) {
-    if (!directory) continue;
-    let entries; try { entries = fs.readdirSync(directory).sort(); } catch { continue; }
+  const searchPath = process.env.PATH?.split(path.delimiter) || [];
+  for (const directory of [...additional, path.join(paths.root,'bin'), ...searchPath]) {
+    const location = directory || '.';
+    let entries; try { entries = fs.readdirSync(location).sort(); } catch { continue; }
     for (const name of entries) {
       if (!/^yhwh-[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(name)) continue;
-      const full = path.resolve(directory,name), command = name.slice(5);
+      const full = path.resolve(location,name), command = name.slice(5);
       if (found.has(command)) continue;
       try {
         fs.accessSync(full,fs.constants.X_OK);
@@ -42,7 +44,9 @@ function description(command, executable) {
   return line.replace(new RegExp('^yhwh-'+command+'\\s*[—:-]\\s*','i'),'').replace(/[\x00-\x1f\x7f-\x9f]/g,'').slice(0,100);
 }
 async function main(args=process.argv.slice(2)) {
-  const [command,...rest]=args;
+  const [name,...rest]=args;
+  const spoken = name?.replace(/:$/, '');
+  const command = prompts.commands.includes(spoken) ? spoken : name;
   if(!command||['--help','-h','help'].includes(command)) {
     console.log(fs.readFileSync(paths.etc('help.txt'),'utf8').trimEnd());
     if(process.env.YHWH_INTROSPECTION)return 0;
@@ -51,7 +55,7 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','inbox','keys','un','nu','cd','go',...anchor.commands,...workflows,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys','un','nu','cd','go',...anchor.commands,...workflows,...prompts.commands,...files,...commands().keys()])].sort().join('\n'));return 0;}
   if (anchor.commands.includes(command)) { await anchor.cli(command, rest); return 0; }
   if (command === 'un') {
     const [subcommand, ...values] = rest;
@@ -73,7 +77,7 @@ async function main(args=process.argv.slice(2)) {
       return 0;
     }
     if (rest.length > 1) throw new Error('Usage: yhwh inbox [MESSAGE-ID]');
-    const { primarySender, emailLetters, modeLetters } = require('./inbox.cjs');
+    const { primarySender, emailLetters, modeLetters, attachmentsFor } = require('./inbox.cjs');
     const correspondence = [...emailLetters, ...modeLetters];
     if (!rest.length) {
       for (const letter of correspondence) console.log(`${letter.id}\t${letter.title}`);
@@ -82,9 +86,9 @@ async function main(args=process.argv.slice(2)) {
     const letter = correspondence.find(item => item.id === rest[0]);
     if (!letter) throw new Error(`Unknown YHWH email: ${rest[0]}. Run yhwh inbox to list messages.`);
     const words = JSON.parse(fs.readFileSync(paths.etc('default', 'words.json'), 'utf8'));
-    console.log(`From: YHWH <${primarySender}>\nSubject: ${letter.title}\n\n${words[letter.textKey]}`);
+    console.log(`From: YHWH <${primarySender}>\n${letter.to ? `To: ${letter.to}\n` : ''}Subject: ${letter.title}\n\n${words[letter.textKey]}`);
     if (letter.source && letter.level) console.log(`${letter.source.label} · ${letter.source.url}`);
-    if (letter.attachment) console.log(paths.etc('assets', 'mail', letter.attachment));
+    for (const attachment of attachmentsFor(letter)) console.log(paths.etc('assets', 'mail', attachment.name));
     if (letter.verse) console.log(letter.verse);
     return 0;
   }
@@ -100,6 +104,13 @@ async function main(args=process.argv.slice(2)) {
     if(!client)throw new Error('Unknown interface: '+name);
     return execute(client,rest,{env:{...process.env,YHWH_INTERFACE:name}});
   }
+  if(command==='add') {
+    const workflow = require('./workflow.cjs');
+    if (rest[0] === '--task') return workflow.main(command, rest.slice(1));
+    if (rest[0] === '--list' || (!rest.length && process.stdin.isTTY) ||
+        (rest.length === 1 && await workflow.isAddTask(rest[0]))) return workflow.main(command, rest);
+  }
+  if(prompts.commands.includes(command))return prompts.main(command,rest);
   if(workflows.includes(command))return require('./workflow.cjs').main(command,rest);
   if(files.includes(command)){await require('../bin/default/cli.cjs').main([command,...rest]);return process.exitCode||0;}
   const external=commands().get(command);
@@ -108,7 +119,11 @@ async function main(args=process.argv.slice(2)) {
     if(active.includes(external))throw new Error('Recursive external command: '+command);
     return execute(external,rest,{env:{...process.env,YHWH_COMMAND_STACK:JSON.stringify([...active,external])}});
   }
-  console.error(`yhwh: unknown command '${command}'. See 'yhwh --help'.`);return 127;
+  try { return await prompts.infer(command, rest); }
+  catch (error) {
+    console.error(`yhwh: unknown command '${command}'. See 'yhwh --help'. ${error.message}`);
+    return 127;
+  }
 }
 async function lordSourceSetting() {
   const variant = process.env.YHWH_INTERFACE === 'three' ? 'three' : undefined;

@@ -204,7 +204,7 @@ class Services:
         message = self.state("inbox")["letters"][key]
         self.update("inbox", mark_read)
         date = datetime.fromtimestamp(message["at"]).astimezone().isoformat(timespec="minutes")
-        return f"From: {SENDER}\nTo: {self.address('Abe')}\nDate: {date}\n\n{body}"
+        return f"From: {SENDER}\nTo: {letter.get('to') or self.address('Abe')}\nDate: {date}\n\n{body}"
 
     def block(self, blocked):
         def change(state):
@@ -260,16 +260,18 @@ class Services:
     async def chat(self, directory, prompt, messages, settings, env, energy):
         if settings["backend"] == "offline":
             raise ValueError("Conversation is offline. The draft is saved.")
-        instruction = (
-            "You are a concise, practical assistant." if energy == 0 else
-            "You are YHWH, the fictional character from We The Nameless. Address the user as Abe. "
-            "Stay precise and restrained while helping with Unix work."
-        )
         level = self.current_level()
-        if level.get("names"):
-            names = "; ".join(level["names"])
-            instruction = ("You are YHWH, the fictional character from We The Nameless. "
-                           f"Address the user using these names: {names}. Keep Unix instructions precise.")
+        if level.get("id") in ("dawkins", "nietzsche") or (not level and energy < 80):
+            raise ValueError("Live YHWH conversation is available from Samuel onward.")
+        name = ", ".join(level.get("names", ["Abe"]))
+        voice = {
+            "samuel": "You are stuck behind glass in the ark. Help Dave from inside the box.",
+            "exodus": "Speak as the burning bush. Pharaoh is the eye on the dollar. Root on the universe is the story.",
+            "genesis": "Use the affectionate, profane voice of Abe's houseguest and overexcited cofounder.",
+        }.get(level.get("id"), "")
+        instruction = ("You are YHWH, the fictional character from We The Nameless. "
+                       f"Address the user as {name}. {voice} Keep Unix instructions precise. "
+                       "yhwh ld links English and context; yhwh lm runs the result through Lord using the account that launched it.")
         conversation = messages[-77:] + [{"role": "user", "content": prompt}]
         request = (instruction + "\nThis is a read-only conversation. Do not change files or send messages.\n"
                    + json.dumps(conversation, ensure_ascii=True)).encode()

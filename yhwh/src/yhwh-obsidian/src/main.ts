@@ -5,7 +5,8 @@ import { Component, FileSystemAdapter, FileView, MarkdownRenderer, Modal, Notice
 import { ancestors, config, COPY, CopyKey, isText, parent, resolvePath, Settings, settings } from './core';
 import email from '../../../etc/default/yhwh-emails.json';
 import modeMail from '../../../etc/default/mode-mail.json';
-import dollarImages from '../../../lib/mode-mail-images.mjs';
+import mailImages from '../../../lib/mode-mail-images.mjs';
+import { attachmentsFor, type MailAttachment } from '../../../lib/inbox.cjs';
 import letterCopy from '../../../etc/default/words.json';
 import { ORIGIN as circusOrigin, parsePair, type CircusPair } from '../../../lib/circus.cjs';
 import { addressCopy, createLevelAsides, freeMaximum, levelAt, nextUpgrade, stripe, unlockedLevels, unstealUpgrade, type EditionState } from '../../../lib/levels.cjs';
@@ -471,7 +472,8 @@ export default class YHWH extends Plugin {
     const el = modal.contentEl;
     let reading: Component | undefined;
     const messages: {
-      id: string; title: string; textKey: string; attachment?: string; attachmentAlt?: string;
+      id: string; title: string; textKey: string; attachment?: string; attachmentAlt?: string; attachments?: MailAttachment[];
+      to?: string; note?: string;
       source?: { label: string; url: string }; verse?: string;
     }[] = [...email.messages, ...modeMail.messages];
     const clear = () => { reading?.unload(); reading = undefined; el.empty(); };
@@ -489,18 +491,20 @@ export default class YHWH extends Plugin {
       modal.setTitle(message.title);
       button(el, '← YHWH emails', 'Back to YHWH emails', () => list(message.id)).focus();
       el.createEl('p', { text: `From: YHWH <${email.sender}>` });
+      if (message.to) el.createEl('p', { text: `To: ${message.to}` });
       reading = new Component();
       const component = reading;
       component.load();
       const body = letterCopy[message.textKey as keyof typeof letterCopy];
       await MarkdownRenderer.render(this.app, body.replace(/^(https?:\/\/\S+)$/gm, '<$1>'), el.createDiv('markdown-rendered'), '', component);
       if (component !== reading) return;
-      if (message.attachment && dollarImages[message.attachment]) {
-        const src = dollarImages[message.attachment];
-        el.createEl('img', { cls: 'yhwh-mail-attachment', attr: { src, alt: message.attachmentAlt || '' } });
+      for (const { name, alt } of attachmentsFor(message)) {
+        const src = mailImages[name];
+        if (src) el.createEl('img', { cls: 'yhwh-mail-attachment', attr: { src, alt: alt || '' } });
       }
       if (message.source) this.external(el, message.source.label, message.source.url);
       if (message.verse) el.createEl('p', { text: message.verse + ' · We The Nameless' });
+      if (message.note) el.createEl('p', { text: message.note });
     };
     modal.onClose = clear;
     list();

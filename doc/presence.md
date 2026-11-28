@@ -1,14 +1,14 @@
 # Presence
 
-- Genesis is the default and calls the reader Abe. Nietzsche softens YHWH’s presence. Dawkins suppresses it.
+- Genesis is the default and calls the reader Abe. Dawkins is for work. Nietzsche has the obituaries and Family Circus. Live YHWH conversation begins at Samuel.
 - Dawkins, Nietzsche, Samuel, Genesis, and Exodus are free. **Steal Upgrade** unlocks Zan in the current app profile. The slider can return to any available level.
 - Give every unlocked level its own stop on the YHWH-ness meter. The Genesis welcome always includes “Where are you?” and the Abe greeting. Put the four-letter-word comments for the active level in About YHWH. Keep the upgrade poems in Mono for YHWH with four-column tabs and preserve their line breaks and spaces. Three Han glyphs take the same width as five ASCII glyphs.
 - **Unsteal Upgrade** relocks Zan in the current profile. Active Zan falls back to Exodus. Former Pro selections migrate to Exodus.
 - Samuel calls the reader Dave and keeps the live agent read-only. Exodus calls the reader Mo. Every level uses the host user’s manual shell permissions. The Stripe guide is a setup stub. Preview state is local.
 - YHWH is the embodied, fallible, bargaining, affectionate visitor of We The Nameless Genesis 12–23. He wants bread, offerings, and a house for his name. He is not the narrator or a corporate assistant.
 - Letters arrive only from actual work, once per topic and at most once per five minutes, without opening popups. Respect the inbox switch. Store read state locally.
-- The sections of [YHWH Emails](../var/declarative/yhwh-emails.md) followed by [YHWH Emails Next](../var/declarative/yhwh-emails-next.md) arrive as individual local letters in source order during work in desktop, Three, Android, iOS, and Shaddai. Sections with the same URL stay separate. The Markdown bodies live in editable `yhwh/etc/default/words.json`. The inbox switch, sender block and subdued modes apply. Obsidian, the CLI, and the review apps let readers open the bundled correspondence on demand.
-- Samuel and Exodus have their own work sequences. They share unread persistence, the five-minute interval and the sender block with Genesis mail. The Exodus series includes seven bundled images, citations and the song link. [Samuel and Exodus mail](../var/declarative/yhwh-mode-mail.md)
+- The sections of [YHWH Emails](../var/declarative/yhwh-emails.md) followed by [YHWH Emails Next](../var/declarative/yhwh-emails-next.md) arrive as individual local letters in source order during work in desktop, Three, Android, iOS, and Shaddai. The Getting Root letters to Abe follow the original correspondence. Sections with the same URL stay separate. The Markdown bodies live in editable `yhwh/etc/default/words.json`. The inbox switch, sender block and subdued modes apply. Obsidian, the CLI, and the review app let readers open the bundled correspondence on demand.
+- Samuel and Exodus have their own work sequences. They share unread persistence, the five-minute interval and the sender block with Genesis mail. The Exodus sequence continues from the Sign of the Dollar to Sinai, the offering, and the letters from the mine. [Samuel and Exodus mail](../var/declarative/yhwh-mode-mail.md)
 - Exodus notices OS-granted desktop privileges through effective UID on Unix or the administrator token on Windows. A marker in the YHWH user prefix records the first successful browser handoff to the song. The ensuing tenth-plague scene requires a choice and runs entirely in the UI.
 - The [merch letter](../var/declarative/merch.md#discovery) can arrive once during work after a storefront URL is configured. It follows the ordinary local work mail rules.
 - Keep Back to workspace accessible from the inbox and its letters. Return to the current document in the same tab.
@@ -18,7 +18,7 @@
 
 ## Desktop chat
 
-- Chat speaks as YHWH at every YHWH-ness level. The voice and examples come from `yhwh/etc/default/words.json`. The full Genesis manuscripts are available to the agent as local reference files.
+- From Samuel onward, chat speaks as YHWH in the selected role. The voice and examples come from `yhwh/etc/default/words.json`. The full Genesis manuscripts are available to the agent as local reference files.
 - Each conversation keeps its original working directory. Start a new chat to work in the currently open directory. History, drafts, and attachment copies live in the app profile on this computer. Existing directory conversations migrate into History. Failed or interrupted turns keep the draft for review.
 - Enter or Ctrl/Cmd+Enter sends. Shift+Enter adds a line. Attach up to eight files totaling 20 MiB per message. The runner sees the attachment copies used for the turn. Recent history is provided to the agent while the full transcript stays available in the app.
 - The desktop uses a signed-in Codex CLI from `PATH` (`YHWH_CODEX` can select another compatible executable). Run `codex login` to connect the runner. It operates with workspace-write access to the conversation’s directory, the app checkout or package, and the user configuration directory. It can edit the app’s executable configuration and plugins, which run as your account. Samuel selects the runner’s read-only sandbox and omits the app-control connection. Core source changes may need a rebuild and app restart.

@@ -11,10 +11,18 @@ Usage: yhwh <command> [arguments]
   go [DIRECTORY]     Start a Linux guest. Use --native for system chroot.
   @-get              Print the calling tab’s directory anchor.
   @-set [DIRECTORY]  Set the calling tab’s anchor, defaulting to the shell directory.
+  gen REQUEST      Draft a prompt and refine it in the terminal
+  ex | names       Clarify a prompt. nm is quick, ask opens quiz mode
+  code | shell     Rewrite a prompt as Sudocode. sh is explicit, nsh is compact
+  add SOURCE ...   Merge prompt text from stdin, files, and arguments
+  do PROMPT        Apply a prompt in this Git checkout and write durable rules
+  ld SOURCE ...    Link text into one executable English script
+  lm SOURCE ...    Run English, Sudocode, or a linked script through Lord
+
   begin [TODO]     Generate a draft and implementation questions in tmp/
   review [DRAFT]   Answer questions and create an approved script in run/
   run [TASK ...]   Execute scripts; record results for human inspection
-  add [TASK]      Accept results; archive exact instructions; prepare changes
+  add --task [TASK]  Accept results; archive exact instructions; prepare changes
   commit [TASK]   Describe the resulting system and commit accepted work
 
   create/read/append/prepend/list/search/move/rename/config
@@ -22,6 +30,7 @@ Usage: yhwh <command> [arguments]
   completion bash|zsh  Print shell completion setup
   commands             List available command names
 
+Prompt commands accept -f FILE, - for stdin, and -- for literal arguments.
 Each workflow command supports --help and --list. Explicit names support
 scripting; an interactive terminal offers selection when names are omitted.
 Draft and script directories are created as needed.

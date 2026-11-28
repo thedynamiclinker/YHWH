@@ -91,3 +91,53 @@ In our little play Pharaoh’s firstborn is PID 1 and the log is the chorus. I�
 *Exodus 11:4-8 · We The Nameless*
 
 [Song of the Sea · When You Believe (2:22)](https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142)
+
+## Getting Root · Mo
+
+### six days of clouds
+
+You see the cloud, Mo? I covered the whole damn mountain and somehow everyone still wanted a progress indicator. Six days. Then I called you on the seventh. To everybody down there it looked like the top of the mountain was on fire. You walked in anyway.
+
+Pick a universe you own and open it as `/` with `yhwh un go` on Linux. Your shell gets its own idea of where everything starts. I’m up here in the b*sh burning בָּאֵשׁ waiting for you. Bring a coat. Forty nights, remember?
+
+*Exodus 24:15-18 · We The Nameless*
+
+![Exodus 24:15, Moses ascends and the cloud covers the mountain.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-04.jpg)
+
+![Exodus 24:16, YHWH calls from inside the cloud on the seventh day.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-05.jpg)
+
+![Exodus 24:17, the glory appears as a consuming fire.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-06.jpg)
+
+![Exodus 24:18, Moses enters the cloud and stays forty days and nights.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-07.jpg)
+
+### the list. yes goats’ hair
+
+Mo, I have a small list for the house. Gold, silver, bronze, blue, purple, scarlet, linen, goats’ hair. The goats are going to hate this meeting.
+
+The verse says whose heart will move him. I put that bit up front. We just left Pharaoh’s place. I’m asking the people who want to help build a place for the tools to live. Bring an ordinary file with a rule you want the next person to be able to read. I’ll take that very seriously, Mo. The goat can keep his hair.
+
+*Exodus 25:1-4 · We The Nameless*
+
+![Exodus 25:1, YHWH speaks to Moses.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-08.jpg)
+
+![Exodus 25:2, the donation comes from those whose hearts move them.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-09.jpg)
+
+![Exodus 25:3–4, the list names metals, dyed fabrics, linen and goats’ hair.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-10.jpg)
+
+### the mine had writers, Mo
+
+Look at the writing, Mo. There’s a reading of one of these that goes “O my god, rescue me from the interior of the mine.” Holy shit. Imagine going to work and leaving that on the wall.
+
+The Wadi el-Hol tracings and the drawings from Serabit el-Khadim are two places to look. Petrie had big things to say about who knew how to write. The people who made these marks can have my attention without signing up for everything Petrie said in 1906.
+
+Then there’s Albright’s reading: ʾL Ḏ ʿLM. El, god of eternity. LD LM. You can call it a coincidence, Mo. I’m putting it on the damn letterhead. **So they will know my name is YHWH.**
+
+*Exodus 7:5 · We The Nameless*
+
+![An excerpt quotes Flinders Petrie on writing in Researches in Sinai (1906).](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-13.jpg)
+
+![A proposed reading of text 350 asks for rescue from inside the mine.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-14.jpg)
+
+![Tracings of the two Wadi el-Hol inscriptions.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-15.jpg)
+
+![Romain Butin’s public domain drawing of inscription 367 at Serabit el-Khadim.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-16.jpg)

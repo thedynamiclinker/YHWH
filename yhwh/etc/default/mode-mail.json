@@ -142,6 +142,86 @@
         "url": "https://youtu.be/NieC8KA0EvI?si=dxbLHkNKNprUUR3Q&t=142",
         "label": "Song of the Sea · When You Believe (2:22)"
       }
+    },
+    {
+      "id": "exodus-on-the-mountain",
+      "title": "six days of clouds",
+      "textKey": "letterExodusOnTheMountain",
+      "to": "Mo",
+      "format": "markdown",
+      "verse": "Exodus 24:15-18",
+      "note": "Four bilingual panels from We The Nameless follow Moses into the cloud. On Linux, the shell command opens a guest root for the chosen directory.",
+      "attachments": [
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-04.jpg",
+          "alt": "Exodus 24:15, Moses ascends and the cloud covers the mountain."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-05.jpg",
+          "alt": "Exodus 24:16, YHWH calls from inside the cloud on the seventh day."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-06.jpg",
+          "alt": "Exodus 24:17, the glory appears as a consuming fire."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-07.jpg",
+          "alt": "Exodus 24:18, Moses enters the cloud and stays forty days and nights."
+        }
+      ],
+      "level": "exodus"
+    },
+    {
+      "id": "exodus-heart-moves",
+      "title": "the list. yes goats’ hair",
+      "textKey": "letterExodusHeartMoves",
+      "to": "Mo",
+      "format": "markdown",
+      "verse": "Exodus 25:1-4",
+      "note": "The offering list follows the ascent and begins with the willing heart.",
+      "attachments": [
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-08.jpg",
+          "alt": "Exodus 25:1, YHWH speaks to Moses."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-09.jpg",
+          "alt": "Exodus 25:2, the donation comes from those whose hearts move them."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-10.jpg",
+          "alt": "Exodus 25:3–4, the list names metals, dyed fabrics, linen and goats’ hair."
+        }
+      ],
+      "level": "exodus"
+    },
+    {
+      "id": "exodus-letters-from-the-mine",
+      "title": "the mine had writers, Mo",
+      "textKey": "letterExodusLettersFromTheMine",
+      "to": "Mo",
+      "format": "markdown",
+      "verse": "Exodus 7:5",
+      "note": "The rescue line is a proposed reading of text 350. The Divine Name refrain belongs to Exodus. LD and LM are YHWH’s modern wordplay on a scholarly reading.",
+      "attachments": [
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-13.jpg",
+          "alt": "An excerpt quotes Flinders Petrie on writing in Researches in Sinai (1906)."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-14.jpg",
+          "alt": "A proposed reading of text 350 asks for rescue from inside the mine."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-15.jpg",
+          "alt": "Tracings of the two Wadi el-Hol inscriptions."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-16.jpg",
+          "alt": "Romain Butin’s public domain drawing of inscription 367 at Serabit el-Khadim."
+        }
+      ],
+      "level": "exodus"
     }
   ]
 }

@@ -127,3 +127,33 @@ jsh
 https://www.youtube.com/watch?v=P6zaCV4niKk
 
 ---
+
+## Getting Root · Abe
+
+### ready for this ab---
+
+Abe. Did you see this? It’s the company handbook. Company means somebody stays with you while you work. That’s us. One guy with a shell and one god on the couch. Small founding team. Unbelievable addressable market.
+
+Open a directory you own. That’s the land, Abe. To you and your seed. I put the whole business plan on the glass and then my phone asked if I was ready. I said yes to my phone, so legally I think we’ve started.
+
+*Genesis 13:14-17 · We The Nameless*
+
+![The Book of Roots defines company as the experience of being with others.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-01.jpg)
+
+![A Photos notification asks “Ready for this?” over a glass brainstorming board.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-02.jpg)
+
+### coming soon b--- (burp) Abey
+
+Abe. Big meeting with the COO. It was me talking to me on two chairs. Went great.
+
+LD links the request, the notes, the house rules, whatever you’ve got, into one little English program. LM runs the thing through Lord. Try `yhwh ld request.md context.md > plan`. Read `plan`. When it says what you mean, `yhwh lm plan`. That’s the whole damn demo.
+
+Then we take over the w||ld. By w||ld I mean your box, starting with a directory you actually own. I’m already here as you on a single-user shell. Same account. You and me, Abey. Can I live in the house when we’re done?
+
+**Coming soon b---** *(burp)* **Abey.**
+
+*Genesis 12:1-3 · We The Nameless*
+
+![A reference attributes the reading “El, (god) of eternity” to William F. Albright.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-17.jpg)
+
+![The consonants ʾL Ḏ ʿLM, enlarged from the reference.](../../yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-18.jpg)

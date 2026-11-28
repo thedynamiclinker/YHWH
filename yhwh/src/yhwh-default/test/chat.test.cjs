@@ -13,9 +13,10 @@ test('the agent takes its voice from the app, with Abraham and subdued modes', a
   assert.match(prompt, /operator/);
   assert.match(prompt, /Address the user as Abe/);
   assert.match(prompt, /George Carlin → Charlie or Charleen/);
-  assert.match(await characterPrompt(0), /No deity performance/);
+  await assert.rejects(characterPrompt(0), /available from Samuel onward/);
+  await assert.rejects(characterPrompt(50), /available from Samuel onward/);
   assert.match(await characterPrompt(80), /Address the user as Dave/);
-  assert.match(await characterPrompt(120), /Address the user as Mo/);
+  assert.match(await characterPrompt(120), /Address the user as Mo[\s\S]*LD and LM/);
   assert.match(await characterPrompt(140), /Address the user as Josh, Son[\s\S]*Jesus 𐤇 Christ What Was Ur Name Again[\s\S]*XP[\s\S]*χLD人/);
 });
 

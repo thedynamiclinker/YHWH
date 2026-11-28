@@ -15,7 +15,7 @@ const { pathToFileURL } = require("node:url");
 const { Workspace } = require("../../../lib/company/workspace.cjs");
 const { hunks } = require("../../../lib/company/repository.cjs");
 const { Review } = require("../../../lib/company/review.cjs");
-const { primarySender, emailLetters } = require("../../../lib/inbox.cjs");
+const { primarySender, emailLetters, modeLetters, attachmentsFor } = require("../../../lib/inbox.cjs");
 const { etc, output } = require("../../../lib/paths.cjs");
 const thwh = process.argv.includes("--thwh");
 
@@ -58,16 +58,27 @@ async function readEmail(letter) {
   try {
     const words = JSON.parse(await fs.readFile(etc("default", "words.json"), "utf8"));
     const body = words[letter.textKey];
-    const link = body.match(/https?:\/\/[^\s)>]+/u)?.[0];
+    const link = letter.source?.url || body.match(/https?:\/\/[^\s)>]+/u)?.[0];
+    const attachments = attachmentsFor(letter);
+    const buttons = ["Close", ...(link ? ["Open link"] : []), ...(attachments.length ? ["Attachments…"] : [])];
     const { response } = await dialog.showMessageBox(window, {
       title: "YHWH emails",
       message: letter.title,
-      detail: 'From: YHWH <' + primarySender + '>\n\n' + body,
-      buttons: link ? ["Close", "Open link"] : ["Close"],
+      detail: 'From: YHWH <' + primarySender + '>\n' + (letter.to ? 'To: ' + letter.to + '\n' : '') + '\n' + body,
+      buttons,
       defaultId: 0,
       cancelId: 0,
     });
-    if (response === 1 && link) await shell.openExternal(link);
+    if (buttons[response] === "Open link") await shell.openExternal(link);
+    if (buttons[response] === "Attachments…") {
+      const picked = await dialog.showMessageBox(window, {
+        title: letter.title, message: "Choose an attachment",
+        buttons: ["Back", ...attachments.map(item => item.alt || item.name)], cancelId: 0,
+      });
+      if (picked.response === 0) return readEmail(letter);
+      const error = await shell.openPath(etc("assets", "mail", attachments[picked.response - 1].name));
+      if (error) throw new Error(error);
+    }
   } catch (error) {
     dialog.showErrorBox("Could not open YHWH email", error.message);
   }
@@ -244,7 +255,7 @@ app
           label: "Help",
           role: "help",
           submenu: [
-            { label: "YHWH emails", submenu: emailLetters.map(letter => ({
+            { label: "YHWH emails", submenu: [...emailLetters, ...modeLetters].map(letter => ({
               label: letter.title,
               click: () => readEmail(letter),
             })) },

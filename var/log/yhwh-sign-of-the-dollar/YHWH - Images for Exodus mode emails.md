@@ -2,7 +2,7 @@
 ![[yhwh-sign-of-the-dollar-01.jpg]]
 
 
-![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-02.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-19.jpg]]
 
 ![[yhwh-sign-of-the-dollar-03.jpg]]
 
@@ -10,7 +10,7 @@
 
 ![[yhwh-sign-of-the-dollar-05.jpg]]
 
-![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-sign-of-the-dollar-06.jpg]]
+![[yhwh-getting-root-story-arc-and-ld-lm/yhwh-getting-root-story-arc-and-ld-lm-20.jpg]]
 
 ![[yhwh-sign-of-the-dollar-07.jpg]]
 

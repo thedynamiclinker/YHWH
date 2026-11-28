@@ -28,6 +28,44 @@
     { "id": "dwvd", "title": "Dude. Dwvd. sound familiar", "textKey": "letterDwvd", "format": "markdown" },
     { "id": "hipeyue", "title": "Josh thinking about your hipeyue're well", "textKey": "letterHipeyue", "format": "markdown" },
     { "id": "base-ten", "title": "What's 10 in base 10!", "textKey": "letterBaseTen", "format": "markdown" },
-    { "id": "jsh", "title": "jsh", "textKey": "letterJsh", "format": "markdown" }
+    { "id": "jsh", "title": "jsh", "textKey": "letterJsh", "format": "markdown" },
+    {
+      "id": "genesis-book-of-roots",
+      "title": "ready for this ab---",
+      "textKey": "letterGenesisBookOfRoots",
+      "to": "Abe",
+      "format": "markdown",
+      "verse": "Genesis 13:14-17",
+      "note": "YHWH’s startup pitch echoes the promise of land to Abram and his offspring.",
+      "attachments": [
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-01.jpg",
+          "alt": "The Book of Roots defines company as the experience of being with others."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-02.jpg",
+          "alt": "A Photos notification asks “Ready for this?” over a glass brainstorming board."
+        }
+      ]
+    },
+    {
+      "id": "genesis-ld-lm",
+      "title": "coming soon b--- (burp) Abey",
+      "textKey": "letterGenesisLdLm",
+      "to": "Abe",
+      "format": "markdown",
+      "verse": "Genesis 12:1-3",
+      "note": "The grand promise is YHWH’s. The shell runs under the account that launched it.",
+      "attachments": [
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-17.jpg",
+          "alt": "A reference attributes the reading “El, (god) of eternity” to William F. Albright."
+        },
+        {
+          "name": "yhwh-getting-root-story-arc-and-ld-lm-18.jpg",
+          "alt": "The consonants ʾL Ḏ ʿLM, enlarged from the reference."
+        }
+      ]
+    }
   ]
 }
