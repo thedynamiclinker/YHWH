@@ -21,15 +21,14 @@ WALK = {
     "inspect": "Open the terminal", "covenant": "Open another tab", "navigate": "Explore a directory",
 }
 WEB = re.compile(r"\[([^\]\n]+)\]\((https?://[^\s)]+)\)|(https?://[^\s<>]+)")
-MAIL_NAME = re.compile(r"\b(Abe|Mo|Dave|Josh)\b(?![’']s\b| inbox\b)", re.I)
 
 
 def address_letter(letter, receipt, text):
-    original = letter.get("to", "Abe") if letter.get("level") else "Abe"
+    original = (letter.get("level") and letter.get("to")) or "Abe"
     to = receipt.get("to")
-    if not to or to == original:
+    if not to or to in (original, letter.get("to")):
         return text
-    return MAIL_NAME.sub(lambda match: to if match[0].lower() == original.lower() else match[0], text)
+    return re.sub(rf"\b{re.escape(original)}\b(?![’']s\b| inbox\b)", lambda _: to, text, flags=re.I)
 
 
 def web_links(text):

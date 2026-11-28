@@ -97,10 +97,13 @@ class YhwhTTYTests(unittest.TestCase):
         self.command(tty, "Inbox")
         tty.shows("* Re: return shipping")
         tty.send(b"Re: return shipping\r")
-        tty.shows("To: Dave")
+        tty.shows("To: Abe")
+        tty.shows("Abe, the Philistines")
         tty.shows("five gold mice")
         received = json.loads(inbox.read_text())
         self.assertTrue(received["letters"]["samuel-return-shipping"]["read"])
+        self.assertEqual(received["letters"]["samuel-return-shipping"]["to"], "Abe")
+        self.assertEqual(received["letters"]["samuel-return-shipping"]["verse"], "Genesis 15:5")
         self.assertEqual(received["last_misdelivery"], received["last"])
 
     def test_panel_shortcuts_cycle_and_resize_from_inside_the_shell(self):

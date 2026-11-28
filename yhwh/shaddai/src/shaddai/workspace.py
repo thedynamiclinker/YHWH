@@ -403,7 +403,7 @@ class Workspace:
             ("", " ‹ ", clickable(lambda: self.browser.step_history(-1))),
             ("", " › ", clickable(lambda: self.browser.step_history(1))),
             ("class:heading", " ↙ " if expanded else " ↗ ", clickable(lambda: self.maximize("files"))),
-            ("class:muted", f" {prompt_path(self.browser.cwd)} ",
+            ("class:muted", f" {prompt_path(self.browser.cwd) if expanded else label(self.browser.cwd.name or '/')} ",
              clickable(self.browser.location)),
         ]
 
@@ -1130,7 +1130,7 @@ class Workspace:
     def universe_command(self, *args):
         executable = self.config.library.command or self.library.command
         if not executable:
-            raise ValueError("Install yhwh on PATH to use universe commands.")
+            raise ValueError(f"Install yhwh on PATH to run yhwh {args[0]}.")
         return [executable, *args]
 
     def new_universe(self):
@@ -1650,7 +1650,8 @@ class Workspace:
             commands[f"{target.get('glyph', target['label'])} · {target['offer']['title']}"] = partial(self.upgrade, target)
         if "offer" in options[-1]:
             commands["Unsteal Upgrade"] = partial(self.unsteal_upgrade, options[-1])
-        self.pick(f"YHWH-ness · {current['label']}", commands)
+        mode = "Mode" if current["id"] == "dawkins" else "YHWH-ness"
+        self.pick(f"{mode} · {current['label']}", commands)
 
     def choose_level(self, level, *, unlock=False):
         self.services.select_level(level, unlock=unlock)
@@ -1661,7 +1662,7 @@ class Workspace:
         self.show_level(self.services.current_level())
 
     def show_level(self, level):
-        title = f"YHWH level {level['label']}"
+        title = level["label"] if level["id"] == "dawkins" else f"YHWH level {level['label']}"
         lines = [level.get("welcome"), *level.get("lines", [])]
         poems = [level.get("welcomePoem"), level.get("poem")]
         asides = level.get("asides", [])
@@ -1678,7 +1679,12 @@ class Workspace:
         if level.get("names"):
             lines.insert(1, self.services.address("Hey Abe, take a look around."))
         links = {"Nietzsche Family Circus": "https://www.nietzschefamilycircus.com/"} if level["id"] == "nietzsche" else None
-        self.show(title, "\n\n".join(filter(None, [*lines, *poems])), links, wrap=not any(poems))
+        copy = [*lines, *poems]
+        if link := level.get("welcomeLink"):
+            copy.append(link["label"])
+            links = {**(links or {}), link["label"]: link["url"]}
+        copy.append(level.get("closingQuote"))
+        self.show(title, "\n\n".join(filter(None, copy)), links, wrap=not any(poems))
 
     def upgrade(self, target):
         guide = self.services.levels["stripe"]
@@ -1936,6 +1942,7 @@ class Workspace:
             ("focus_files", "Focus files", lambda: self.focus("files"), True),
             ("focus_editor", "Focus document", lambda: self.focus("editor"), True),
             ("focus_terminal", "Focus terminal", lambda: self.focus("terminal"), True),
+            (None, "cvnt · Covenant · Open a root shell", lambda: self.tty_command(self.universe_command("cvnt")), True),
             ("focus_next", "Focus next pane", self.focus_next, True),
             ("new_shell", "New shell tab", self.new_shell, True),
             ("close_shell", "Close shell tab", self.close_shell, True),

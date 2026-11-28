@@ -208,6 +208,29 @@ test('only selected Dave letters can go astray, with a shared cooldown across mo
   assert.equal(state.letters.find(letter => letter.id === ids[0]).read, true);
 });
 
+test('the recipient and book follow the level at delivery, even for a stray Dave story', async () => {
+  const { modeLetters, deliveryFor, addressLetter } = require('../lib/inbox.cjs');
+  const { createVerseStore } = require('../lib/verses.cjs');
+  const verses = createVerseStore();
+  const letter = modeLetters.find(letter => letter.id === 'samuel-return-shipping');
+  const body = words[letter.textKey];
+  for (const [level, to, book] of [
+    ['genesis', 'Abe', /^Genesis /], ['exodus', 'Mo', /^Exodus /],
+    ['samuel', 'Dave', /^[12] Samuel /], ['yue', 'Josh', /^Joshua /],
+  ]) {
+    for (let index = 0; index < 3; index++) {
+      const receipt = JSON.parse(JSON.stringify(deliveryFor(letter, level, index)));
+      assert.equal(receipt.to, to);
+      assert.match(receipt.verse, book);
+      assert.ok((await verses.get(receipt.verse)).length);
+      const sent = addressLetter(letter, receipt, body);
+      assert.ok(sent.startsWith(`${to}, the Philistines`));
+      assert.ok(sent.includes('Is this the Dave inbox?'));
+    }
+  }
+  assert.equal(addressLetter(letter, { read: true }, body), body);
+});
+
 test('the first-root song opens once after privilege detection and retries a failed handoff', async t => {
   const fs = require('node:fs/promises'), os = require('node:os'), path = require('node:path');
   const { firstRoot } = require('../src/yhwh-default/app/exodus.cjs');

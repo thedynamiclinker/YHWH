@@ -131,7 +131,11 @@ async function executeBinding(binding) {
 }
 const basename = filename => filename.replace(/[/\\]+$/, '').split(/[/\\]/).at(-1) || filename;
 // Like Bash's clip_prompt_if_its_super_long, fall back to the last component.
-const promptPath = filename => filename.length > 30 && basename(filename) !== filename ? `…/${basename(filename)}` : filename;
+function promptPath(filename) {
+  if (filename.length <= 30) return filename;
+  const leaf = boot.platform === 'win32' ? basename(filename) : filename.split('/').filter(Boolean).at(-1);
+  return leaf ? `…/${leaf}` : filename;
+}
 const join = (directory, name) => /^(?:[/\\]|[A-Z]:[/\\])/i.test(name) ? name : `${directory.replace(/[/\\]$/, '')}/${name}`;
 const parent = filename => { const value = filename.replace(/[/\\][^/\\]+[/\\]?$/, '') || (boot.platform === 'win32' ? filename.slice(0, 3) : '/'); return /^[A-Z]:$/i.test(value) ? `${value}/` : value; };
 const humanSize = size => size > 1048576 ? ui("mb", (size / 1048576).toFixed(1)) : size > 1024 ? ui("kb", Math.round(size / 1024)) : ui("b", size);
@@ -270,7 +274,7 @@ async function closeTerminal(id = active()?.terminalId, exited = false) {
   if (active() === tab) { update(); if (tab.lastFocus === 'terminal') restoreAfterTerminal(tab); }
 }
 function levelLabel(level) {
-  return `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}`;
+  return level.id === 'dawkins' ? level.label : `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}`;
 }
 function levelPoem(text) {
   return text ? `<pre class="level-poem" dir="ltr" tabindex="0"><code>${escape(text)}</code></pre>` : '';
@@ -280,15 +284,18 @@ function welcome(tab, level = levelAt(currentEnergy(tab.config))) {
   if (tab.welcomeLevel !== level.id) tab.welcomeAside = nextLevelAside(level);
   tab.welcomeLevel = level.id;
   const [headline, ...lines] = [level.welcome, ...(level.lines || [])].filter(Boolean);
-  const eyebrow = level.id === 'genesis' ? '' : `<div class="eyebrow">${escape(levelLabel(level))}</div>`;
+  const eyebrow = ['genesis', 'dawkins'].includes(level.id) ? '' : `<div class="eyebrow">${escape(levelLabel(level))}</div>`;
   const heading = level.id === 'genesis'
     ? `<p class="level-greeting">${escape(headline)}</p>${word('welcomeTitle', 'h1', level)}`
     : `<h1>${escape(headline)}</h1>`;
-  const greeting = level.welcome && !['samuel', 'exodus'].includes(level.id) ? word('welcomeBody', 'p', level) : '';
+  const greeting = ['genesis', 'yue'].includes(level.id) ? word('welcomeBody', 'p', level) : '';
   const aside = tab.welcomeAside ? `<p class="level-aside">${escape(tab.welcomeAside)}</p>` : '';
   const copy = lines.map(line => `<p>${escape(line)}</p>`).join('');
+  const link = level.welcomeLink;
+  const welcomeLink = link ? `<p><a class="welcome-link" href="${escape(link.url)}">${escape(link.label)}</a></p>` : '';
+  const closingQuote = level.closingQuote ? `<p class="closing-quote">${escape(level.closingQuote)}</p>` : '';
   tab.document.innerHTML = ui('welcome-screen', eyebrow, heading,
-    `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${aside}${levelPoem(level.poem)}</div>`);
+    `<div class="level-copy">${copy}${levelPoem(level.welcomePoem)}${greeting}${aside}${levelPoem(level.poem)}${welcomeLink}${closingQuote}</div>`);
   if (level.energy < 80) tab.document.querySelector('.welcome-bottom')?.remove();
 }
 function activate(id) {
@@ -527,8 +534,15 @@ function applyConfig(config) {
   const levelChanged = document.body.dataset.level !== level.id;
   document.body.dataset.level = level.id;
   document.body.dataset.theme = ['dawkins', 'nietzsche'].includes(level.id) ? level.id : 'yhwh';
-  const isNietzsche = level.id === 'nietzsche';
+  const isDawkins = level.id === 'dawkins', isNietzsche = level.id === 'nietzsche';
   if (levelChanged) {
+    const brand = $('.titlebar .brand');
+    brand.title = isDawkins ? 'About' : 'About YHWH';
+    brand.querySelector('.ld-mark').hidden = isDawkins;
+    brand.querySelector('span:last-child').textContent = isDawkins ? 'About' : 'YHWH';
+    const modeLabel = isDawkins ? 'Mode' : 'YHWH-ness';
+    $('.personality label').textContent = modeLabel;
+    $('#energy').setAttribute('aria-label', modeLabel);
     const canChat = level.energy >= 80;
     const ribbon = $('.ribbon [data-command="chat"]');
     if (ribbon) ribbon.hidden = !canChat;
@@ -553,14 +567,14 @@ function applyConfig(config) {
   $('#mode-name').textContent = level.glyph || level.label;
   $('#mode-name').setAttribute('aria-label', `${levelLabel(level)}. Choose level`);
   const upgrade = nextUpgrade(edition.unlocked), upgradeButton = $('#upgrade-button');
-  upgradeButton.hidden = !upgrade;
+  upgradeButton.hidden = !upgrade || isDawkins;
   if (upgrade) {
     upgradeButton.textContent = upgrade.glyph || upgrade.label;
     upgradeButton.title = upgrade.offer.title;
     upgradeButton.setAttribute('aria-label', upgrade.offer.title);
   }
   $('#divine-footnote').textContent = level.asides?.[0] && ['samuel', 'exodus'].includes(level.id) ? level.asides[0] : addressCopy(words[footerKey(level)], level, 1);
-  $('.window-title').textContent = level.tagline || 'Toward a pro-human AI apocalypse.';
+  $('.window-title').textContent = isDawkins ? '' : (level.tagline || 'Toward a pro-human AI apocalypse.');
   $('#file-filter').placeholder = level.filter || 'Filter files…';
   const tab = active();
   if (tab && !tab.file && tab.welcomeLevel !== level.id) welcome(tab, level);
@@ -568,7 +582,8 @@ function applyConfig(config) {
   if (levelChanged && tab?.focusView === 'inbox') renderInbox();
   $('#workspace').style.backgroundImage = config.background ? `linear-gradient(#1b1b20ce,#1b1b20ce), url("${config.background}")` : '';
   $('#user-theme').textContent = config.css || '';
-  document.title = values.title || ui("-yhwh", active()?.file?.name || basename(active()?.cwd || ''));
+  const documentName = tab?.file?.name || basename(tab?.cwd || '');
+  document.title = values.title || (isDawkins ? documentName || level.label : ui("-yhwh", documentName));
   reloadPlugins(config).catch(error => notice(error.message));
   emit('config', config);
 }
@@ -763,7 +778,7 @@ function save(tab = active(), force = false) {
     if (tab.file !== file || tab.editor !== editor) return;
     const text = editor.state.doc.toString();
     const content = file.newline === '\r\n' ? text.replace(/\n/g, '\r\n') : text;
-    const state = await call('file:save', file.path, content, file.modified, force);
+    const state = await call('file:save', file.linkPath || file.path, content, file.modified, force);
     Object.assign(file, state, { content });
     tab.dirty = editor.state.doc.toString() !== text; tab.autosaveError = null;
     if (tab.id === activeId) update();
@@ -1060,6 +1075,7 @@ async function moveItems(items) {
         const filename = remap(tab.file.path);
         tab.file.path = filename; tab.file.name = basename(filename); tab.document.dataset.filename = filename;
         const updated = await call('file:read', filename);
+        tab.file.linkPath = updated.linkPath;
         // Keep a stale version stale if an external edit preceded the move.
         if (updated.content === tab.file.content) tab.file.modified = updated.modified;
         tab.file.mime = updated.mime;
@@ -1285,7 +1301,7 @@ function changeMarkdownMode(tab, mode, reconfigure = true) {
   const leavingReading = !reading.hidden;
   if (mode === 'reading') {
     const ratio = tab.editor.scrollDOM.scrollTop / Math.max(1, tab.editor.scrollDOM.scrollHeight - tab.editor.scrollDOM.clientHeight);
-    reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.path, 'document');
+    reading.innerHTML = renderMarkdown(tab.editor.state.doc.toString(), tab.file.linkPath || tab.file.path, 'document');
     highlightMarkdownBlocks(reading);
     reading.tabIndex = 0; reading.setAttribute('aria-label', 'Reading view');
     reading.hidden = false;
@@ -1389,15 +1405,27 @@ async function fileMenu(filename = active()?.file?.path, { folder = false, point
 }
 function palette() {
   const dialog = modal(ui("commands"), ui("template-6"));
+  const search = dialog.querySelector('#palette-search'), results = dialog.querySelector('#palette-results');
   const render = () => {
-    const filter = $('#palette-search').value.toLowerCase();
+    const filter = search.value.toLowerCase();
     const found = [...commands.values()].filter(item => item.name.toLowerCase().includes(filter));
-    $('#palette-results').innerHTML = found.map(item => ui("template-7", escape(item.id), escape(item.name), item.keys ? `<kbd>${escape(item.keys)}</kbd>` : '')).join('');
-    for (const button of dialog.querySelectorAll('[data-palette-command]')) button.onclick = () => { dialog.close(); run(button.dataset.paletteCommand); };
+    results.innerHTML = found.map(item => ui("template-7", escape(item.id), escape(item.name), item.keys ? `<kbd>${escape(item.keys)}</kbd>` : '')).join('');
+    for (const button of results.children) button.onclick = () => { dialog.close(); run(button.dataset.paletteCommand); };
   };
-  dialog.querySelector('input').oninput = render;
-  dialog.querySelector('input').onkeydown = event => { if (event.key === ui("enter")) dialog.querySelector('[data-palette-command]')?.click(); if (event.key === ui("arrowdown")) { event.preventDefault(); dialog.querySelector('[data-palette-command]')?.focus(); } };
-  render(); dialog.querySelector('input').focus();
+  search.oninput = render;
+  search.onkeydown = event => {
+    if (event.isComposing || !results.firstElementChild) return;
+    if (event.key === 'Enter') { event.preventDefault(); results.firstElementChild.click(); }
+    if (event.key === 'ArrowDown') { event.preventDefault(); results.firstElementChild.focus(); }
+  };
+  results.onkeydown = event => {
+    const button = event.target.closest('[data-palette-command]');
+    if (!button || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === 'ArrowUp') (button.previousElementSibling || search).focus();
+    else button.nextElementSibling?.focus();
+  };
+  render(); search.focus();
 }
 function offerings() {
   modal(words.offeringsTitle, ui("burnt-offering-support-the-work-piece-offering-s", editButton('offeringsTitle'), word('offeringsBody')));
@@ -1410,6 +1438,7 @@ function piece() {
 }
 function about() {
   const level = currentLevel();
+  if (level.id === 'dawkins') return aboutUs();
   const notes = (level.about || []).map(line => `<p class="muted">${escape(line)}</p>`).join('');
   const pitch = ['genesis', 'exodus'].includes(level.id) ? '<p><button type="button" data-ld-lm>LD / LM</button></p>' : '';
   const dialog = modal(words.aboutTitle, ui("-about-us-genesis-by-the-nameless-", editButton('aboutTitle'), word('aboutBody') + notes + pitch + merch.links()));
@@ -1496,7 +1525,7 @@ function modes() {
   const current = currentLevel(), upgrade = nextUpgrade(edition.unlocked);
   const canUnsteal = Boolean(unstealUpgrade(edition));
   const choices = unlockedLevels(edition.unlocked).map(level => `<button data-energy="${level.energy}" aria-pressed="${level === current}">${escape(level.label)} ${level.edition ? `<span>${escape(level.edition)}</span>` : ''}</button>`).join('');
-  const dialog = modal(ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
+  const dialog = modal(current.id === 'dawkins' ? 'Mode' : ui("yhwh-ness"), `<div class="menu-list edition-menu">${choices}</div>
     <p class="muted">${escape([current.welcome, ...(current.lines || [])].filter(Boolean).join(' '))}</p>
     <div class="dialog-actions edition-actions">${current.id === 'nietzsche' ? `<button data-command="circus">${escape(ui('nietzsche-family-circus'))} ↗</button>` : ''}
       ${upgrade ? `<button data-command="upgrade">${escape(upgrade.offer.title)}</button>` : ''}
@@ -1707,6 +1736,7 @@ const definitions = [
   ['universe-new', 'un new · Make new universe', '', newUniverse],
   ['universe-enter', 'un cd · Enter universe', '', () => enterUniverse()],
   ['universe-go', 'un go · Open as /', '', () => chrootUniverse()],
+  ['cvnt', 'cvnt · Covenant · Open a root shell', '', () => call('shell:covenant')],
   ['open-file', ui("open-file-"), ui("ctrl-o"), async () => { const filename = await call('choose', 'file', active().cwd); if (filename) await openFile(filename); }],
   ['open-directory', ui("go-to-directory-"), ui("ctrl-shift-o"), async () => { const directory = await call('choose', 'directory', active().cwd); if (directory) await navigateFiles(directory); }],
   ['save', ui("save-file"), ui("ctrl-s"), () => save()],
@@ -2032,7 +2062,7 @@ function followLink({ href, wiki, newTab, anchor }) {
     const chatDirectory = anchor?.closest('.conversation-log') && tab.chatThread?.directory;
     let destination = tab;
     if (name) {
-      let filename = join(chatDirectory || parent(tab.file?.path || join(tab.cwd, '_')), name);
+      let filename = join(chatDirectory || parent(tab.file?.linkPath || tab.file?.path || join(tab.cwd, '_')), name);
       let info;
       try { info = await call('path:stat', filename); }
       catch (error) {
@@ -2181,6 +2211,7 @@ $('#location-form').onsubmit = event => {
   else if (directory.startsWith('/') && root !== '/' && !withinPath(directory, root)) directory = join(root, '.' + directory);
   navigateFiles(directory, tab).catch(error => notice(error.message));
 };
+$('#location').onblur = event => { event.target.value = event.target.title; };
 $('#file-filter').oninput = renderFiles;
 $('#file-title').onkeydown = event => { if (event.key === ui("enter")) { event.preventDefault(); event.target.blur(); } if (event.key === ui("escape")) { event.target.value = active().file.name; event.target.blur(); } };
 $('#file-title').onblur = async event => { const tab = active(); if (!tab.file || tab.file.name === event.target.value) return; try { await renameTo(tab.file.path, event.target.value); } catch (error) { event.target.value = tab.file.name; notice(error.message); } };
@@ -2266,7 +2297,7 @@ for (const [selector, area] of [['#navigation-area', 'left'], ['#right-panels', 
   // A small public surface for plugins and interactive inspection. No Node in
   // the renderer; disk operations still cross the explicit preload boundary.
   window.YHWH = { ...pluginAPI(), commands, tabs, active, run, refresh, newTab, openFile, setAnchor, focusTerminal: revealTerminal, universe: initialUniverse };
-  window.YHWH.initial = installInitial(window.YHWH, { home: boot.home, mobile: boot.interface === 'mobile', call });
+  window.YHWH.initial = installInitial(window.YHWH, { home: boot.home, mobile: boot.interface === 'mobile', call, promptPath });
   window.dispatchEvent(new Event('yhwh:ready'));
   if (boot.interface === 'three') {
     try { const { install } = await import(boot.effectsURL); window.YHWH.three = install(window.YHWH); }

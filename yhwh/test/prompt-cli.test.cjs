@@ -6,6 +6,7 @@ const path = require('node:path');
 const { test } = require('node:test');
 
 const yhwh = path.resolve(__dirname, '../bin/yhwh');
+const cvnt = path.resolve(__dirname, '../bin/cvnt');
 
 async function fixture(t) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'yhwh-prompt-test-'));
@@ -74,6 +75,21 @@ test('prompt preparation is text-only and input sources retain their order', asy
   await write('yhwh-boop', '#!/usr/bin/env sh\nprintf "%s\\n" "$1"\n', { mode: 0o700 });
   assert.equal((await cli(['boop', 'external!'])).stdout, 'external!\n');
   assert.match((await cli(['unfamiliar', 'question'])).stdout, /^-n\n[\s\S]*"command":"unfamiliar"/);
+});
+
+test('Covenant is discoverable and requires an interactive Unix terminal', async t => {
+  const { cli, run } = await fixture(t);
+  const help = await cli(['cvnt', '--help']);
+  assert.equal(help.code, 0, help.stderr);
+  assert.match(help.stdout, /Covenant.*root login shell/s);
+  assert.equal((await run(process.execPath, [cvnt, '--help'])).stdout, help.stdout);
+  assert.match((await cli(['commands'])).stdout, /^cvnt$/m);
+  const invocation = await cli(['cvnt']);
+  assert.equal(invocation.code, 1);
+  assert.match(invocation.stderr, /interactive terminal|requires a Unix host/);
+  const extra = await cli(['cvnt', 'id']);
+  assert.equal(extra.code, 1);
+  assert.match(extra.stderr, /Usage:/);
 });
 
 test('do invokes the writer from the Git root and supplies the existing law', async t => {

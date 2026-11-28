@@ -19,6 +19,7 @@ export const unavailable = {
   'terminal:open': 'Local Unix shells are available on desktop.',
   'terminal:close': 'Local Unix shells are available on desktop.',
   'terminal:run': 'This device uses the Initial interpreter. Bash, Zsh, and native executables require the desktop host.',
+  'shell:covenant': 'Covenant needs a Unix terminal with system sudo. Android and iOS use an app-owned workspace.',
   'exodus:first-root': 'The first-root scene uses desktop OS privileges. Here, / is the app’s workspace.',
 };
 export function normalize(input, cwd = HOME) {

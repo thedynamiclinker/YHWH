@@ -51,9 +51,21 @@ if [[ $(type -t @) != function && $(type -t @) != alias ]]; then
         esac
     }
 fi
+# Port of clip_prompt_if_its_super_long. Re-expand \w after leaving a long path.
+__yhwh_clip_prompt() {
+    if [[ $PS1 != "${__yhwh_previous_prompt-}" ]]; then
+        __yhwh_full_prompt=$PS1
+    fi
+    PS1=${__yhwh_full_prompt-}
+    if (( ${#PWD} > 30 )); then
+        PS1=${PS1//\\w/\\W}
+    fi
+    __yhwh_previous_prompt=$PS1
+}
+
 if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a'* ]]; then
-    PROMPT_COMMAND+=(__yhwh_prompt)
+    PROMPT_COMMAND+=(__yhwh_clip_prompt __yhwh_prompt)
 else
-    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__yhwh_prompt"
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__yhwh_clip_prompt; __yhwh_prompt"
 fi
 HISTCONTROL="${HISTCONTROL:+$HISTCONTROL:}ignorespace"

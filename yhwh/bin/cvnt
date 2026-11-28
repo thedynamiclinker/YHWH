@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+require('../lib/cli.cjs').main(['cvnt', ...process.argv.slice(2)]).then(code => { process.exitCode = code; })
+  .catch(error => { console.error('cvnt: ' + error.message); process.exitCode = 1; });

@@ -6,21 +6,9 @@ const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const { seedFor, marker, hostOnly, createSeed } = require('./universe-seeds.cjs');
 const { createPlain, run } = require('./un-provider.cjs');
+const { executable, systemDirs } = require('./executable.cjs');
 
 const exec = promisify(execFile);
-const systemDirs = ['/run/wrappers/bin', '/run/current-system/sw/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin'];
-
-async function executable(name, directories = (process.env.PATH || '').split(path.delimiter)) {
-  for (const directory of directories) {
-    if (!directory) continue;
-    const file = path.resolve(directory, name);
-    try {
-      await fs.access(file, constants.X_OK);
-      if ((await fs.stat(file)).isFile()) return file;
-    } catch {}
-  }
-  throw new Error(`Install ${name} and make it available on PATH.`);
-}
 
 async function hasMarker(directory, name, value) {
   let file;

@@ -13,6 +13,14 @@ const path = require('node:path');
   await fs.writeFile(path.join(config, 'etc/keys/alt/ctrl/u'), '#!/bin/sh\ncat > from-executable\nprintf "%s\\n" "$YHWH_KEY"\n', { mode: 0o755 });
   const variant = process.env.YHWH_TEST_INTERFACE === 'three' ? 'three' : 'default';
   const env = { ...process.env, YHWH_CONFIG_HOME: config, YHWH_SYSTEM_CONFIG: path.join(temp, 'system'), YHWH_DATA_DIR: path.join(temp, 'profile'), YHWH_THREE_DATA_DIR: path.join(temp, 'profile-three'), YHWH_SHELL: require('node:child_process').execFileSync('which', ['bash'], { encoding: 'utf8' }).trim(), YHWH_NODE: process.execPath, YHWH_NO_SHELL_RC: '1', HISTFILE: '/dev/null' };
+  const { executable, systemDirs } = require('../../../lib/executable.cjs');
+  const sudo = process.platform === 'linux' && await executable('sudo', [...systemDirs, '/usr/local/bin']).catch(() => null);
+  if (sudo) {
+    env.PATH = temp + path.delimiter + env.PATH;
+    env.TEST_COVENANT_ARGS = path.join(temp, 'covenant-args');
+    await fs.writeFile(path.join(temp, 'xdg-terminal-exec'),
+      '#!/bin/sh\nprintf "%s\\n" "$@" > "$TEST_COVENANT_ARGS"\n', { mode: 0o700 });
+  }
   delete env.ELECTRON_RUN_AS_NODE;
   let app;
   try {
@@ -21,6 +29,27 @@ const path = require('node:path');
     page.on('pageerror', error => errors.push(error.message));
     await page.waitForFunction(() => window.YHWH?.active());
     const run = id => page.evaluate(id => window.YHWH.run(id), id);
+    await page.keyboard.press('Control+p');
+    const search = page.locator('#palette-search'), results = page.locator('[data-palette-command]');
+    await search.fill('focus');
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await results.first().evaluate(button => document.activeElement === button), true);
+    assert.equal(await results.first().evaluate(button => getComputedStyle(button).outlineWidth), '1px');
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await results.nth(1).evaluate(button => document.activeElement === button), true);
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await search.evaluate(input => document.activeElement === input), true);
+    await search.fill('covenant');
+    assert.equal(await results.first().getAttribute('data-palette-command'), 'cvnt');
+    if (sudo) {
+      await page.keyboard.press('Enter');
+      await page.locator('#dialog').waitFor({ state: 'hidden' });
+      for (let attempt = 0; attempt < 100 && !await fs.stat(env.TEST_COVENANT_ARGS).catch(() => null); attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      assert.deepEqual((await fs.readFile(env.TEST_COVENANT_ARGS, 'utf8')).trimEnd().split('\n'), ['--', sudo, '-i', '-u', 'root']);
+    } else await page.keyboard.press('Escape');
     await page.locator('#location').focus(); await page.keyboard.press('Control+a'); await page.keyboard.press('Delete');
     assert.equal(await page.locator('#location').inputValue(), '');
     assert.equal(await page.locator('#dialog').isVisible(), false);

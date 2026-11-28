@@ -62,7 +62,8 @@ async function main(args=process.argv.slice(2)) {
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}
-  if(command==='commands'){console.log([...new Set(['open','inbox','keys','un','nu','cd','go',...anchor.commands,...workflows,...prompts.commands,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if(command==='commands'){console.log([...new Set(['open','inbox','keys','un','nu','cd','go','cvnt',...anchor.commands,...workflows,...prompts.commands,...files,...commands().keys()])].sort().join('\n'));return 0;}
+  if (command === 'cvnt') return require('./cvnt.cjs').main(rest, execute);
   if (anchor.commands.includes(command)) { await anchor.cli(command, rest); return 0; }
   if (command === 'un') {
     const [subcommand, ...values] = rest;

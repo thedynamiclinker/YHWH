@@ -353,6 +353,8 @@ process.stdin.on('end', () => {
     assert.equal(await page.evaluate(() => window.YHWH.active().cwd), directory);
     await nestedRow.click();
     await page.waitForFunction(directory => window.YHWH.active().cwd === directory, nested);
+    assert.equal(await page.locator('#location-label').innerText(), '…/nested');
+    assert.equal(await page.locator('#location').inputValue(), nested);
     await page.waitForFunction(() => document.activeElement === document.querySelector('#file-list') && document.querySelector('#file-list .selected .file-name')?.textContent === 'child.txt');
     await run('toggle-terminal');
     await page.waitForFunction(() => document.activeElement === window.YHWH.active().terminal.textarea);

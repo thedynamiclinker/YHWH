@@ -359,6 +359,7 @@ async function launch() {
     return { root, interface: three ? 'three' : 'default', effectsURL: three ? pathToFileURL(require('../../../lib/paths.cjs').output('three/renderer.js')).href : null, initial, defaultDirectory: configured, pending: pendingOpens.splice(0), words: JSON.parse(await fs.readFile(require('../../../lib/paths.cjs').etc('default', 'words.json'), 'utf8')), home: os.homedir(), platform: process.platform };
   });
   handle('exodus:first-root', () => firstRoot(userDirectory(), url => shell.openExternal(url)));
+  handle('shell:covenant', () => require('../../../lib/cvnt.cjs').open());
   async function newFocus(id, directory, state = {}) {
     if (typeof id !== 'string' || focuses.has(id)) throw new Error(ui("invalid-tab-"));
     const focus = { id, cwd: path.resolve(directory), ...state };
@@ -533,8 +534,14 @@ async function launch() {
       return await chat({ directory, energy, messages, attachments, app }, { signal: controller.signal });
     } finally { conversations.delete(thread.id); refreshApp(); }
   });
-  // Resolve shortcuts before choosing a language, preview base, or link directory.
-  handle('file:read', async filename => { filename = await fs.realpath(await sourcePath(filename)); const config = await configFor(filename); return { ...await files.read(filename, config.values, config.languageRules), config }; });
+  handle('file:read', async filename => {
+    const logical = path.resolve(filename);
+    // The target supplies relative links and language detection; the tab keeps the path the user opened.
+    const target = await fs.realpath(await sourcePath(logical));
+    const config = await configFor(target);
+    const file = await files.read(target, config.values, config.languageRules);
+    return { ...file, path: logical, name: path.basename(logical), linkPath: target === logical ? undefined : target, config };
+  });
   handle('editor:language-rule', (filename, language, scope) => appendEditorRecord(ruleFile, languageRuleLine(path.resolve(filename), language, scope)));
   handle('editor:language-feedback', feedback => appendEditorRecord(feedbackFile, languageFeedbackLine(feedback)));
   handle('path:stat', async filename => { const absolute = path.resolve(filename); const stat = await fs.stat(await sourcePath(absolute)); return { path: absolute, directory: stat.isDirectory() }; });

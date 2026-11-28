@@ -240,7 +240,6 @@ body[data-editing-text] .tab[aria-selected='true'] {
   font-size: .8125rem;
 }
 #language-picker { field-sizing: content; min-width: 106px; max-width: clamp(120px, 27vw, 230px); text-overflow: ellipsis; }
-#language-controls :focus-visible { outline-color: var(--write-aqua); }
 #file-encoding, #cursor-position { white-space: nowrap; }
 #dialog:has(.language-feedback) {
   color-scheme: var(--editor-color-scheme);

@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { primarySender, alternateSenders, letters, emailLetters, modeLetters } = require('../lib/inbox.cjs');
+const { primarySender, alternateSenders, letters, emailLetters, modeLetters, deliveryFor } = require('../lib/inbox.cjs');
 const { nightLetters, letterInterval } = require('../lib/presence.cjs');
 const copy = require('../etc/default/words.json');
 
@@ -117,7 +117,7 @@ module.exports = async function checkStartupInbox(page, screenshots) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
 
   // Work advances the authored correspondence after its own topic was delivered.
-  // The three Dave letters can take spaced turns in Abe's inbox.
+  // Dave's stories can find their way into letters sent to Abe.
   await page.clock.setFixedTime(new Date(blockedAt));
   await page.evaluate(at => localStorage.setItem('yhwh:presence:v1', JSON.stringify({
     letters: [{ id: 'covenant', read: true, at }],
@@ -136,8 +136,9 @@ module.exports = async function checkStartupInbox(page, screenshots) {
     await page.locator('[data-mail="' + letter.id + '"].unread').click();
     assert.equal(await page.locator('.mail-message h1').textContent(), letter.title);
     if (letter.mayMisdeliver) {
-      assert.match(await page.locator('.mail-envelope').innerText(), /to Dave/);
+      assert.match(await page.locator('.mail-envelope').innerText(), /to Abe/);
       await page.locator('.mail-source .verse-commentary summary').first().waitFor();
+      assert.match(await page.locator('.mail-source .verse-heading').first().innerText(), /^Genesis /);
       assert.equal((await readState()).lastMisdelivery, now);
     }
     const link = copy[letter.textKey].match(/https?:\/\/[^\s)]+/)?.[0];
@@ -146,10 +147,41 @@ module.exports = async function checkStartupInbox(page, screenshots) {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     const received = (await readState()).letters.slice(1);
     assert.equal(received.length, index + 1);
-    assert.deepEqual(received.at(-1), { id: letter.id, sender: primarySender, read: true, at: now });
+    assert.deepEqual(
+      received.at(-1),
+      { id: letter.id, sender: primarySender, read: true, at: now, ...deliveryFor(letter, 'genesis', index + 1) },
+    );
   }
   await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
   await run('inbox');
   assert.equal(await page.locator('.mail-row').count(), arrivals.length + 1);
   assert.equal(await page.locator('.mail-row.unread').count(), 0);
+
+  async function chooseLevel(id, energy) {
+    await page.locator('#mode-name').click();
+    await page.locator(`#dialog [data-energy="${energy}"]`).click();
+    await page.waitForFunction(({ id, energy }) => document.body.dataset.level === id
+      && Number(window.YHWH.active().config.values.energy) === energy, { id, energy });
+  }
+  async function checkLetter(id, recipient, book) {
+    await run('inbox');
+    await page.locator(`[data-mail="${id}"]`).click();
+    assert.match(await page.locator('.mail-envelope').innerText(), new RegExp(`to ${recipient}`));
+    const verse = page.locator('.mail-source .verse-heading').first();
+    await verse.waitFor();
+    assert.match(await verse.innerText(), book);
+    await page.locator('[data-mail-back]').click();
+  }
+  await chooseLevel('samuel', 80);
+  await page.clock.setFixedTime(new Date(blockedAt + arrivals.length * letterInterval));
+  await page.keyboard.press('Shift');
+  await checkLetter('samuel-first-knock', 'Dave', /^[12] Samuel /);
+  await chooseLevel('exodus', 120);
+  await page.reload(); await page.waitForFunction(() => window.YHWH?.active());
+  await page.clock.setFixedTime(new Date(blockedAt + (arrivals.length + 1) * letterInterval));
+  await page.keyboard.press('Shift');
+  await checkLetter('exodus-the-eye', 'Mo', /^Exodus /);
+  await chooseLevel('genesis', 100);
+  await checkLetter('samuel-first-knock', 'Dave', /^[12] Samuel /);
+  await checkLetter('exodus-the-eye', 'Mo', /^Exodus /);
 };

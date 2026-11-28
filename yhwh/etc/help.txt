@@ -9,6 +9,7 @@ Usage: yhwh <command> [arguments]
   nu DIRECTORY       Make a new universe. Use nu --list for templates.
   cd [DIRECTORY]     Print the path to a universe for the calling shell.
   go [DIRECTORY]     Start a Linux guest. Use --native for system chroot.
+  cvnt               Covenant. Open an interactive root login shell through sudo.
   @-get              Print the calling tab’s directory anchor.
   @-set [DIRECTORY]  Set the calling tab’s anchor, defaulting to the shell directory.
   gen REQUEST      Draft a prompt and refine it in the terminal

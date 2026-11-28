@@ -12,7 +12,7 @@ const draftKey = 'yhwh:initial:draft';
 const locations = { Initials: '~/.initialrc', Words: '~/bin', Atomics: '/bin', Builtins: '/usr/bin' };
 const gridDraftKey = 'yhwh:initial:grid';
 
-export function installInitial(app, { home, mobile, call }) {
+export function installInitial(app, { home, mobile, call, promptPath }) {
   let dialog, liveTimer, docked = false;
   const scratch = { source: '' };
   try { scratch.source = localStorage.getItem(draftKey) || ''; } catch {}
@@ -575,7 +575,7 @@ export function installInitial(app, { home, mobile, call }) {
     async function render() {
       const entries = (await host.list(cwd)).filter(entry => !entry.name.startsWith('.'));
       const parent = cwd !== (root() || home);
-      modal(title, `<p class="initial-path">${escape(cwd)}</p>
+      modal(title, `<p class="initial-path" title="${escape(cwd)}">${escape(promptPath(cwd))}</p>
         <div class="initial-tools">${parent ? button('↑ Parent', 'parent') : ''}${button('Use this folder', 'here')}</div>
         <div class="initial-paths">${entries.map((entry, index) => `<div>
           <button type="button" data-path="${index}">${entry.directory ? '▱' : '≡'} ${escape(entry.name)}</button>
@@ -628,9 +628,10 @@ export function installInitial(app, { home, mobile, call }) {
 
     const target = tab.document;
     const searchFocused = document.activeElement === target.querySelector('[data-view-search]');
+    const directory = boundary ? cwd.slice(boundary.length) || '/' : cwd;
     target.innerHTML = `<section class="initial-file-view">
       <header><div><h2>${escape(live ? cwd.split('/').at(-1) || '/' : 'Command output')}</h2>
-        <p>${live ? 'Live folder · ' + escape(boundary ? cwd.slice(boundary.length) || '/' : cwd) : entries ? 'Fixed list · ' + entries.length + ' items' : 'Text output'}</p>
+        <p${live ? ` title="${escape(directory)}"` : ''}>${live ? 'Live folder · ' + escape(promptPath(directory)) : entries ? 'Fixed list · ' + entries.length + ' items' : 'Text output'}</p>
       </div>${live ? button('+ New', 'new', true) : ''}</header>
       ${entries ? `
         <div class="initial-tools initial-file-toolbar">

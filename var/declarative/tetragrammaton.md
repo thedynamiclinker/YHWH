@@ -8,17 +8,15 @@ The standard interface has the following copy for its five free levels.
 
 ---
 
-YHWH level Dawkins
+Dawkins
+
+God is a meme.
+
+[Help poor children in Uganda](https://www.kuwasha.net/) appears as a quiet link on the opening page. Kuwasha continues the work of Bram Moolenaar’s ICCF Holland charity, as described in Vim’s help.
 
 The old testament god is the most unpleasant character in all fiction.
 
-Sometimes:
-
-God is a fiction.
-
-Sometimes:
-
-LD is a two letter sequence, or perhaps an abbreviation of something or other, how should I know, it's possible for an abbreviation to stand for anything.
+Dawkins uses the shared interface and typography. Its opening screen omits YHWH branding and character copy, and the longer quote closes the page.
 
 ---
 
@@ -30,7 +28,7 @@ It's Over Man.™
 
 Lord is a four letter word.
 
-Nietzsche’s level includes the Nietzsche Family Circus widget.
+Nietzsche’s level includes the Nietzsche Family Circus widget. On the opening page it sits below the welcome pane, which keeps the logo and greeting in their shared horizontal position.
 
 ---
 

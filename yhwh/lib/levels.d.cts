@@ -10,6 +10,8 @@ export type Level = {
   names?: string[];
   chatVoice?: string;
   welcome?: string;
+  welcomeLink?: { label: string; url: string };
+  closingQuote?: string;
   poem?: string;
   welcomePoem?: string;
   filter?: string;

@@ -4,14 +4,12 @@
       "id": "dawkins",
       "label": "Dawkins",
       "energy": 0,
-      "lines": [
-        "The old testament god is the most unpleasant character in all fiction."
-      ],
-      "asides": [
-        null,
-        "God is a fiction.",
-        "LD is a two letter sequence, or perhaps an abbreviation of something or other, how should I know, it's possible for an abbreviation to stand for anything."
-      ]
+      "welcome": "God is a meme.",
+      "welcomeLink": {
+        "label": "Help poor children in Uganda",
+        "url": "https://www.kuwasha.net/"
+      },
+      "closingQuote": "The old testament god is the most unpleasant character in all fiction."
     },
     {
       "id": "nietzsche",

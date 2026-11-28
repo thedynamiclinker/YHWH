@@ -1,8 +1,8 @@
 # Samuel and Exodus mail
 
-These series arrive during work in their respective modes. The app retains received letters across mode changes. Image order follows the [original image notes](../log/yhwh-sign-of-the-dollar/YHWH%20-%20Images%20for%20Exodus%20mode%20emails.md).
+These series arrive during work in their respective modes. New Inbox mail takes its recipient and We The Nameless citation from the level active at delivery. Genesis calls the reader Abe and quotes Genesis, Exodus calls them Mo and quotes Exodus, Samuel calls them Dave and quotes 1 or 2 Samuel, and 曰 calls them Josh and quotes Joshua. The app saves the last selected level locally and keeps each received letter’s address and citation across mode changes and restarts. [Mail profiles](../../yhwh/etc/default/mode-mail.json) hold the names and fallback citations. Image order follows the [original image notes](../log/yhwh-sign-of-the-dollar/YHWH%20-%20Images%20for%20Exodus%20mode%20emails.md).
 
-During work in Genesis, Exodus, or 曰, a Dave letter marked for accidental delivery can turn up with its original envelope. The first is eligible 30 minutes after the first local letter arrives and later misdeliveries are at least 30 minutes apart. The inbox switch, sender block, and shared mail interval apply. Each letter arrives once across modes and stays in the Inbox.
+During work in Genesis, Exodus, or 曰, a Dave letter marked for accidental delivery can turn up addressed to the current reader. YHWH still tells the wrong story and can wonder aloud whose inbox he reached. The first is eligible 30 minutes after the first local letter arrives and later misdeliveries are at least 30 minutes apart. The inbox switch, sender block, and shared mail interval apply. Each letter arrives once across modes and stays in the Inbox.
 
 ## Samuel
 

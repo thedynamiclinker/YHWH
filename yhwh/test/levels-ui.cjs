@@ -35,13 +35,24 @@ module.exports = async function checkLevels(page, screenshot) {
   };
 
   await run('new-tab'); await run('focus-document');
+  await choose(100, 'genesis');
+  const logo = welcome.locator('.logo-signature');
+  const originalLogo = await logo.boundingBox();
+  const originalFont = await welcome.evaluate(element => getComputedStyle(element).fontFamily);
   await choose(0, 'dawkins');
-  assert.match(await welcome.innerText(), /The old testament god is the most unpleasant character in all fiction\./);
+  assert.equal(await welcome.locator('h1').innerText(), 'God is a meme.');
+  assert.equal(await welcome.locator('.level-copy > :last-child').innerText(), 'The old testament god is the most unpleasant character in all fiction.');
+  assert.equal(await welcome.getByRole('link', { name: 'Help poor children in Uganda', exact: true }).getAttribute('href'), 'https://www.kuwasha.net/');
+  assert.equal(await logo.isVisible(), false);
+  assert.doesNotMatch(await welcome.innerText(), /YHWH|LD is a two letter/i);
+  assert.doesNotMatch(await page.locator('.titlebar').innerText(), /YHWH/i);
+  assert.equal(await welcome.evaluate(element => getComputedStyle(element).fontFamily), originalFont);
   assert.equal(await page.evaluate(() => window.YHWH.commands.has('circus')), false);
   assert.equal(await page.evaluate(() => window.YHWH.commands.has('chat')), false);
   await choose(50, 'nietzsche');
   assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™/);
   assert.doesNotMatch(await welcome.innerText(), /four letter word/);
+  assert.ok(Math.abs((await logo.boundingBox()).x - originalLogo.x) < 1);
   await checkAbout(['Lord is a four letter word.']);
   assert.match(await page.locator('#margin-box').innerText(), /Nietzsche Family Circus/i);
   await page.locator('#mode-name').click();

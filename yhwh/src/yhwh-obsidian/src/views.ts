@@ -204,7 +204,7 @@ export class Navigator extends ItemView {
       if (p.circusError) footer.createEl('p', { text: p.circusError, cls: 'yhwh-errors' });
       button(footer, p.circusBusy ? ui("loading-") : ui("next-cartoon-"), ui("load-a-random-pairing-from-nietzschefamilycircus"), () => p.run(() => p.nextCircus())).disabled = p.circusBusy;
       p.external(footer, ui("nietzsche-family-circus-"), circusOrigin + '/');
-    } else p.copyBlock(footer, this.visible.length > 1 ? 'welcome' : 'empty');
+    } else if (p.level().id !== 'dawkins') p.copyBlock(footer, this.visible.length > 1 ? 'welcome' : 'empty');
     button(footer, ui("offerings"), ui("open-offerings"), () => p.offerings());
     if (hadFocus) this.focusRow();
   }

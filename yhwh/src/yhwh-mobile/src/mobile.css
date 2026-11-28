@@ -19,7 +19,7 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 @media (max-width: 365px) {
   .is-mobile .titlebar { gap: 3px; padding-inline: 7px; }
   .is-mobile .titlebar .brand { gap: 0; }
-  .is-mobile .titlebar .brand > span:last-child { display: none; }
+  .is-mobile:not([data-level='dawkins']) .titlebar .brand > span:last-child { display: none; }
 }
 .is-mobile .ribbon, .is-mobile .statusbar, .is-mobile .resize-handle, .is-mobile .terminal-panel { display: none !important; }
 .is-mobile .tab-strip { padding-left: 8px; }
@@ -37,9 +37,8 @@ body.is-mobile { height: var(--mobile-layout-height); padding-top: env(safe-area
 .is-mobile #workspace[data-expanded='files'] #navigation-area:not([hidden]) { width: 100%; }
 .is-mobile .file-row { min-height: 44px; }
 .is-mobile .file-manager [data-file-icon] { width: 44px; }
-.is-mobile .file-manager .universe-tools span[data-file-icon] { width: auto; }
 .is-mobile .file-manager .pane-header { height: 48px; min-height: 48px; }
-.is-mobile .navigation-buttons button { flex-shrink: 0; }
+.is-mobile #location { min-height: 44px; }
 .is-mobile dialog { max-width: min(var(--mobile-layout-width) - 16px, 780px); max-height: calc(var(--mobile-layout-height) - env(safe-area-inset-top) - 24px); overflow: auto; overscroll-behavior: contain; }
 .is-mobile dialog::backdrop { background: #0008; }
 #mobile-dialog { width: min(var(--mobile-layout-width) - 16px, 560px); padding: 16px; }

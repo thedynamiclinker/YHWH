@@ -102,11 +102,11 @@ function deliveryFor(letter, level, index) {
 }
 
 function addressLetter(letter, receipt, text) {
-  const original = letter.level ? letter.to : 'Abe';
-  if (!receipt.to || receipt.to === original || receipt.to === 'ʾbe') return text;
+  const original = (letter.level && letter.to) || 'Abe';
+  if (!receipt.to || receipt.to === original || receipt.to === letter.to) return text;
   // Another inbox or a name he blurts out mid-story is part of the letter.
-  return text.replace(/\b(Abe|Mo|Dave|Josh)\b(?![’']s\b| inbox\b)/gi,
-    (name) => name.toLowerCase() === original.toLowerCase() ? receipt.to : name);
+  const name = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`\\b${name}\\b(?![’']s\\b| inbox\\b)`, 'gi'), () => receipt.to);
 }
 
 function senderFor(state, letter) {

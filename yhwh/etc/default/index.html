@@ -36,16 +36,18 @@
     <div id="navigation-area" class="navigation-area">
       <section id="files" class="file-manager workspace-leaf" aria-label="File manager">
         <header class="pane-header"><span>Files</span><div><button data-command="new-file" data-file-icon="newFile" title="New file (Ctrl+N)" aria-label="New file"></button><button data-command="new-directory" data-file-icon="newFolder" title="New directory" aria-label="New directory"></button><button data-command="expand-files" data-file-icon="maximize" title="Expand file manager (Ctrl+D)" aria-label="Expand file manager"></button></div></header>
-        <div class="universe-tools"><button data-command="un" title="un · Universe commands" aria-label="un · Universe commands" aria-haspopup="menu"><span data-file-icon="newUniverse"></span>un ▾</button></div>
-        <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button></div>
-        <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
-        <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>
+        <div class="navigation-buttons">
+          <button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button>
+          <form id="location-form"><span class="location-dot" aria-hidden="true">.</span><input id="location" aria-label="Current directory" spellcheck="false"><span id="location-label" dir="auto" aria-hidden="true"></span></form>
+          <button class="universe-control" data-command="un" title="un · Universe commands" aria-label="un · Universe commands" aria-haspopup="menu">un ▾</button>
+        </div>
         <div class="directory-shortcuts" role="group" aria-label="Shell directories">
           <button type="button" data-command="home" aria-label="Go to home directory"><span aria-hidden="true">~</span><small dir="auto"></small></button>
           <button type="button" data-command="anchor-directory" aria-label="Go to tab prefix"><span aria-hidden="true">@</span><small dir="auto"></small></button>
           <button type="button" data-command="root-directory" aria-label="Go to root directory"><span aria-hidden="true">/</span><small dir="auto"></small></button>
           <button type="button" class="directory-more" data-command="directory-actions" title="Shell directory actions" aria-label="Shell directory actions" aria-haspopup="true" aria-expanded="false">…</button>
         </div>
+        <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>
         <div id="file-list" role="listbox" tabindex="0" aria-label="Directory contents"></div>
         <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" data-file-icon="refresh" title="Refresh" aria-label="Refresh directory"></button></footer>
         <div id="directory-menu" class="directory-menu" popover="auto" role="menu" aria-label="Directory actions"></div>

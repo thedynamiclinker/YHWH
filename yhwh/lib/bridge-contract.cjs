@@ -9,7 +9,7 @@ const callChannels = [
   'choose:save', 'settings:save', 'config:open', 'config:reload', 'words:save', 'plugins', 'circus',
   'external', 'mail', 'words:read', 'offering:piece', 'window:close', 'verse:catalog', 'verse:chapter', 'verse:get',
   'verse:random', 'verse:commentary', 'keys:run', 'keys:shell', 'keys:save',
-  'terminal:open', 'terminal:close', 'terminal:run', 'shell:prefix',
+  'terminal:open', 'terminal:close', 'terminal:run', 'shell:prefix', 'shell:covenant',
   'universe:create', 'universe:cancel', 'universe:cd', 'universe:go', 'exodus:first-root',
 ];
 module.exports = { callChannels };

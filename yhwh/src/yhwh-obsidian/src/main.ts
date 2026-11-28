@@ -65,6 +65,11 @@ export default class YHWH extends Plugin {
       ['universe-new', 'Nu · Make new universe', () => this.universeDialog()],
       ['universe-enter', 'Cd · Enter universe', () => this.enterUniverse(this.folder)],
       ['universe-go', 'Go · Chroot universe', () => this.chrootUniverse(this.folder)],
+      ['cvnt', 'cvnt · Covenant · Open a root shell', () => {
+        if (!Platform.isDesktopApp) throw new Error('Covenant needs a Unix terminal with system sudo.');
+        const covenant = require('../../../lib/cvnt.cjs') as { open(): Promise<void> };
+        return covenant.open();
+      }],
       ['reload-config', ui("reload-folder-configuration"), () => this.go(this.folder)],
       ['hello-world', ui("hello-world"), () => new Notice(this.current.energy ? this.settings.copy.hello : ui("hello-world-"))],
       ['offerings', ui("offerings"), () => this.offerings()],
@@ -111,7 +116,7 @@ export default class YHWH extends Plugin {
   }
   changed() {
     const level = this.level();
-    this.status?.setText(`${level.energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh")} · /${this.folder} · ${level.label}`);
+    this.status?.setText(`${level.energy ? '𐤉𐤄𐤅𐤄 · ' : ''}/${this.folder} · ${level.label}`);
     this.listeners.forEach(callback => callback());
   }
   async save() {
@@ -342,14 +347,16 @@ export default class YHWH extends Plugin {
   }
   heading(el: HTMLElement, title: string) {
     this.decorate(el);
+    const isDawkins = this.level().id === 'dawkins';
     const head = el.createDiv('yhwh-heading');
-    head.createEl('bdi', { text: this.level().energy ? '𐤉𐤄𐤅𐤄' : ui("yhwh"), cls: 'yhwh-wordmark', attr: { dir: 'ltr' } });
+    if (!isDawkins) head.createEl('bdi', { text: '𐤉𐤄𐤅𐤄', cls: 'yhwh-wordmark', attr: { dir: 'ltr' } });
     head.createEl('span', { text: this.current.title || title, cls: 'yhwh-title' });
     button(head, '?', ui("help-and-about"), () => this.help());
     button(head, '', 'Upgrade YHWH', () => this.upgrades()).addClass('yhwh-upgrade');
     const label = el.createEl('label', { cls: 'yhwh-energy' });
-    label.createSpan({ text: 'YHWH-ness' });
-    const slider = label.createEl('input', { type: 'range', attr: { min: '0', step: '1', 'aria-label': 'YHWH-ness' } });
+    const modeLabel = isDawkins ? 'Mode' : 'YHWH-ness';
+    label.createSpan({ text: modeLabel });
+    const slider = label.createEl('input', { type: 'range', attr: { min: '0', step: '1', 'aria-label': modeLabel } });
     label.createSpan({ cls: 'yhwh-level-name' });
     slider.addEventListener('change', () => this.run(() => this.selectLevel(unlockedLevels(this.settings.edition.unlocked)[Number(slider.value)].energy)));
     this.updateLevelControls(el);
@@ -361,13 +368,15 @@ export default class YHWH extends Plugin {
       this.welcomeLevel = level.id;
       this.welcomeAside = this.nextLevelAside(level);
     }
-    if (level.id !== 'genesis') el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
+    if (level.id !== 'genesis' && level.id !== 'dawkins') el.createEl('strong', { text: `YHWH level ${level.label}${level.edition ? ` · ${level.edition}` : ''}` });
     const lines = [level.welcome, ...(level.lines || []), this.welcomeAside];
     for (const line of lines) if (line) el.createEl('p', { text: line });
     if (level.names) el.createEl('p', { text: addressCopy('Hey Abe, take a look around.', level) });
     for (const text of [level.welcomePoem, level.poem]) {
       if (text) el.createEl('pre', { cls: 'yhwh-level-poem', attr: { dir: 'ltr', tabindex: '0' } }).createEl('code', { text });
     }
+    if (level.welcomeLink) this.external(el.createEl('small', { cls: 'yhwh-welcome-link' }), level.welcomeLink.label, level.welcomeLink.url);
+    if (level.closingQuote) el.createEl('p', { text: level.closingQuote, cls: 'yhwh-muted' });
   }
   upgrades() {
     const unlocked = this.settings.edition.unlocked;
