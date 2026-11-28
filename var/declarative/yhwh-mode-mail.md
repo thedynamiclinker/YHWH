@@ -98,7 +98,7 @@ In our little play Pharaoh’s firstborn is PID 1 and the log is the chorus. I�
 
 You see the cloud, Mo? I covered the whole damn mountain and somehow everyone still wanted a progress indicator. Six days. Then I called you on the seventh. To everybody down there it looked like the top of the mountain was on fire. You walked in anyway.
 
-Pick a universe you own and open it as `/` with `yhwh un go` on Linux. Your shell gets its own idea of where everything starts. I’m up here in the b*sh burning בָּאֵשׁ waiting for you. Bring a coat. Forty nights, remember?
+Pick a directory you own and open it as `/` in Folder view. If your Linux universe has a shell, `yhwh un go ./universe` takes your terminal into it too. Now you know where everything starts. I’m up here in the b*sh burning בָּאֵשׁ waiting for you. Bring a coat. Forty nights, remember?
 
 *Exodus 24:15-18 · We The Nameless*
 

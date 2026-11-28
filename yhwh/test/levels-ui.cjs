@@ -25,11 +25,20 @@ module.exports = async function checkLevels(page, screenshot) {
     await dialog.locator(`[data-energy="${energy}"]`).click();
     await level(id);
   };
+  const checkPitch = async (address) => {
+    await page.locator('.titlebar [data-command="about"]').click();
+    await dialog.getByRole('button', { name: 'LD / LM' }).click();
+    assert.match(await dialog.innerText(), new RegExp(`^${address}\\.`, 'm'));
+    assert.match(await dialog.locator('pre').innerText(), /yhwh ld[^\n]+\ncat plan\nyhwh lm plan/);
+    await dialog.locator('img').evaluate(image => image.decode());
+    await dialog.getByRole('button', { name: 'Close dialog' }).click();
+  };
 
   await run('new-tab'); await run('focus-document');
   await choose(0, 'dawkins');
   assert.match(await welcome.innerText(), /The old testament god is the most unpleasant character in all fiction\./);
   assert.equal(await page.evaluate(() => window.YHWH.commands.has('circus')), false);
+  assert.equal(await page.evaluate(() => window.YHWH.commands.has('chat')), false);
   await choose(50, 'nietzsche');
   assert.match(await welcome.innerText(), /God is dead\.[\s\S]*It's Over Man\.™/);
   assert.doesNotMatch(await welcome.innerText(), /four letter word/);
@@ -46,10 +55,12 @@ module.exports = async function checkLevels(page, screenshot) {
   assert.match(await welcome.innerText(), /Dave.*box/i);
   await choose(120, 'exodus');
   assert.match(await welcome.innerText(), /Mo.*b\*sh is burning/i);
+  await checkPitch('Mo');
   assert.equal(await upgrade.innerText(), '咱');
   await choose(100, 'genesis');
   await defaultWelcome();
   await checkAbout(['God is a four letter word.', 'LD is a four letter word.']);
+  await checkPitch('Abe');
   await run('new-tab'); await run('focus-document');
   await defaultWelcome();
   await page.locator('#mode-name').click();

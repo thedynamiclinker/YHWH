@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawn, execFile } = require('node:child_process');
+const { promisify } = require('node:util');
 const paths = require('./paths.cjs');
 const anchor = require('./tab-anchor.cjs');
 const prompts = require('./prompt-cli.cjs');
@@ -36,10 +37,16 @@ async function execute(executable,args,options={}) {
     child.on('exit',(code,signal)=>{cleanup();resolve(code ?? (signal==='SIGINT'?130:143));});
   });
 }
-function description(command, executable) {
-  const result=spawnSync(executable,['--help'],{encoding:'utf8',timeout:1000,maxBuffer:16384,stdio:['ignore','pipe','ignore'],env:{...process.env,YHWH_INTROSPECTION:'1'}});
-  if(result.error||result.status!==0)return '(help unavailable)';
-  const line=(result.stdout||'').split(/\r?\n/).map(s=>s.trim()).find(Boolean);
+const exec = promisify(execFile);
+async function description(command, executable) {
+  const result = exec(executable, ['--help'], {
+    timeout: 1000, killSignal: 'SIGKILL', maxBuffer: 16384, env: { ...process.env, YHWH_INTROSPECTION: '1' },
+  });
+  result.child.stdin.on('error', () => {});
+  result.child.stdin.end();
+  const response = await result.catch(() => null);
+  if (!response) return '(help unavailable)';
+  const line=response.stdout.split(/\r?\n/).map(s=>s.trim()).find(Boolean);
   if(!line||/^usage:/i.test(line))return '(use --help)';
   return line.replace(new RegExp('^yhwh-'+command+'\\s*[—:-]\\s*','i'),'').replace(/[\x00-\x1f\x7f-\x9f]/g,'').slice(0,100);
 }
@@ -51,7 +58,7 @@ async function main(args=process.argv.slice(2)) {
     console.log(fs.readFileSync(paths.etc('help.txt'),'utf8').trimEnd());
     if(process.env.YHWH_INTROSPECTION)return 0;
     console.log('\nInterface and external commands (PATH):');
-    for(const [name,full] of commands())if(!workflows.includes(name))console.log('  '+name.padEnd(16)+description(name,full));
+    for(const [name,full] of commands())if(!workflows.includes(name))console.log('  '+name.padEnd(16)+await description(name,full));
     return 0;
   }
   if(command==='--version'){console.log(require('../package.json').version);return 0;}

@@ -40,9 +40,12 @@
         <div class="navigation-buttons"><button data-command="back" data-file-icon="back" title="Back (Alt+Left)" aria-label="Back"></button><button data-command="forward" data-file-icon="forward" title="Forward (Alt+Right)" aria-label="Forward"></button></div>
         <form id="location-form"><input id="location" aria-label="Current directory" spellcheck="false"></form>
         <div class="file-filter"><input id="file-filter" placeholder="Filter files…" aria-label="Filter files"><button data-command="toggle-hidden" data-file-icon="hidden" title="Show hidden files (Ctrl+H)" aria-label="Show hidden files"></button></div>
-        <div class="path-state" id="path-state" aria-label="Shell directories"><span><b>.</b> <code id="path-cwd"></code></span><span><b>@</b> <code id="path-anchor"></code></span><span><b>/</b> <code id="path-root"></code></span></div>
-        <div class="directory-shortcuts" role="group" aria-label="Go to shell directories"><small>go</small><button data-command="cwd-directory" aria-label="Go to current directory">.</button><button data-command="anchor-directory" aria-label="Go to tab prefix">@</button><button data-command="root-directory" aria-label="Go to root directory">/</button></div>
-        <div class="directory-shortcuts" role="group" aria-label="Set shell directories"><small>set</small><button data-command="cwd-set" title="cd · Enter selected directory" aria-label="Set current directory">.</button><button data-command="anchor-set" title="cwat · Set @ to selected directory" aria-label="Set tab prefix">@</button><button data-command="root-set" title="Set / · Chroot" aria-label="Set root directory">/</button></div>
+        <div class="directory-shortcuts" role="group" aria-label="Shell directories">
+          <button type="button" data-command="home" aria-label="Go to home directory"><span aria-hidden="true">~</span><small dir="auto"></small></button>
+          <button type="button" data-command="anchor-directory" aria-label="Go to tab prefix"><span aria-hidden="true">@</span><small dir="auto"></small></button>
+          <button type="button" data-command="root-directory" aria-label="Go to root directory"><span aria-hidden="true">/</span><small dir="auto"></small></button>
+          <button type="button" class="directory-more" data-command="directory-actions" title="Shell directory actions" aria-label="Shell directory actions" aria-haspopup="true" aria-expanded="false">…</button>
+        </div>
         <div id="file-list" role="listbox" tabindex="0" aria-label="Directory contents"></div>
         <footer class="directory-footer"><span id="file-count"></span><button data-command="refresh" data-file-icon="refresh" title="Refresh" aria-label="Refresh directory"></button></footer>
         <div id="directory-menu" class="directory-menu" popover="auto" role="menu" aria-label="Directory actions"></div>

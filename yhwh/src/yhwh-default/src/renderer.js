@@ -338,7 +338,7 @@ function renderFiles() {
   const hiddenToggle = $('#files [data-command="toggle-hidden"]');
   hiddenToggle.setAttribute('aria-pressed', String(hiddenFiles));
   hiddenToggle.innerHTML = fileIcons[hiddenFiles ? 'visible' : 'hidden'];
-  renderAnchor(tab);
+  renderShellDirectories(tab);
   const fileRoot = tab.worldRoot || (tab.guestMode && root);
   $('#location').value = fileRoot ? '/' + tab.cwd.slice(fileRoot.length).replace(/^\/+/, '') : tab.cwd;
   $('#shell-state').textContent = ui("-files");
@@ -600,15 +600,21 @@ async function navigate(directory, tab = active(), history = true, focusFiles = 
   emit('navigate', { id: tab.id, cwd: tab.cwd });
 }
 const navigateFiles = (directory, tab = active(), history = true) => navigate(directory, tab, history, true);
-function renderAnchor(tab) {
+function homeDirectory(tab) {
   const root = tab.worldRoot || tab.systemRoot;
-  for (const [id, value] of [['cwd', tab.cwd], ['anchor', tab.anchor], ['root', root]]) {
-    const element = $('#path-' + id);
-    element.textContent = value; element.title = value;
+  if (tab.guestMode) return join(root, 'root');
+  return tab.worldRoot && !withinPath(boot.home, root) ? root : boot.home;
+}
+function renderShellDirectories(tab) {
+  const root = tab.worldRoot || tab.systemRoot;
+  for (const [command, directory] of [['home', homeDirectory(tab)], ['anchor-directory', tab.anchor], ['root-directory', root]]) {
+    const button = $(`.directory-shortcuts [data-command="${command}"]`);
+    button.querySelector('small').textContent = basename(directory);
+    button.title = `${button.getAttribute('aria-label')} (${button.firstElementChild.textContent})\n${directory}`;
+    button.setAttribute('aria-description', directory);
   }
   $('#terminal-cwd').textContent = `. ${tab.cwd}   @ ${tab.anchor}   / ${root}`;
   $('#terminal-cwd').title = $('#terminal-cwd').textContent;
-  $('#files [data-command="anchor-directory"]').title = tab.anchor;
 }
 async function confirmAnchor(tab, directory) {
   return tab.config.values.ask_at !== 'true' || directory === tab.anchor ||
@@ -618,7 +624,7 @@ async function setAnchor(tab, directory) {
   if (!await confirmAnchor(tab, directory)) return tab.anchor;
   const anchor = await call('@-set', tab.id, directory);
   tab.anchor = anchor;
-  if (tab === active()) renderAnchor(tab);
+  if (tab === active()) renderShellDirectories(tab);
   return anchor;
 }
 async function chooseAnchor(tab = active()) {
@@ -924,6 +930,12 @@ async function chrootUniverse(raw = false, directory = universeTarget(active()))
   };
 }
 const setRoot = () => chrootUniverse(true);
+function directoryActions() {
+  const trigger = $('#files [data-command="directory-actions"]');
+  showDirectoryMenu('Shell directory actions', ['cwd-set', 'anchor-set', 'root-set'].map(id => [
+    commands.get(id).name, () => run(id),
+  ]), { trigger });
+}
 function universeMenu() {
   showDirectoryMenu('un', [
     ['new · Create a universe', newUniverse],
@@ -1276,6 +1288,10 @@ function showDirectoryMenu(title, items, { trigger, point } = {}) {
   const menu = $('#directory-menu');
   if (boot.interface === 'mobile' || !menu.showPopover || (!trigger && !point)) {
     const dialog = modal(title, ui('template-5', items.map(([label], i) => `<button data-menu="${i}">${escape(label)}</button>`).join('')));
+    if (trigger?.hasAttribute('aria-expanded')) {
+      trigger.setAttribute('aria-expanded', 'true');
+      dialog.addEventListener('close', () => trigger.setAttribute('aria-expanded', 'false'), { once: true });
+    }
     for (const button of dialog.querySelectorAll('[data-menu]')) button.onclick = () => {
       dialog.addEventListener('close', () => invoke(Number(button.dataset.menu)), { once: true });
       dialog.close();
@@ -1677,7 +1693,8 @@ const definitions = [
   ['focus-files', ui("focus-file-manager"), 'Ctrl+Alt+2', () => { active().showFiles = true; active().expanded = ''; update(); $('#file-list').focus(); }],
   ['focus-terminal', ui("focus-terminal"), 'Ctrl+Alt+3', () => { active().expanded = ''; return revealTerminal(); }],
   ['parent', ui("parent-directory"), ui("alt-up"), () => navigateFiles(parent(active().cwd))],
-  ['home', ui("home-directory"), '', () => navigateFiles(boot.home)],
+  ['home', ui("home-directory"), '', () => navigateFiles(homeDirectory(active()))],
+  ['directory-actions', 'Shell directory actions', '', directoryActions],
   ['cwd-directory', '. · Current directory', '', () => navigateFiles(active().cwd)],
   ['anchor-directory', '@ · Go to prefix', '', () => goToAnchor(active())],
   ['cwd-set', 'cd · Enter selected directory', '', () => navigateFiles(universeTarget(active()))],
@@ -1929,7 +1946,7 @@ bridge.on('directory-changed', ({ id }) => { const tab = tabs.find(item => item.
 bridge.on('anchor-changed', ({ id, anchor }) => {
   const tab = tabs.find(item => item.id === id); if (!tab) return;
   tab.anchor = anchor;
-  if (tab === active()) renderAnchor(tab);
+  if (tab === active()) renderShellDirectories(tab);
   emit('anchor', { id, anchor });
 });
 bridge.on('error', notice);
@@ -2110,7 +2127,10 @@ $('#location-form').onsubmit = event => {
   let directory = $('#location').value;
   if (directory === '@' || directory.startsWith('@/')) { goToAnchor(tab, directory.slice(2)).catch(error => notice(error.message)); return; }
   const root = tab.worldRoot || tab.systemRoot;
-  if (directory === '~' || directory.startsWith('~/')) directory = boot.home + directory.slice(1);
+  if (directory === '~' || directory.startsWith('~/')) {
+    const home = homeDirectory(tab);
+    directory = directory === '~' ? home : join(home, `.${directory.slice(1)}`);
+  }
   else if (directory.startsWith('/') && root !== '/' && !withinPath(directory, root)) directory = join(root, '.' + directory);
   navigateFiles(directory, tab).catch(error => notice(error.message));
 };

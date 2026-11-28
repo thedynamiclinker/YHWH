@@ -31,6 +31,13 @@
 .yhwh-tools code { flex: 1; overflow-wrap: anywhere; }
 .yhwh-universe-tools button { display: inline-flex; align-items: center; gap: 5px; }
 .yhwh-universe-tools button:first-child { color: var(--yhwh-accent); }
+.yhwh-directory-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 2px; max-inline-size: 24rem; }
+.yhwh-directory-shortcuts button { display: flex; flex-direction: column; justify-content: start; align-items: center; gap: 3px; height: auto; min-width: 0; padding: 4px 3px; background: transparent; box-shadow: none; }
+.yhwh-directory-shortcuts button > span { font: 600 1.375rem/1 var(--font-monospace); }
+.yhwh-directory-shortcuts small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; max-width: 100%; color: var(--text-muted); font: .75rem/1.2 var(--font-monospace); }
+.yhwh-directory-shortcuts .yhwh-directory-more { min-width: 28px; color: var(--text-muted); font: 1rem/1.375rem var(--font-monospace); }
+.yhwh-directory-shortcuts button:is(:hover, :focus-visible) { color: var(--yhwh-accent); background: var(--background-modifier-hover); }
+@media (pointer: coarse) { .yhwh-directory-shortcuts button { min-width: 44px; min-height: 44px; } }
 .yhwh-universe-form label { display: grid; gap: 4px; margin-bottom: 10px; }
 .yhwh-breadcrumbs { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0; }
 .yhwh-breadcrumbs button { box-shadow: none; background: transparent; color: var(--text-muted); font-size: var(--font-ui-smaller); padding: 2px 5px; }

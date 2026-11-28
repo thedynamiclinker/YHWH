@@ -51,6 +51,7 @@ export class Navigator extends ItemView {
     this.unsubscribe = this.plugin.watch(() => this.render());
     this.registerDomEvent(this.contentEl, 'keydown', event => {
       const target = event.target as HTMLElement;
+      if (event.key === ui("enter") && target.closest('.yhwh-directory-shortcuts')) return;
       if ((event.altKey && event.key === ui("arrowup")) || (event.key === ui("arrowleft") && target.tagName !== ui("input"))) {
         event.preventDefault(); this.plugin.run(() => this.plugin.go(parent(this.plugin.folder))); return;
       }
@@ -119,17 +120,24 @@ export class Navigator extends ItemView {
       const bounds = un.getBoundingClientRect();
       menu.showAtPosition({ x: bounds.left, y: bounds.bottom });
     });
-    el.createDiv({ text: `. /${p.folder}   @ /${p.anchor}   / /`, cls: 'yhwh-muted' });
-    const go = el.createDiv({ cls: 'yhwh-tools', attr: { role: 'group', 'aria-label': 'Go to shell directories' } });
-    go.createSpan({ text: 'go' });
-    button(go, '.', 'Go to current directory', () => p.run(() => p.go(p.folder)));
-    button(go, '@', 'Go to tab prefix', () => p.run(() => p.go(p.anchor)));
-    button(go, '/', 'Go to vault root', () => p.run(() => p.go('')));
-    const set = el.createDiv({ cls: 'yhwh-tools', attr: { role: 'group', 'aria-label': 'Set shell directories' } });
-    set.createSpan({ text: 'set' });
-    button(set, '.', 'Set current directory', () => p.run(() => p.go(target())));
-    button(set, '@', 'Set tab prefix', () => p.run(() => p.setAnchor(target())));
-    button(set, '/', 'Set root directory', () => p.run(() => p.chrootUniverse(target(), true)));
+    const shortcuts = el.createDiv({ cls: 'yhwh-directory-shortcuts', attr: { role: 'group', 'aria-label': 'Shell directories' } });
+    for (const [symbol, title, directory] of [['~', 'Go to vault home', ''], ['@', 'Go to tab prefix', p.anchor], ['/', 'Go to vault root', '']]) {
+      const shortcut = button(shortcuts, '', title, () => p.run(() => p.go(directory)));
+      shortcut.title = `${title} (${symbol})\n/${directory}`;
+      shortcut.setAttribute('aria-description', '/' + directory);
+      shortcut.createSpan({ text: symbol, attr: { 'aria-hidden': 'true' } });
+      shortcut.createEl('small', { text: directory.split('/').at(-1) || this.app.vault.getName(), attr: { dir: 'auto' } });
+    }
+    const more = button(shortcuts, '…', 'Shell directory actions', () => {
+      const menu = new Menu();
+      menu.addItem(item => item.setTitle('cd · Enter selected directory').onClick(() => p.run(() => p.go(target()))));
+      menu.addItem(item => item.setTitle('cwat · Set @ to selected directory').onClick(() => p.run(() => p.setAnchor(target()))));
+      menu.addItem(item => item.setTitle('Set / · Open as root').onClick(() => p.run(() => p.chrootUniverse(target(), true))));
+      const bounds = more.getBoundingClientRect();
+      menu.showAtPosition({ x: bounds.left, y: bounds.bottom });
+    });
+    more.addClass('yhwh-directory-more');
+    more.setAttribute('aria-haspopup', 'menu');
     const crumbs = el.createDiv('yhwh-breadcrumbs');
     this.dropTarget(button(crumbs, '/', ui("vault-root"), () => p.run(() => p.go(''))), '');
     let path = '';
